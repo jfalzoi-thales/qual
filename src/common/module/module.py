@@ -2,71 +2,61 @@ import Queue
 from threading import Thread
 from time import sleep
 
+import signal
 
-class ExceptionModuleAbort(Exception):
+import datetime
+
+from src.common.gpb.python.baseMessage import BaseMessage
+
+
+class ModuleException(Exception):
     pass
 
-class ModuleCtrlStop(object):
-    pass
 
 class Module(object):
-    # currentConfig is class scope (shared across all Test)
 
-    def __init__(self, config):
-        self.config = config
-        self.ctrlQ = Queue.Queue()
+    def __init__(self):
+        self.__running = False
         self.name = type(self).__name__
+        self._thread = Thread(target=self._execute, name=self.name)
+        self.msgHandlers = []
 
-        self.thread = Thread(target=self._execute,
-                             name=self.name)
-        self.thread.start()
+    def start(self, msg):
+        if self._thread.isAlive() == True:
+            raise ModuleException('Thread %s already active' % (self.name,))
+        self.__running = True
+        self._thread.start()
+        return
 
+    def stop(self, msg):
+        self.__running = False
+        timeout = datetime.datetime.now() + datetime.timedelta(seconds=5)
+        while(self._thread.isAlive() == False) :
+            sleep(0.1)
+            if datetime.datetime.now()  > timeout :
+                raise ModuleException('Thread %s did not terminate' % (self.name,))
+        return
 
-    def terminate(self):
-
-        print ("destructor")
-        if self.thread.isAlive() == True:
-            msg = ModuleCtrlStop()
-            self.ctrlQ.put(msg)
-            for loop in range(10) :
-                if self.thread.isAlive() == False:
-                    return
-                sleep(1)
-        raise Exception('Thread %s failed to close' % (self.name))
-
-
-    ## Run a complete test case
-    #
-    def _execute(self):
-
-        try:
-            self.setup()
-            try:
-                while self._monitorCtrl():
-                    self.run()
-            except ExceptionModuleAbort as e:
-                # this is already logged
-                pass
-            self.cleanup()
-        except Exception as e:
-            #TODO: Need to handle this
-            raise
-
-    def _monitorCtrl(self):
-        # See if there are any pending exceptions from the child threads
-        try:
-            ctrlMsg = self.ctrlQ.get(block=False)
-            if isinstance(ctrlMsg, ModuleCtrlStop) :
-                return False
-
-        except Queue.Empty:
-            return True
-        except Exception as e:
-            raise
-
-
-    def message(self, msg):
+    def addMsgHandler(self, msgClass, handler):
+        self.msgHandlers.append((msgClass, handler))
         pass
+
+    def msgHandler(self, msg):
+        self.log('%s->%s' % (msg.__class__.__name__, msg.__str__()))
+        for item in self.msgHandlers:
+            if isinstance(msg, item[0]):
+                retMsg = item[1](msg)
+                if not isinstance(retMsg, BaseMessage) :
+                    raise ModuleException('Thread %s %s msg handler type exception' %
+                                          (self.name,msg.__class__.name,))
+                self.log('%s<-%s' % (retMsg.__class__.__name__, retMsg.__str__()))
+                return retMsg
+
+
+
+
+
+    ##--------------Base Class Funtions Below
 
     ## Placeholder for virtual
     #@param params parameters given to execute method
@@ -74,43 +64,23 @@ class Module(object):
     def run(self):
         pass
 
-    ## Placeholder for virtual
-    #@param params parameters given to execute method
-    #
-    def setup(self):
-        pass
-
-    ## Placeholder for virtual
-    #@param params parameters given to execute method
-    #
-    def cleanup(self):
-        pass
-
-
-    ## DEBUG is for information that will normally not be shown in any logs unless enabled
-    DEBUG = 1
-    INFO = 2
-    WARNING =  3
-    ERROR =  4
-    CRITICAL =  5
 
     ## Add information to the test log
-    #@param level One of DEBUG, INFO, WARNING, ERROR, CRITICAL
     #@param message Textual information to be added to the log
     #
-    def log(self, level, message):
-        print 'Log: %d %s' % (level, message)
+    def log(self,  message):
+        print 'Log: %s' % (message)
 
 
-    ## Test Assertion: logs that the given expression is boolean-true
-    #
-    #@param expression : Expression to be executed and compared against true
-    #@param msg : additional log information
-    def assertTrue(self, expression, msg):
-        if expression is False:
-            self.log (Module.CRITICAL, msg)
-            raise ExceptionModuleAbort()
+    def _execute(self):
 
+        try:
+            while self.__running:
+                self.run()
+
+        except Exception as e:
+            #TODO: Need to handle this
+            raise
 
 
 
