@@ -1,0 +1,24 @@
+package mpsqual;
+
+message CPULoadingRequest { 
+	enum RequestTypeT {
+		STOP = 0;
+		RUN = 1;
+		REPORT = 2;
+	}
+	
+	required RequestTypeT requestType = 1 [default = STOP];
+	optional float level = 2;
+}
+
+message CPULoadingResponse{
+	enum AppStateT {
+		STOPPED	= 0;
+		RUNNING	= 1;
+	}
+	
+	required AppStateT state = 1;
+	required float totalUtilization = 2;
+	repeated float coreUtilization = 3;
+
+}
