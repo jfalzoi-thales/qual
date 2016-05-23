@@ -6,8 +6,7 @@ from src.common.module.module import Module
 
 
 class StartMessage(BaseMessage):
-    def __init__(self, start, interval):
-        self.start = start
+    def __init__(self, interval):
         self.interval = interval
         super(StartMessage, self).__init__()
 
@@ -39,6 +38,10 @@ class Example(Module):
         self.addThread(self.runCounter1)
         self.addThread(self.runCounter2)
 
+    @classmethod
+    def getConfigurations(cls):
+        return [{'initial': 0},{'initial':2000}]
+
     #Thread Execution function, must return quickly
     def runCounter1(self):
         self.counter1 += 1
@@ -49,17 +52,16 @@ class Example(Module):
     #Thread Execution function, must return quickly
     def runCounter2(self):
         self.counter2 += 11
-        sleep(self.interval/1000.0)
+        sleep(self.interval/10000.0)
         #self.log('counter now %d' % (self.counter))
         return
-
 
 
     #Thread Setup Function
     # e.g. Setup member variables, thread will be started in the Super
     def start(self, msg):
-        self.counter1 = 0
-        self.counter2 = 0
+        self.counter1 = self.config['initial']
+        self.counter2 = self.config['initial']
         self.interval = msg.interval
         super(Example, self).startThread()
         status = StatusRequestMessage(self.counter1,self.counter2)
@@ -80,9 +82,9 @@ class Example(Module):
 class Test_Module(unittest.TestCase):
 
     def test_basic(self):
-        print 'Test 1'
-        self.module = Example()
-        self.module.msgHandler(StartMessage(start=0, interval=100))
+        print 'Test 1 - Run 1 Module with multiple Threads'
+        self.module = Example(config=Example.getConfigurations()[0])
+        self.module.msgHandler(StartMessage(interval=100))
         for loop in range(10) :
             sleep(1)
             status = self.module.msgHandler(RequestReportMessage())
@@ -91,7 +93,25 @@ class Test_Module(unittest.TestCase):
         pass
 
     def test_basic2(self):
-        print 'Test 2 - empty'
+        print 'Test 2 - Run Multiple Modules'
+        configs = Example.getConfigurations()
+        print 'There are %d configs' % (len(configs))
+        modules = []
+        for config in configs:
+            module = Example(config=config)
+            modules.append(module)
+
+        for module in modules:
+            module.msgHandler(StartMessage(interval=100))
+        for loop in range(10) :
+            sleep(1)
+            print 'Looping--------->'
+            for module in modules:
+                status = module.msgHandler(RequestReportMessage())
+                print 'Status reported as %d %d' % (status.value1, status.value2)
+            print '<---------Looping'
+        for module in modules:
+            module.msgHandler(StopMessage())
         pass
 
 if __name__ == '__main__':
