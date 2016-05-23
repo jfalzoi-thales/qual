@@ -1,9 +1,5 @@
-import Queue
 from threading import Thread
 from time import sleep
-
-import signal
-
 import datetime
 
 from src.common.gpb.python.baseMessage import BaseMessage
@@ -15,12 +11,17 @@ class ModuleException(Exception):
 
 class Module(object):
 
+    @classmethod
+    def getConfigurations(cls):
+        return [{},]
+
     def __init__(self, config):
         self.__running = False
         self.config = config
         self.name = type(self).__name__
         self._thread = Thread(target=self._execute, name=self.name)
         self.msgHandlers = []
+        return
 
     def startThread(self):
         if self._thread.isAlive() == True:
@@ -40,7 +41,7 @@ class Module(object):
 
     def addMsgHandler(self, msgClass, handler):
         self.msgHandlers.append((msgClass, handler))
-        pass
+        return
 
     def msgHandler(self, msg):
         self.log('%s->%s' % (msg.__class__.__name__, msg.__str__()))
@@ -53,7 +54,8 @@ class Module(object):
                 self.log('%s<-%s' % (retMsg.__class__.__name__, retMsg.__str__()))
                 return retMsg
 
-
+        raise ModuleException('Thread %s %s msg handler not defined' %
+                                          (self.name,msg.__class__.name,))
 
 
 
