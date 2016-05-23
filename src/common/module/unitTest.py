@@ -30,8 +30,8 @@ class StatusRequestMessage(BaseMessage):
 
 class Example(Module):
 
-    def __init__(self):
-        super(Example, self).__init__()
+    def __init__(self, config={}):
+        super(Example, self).__init__(config)
         self.addMsgHandler(StopMessage, self.stop)
         self.addMsgHandler(StartMessage, self.start)
         self.addMsgHandler(RequestReportMessage, self.report)
@@ -48,7 +48,7 @@ class Example(Module):
     def start(self, msg):
         self.counter = 0
         self.interval = msg.interval
-        super(Example, self).start(msg)
+        super(Example, self).startThread()
         status = StatusRequestMessage(self.counter)
         return status
 
@@ -56,7 +56,7 @@ class Example(Module):
     #
     def stop(self, msg):
         status = StatusRequestMessage(self.counter)
-        super(Example, self).stop(msg)
+        super(Example, self).stopThread()
         return status
 
     def report(self, msg):

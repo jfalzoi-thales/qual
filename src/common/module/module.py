@@ -15,20 +15,21 @@ class ModuleException(Exception):
 
 class Module(object):
 
-    def __init__(self):
+    def __init__(self, config):
         self.__running = False
+        self.config = config
         self.name = type(self).__name__
         self._thread = Thread(target=self._execute, name=self.name)
         self.msgHandlers = []
 
-    def start(self, msg):
+    def startThread(self):
         if self._thread.isAlive() == True:
             raise ModuleException('Thread %s already active' % (self.name,))
         self.__running = True
         self._thread.start()
         return
 
-    def stop(self, msg):
+    def stopThread(self):
         self.__running = False
         timeout = datetime.datetime.now() + datetime.timedelta(seconds=5)
         while(self._thread.isAlive() == False) :
