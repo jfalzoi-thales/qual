@@ -22,8 +22,9 @@ class RequestReportMessage(BaseMessage):
         pass
 
 class StatusRequestMessage(BaseMessage):
-    def __init__(self, value):
-        self.value = value
+    def __init__(self, value1, value2):
+        self.value1 = value1
+        self.value2 = value2
         super(StatusRequestMessage, self).__init__()
         pass
 
@@ -35,32 +36,44 @@ class Example(Module):
         self.addMsgHandler(StopMessage, self.stop)
         self.addMsgHandler(StartMessage, self.start)
         self.addMsgHandler(RequestReportMessage, self.report)
+        self.addThread(self.runCounter1)
+        self.addThread(self.runCounter2)
 
     #Thread Execution function, must return quickly
-    def run(self):
-        self.counter += 1
+    def runCounter1(self):
+        self.counter1 += 1
         sleep(self.interval/1000.0)
-        #self.log(self.DEBUG, 'counter now %d' % (self.counter))
-        super(Example, self).run()
+        #self.log('counter now %d' % (self.counter))
+        return
+
+    #Thread Execution function, must return quickly
+    def runCounter2(self):
+        self.counter2 += 11
+        sleep(self.interval/1000.0)
+        #self.log('counter now %d' % (self.counter))
+        return
+
+
 
     #Thread Setup Function
     # e.g. Setup member variables, thread will be started in the Super
     def start(self, msg):
-        self.counter = 0
+        self.counter1 = 0
+        self.counter2 = 0
         self.interval = msg.interval
         super(Example, self).startThread()
-        status = StatusRequestMessage(self.counter)
+        status = StatusRequestMessage(self.counter1,self.counter2)
         return status
 
     # Thread Cleanup function, thread will be stopped in the Super
     #
     def stop(self, msg):
-        status = StatusRequestMessage(self.counter)
+        status = StatusRequestMessage(self.counter1,self.counter2)
         super(Example, self).stopThread()
         return status
 
     def report(self, msg):
-        status = StatusRequestMessage(self.counter)
+        status = StatusRequestMessage(self.counter1,self.counter2)
         return status
 
 
@@ -73,7 +86,7 @@ class Test_Module(unittest.TestCase):
         for loop in range(10) :
             sleep(1)
             status = self.module.msgHandler(RequestReportMessage())
-            print 'Status reported as %d' % (status.value)
+            print 'Status reported as %d %d' % (status.value1, status.value2)
         self.module.msgHandler(StopMessage())
         pass
 
