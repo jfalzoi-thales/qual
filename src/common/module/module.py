@@ -23,6 +23,13 @@ class Module(object):
         self.threads = []
         return
 
+    def setName(self, name):
+        self.name = name
+        return
+
+    def terminate(self):
+        return
+
     def addThread(self, runMethod):
         threadArgs = {
             'runMethod' : runMethod,
