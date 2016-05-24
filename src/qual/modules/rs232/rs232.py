@@ -109,6 +109,3 @@ class Rs232(Module):
         status = StatusRequestMessage(self.match, self.mismatch)
         super(Rs232, self).stopThread()
         return status
-
-# serReceiver = SerialReceiver(serialStr='/dev/ttyUSB5')
-# serReceiver.start()
