@@ -2,7 +2,8 @@ from threading import Thread
 from time import sleep
 import datetime
 
-from src.common.module.exception import ModuleException
+from common.logger.logger import Logger
+from common.module.exception import ModuleException
 
 ## Module Base class
 #
@@ -38,6 +39,9 @@ class Module(object):
         self.msgHandlers = []
         ## List of managed threads, populated by self.addThread()
         self.threads = []
+
+        self.logger = Logger(self.name)
+
         return
 
     ## Changes the name of the module.
@@ -92,7 +96,7 @@ class Module(object):
     #@param message Textual information to be added to the log
     #
     def log(self,  message):
-        print 'Log: %s' % (message)
+        self.logger.info(message)
 
     #--------------Threading Funtions Below------------------
 

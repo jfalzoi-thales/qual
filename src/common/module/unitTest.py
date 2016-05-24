@@ -1,7 +1,7 @@
 import unittest
 from time import sleep
 
-from src.common.module.module import Module
+from common.module.module import Module
 
 
 class BaseMessage(object):
