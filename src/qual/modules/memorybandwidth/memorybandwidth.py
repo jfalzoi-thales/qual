@@ -45,7 +45,7 @@ class MemoryBandwidth(Module):
         self.bandwidth = []
         self.lastBandwidthRead = 0
 
-    # This configurations are the most common,
+    # These configurations are the most common,
     # mSize == 0, means no max size in memory reservation
     @classmethod
     def getConfigurations(cls):
