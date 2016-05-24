@@ -4,8 +4,10 @@ import re
 
 from src.common.module.module import Module
 from src.common.gpb.python.baseMessage import BaseMessage
-from threading import Thread
+import threading
 
+# Variable for stdoutput of PMBW
+pmbwOutput = None
 
 class StartMessage(BaseMessage):
     def __init__(self):
@@ -20,7 +22,6 @@ class StopMessage(BaseMessage):
 
 class RequestReportMessage(BaseMessage):
     def __init__(self, bandwidth):
-        self.bandwidth = bandwidth
         super(RequestReportMessage, self).__init__()
         pass
 
@@ -38,10 +39,11 @@ class MemoryBandwidth(Module):
         self.addMsgHandler(StartMessage, self.start)
         self.addMsgHandler(StopMessage, self.stop)
         self.addMsgHandler(RequestReportMessage, self.report)
+        self.addThread(self.runPmbw())
         self.addThread(self.runMemBandwithTest())
         self.PMBW = "pmbw"
         self.bandwidth = []
-        self.averageBandwidth = self.aveBandwidth()
+        self.lastBandwidthRead = 0
 
     # This configurations are the most common,
     # mSize == 0, means no max size in memory reservation
@@ -52,48 +54,33 @@ class MemoryBandwidth(Module):
 
     def start(self, msg):
         super(MemoryBandwidth, self).startThread()
-        status = StatusRequestMessage(self.aveBandwidth())
+        status = StatusRequestMessage(self.lastBandwidthRead)
         return status
 
     def stop(self):
-        status = StatusRequestMessage(self.aveBandwidth())
+        status = StatusRequestMessage(self.lastBandwidthRead)
         super(MemoryBandwidth, self).stopThread()
         return status
 
     def report(self):
-        status = StatusRequestMessage(self.aveBandwidth())
+        status = StatusRequestMessage(self.lastBandwidthRead)
         return status
 
-    #   pmbw with the required parameters:
-    #   Runs the pmbw and creates a file called "stats.txt"
-    #   with all statistics of the test
-    def runMemBandwithTest(self):
+
+    def runPmbw(self):
+        global pmbwOutput
         while True:
-            subprocess.call([self.PMBW, "-S " + str(self.config['mSize']), "-P " + str(self.config['numThreads'])])
-            self.parseOutput()
+            pmbwOutput= subprocess.Popen(
+                        self.PMBW,
+                        stdout=subprocess.PIPE)
 
-    # parse the output test
-    #   parse the output test called "stats.txt"
-    #   if file, returns a list with all the calculated bandwidth
-    #   if no file, returns an empty list
-    def parseOutput(self):
-        statsFile = "stats.txt"
-        if os.path.exists(statsFile):
-            file = open(statsFile)
-            for line in file:
+    def runMemBandwithTest(self):
+        global pmbwOutput
+        while True:
+            line = pmbwOutput.stdout.readline()
+            if not line:
+                continue
+            else:
                 num = re.search('(?<=bandwidth=).+\t', line)
-                self.bandwidth.append(float(num.group(0)[:-1]))
-        else:
-            return []
-
-    # returns the max bandwidth of the test
-    def maxBandwidth(self):
-        return max(self.bandwidth)
-
-    # returns the min bandwidth of the test
-    def minBandwidth(self):
-        return min(self.bandwidth)
-
-    # returns the average bandwidth of the test
-    def aveBandwidth(self):
-        return sum(self.bandwidth) / len(self.bandwidth) if (len(self.bandwidth) > 0) else 0
+                self.bandwidth.append(float(num.group(0)))
+                self.lastBandwidthRead = float(num.group(0))

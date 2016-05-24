@@ -22,7 +22,7 @@ else
     echo "Configuring..."
 
     cd pmbw
-    PMBW_WD = pwd
+    PMBW_WD=pwd
     ./configure
 
     echo

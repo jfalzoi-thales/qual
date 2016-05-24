@@ -524,9 +524,8 @@ void* thread_master(void* cookie)
                        << "rate=" << runtime / testaccess;
 
                 std::cout << result.str() << std::endl;
-
                 std::ofstream resultfile("stats.txt", std::ios::app);
-                resultfile << result.str() << std::endl;
+                std::cout << result.str() << std::endl;
             }
         }
     }
