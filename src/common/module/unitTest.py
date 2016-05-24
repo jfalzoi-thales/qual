@@ -1,9 +1,11 @@
 import unittest
 from time import sleep
 
-from src.common.gpb.python.baseMessage import BaseMessage
 from src.common.module.module import Module
 
+
+class BaseMessage(object):
+    pass
 
 class StartMessage(BaseMessage):
     def __init__(self, interval):
