@@ -12,26 +12,32 @@ MAIN_WD=pwd
 #  This has to be done only once. An executable of this application
 #   can be found: https://panthema.net/2013/pmbw/
 #-------------------------------------------------------------------------
-echo
-echo "Configuring..."
+MEMBANDMODULE_WD="../../src/qual/modules/memorybandwidth/pmbw"
 
-cd pmbw
-PMBW_WD=pwd
-./configure
+if [ -a $MEMBANDMODULE_WD]
+then
+    echo "PMBW tool already exists..."
+else
+    echo
+    echo "Configuring..."
 
-echo
-echo "Making..."
-make
+    cd pmbw
+    PMBW_WD = pwd
+    ./configure
 
-echo "Installing.."
-make install
+    echo
+    echo "Making..."
+    make
 
-echo
-echo "Copying files to $PMBW_WD..."
-cp "/usr/local/bin/pmbw" "../../src/qual/modules/memorybandwidth"
+    echo "Installing.."
+    make install
 
-cd ..
+    echo
+    echo "Copying files to Module MemoryBandwidth..."
+    cp "/usr/local/bin/pmbw" $MEMBANDMODULE_WD
 
-echo "------------------ DONE with PMBW!!! ------------------"
+    cd ..
+    echo "------------------ DONE with PMBW!!! ------------------"
+fi
 
 #------------------------------- PMBW setup completed ---------------------------
