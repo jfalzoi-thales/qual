@@ -6,7 +6,7 @@ from src.common.module.module import Module
 from src.common.gpb.python.baseMessage import BaseMessage
 import threading
 
-# Variable for stdoutput of PMBW
+# Variable for PMBW process
 pmbwOutput = None
 
 class StartMessage(BaseMessage):
@@ -58,6 +58,8 @@ class MemoryBandwidth(Module):
         return status
 
     def stop(self):
+        global pmbwOutput
+        pmbwOutput.terminate()
         status = StatusRequestMessage(self.lastBandwidthRead)
         super(MemoryBandwidth, self).stopThread()
         return status
@@ -65,7 +67,6 @@ class MemoryBandwidth(Module):
     def report(self):
         status = StatusRequestMessage(self.lastBandwidthRead)
         return status
-
 
     def runPmbw(self):
         global pmbwOutput
