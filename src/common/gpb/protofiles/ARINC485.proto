@@ -1,0 +1,27 @@
+package mpsqual;
+
+message ARINC485Request {
+	enum RequestTypeT {
+		STOP = 0;
+		RUN	= 1;
+		REPORT = 2;
+	}
+	
+	required RequestTypeT requestType = 1;
+}
+
+message ARINC485Response {
+	enum AppStateT {
+		STOPPED	= 0;
+		RUNNING	= 1;
+	}
+	
+	message LoopbackStats {
+		required string channel = 1;
+		required uint32 missed = 2;
+		required uint32 received = 3;
+	}
+	
+	required AppStateT state = 1;
+	repeated LoopbackStats statistics = 2;
+}

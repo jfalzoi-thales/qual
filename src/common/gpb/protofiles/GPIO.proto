@@ -1,0 +1,27 @@
+package mpsqual;
+
+message GPIORequest {
+	enum RequestTypeT {
+		DISCONNECT = 0;
+		CONNECT	= 1;
+		REPORT = 2;
+	}
+	required RequestTypeT requestType = 1 [default = DISCONNECT];
+	required string gpIn  = 2 [default = ""];
+	optional string gpOut = 3 [default = ""];
+}
+
+message GPIOResponse {
+	enum ConStateT {
+		DISCONNECTED = 0;
+		CONNECTED = 1;
+	}
+	
+	message GpioStatus {
+		required ConStateT conState = 1;
+		required int32 mismatchCount = 2;
+		required string gpIn = 3;
+		optional string gpOut = 4;
+	}
+	repeated GpioStatus status = 1;
+}
