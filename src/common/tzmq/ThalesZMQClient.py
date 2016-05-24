@@ -33,11 +33,15 @@ class ThalesZMQClient(object):
         # serialized header, and serialized body
         self.zsocket.send_multipart((request.name, request.serializedHeader, request.serializedBody))
 
-        # Receive the response
+        # This will block waiting for the response
         responseData = self.zsocket.recv_multipart()
 
-        # Well-formed Thales messages must have 3 parts
+        # We expect Thales messages to have 3 parts
         if len(responseData) >= 3:
+            # If message has more than 3 parts, log a warning, but proceed anyway
+            if len(responseData) > 3:
+                print "Warning: received response message with", len(responseData), "parts"
+
             # Package response data into a message object
             response = ThalesZMQMessage(str(responseData[0]))
             response.header.ParseFromString(responseData[1])

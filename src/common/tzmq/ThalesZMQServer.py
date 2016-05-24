@@ -28,16 +28,19 @@ class ThalesZMQServer(object):
         """
 
         while True:
-            # print "Waiting for request"
+            # This will block waiting for a request
             requestData = self.zsocket.recv_multipart()
 
-            # Well-formed Thales messages must have 3 parts
+            # We expect Thales messages to have 3 parts
             if len(requestData) >= 3:
-                # Package response data into a message object and hand off to HandleRequest()
+                # If message has more than 3 parts, log a warning, but proceed anyway
+                if len(requestData) > 3:
+                    print "Warning: received request message with", len(requestData), "parts"
+
+                # Package request data into a message object and hand off to HandleRequest()
                 request = ThalesZMQMessage(str(requestData[0]))
                 request.header.ParseFromString(requestData[1])
                 request.serializedBody = requestData[2]
-                # Hand the message name and the body off to HandleRequest; ignore the header
                 self.HandleRequest(request)
             else:
                 print "Malformed message received; ignoring"
@@ -79,8 +82,7 @@ class ThalesZMQServer(object):
         errorMessage = ErrorMessage()
         errorMessage.error_code = code
         errorMessage.error_description = description
-        response = ThalesZMQMessage("ErrorMessage")
-        response.serializedBody = errorMessage.SerializeToString()
+        response = ThalesZMQMessage("ErrorMessage", errorMessage)
 
         # Send the message as the response
         self.SendResponse(response)
