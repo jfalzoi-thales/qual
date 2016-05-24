@@ -6,7 +6,9 @@ from src.common.gpb.python.baseMessage import BaseMessage
 from src.common.module.module import Module
 
 class StartMessage(BaseMessage):
-    def __init__(self):
+    def __init__(self, ports):
+        self.writer = ports.writer
+        self.reader = ports.reader
         super(StartMessage, self).__init__()
         pass
 
@@ -109,3 +111,8 @@ class Rs232(Module):
         status = StatusRequestMessage(self.match, self.mismatch)
         super(Rs232, self).stopThread()
         return status
+
+    def report(self):
+        status = StatusRequestMessage(self.match, self.mismatch)
+        return status
+
