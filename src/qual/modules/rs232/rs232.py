@@ -40,7 +40,6 @@ class Rs232(Module):
         character = chr(0)
         while True:
             ser.write(character)
-            appState = RS232Response.AppStateT.RUNNING
             time.sleep(0.5)
             if ord(character) < 255:
                 character = chr(ord(character) + 1)
@@ -83,6 +82,7 @@ class Rs232(Module):
         return response
 
     def start(self):
+        global appState
         self.portWriter = self.config['portwriter']
         self.portReader = self.config['portreader']
         self.baudrate = self.config['baudrate']
@@ -90,7 +90,8 @@ class Rs232(Module):
         self.stopbits = self.config['stopbits']
         self.bytesize = self.config['bytesize']
         super(Rs232, self).startThread()
-        status = RS232Response(RS232Response.AppStateT.RUNNING, self.match, self.mismatch)
+        appState = RS232Response.AppStateT.RUNNING
+        status = RS232Response(appState, self.match, self.mismatch)
         return status
 
     def stop(self):
