@@ -1,45 +1,20 @@
-from threading import Thread
 import serial
 import time
 
 from src.common.module.module import Module
 from src.common.module.unitTest import BaseMessage
+from src.common.gpb.python.RS232_pb2 import RS232Request, RS232Response
 
-class StartMessage(BaseMessage):
-    def __init__(self, ports):
-        self.writer = ports.writer
-        self.reader = ports.reader
-        super(StartMessage, self).__init__()
+class Rs232MsgHdlr(BaseMessage):
+    def __init__(self, rs232Request):
+        self.msg = rs232Request
+        super(Rs232MsgHdlr, self).__init__()
         pass
-
-class StopMessage(BaseMessage):
-    def __init__(self):
-        super(StopMessage, self).__init__()
-        pass
-
-class RequestReportMessage(BaseMessage):
-    def __init__(self):
-        super(RequestReportMessage, self).__init__()
-        pass
-
-class StatusRequestMessage(BaseMessage):
-    def __init__(self, match, mismatch):
-        self.match = match
-        self.mismatch = mismatch
-        super(StatusRequestMessage, self).__init__()
-        pass
-
-class PortMsg():
-    def __init__(self, writer, reader):
-        self.writer = writer
-        self.reader = reader
 
 class Rs232(Module):
     def __init__(self, config={}):
         super(Rs232, self).__init__(config)
-        self.addMsgHandler(StartMessage, self.start)
-        self.addMsgHandler(StopMessage, self.stop)
-        self.addMsgHandler(RequestReportMessage, self.report)
+        self.addMsgHandler(Rs232MsgHdlr, self.hdlrMsg)
         self.addThread(self.rs232Write)
         self.addThread(self.rs232Read)
         self.match = 0
@@ -48,13 +23,7 @@ class Rs232(Module):
     @classmethod
     def getConfigurations(cls):
         return [
-                {'port': '/dev/ttyUSB1', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
-                {'port': '/dev/ttyUSB1', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
-                {'port': '/dev/ttyUSB2', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
-                {'port': '/dev/ttyUSB3', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
-                {'port': '/dev/ttyUSB4', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
-                {'port': '/dev/ttyUSB5', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
-                {'port': '/dev/ttyUSB6', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
+                {'portwriter': '/dev/ttyUSB2','portreader': '/dev/ttyUSB3', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
                 ]
 
     def rs232Write(self):
@@ -97,24 +66,34 @@ class Rs232(Module):
             else:
                 character = chr(0)
 
-    def start(self, msg):
-        self.portWriter = msg.writer
-        self.portReader = msg.reader
+    def hdlrMsg(self, rs232Request):
+        response = RS232Response()
+        if rs232Request.requestType == RS232Request.STOP:
+            reply = self.stop()
+        elif rs232Request.requestType == RS232Request.RUN:
+            reply = self.stop()
+        elif rs232Request.requestType == RS232Request.STOP:
+            reply = self.report()
+        else:
+            print "Unexpected request"
+        return response
+
+    def start(self):
+        self.portWriter = self.config['portwriter']
+        self.portReader = self.config['portreader']
         self.baudrate = self.config['baudrate']
         self.parity= self.config['parity']
         self.stopbits = self.config['stopbits']
         self.bytesize = self.config['bytesize']
         super(Rs232, self).startThread()
-        status = StatusRequestMessage(self.match, self.mismatch)
+        status = RS232Response(RS232Response.AppStateT.RUNNING, self.match, self.mismatch)
         return status
 
-    def stop(self, msg):
-        status = StatusRequestMessage(self.match, self.mismatch)
+    def stop(self):
+        status = RS232Response(RS232Response.AppStateT.STOPPED, self.match, self.mismatch)
         super(Rs232, self).stopThread()
         return status
 
-    def report(self, msg):
-        status = StatusRequestMessage(self.match, self.mismatch)
+    def report(self):
+        status = RS232Response(RS232Response.AppStateT.RUNNING, self.match, self.mismatch)
         return status
-
-
