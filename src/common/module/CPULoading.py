@@ -1,15 +1,14 @@
-import subprocess
-import sys
-import module
-import zmq
 from time import sleep
-import CPULoader
+import sys
+import subprocess
 from common.gpb.python import CPULoading_pb2
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
+import module
+import CPULoader
 
 ## CPULoading Class Module
 #
-class CPULoading(module):
+class CPULoading(module.Module):
     ## Constructor
     #  @param     self
     def __init__(self):
@@ -125,48 +124,97 @@ class CPULoading(module):
 #  Tests module functionality with simulated messages
 #
 if __name__=='__main__':
-    def testprint(self, tzmq):
+    def testprint(tzmq):
+        print("Load Running: {} [0 is NO, 1 is YES]".format(tzmq.state))
         print("Total Untilization: {}".format(tzmq.totalUtilization))
-        print("Core Untilization: {}\n\n".format(tzmq.coreUtilization))
+        print("Core Untilization: {}\n".format(tzmq.coreUtilization))
 
 
     test = CPULoading()
     message = CPULoading_pb2.CPULoadingRequest()
 
+    sleep(3)
+
     ## test REPORT message input before CPU load
     message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
     request = ThalesZMQMessage("CPULoading_pb2.CPULoadingRequest", message)
+    out = test.handler(request)
 
-    test.handler(request)
-    sleep(5)
+    print("REPORT before CPU load:")
+    testprint(out)
+    sleep(3)
 
-    ## test RUN message input and report
+    ## test RUN message with default level input and report
     message.requestType = CPULoading_pb2.CPULoadingRequest.RUN
-    message.level = 50
     request = ThalesZMQMessage("CPULoading_pb2.CPULoadingRequest", message)
+    out = test.handler(request)
 
-    test.handler(request)
-    sleep(5)
+    print("RUN with default level and report:")
+    testprint(out)
+    sleep(3)
 
     ## test REPORT message input after CPU load
     message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
     request = ThalesZMQMessage("CPULoading_pb2.CPULoadingRequest", message)
+    out = test.handler(request)
 
-    test.handler(request)
-    sleep(5)
+    print("REPORT after CPU load:")
+    testprint(out)
+    sleep(3)
+
+    ## test additional RUN with custom level
+    message.requestType = CPULoading_pb2.CPULoadingRequest.RUN
+    message.level = 50
+    request = ThalesZMQMessage("CPULoading_pb2.CPULoadingRequest", message)
+    out = test.handler(request)
+
+    print("RUN again with custom level while previous load running:")
+    testprint(out)
+    sleep(3)
+
+    ## test REPORT message input after additional RUN and custom level
+    message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
+    request = ThalesZMQMessage("CPULoading_pb2.CPULoadingRequest", message)
+    out = test.handler(request)
+
+    print("REPORT after starting additional load with custom level:")
+    testprint(out)
+    sleep(3)
 
     ## test STOP message input and report
     message.requestType = CPULoading_pb2.CPULoadingRequest.STOP
     request = ThalesZMQMessage("CPULoading_pb2.CPULoadingRequest", message)
+    out = test.handler(request)
 
-    test.handler(request)
-    sleep(5)
+    print("STOP and report:")
+    testprint(out)
+    sleep(3)
 
     ## test REPORT message input after CPU load stop
     message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
     request = ThalesZMQMessage("CPULoading_pb2.CPULoadingRequest", message)
+    out = test.handler(request)
 
-    test.handler(request)
-    sleep(5)
+    print("REPORT after stopping load:")
+    testprint(out)
+    sleep(3)
+
+    ## test STOP with no load
+    message.requestType = CPULoading_pb2.CPULoadingRequest.STOP
+    request = ThalesZMQMessage("CPULoading_pb2.CPULoadingRequest", message)
+    out = test.handler(request)
+
+    print("STOP with no load:")
+    testprint(out)
+    sleep(3)
+
+    ## test REPORT message input after stopping with no load
+    message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
+    request = ThalesZMQMessage("CPULoading_pb2.CPULoadingRequest", message)
+    out = test.handler(request)
+
+    print("REPORT after stopping with no load:")
+    testprint(out)
+    sleep(3)
 
     test.terminate()
