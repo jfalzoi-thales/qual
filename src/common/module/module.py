@@ -2,7 +2,8 @@ from threading import Thread
 from time import sleep
 import datetime
 
-from src.common.module.exception import ModuleException
+from common.logger.logger import Logger
+from common.module.exception import ModuleException
 
 ## Module Base class
 #
@@ -38,6 +39,9 @@ class Module(object):
         self.msgHandlers = []
         ## List of managed threads, populated by self.addThread()
         self.threads = []
+
+        self.log = Logger(self.name)
+
         return
 
     ## Changes the name of the module.
@@ -77,22 +81,18 @@ class Module(object):
     # @todo : This is a unit test construct, QTA will call handlers directly.
     # @param     msg The message being procced.
     def msgHandler(self, msg):
-        self.log('%s->%s' % (msg.__class__.__name__, msg.__str__()))
+        self.log.debug('%s->%s' % (msg.__class__.__name__, msg.__str__()))
         for item in self.msgHandlers:
             if isinstance(msg, item[0]):
                 retMsg = item[1](msg)
-                self.log('%s<-%s' % (retMsg.__class__.__name__, retMsg.__str__()))
+                self.log.debug('%s<-%s' % (retMsg.__class__.__name__, retMsg.__str__()))
                 return retMsg
 
         raise ModuleException('Thread %s %s msg handler not defined' %
                                           (self.name,msg.__class__.name,))
 
 
-    ## Add information to the test log
-    #@param message Textual information to be added to the log
-    #
-    def log(self,  message):
-        print 'Log: %s' % (message)
+
 
     #--------------Threading Funtions Below------------------
 
