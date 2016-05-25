@@ -5,6 +5,8 @@ from src.common.module.module import Module
 from src.common.module.unitTest import BaseMessage
 from src.common.gpb.python.RS232_pb2 import RS232Request, RS232Response
 
+appState = RS232Response.AppStateT.STOPPED
+
 class Rs232MsgHdlr(BaseMessage):
     def __init__(self, rs232Request):
         self.msg = rs232Request
@@ -27,6 +29,7 @@ class Rs232(Module):
                 ]
 
     def rs232Write(self):
+        global appState
         ser = serial.Serial(
             port=self.portWriter,
             baudrate=self.baudrate,
@@ -37,6 +40,7 @@ class Rs232(Module):
         character = chr(0)
         while True:
             ser.write(character)
+            appState = RS232Response.AppStateT.RUNNING
             time.sleep(0.5)
             if ord(character) < 255:
                 character = chr(ord(character) + 1)
@@ -90,10 +94,13 @@ class Rs232(Module):
         return status
 
     def stop(self):
-        status = RS232Response(RS232Response.AppStateT.STOPPED, self.match, self.mismatch)
+        global appState
+        appState =RS232Response.AppStateT.STOPPED
+        status = RS232Response(appState, self.match, self.mismatch)
         super(Rs232, self).stopThread()
         return status
 
     def report(self):
-        status = RS232Response(RS232Response.AppStateT.RUNNING, self.match, self.mismatch)
+        global appState
+        status = RS232Response(appState, self.match, self.mismatch)
         return status
