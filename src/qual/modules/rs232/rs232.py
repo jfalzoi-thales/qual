@@ -2,8 +2,8 @@ from threading import Thread
 import serial
 import time
 
-from src.common.gpb.python.baseMessage import BaseMessage
 from src.common.module.module import Module
+from src.common.module.unitTest import BaseMessage
 
 class StartMessage(BaseMessage):
     def __init__(self, ports):
@@ -40,14 +40,15 @@ class Rs232(Module):
         self.addMsgHandler(StartMessage, self.start)
         self.addMsgHandler(StopMessage, self.stop)
         self.addMsgHandler(RequestReportMessage, self.report)
-        self.addThread(self.rs232Write())
-        self.addThread(self.rs232Read())
+        self.addThread(self.rs232Write)
+        self.addThread(self.rs232Read)
         self.match = 0
         self.mismatch = 0
 
     @classmethod
     def getConfigurations(cls):
         return [
+                {'port': '/dev/ttyUSB1', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
                 {'port': '/dev/ttyUSB1', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
                 {'port': '/dev/ttyUSB2', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
                 {'port': '/dev/ttyUSB3', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
@@ -107,12 +108,13 @@ class Rs232(Module):
         status = StatusRequestMessage(self.match, self.mismatch)
         return status
 
-    def stop(self):
+    def stop(self, msg):
         status = StatusRequestMessage(self.match, self.mismatch)
         super(Rs232, self).stopThread()
         return status
 
-    def report(self):
+    def report(self, msg):
         status = StatusRequestMessage(self.match, self.mismatch)
         return status
+
 

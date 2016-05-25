@@ -1,13 +1,16 @@
 import unittest
-import time
 from rs232 import *
 
 class Test_Rs232(unittest.TestCase):
-    def rs232test(self):
-        ports = PortMsg("port': /dev/ttyUSB1", "port': /dev/ttyUSB2")
+    def rs232test(self, port):
         self.module =  Rs232(config=Rs232.getConfigurations()[0])
-        self.module.msgHandler(StartMessage(ports))
-        for loop in range(1000):
-            time.sleep(5)
+        self.module.msgHandler(StartMessage(port))
+        for loop in range(20):
+            time.sleep(1)
             status = self.module.msgHandler(RequestReportMessage())
+            print "Status reported as match=" + str(status.match) + ", mismatch=" + str(status.mismatch)
         self.module.msgHandler(StopMessage())
+        pass
+
+if __name__ == '__main__':
+    unittest.main()
