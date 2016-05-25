@@ -1,8 +1,6 @@
 from time import sleep
 import threading
 
-lock = threading.Lock()
-
 ## CPULoader Class
 #
 class CPULoader(threading.Thread):
@@ -12,6 +10,8 @@ class CPULoader(threading.Thread):
     def __init__(self, sleeptime = 1):
         ## initializes threading
         threading.Thread.__init__(self)
+        ## lock for preventing threading issues
+        self.lock = threading.Lock()
         ## stores sleeptime in seconds
         self.sleeptime = sleeptime
         ## initializes cpuload
@@ -51,9 +51,9 @@ class CPULoader(threading.Thread):
     #  @param     self
     #  @return    load  dict containing CPU load information
     def getcpuload(self):
-        lock.acquire()
+        self.lock.acquire()
         load = self.cpuload
-        lock.release()
+        self.lock.release()
         return load
 
     ## Calculates CPU Load
@@ -69,7 +69,7 @@ class CPULoader(threading.Thread):
         while not self.quit:
             sleep(self.sleeptime)
             stop = self.getcputime()
-            lock.acquire()
+            self.lock.acquire()
 
             for cpu in start:
                 Total = stop[cpu]['total']
@@ -78,5 +78,5 @@ class CPULoader(threading.Thread):
                 PrevIdle = start[cpu]['idle']
                 CPU_Percentage = ((Total - PrevTotal) - (Idle - PrevIdle)) / (Total - PrevTotal) * 100
                 self.cpuload[cpu] = CPU_Percentage
-            lock.release()
+            self.lock.release()
             start = stop
