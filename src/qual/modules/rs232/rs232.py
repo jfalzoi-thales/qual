@@ -75,7 +75,7 @@ class Rs232(Module):
             response = self.stop()
         elif rs232Request.requestType == RS232Request.RUN:
             response = self.stop()
-        elif rs232Request.requestType == RS232Request.STOP:
+        elif rs232Request.requestType == RS232Request.REPORT:
             response = self.report()
         else:
             print "Unexpected request"
