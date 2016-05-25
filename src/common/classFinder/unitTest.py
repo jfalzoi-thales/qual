@@ -17,7 +17,7 @@ class TestStringMethods(unittest.TestCase):
         )
 
         for className in classNames :
-            classFinder= ClassFinder(rootPath='common.gpb.python',
+            classFinder= ClassFinder(rootPath='common.gpb',
                                      baseClass=GeneratedProtocolMessageType)
             searchClass = classFinder.getClassByName(className)
             myMessage = searchClass()
