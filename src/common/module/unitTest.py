@@ -1,7 +1,8 @@
 import unittest
 from time import sleep
 
-from src.common.module.module import Module
+from common.logger.logger import Logger
+from common.module.module import Module
 
 
 class BaseMessage(object):
@@ -83,21 +84,25 @@ class Example(Module):
 
 class Test_Module(unittest.TestCase):
 
+
     def test_basic(self):
-        print 'Test 1 - Run 1 Module with multiple Threads'
+        log = Logger(name='Test1')
+        log.info('Test 1 - Run 1 Module with multiple Threads')
         self.module = Example(config=Example.getConfigurations()[0])
         self.module.msgHandler(StartMessage(interval=100))
         for loop in range(10) :
             sleep(1)
             status = self.module.msgHandler(RequestReportMessage())
-            print 'Status reported as %d %d' % (status.value1, status.value2)
+            log.info('Status reported as %d %d' % (status.value1, status.value2))
         self.module.msgHandler(StopMessage())
         pass
 
     def test_basic2(self):
-        print 'Test 2 - Run Multiple Modules'
+        log = Logger(name='Test2')
+
+        log.info('Test 2 - Run Multiple Modules')
         configs = Example.getConfigurations()
-        print 'There are %d configs' % (len(configs))
+        log.info('There are %d configs' % (len(configs)))
         modules = []
         for config in configs:
             module = Example(config=config)
@@ -107,11 +112,11 @@ class Test_Module(unittest.TestCase):
             module.msgHandler(StartMessage(interval=100))
         for loop in range(10) :
             sleep(1)
-            print 'Looping--------->'
+            log.info('Looping--------->')
             for module in modules:
                 status = module.msgHandler(RequestReportMessage())
-                print 'Status reported as %d %d' % (status.value1, status.value2)
-            print '<---------Looping'
+                log.info('Status reported as %d %d' % (status.value1, status.value2))
+            log.info('<---------Looping')
         for module in modules:
             module.msgHandler(StopMessage())
         pass
