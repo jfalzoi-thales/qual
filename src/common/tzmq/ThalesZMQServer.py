@@ -40,7 +40,7 @@ class ThalesZMQServer(object):
                     print "Warning: received request message with", len(requestData), "parts"
 
                 # Package request data into a message object and hand off to HandleRequest()
-                request = ThalesZMQMessage(str(requestData[0]))
+                request = ThalesZMQMessage(name=str(requestData[0]))
                 request.header.ParseFromString(requestData[1])
                 request.serializedBody = requestData[2]
                 self.handleRequest(request)
@@ -79,7 +79,7 @@ class ThalesZMQServer(object):
         errorMessage = ErrorMessage()
         errorMessage.error_code = code
         errorMessage.error_description = description
-        response = ThalesZMQMessage("ErrorMessage", errorMessage)
+        response = ThalesZMQMessage(errorMessage)
 
         # Send the message as the response
         self.sendResponse(response)

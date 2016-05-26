@@ -14,7 +14,7 @@ class HDDSClient(ThalesZMQClient):
         getReq.key.append(key)
 
         # Send a request and get the response
-        response = self.sendRequest(ThalesZMQMessage("GetReq", getReq))
+        response = self.sendRequest(ThalesZMQMessage(getReq))
 
         # Parse the response
         if response.name == "GetResp":
@@ -38,7 +38,7 @@ class HDDSClient(ThalesZMQClient):
         prop.value = value
 
         # Send a request and get the response
-        response = self.sendRequest(ThalesZMQMessage("SetReq", setReq))
+        response = self.sendRequest(ThalesZMQMessage(setReq))
 
         # Parse the response
         if response.name == "HDDSSetResp":

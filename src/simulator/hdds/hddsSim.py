@@ -96,7 +96,7 @@ class HDDSSimulator(ThalesZMQServer):
                 valueResp.error.error_description = "Invalid/unsupported key in HDDS_GET message"
 
         # Send response back to client
-        self.sendResponse(ThalesZMQMessage("GetResp", getResp))
+        self.sendResponse(ThalesZMQMessage(getResp))
 
     ## Handle request of type "SetReq"
     #
@@ -131,7 +131,7 @@ class HDDSSimulator(ThalesZMQServer):
                 valueResp.error.error_description = "Invalid/unsupported key in HDDS_SET message"
 
         # Send response back to client
-        self.sendResponse(ThalesZMQMessage("HDDSSetResp", setResp))
+        self.sendResponse(ThalesZMQMessage(setResp))
 
 
 if __name__ == "__main__":

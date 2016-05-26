@@ -42,12 +42,12 @@ class ThalesZMQClient(object):
                 print "Warning: received response message with", len(responseData), "parts"
 
             # Package response data into a message object
-            response = ThalesZMQMessage(str(responseData[0]))
+            response = ThalesZMQMessage(name=str(responseData[0]))
             response.header.ParseFromString(responseData[1])
             response.serializedBody = responseData[2]
             return response
         else:
             print "Malformed message received"
             # Create an empty message object to return
-            response = ThalesZMQMessage("")
+            response = ThalesZMQMessage()
             return response
