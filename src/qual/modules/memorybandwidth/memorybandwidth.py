@@ -3,6 +3,7 @@ import re
 
 from src.common.module.module import Module
 from src.common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
+from src.common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 class MemoryBandwidth(Module):
     def __init__(self, config={}):
@@ -37,7 +38,7 @@ class MemoryBandwidth(Module):
         super(MemoryBandwidth, self).startThread()
         self.appState = MemoryBandwidthResponse.AppStateT.RUNNING
         status = MemoryBandwidthResponse(self.appState, self.lastBandwidthRead)
-        return status
+        return ThalesZMQMessage(status)
 
     def stop(self):
         self.subProcess.terminate()
