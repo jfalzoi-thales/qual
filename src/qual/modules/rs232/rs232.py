@@ -3,6 +3,7 @@ import time
 
 from src.common.module.module import Module
 from src.common.gpb.python.RS232_pb2 import RS232Request, RS232Response
+from src.common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 class Rs232(Module):
     def __init__(self, config={}):
@@ -70,7 +71,7 @@ class Rs232(Module):
             response = self.report()
         else:
             print "Unexpected request"
-        return response
+        return ThalesZMQMessage(response)
 
     def start(self):
         self.portWriter = self.config['portwriter']
