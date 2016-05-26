@@ -1,87 +1,72 @@
 import subprocess
-import os
 import re
 
 from src.common.module.module import Module
-from src.common.gpb.python.baseMessage import BaseMessage
-import threading
+from src.common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
 
-# Variable for PMBW process
-pmbwOutput = None
-
-class StartMessage(BaseMessage):
-    def __init__(self):
-        super(StartMessage, self).__init__()
-
-
-class StopMessage(BaseMessage):
-    def __init__(self):
-        super(StopMessage, self).__init__()
+class MemBandwMsgHdlr(object):
+    def __init__(self, memBandwRequest):
+        self.msg = memBandwRequest
+        super(MemBandwMsgHdlr, self).__init__()
         pass
-
-
-class RequestReportMessage(BaseMessage):
-    def __init__(self, bandwidth):
-        super(RequestReportMessage, self).__init__()
-        pass
-
-
-class StatusRequestMessage(BaseMessage):
-    def __init__(self, bandwidth):
-        self.bandwidth = bandwidth
-        super(StatusRequestMessage, self).__init__()
-        pass
-
 
 class MemoryBandwidth(Module):
     def __init__(self, config={}):
         super(MemoryBandwidth, self).__init__(config)
-        self.addMsgHandler(StartMessage, self.start)
-        self.addMsgHandler(StopMessage, self.stop)
-        self.addMsgHandler(RequestReportMessage, self.report)
+        self.addMsgHandler(MemBandwMsgHdlr, self.start)
         self.addThread(self.runPmbw())
         self.addThread(self.runMemBandwithTest())
-        self.PMBW = "pmbw"
-        self.bandwidth = []
-        self.lastBandwidthRead = 0
+        self.subProcess = None
+        self.appState = MemoryBandwidthResponse.AppStateT.STOPPED
+        self.bandwidth = 0
 
-    # These configurations are the most common,
-    # mSize == 0, means no max size in memory reservation
     @classmethod
     def getConfigurations(cls):
-        return [{'numThreads': 1, 'mSize': 1024},
-                {'numThreads': 1, 'mSize': 0}]
+        return [{'maxallocmem': '-M 109951162','numthreads': '-P 1', 'mSize': '-s 109951162'}]
+
+    def hdlrMsg(self, memBandwRequest):
+        response = MemoryBandwidthResponse()
+        if memBandwRequest.requestType == MemoryBandwidthRequest.STOP:
+            response = self.stop()
+        elif memBandwRequest.requestType == MemoryBandwidthRequest.RUN:
+            response = self.start()
+        elif memBandwRequest.requestType == MemoryBandwidthRequest.REPORT:
+            response = self.report()
+        else:
+            print "Unexpected request"
+        return response
 
     def start(self, msg):
+        self.M = self.config['maxallocmem']
+        self.P = self.config['numthreads']
+        self.s = self.config['mSize']
         super(MemoryBandwidth, self).startThread()
-        status = StatusRequestMessage(self.lastBandwidthRead)
+        self.appState = MemoryBandwidthResponse.AppStateT.RUNNING
+        status = MemoryBandwidthResponse(self.appState, self.lastBandwidthRead)
         return status
 
     def stop(self):
-        global pmbwOutput
-        pmbwOutput.terminate()
-        status = StatusRequestMessage(self.lastBandwidthRead)
-        super(MemoryBandwidth, self).stopThread()
+        self.subProcess.terminate()
+        self.appState = MemoryBandwidthResponse.AppStateT.STOPPED
+        status = MemoryBandwidthResponse(self.appState, self.lastBandwidthRead)
         return status
 
     def report(self):
-        status = StatusRequestMessage(self.lastBandwidthRead)
+        status = MemoryBandwidthResponse(self.appState, self.lastBandwidthRead)
         return status
 
     def runPmbw(self):
-        global pmbwOutput
         while True:
-            pmbwOutput= subprocess.Popen(
-                        self.PMBW,
-                        stdout=subprocess.PIPE)
+            self.subProcess = subprocess.Popen(["./pmbw", self.M, self.s, self.P],
+                                               stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE)
 
     def runMemBandwithTest(self):
-        global pmbwOutput
         while True:
-            line = pmbwOutput.stdout.readline()
-            if not line:
-                continue
-            else:
-                num = re.search('(?<=bandwidth=).+\t', line)
-                self.bandwidth.append(float(num.group(0)))
-                self.lastBandwidthRead = float(num.group(0))
+            if isinstance(self.subProcess, subprocess.Popen):
+                line = self.subProcess.stdout.readline()
+                if not line:
+                    continue
+                else:
+                    num = re.search('(?<=bandwidth=).+\t', line)
+                    self.lastBandwidthRead = float(num.group(0))
