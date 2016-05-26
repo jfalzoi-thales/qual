@@ -2,19 +2,12 @@ import serial
 import time
 
 from src.common.module.module import Module
-from src.common.module.unitTest import BaseMessage
 from src.common.gpb.python.RS232_pb2 import RS232Request, RS232Response
-
-class Rs232MsgHdlr(object):
-    def __init__(self, rs232Request):
-        self.msg = rs232Request
-        super(Rs232MsgHdlr, self).__init__()
-        pass
 
 class Rs232(Module):
     def __init__(self, config={}):
         super(Rs232, self).__init__(config)
-        self.addMsgHandler(Rs232MsgHdlr, self.hdlrMsg)
+        self.addMsgHandler(RS232Request, self.hdlrMsg)
         self.addThread(self.rs232Write)
         self.addThread(self.rs232Read)
         self.appState = RS232Response.AppStateT.STOPPED
