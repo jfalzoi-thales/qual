@@ -45,7 +45,7 @@ class CPULoading(module.Module):
         else:
             self.log.error("Unexpected Request Type %d" %(msg.body.requestType))
 
-        return reply
+        return ThalesZMQMessage(reply)
 
     ## Starts lookbusy process to mimic specific CPU loads
     #
