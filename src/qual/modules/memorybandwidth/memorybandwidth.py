@@ -4,16 +4,10 @@ import re
 from src.common.module.module import Module
 from src.common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
 
-class MemBandwMsgHdlr(object):
-    def __init__(self, memBandwRequest):
-        self.msg = memBandwRequest
-        super(MemBandwMsgHdlr, self).__init__()
-        pass
-
 class MemoryBandwidth(Module):
     def __init__(self, config={}):
         super(MemoryBandwidth, self).__init__(config)
-        self.addMsgHandler(MemBandwMsgHdlr, self.start)
+        self.addMsgHandler(MemoryBandwidthRequest, self.hdlrMsg)
         self.addThread(self.runPmbw)
         self.addThread(self.runMemBandwithTest)
         self.subProcess = None
