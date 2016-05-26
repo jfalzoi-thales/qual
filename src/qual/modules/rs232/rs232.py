@@ -5,9 +5,7 @@ from src.common.module.module import Module
 from src.common.module.unitTest import BaseMessage
 from src.common.gpb.python.RS232_pb2 import RS232Request, RS232Response
 
-appState = RS232Response.AppStateT.STOPPED
-
-class Rs232MsgHdlr(BaseMessage):
+class Rs232MsgHdlr(object):
     def __init__(self, rs232Request):
         self.msg = rs232Request
         super(Rs232MsgHdlr, self).__init__()
@@ -19,6 +17,7 @@ class Rs232(Module):
         self.addMsgHandler(Rs232MsgHdlr, self.hdlrMsg)
         self.addThread(self.rs232Write)
         self.addThread(self.rs232Read)
+        self.appState = RS232Response.AppStateT.STOPPED
         self.match = 0
         self.mismatch = 0
 
@@ -29,7 +28,6 @@ class Rs232(Module):
                 ]
 
     def rs232Write(self):
-        global appState
         ser = serial.Serial(
             port=self.portWriter,
             baudrate=self.baudrate,
@@ -74,7 +72,7 @@ class Rs232(Module):
         if rs232Request.requestType == RS232Request.STOP:
             response = self.stop()
         elif rs232Request.requestType == RS232Request.RUN:
-            response = self.stop()
+            response = self.start()
         elif rs232Request.requestType == RS232Request.REPORT:
             response = self.report()
         else:
@@ -82,7 +80,6 @@ class Rs232(Module):
         return response
 
     def start(self):
-        global appState
         self.portWriter = self.config['portwriter']
         self.portReader = self.config['portreader']
         self.baudrate = self.config['baudrate']
@@ -90,18 +87,16 @@ class Rs232(Module):
         self.stopbits = self.config['stopbits']
         self.bytesize = self.config['bytesize']
         super(Rs232, self).startThread()
-        appState = RS232Response.AppStateT.RUNNING
-        status = RS232Response(appState, self.match, self.mismatch)
+        self.appState = RS232Response.AppStateT.RUNNING
+        status = RS232Response(self.appState, self.match, self.mismatch)
         return status
 
     def stop(self):
-        global appState
-        appState =RS232Response.AppStateT.STOPPED
-        status = RS232Response(appState, self.match, self.mismatch)
+        self.appState =RS232Response.AppStateT.STOPPED
+        status = RS232Response(self.appState, self.match, self.mismatch)
         super(Rs232, self).stopThread()
         return status
 
     def report(self):
-        global appState
-        status = RS232Response(appState, self.match, self.mismatch)
+        status = RS232Response(self.appState, self.match, self.mismatch)
         return status
