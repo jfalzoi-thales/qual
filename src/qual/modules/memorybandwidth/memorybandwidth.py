@@ -14,8 +14,8 @@ class MemoryBandwidth(Module):
     def __init__(self, config={}):
         super(MemoryBandwidth, self).__init__(config)
         self.addMsgHandler(MemBandwMsgHdlr, self.start)
-        self.addThread(self.runPmbw())
-        self.addThread(self.runMemBandwithTest())
+        self.addThread(self.runPmbw)
+        self.addThread(self.runMemBandwithTest)
         self.subProcess = None
         self.appState = MemoryBandwidthResponse.AppStateT.STOPPED
         self.bandwidth = 0
