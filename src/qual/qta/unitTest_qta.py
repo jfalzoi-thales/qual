@@ -5,7 +5,8 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.classFinder.classFinder import ClassFinder
 from common.logger.logger import Logger
 from google.protobuf.message import Message
-from common.gpb.python import CPULoading_pb2
+from common.gpb.python.CPULoading_pb2 import CPULoadingRequest
+from common.gpb.python.RS232_pb2 import RS232Request
 
 
 ## QTA Tester class
@@ -22,7 +23,9 @@ class QTAClient(ThalesZMQClient):
         # Set up a logger
         self.log = Logger(name='Test QTA')
 
-    def sendAndLogResponse(self, request):
+    ## Send a request to the QTA, wait for the response, and write decoded response to log
+    #
+    def sendReqAndLogResp(self, request):
         # Send request and get response
         response = self.sendRequest(request)
         self.log.info("Sent %s" % request.name)
@@ -37,73 +40,84 @@ class QTAClient(ThalesZMQClient):
             responseBody.ParseFromString(response.serializedBody)
             self.log.info("Received %s:\n%s" % (response.name, responseBody))
 
+    ## Series of tests for the CPULoading module
+    #
     def test_CPULoading(self):
-        message = CPULoading_pb2.CPULoadingRequest()
+        message = CPULoadingRequest()
 
-        ## test REPORT before CPU load
         self.log.info("REPORT before CPU load:")
-        message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
-        request = ThalesZMQMessage(message)
-        self.sendAndLogResponse(request)
+        message.requestType = CPULoadingRequest.REPORT
+        self.sendReqAndLogResp(ThalesZMQMessage(message))
         sleep(3)
 
-        ## test RUN message with default level input and report
         self.log.info("RUN with default level and report:")
-        message.requestType = CPULoading_pb2.CPULoadingRequest.RUN
-        request = ThalesZMQMessage(message)
-        self.sendAndLogResponse(request)
+        message.requestType = CPULoadingRequest.RUN
+        self.sendReqAndLogResp(ThalesZMQMessage(message))
         sleep(3)
 
-        ## test REPORT message input after CPU load
         self.log.info("REPORT after CPU load:")
-        message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
-        request = ThalesZMQMessage(message)
-        self.sendAndLogResponse(request)
+        message.requestType = CPULoadingRequest.REPORT
+        self.sendReqAndLogResp(ThalesZMQMessage(message))
         sleep(3)
 
-        ## test additional RUN with custom level
         self.log.info("RUN again with custom level while previous load running:")
-        message.requestType = CPULoading_pb2.CPULoadingRequest.RUN
+        message.requestType = CPULoadingRequest.RUN
         message.level = 50
-        request = ThalesZMQMessage(message)
-        self.sendAndLogResponse(request)
+        self.sendReqAndLogResp(ThalesZMQMessage(message))
         sleep(3)
 
-        ## test REPORT message input after additional RUN and custom level
         self.log.info("REPORT after starting additional load with custom level:")
-        message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
-        request = ThalesZMQMessage(message)
-        self.sendAndLogResponse(request)
+        message.requestType = CPULoadingRequest.REPORT
+        self.sendReqAndLogResp(ThalesZMQMessage(message))
         sleep(3)
 
-        ## test STOP message input and report
         self.log.info("STOP and report:")
-        message.requestType = CPULoading_pb2.CPULoadingRequest.STOP
-        request = ThalesZMQMessage(message)
-        self.sendAndLogResponse(request)
+        message.requestType = CPULoadingRequest.STOP
+        self.sendReqAndLogResp(ThalesZMQMessage(message))
         sleep(3)
 
-        ## test REPORT message input after CPU load stop
         self.log.info("REPORT after stopping load:")
-        message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
-        request = ThalesZMQMessage(message)
-        self.sendAndLogResponse(request)
+        message.requestType = CPULoadingRequest.REPORT
+        self.sendReqAndLogResp(ThalesZMQMessage(message))
         sleep(3)
 
-        ## test STOP with no load
         self.log.info("STOP with no load:")
-        message.requestType = CPULoading_pb2.CPULoadingRequest.STOP
-        request = ThalesZMQMessage(message)
-        self.sendAndLogResponse(request)
+        message.requestType = CPULoadingRequest.STOP
+        self.sendReqAndLogResp(ThalesZMQMessage(message))
         sleep(3)
 
-        ## test REPORT message input after stopping with no load
         self.log.info("REPORT after stopping with no load:")
-        message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
-        request = ThalesZMQMessage(message)
-        self.sendAndLogResponse(request)
+        message.requestType = CPULoadingRequest.REPORT
+        self.sendReqAndLogResp(ThalesZMQMessage(message))
         sleep(3)
 
+    ## Series of tests for the RS232 module
+    #
+    def test_RS232(self):
+        message = RS232Request()
+
+        self.log.info("Get report before starting:")
+        message.requestType = RS232Request.REPORT
+        self.sendReqAndLogResp(ThalesZMQMessage(message))
+
+        self.log.info("Start RS232 traffic:")
+        message.requestType = RS232Request.RUN
+        self.sendReqAndLogResp(ThalesZMQMessage(message))
+
+        self.log.info("Get reports for 10 seconds:")
+        message.requestType = RS232Request.REPORT
+        for loop in range(10):
+            sleep(1)
+            self.sendReqAndLogResp(ThalesZMQMessage(message))
+
+        self.log.info("Stop RS232 traffic:")
+        message.requestType = RS232Request.STOP
+        self.sendReqAndLogResp(ThalesZMQMessage(message))
+        sleep(1)
+
+        self.log.info("Get report after stopping:")
+        message.requestType = RS232Request.REPORT
+        self.sendReqAndLogResp(ThalesZMQMessage(message))
 
 
 if __name__ == "__main__":
@@ -112,3 +126,4 @@ if __name__ == "__main__":
 
     # Run some tests
     client.test_CPULoading()
+    client.test_RS232()
