@@ -43,15 +43,15 @@ class MemoryBandwidth(Module):
     #  @return    response          an MemoryBandwidth Response object
     def hdlrMsg(self, memBandwRequest):
         response = MemoryBandwidthResponse()
-        if memBandwRequest.requestType == MemoryBandwidthRequest.STOP:
+        if memBandwRequest.body.requestType == MemoryBandwidthRequest.STOP:
             response = self.stop()
-        elif memBandwRequest.requestType == MemoryBandwidthRequest.RUN:
+        elif memBandwRequest.body.requestType == MemoryBandwidthRequest.RUN:
             response = self.start(memBandwRequest)
         elif memBandwRequest.requestType == MemoryBandwidthRequest.REPORT:
-            response = self.report()
+            response = self.body.report()
         else:
             print "Unexpected request"
-        return response
+        return ThalesZMQMessage(response)
 
 
     ## Starts runnung PMBW tool and reading the output
@@ -65,7 +65,7 @@ class MemoryBandwidth(Module):
         super(MemoryBandwidth, self).startThread()
         self.appState = MemoryBandwidthResponse.RUNNING
         status = MemoryBandwidthResponse(self.appState, self.lastBandwidthRead)
-        return ThalesZMQMessage(status)
+        return status
 
     ## Stops runnung PMBW tool and reading the output
     #
