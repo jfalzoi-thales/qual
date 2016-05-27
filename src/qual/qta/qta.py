@@ -66,7 +66,7 @@ class QualTestApp(ThalesZMQServer):
             for _module in self.__instances.itervalues():
                 for modObjet in _module:
                     for msgHandler in modObjet.msgHandlers:
-                        #  if the message class name is the same than one of the instances pass the message
+                        #  if the message class name has the same than one of the instances, pass the message
                         if msgHandler[0].__class__.__name__ == msg.__class__.__name__:
                             #  Get the ThalesZMQ response object
                             response = modObjet.msgHandler(msg)
