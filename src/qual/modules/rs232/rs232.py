@@ -63,11 +63,11 @@ class Rs232(Module):
 
     def hdlrMsg(self, rs232Request):
         response = RS232Response()
-        if rs232Request.requestType == RS232Request.STOP:
+        if rs232Request.body.requestType == RS232Request.STOP:
             response = self.stop()
-        elif rs232Request.requestType == RS232Request.RUN:
+        elif rs232Request.body.requestType == RS232Request.RUN:
             response = self.start()
-        elif rs232Request.requestType == RS232Request.REPORT:
+        elif rs232Request.body.requestType == RS232Request.REPORT:
             response = self.report()
         else:
             print "Unexpected request"
