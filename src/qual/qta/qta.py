@@ -2,7 +2,7 @@
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 from common.classFinder.classFinder import ClassFinder
 from common.module.module import Module
-from google.protobuf.reflection import GeneratedProtocolMessageType
+from google.protobuf.message import Message
 
 
 ## Map to the
@@ -21,7 +21,7 @@ class QualTestApp(ThalesZMQServer):
     # @attrib : modInstances The map of {<class>:[<instances>...]}
     # @attrib : module Classes
     # @attrib : gpb Classes
-    def __init__(self, ip='0.0.0.0', port=50001):
+    def __init__(self, ip='*', port=50001):
         self.__instances = {}
 
         #  Address to be bended
@@ -34,17 +34,19 @@ class QualTestApp(ThalesZMQServer):
 
         #  All available classes in GPB modules for QTA,
         self.__gpbClasses = ClassFinder(rootPath='common.gpb.python',
-                                        baseClass=GeneratedProtocolMessageType)
+                                        baseClass=Message)
 
         #  Create instances for each possible configuration
         for className in self.__modClasses.messageMap.keys():
             _class = self.__modClasses.getClassByName(className)
             _config = _class.getConfigurations()
             for config in _config:
+                print "Creating instance of", className  # FIXME: use logger
                 if self.__instances.has_key(className):
-                    self.__instances[className] = self.__instances.append(_class(config))
-                else :
-                    self.__instances[className] = list(_class(config))
+                    self.__instances[className].append(_class(config))
+                else:
+                    self.__instances[className] = [_class(config)]
+
 
     ## Called by base class when a request is received from a client.
     #

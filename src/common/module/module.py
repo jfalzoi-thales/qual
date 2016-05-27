@@ -12,9 +12,9 @@ class Module(object):
 
     ## Class Method for returning configurations
     #
-    # Modules that require/desire parameteres passed to their constructors may
+    # Modules that require/desire parameters passed to their constructors may
     # implement this function in their class.  The return value is a "list of dict",
-    # each dictionary will be passed as the constructure to an instance of the module.
+    # each dictionary will be passed to the constructor for an instance of the module.
     # Therefore if multiple copies of the module are desired, a list of size >1 may
     # be created.
     #
@@ -22,7 +22,7 @@ class Module(object):
     #
     @classmethod
     def getConfigurations(cls):
-        return [{},]
+        return [{"name": "default"},]
 
 
     ## Constructor
