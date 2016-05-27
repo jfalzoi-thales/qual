@@ -6,7 +6,8 @@ from common.gpb.python import CPULoading_pb2
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.logger.logger import Logger
 
-
+## CPULoading Unit Test
+#
 class Test_CPULoading(unittest.TestCase):
     def test_basic(self):
         log = Logger(name='Test CPULoading')
