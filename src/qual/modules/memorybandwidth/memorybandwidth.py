@@ -41,7 +41,7 @@ class MemoryBandwidth(Module):
         return ThalesZMQMessage(status)
 
     def stop(self):
-        self.subProcess.terminate()
+        subprocess.Popen(["sudo", "pkill", "-9", "pmbw"])
         self.appState = MemoryBandwidthResponse.AppStateT.STOPPED
         status = MemoryBandwidthResponse(self.appState, self.lastBandwidthRead)
         return status
