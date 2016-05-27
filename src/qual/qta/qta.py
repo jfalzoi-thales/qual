@@ -1,5 +1,6 @@
 
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
+from common.logger.logger import Logger
 from common.classFinder.classFinder import ClassFinder
 from common.module.module import Module
 from google.protobuf.message import Message
@@ -28,6 +29,9 @@ class QualTestApp(ThalesZMQServer):
         address = str.format('tcp://{}:{}',ip, port)
         super(QualTestApp, self).__init__(address=address)
 
+        # Set up a logger
+        self.log = Logger(name='QTA')
+
         #  All available classes in QUAL modules for QTA,
         self.__modClasses = ClassFinder(rootPath='qual.modules',
                                         baseClass=Module)
@@ -41,11 +45,13 @@ class QualTestApp(ThalesZMQServer):
             _class = self.__modClasses.getClassByName(className)
             _config = _class.getConfigurations()
             for config in _config:
-                print "Creating instance of", className  # FIXME: use logger
+                self.log.info("Created instance of %s" % className)
                 if self.__instances.has_key(className):
                     self.__instances[className].append(_class(config))
                 else:
                     self.__instances[className] = [_class(config)]
+
+        self.log.info("Initialization complete")
 
     ## Called by base class when a request is received from a client.
     #
@@ -55,7 +61,7 @@ class QualTestApp(ThalesZMQServer):
         # Route messages based on type
         requestClass = self.__gpbClasses.getClassByName(request.name)
         if requestClass is None:
-            print "Unknown message class:", request.name  # FIXME: use logger
+            self.log.warning("Unknown message class in request: %s" % request.name)
             self.sendUnsupportedMessageErrorResponse()
         else:
             #  Create the message to pass to the module instances
@@ -71,13 +77,14 @@ class QualTestApp(ThalesZMQServer):
                         #  if the message class matches one of the instances, pass the message
                         if msgHandler[0] == msg.__class__:
                             #  Get the ThalesZMQ response object
+                            self.log.debug("Passing %s message to %s module" % (request.name, modObjet.__class__.__name__))
                             response = modObjet.msgHandler(request)
                             if response is not None:
                                 self.sendResponse(response=response)
                                 msgProcessed = True
             #  If no module instance handled the request, send en error
             if not msgProcessed:
-                print "No handler found for message class:", msg.__class__.__name__  # FIXME: use logger
+                self.log.warning("No handler for received message of class: %s" % request.name)
                 self.sendUnsupportedMessageErrorResponse()
 
 if __name__ == "__main__":
