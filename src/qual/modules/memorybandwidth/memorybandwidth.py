@@ -1,9 +1,9 @@
 import subprocess
 import re
 
-from src.common.module.module import Module
-from src.common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
-from src.common.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from common.module.module import Module
+from common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
+from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 class MemoryBandwidth(Module):
     def __init__(self, config={}):

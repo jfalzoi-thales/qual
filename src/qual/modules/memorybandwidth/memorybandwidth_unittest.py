@@ -1,7 +1,7 @@
 import unittest
 import time
-from src.qual.modules.memorybandwidth.memorybandwidth import MemoryBandwidth
-from src.common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthResponse, MemoryBandwidthRequest
+from qual.modules.memorybandwidth.memorybandwidth import MemoryBandwidth
+from common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthResponse, MemoryBandwidthRequest
 
 class Test_Rs232(unittest.TestCase):
     def rs232test(self):
