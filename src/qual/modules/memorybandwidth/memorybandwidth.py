@@ -12,7 +12,7 @@ class MemoryBandwidth(Module):
         self.addThread(self.runPmbw)
         self.addThread(self.runMemBandwithTest)
         self.subProcess = None
-        self.appState = MemoryBandwidthResponse.AppStateT.STOPPED
+        self.appState = MemoryBandwidthResponse.STOPPED
         self.bandwidth = 0
 
     @classmethod
@@ -24,7 +24,7 @@ class MemoryBandwidth(Module):
         if memBandwRequest.requestType == MemoryBandwidthRequest.STOP:
             response = self.stop()
         elif memBandwRequest.requestType == MemoryBandwidthRequest.RUN:
-            response = self.start()
+            response = self.start(memBandwRequest)
         elif memBandwRequest.requestType == MemoryBandwidthRequest.REPORT:
             response = self.report()
         else:
@@ -36,13 +36,13 @@ class MemoryBandwidth(Module):
         self.P = self.config['numthreads']
         self.s = self.config['mSize']
         super(MemoryBandwidth, self).startThread()
-        self.appState = MemoryBandwidthResponse.AppStateT.RUNNING
+        self.appState = MemoryBandwidthResponse.RUNNING
         status = MemoryBandwidthResponse(self.appState, self.lastBandwidthRead)
         return ThalesZMQMessage(status)
 
     def stop(self):
         subprocess.Popen(["sudo", "pkill", "-9", "pmbw"])
-        self.appState = MemoryBandwidthResponse.AppStateT.STOPPED
+        self.appState = MemoryBandwidthResponse.STOPPED
         status = MemoryBandwidthResponse(self.appState, self.lastBandwidthRead)
         return status
 

@@ -11,7 +11,7 @@ class Rs232(Module):
         self.addMsgHandler(RS232Request, self.hdlrMsg)
         self.addThread(self.rs232Write)
         self.addThread(self.rs232Read)
-        self.appState = RS232Response.AppStateT.STOPPED
+        self.appState = RS232Response.STOPPED
         self.match = 0
         self.mismatch = 0
 
@@ -81,12 +81,12 @@ class Rs232(Module):
         self.stopbits = self.config['stopbits']
         self.bytesize = self.config['bytesize']
         super(Rs232, self).startThread()
-        self.appState = RS232Response.AppStateT.RUNNING
+        self.appState = RS232Response.RUNNING
         status = RS232Response(self.appState, self.match, self.mismatch)
         return status
 
     def stop(self):
-        self.appState =RS232Response.AppStateT.STOPPED
+        self.appState =RS232Response.STOPPED
         status = RS232Response(self.appState, self.match, self.mismatch)
         super(Rs232, self).stopThread()
         return status
