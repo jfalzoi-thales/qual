@@ -47,7 +47,6 @@ class QualTestApp(ThalesZMQServer):
                 else:
                     self.__instances[className] = [_class(config)]
 
-
     ## Called by base class when a request is received from a client.
     #
     # @param request ThalesZMQMessage object containing received request
@@ -56,6 +55,7 @@ class QualTestApp(ThalesZMQServer):
         # Route messages based on type
         requestClass = self.__gpbClasses.getClassByName(request.name)
         if requestClass is None:
+            print "Unknown message class:", request.name  # FIXME: use logger
             self.sendUnsupportedMessageErrorResponse()
         else:
             #  Create the message to pass to the module instances
@@ -68,15 +68,16 @@ class QualTestApp(ThalesZMQServer):
             for _module in self.__instances.itervalues():
                 for modObjet in _module:
                     for msgHandler in modObjet.msgHandlers:
-                        #  if the message class name has the same than one of the instances, pass the message
-                        if msgHandler[0].__class__.__name__ == msg.__class__.__name__:
+                        #  if the message class matches one of the instances, pass the message
+                        if msgHandler[0] == msg.__class__:
                             #  Get the ThalesZMQ response object
-                            response = modObjet.msgHandler(msg)
+                            response = modObjet.msgHandler(request)
                             if response is not None:
                                 self.sendResponse(response=response)
                                 msgProcessed = True
             #  If no module instance handled the request, send en error
             if not msgProcessed:
+                print "No handler found for message class:", msg.__class__.__name__  # FIXME: use logger
                 self.sendUnsupportedMessageErrorResponse()
 
 if __name__ == "__main__":
