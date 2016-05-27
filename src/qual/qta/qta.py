@@ -1,8 +1,8 @@
 
-from src.common.tzmq.ThalesZMQServer import ThalesZMQServer
-from src.common.classFinder.classFinder import ClassFinder
-from src.common.module.module import Module
-from src.common.gpb.python import *
+from common.tzmq.ThalesZMQServer import ThalesZMQServer
+from common.classFinder.classFinder import ClassFinder
+from common.module.module import Module
+from google.protobuf.reflection import GeneratedProtocolMessageType
 
 
 ## Map to the
@@ -30,11 +30,11 @@ class QualTestApp(ThalesZMQServer):
 
         #  All available classes in QUAL modules for QTA,
         self.__modClasses = ClassFinder(rootPath='qual.modules',
-                                        baseClase=Module)
+                                        baseClass=Module)
 
         #  All available classes in GPB modules for QTA,
-        self.__gpbClasses = ClassFinder(rootPath='qual.modules',
-                                        baseClase=GeneratedProtocolMessageType)
+        self.__gpbClasses = ClassFinder(rootPath='common.gpb.python',
+                                        baseClass=GeneratedProtocolMessageType)
 
         #  Create instances for each possible configuration
         for className in self.__modClasses.messageMap.keys():
@@ -53,7 +53,7 @@ class QualTestApp(ThalesZMQServer):
     def handleRequest(self, request):
         # Route messages based on type
         requestClass = self.__gpbClasses.getClassByName(request.name)
-        if requestClass == None:
+        if requestClass is None:
             self.sendUnsupportedMessageErrorResponse()
         else:
             #  Create the message to pass to the module instances
@@ -70,8 +70,9 @@ class QualTestApp(ThalesZMQServer):
                         if msgHandler[0].__class__.__name__ == msg.__class__.__name__:
                             #  Get the ThalesZMQ response object
                             response = modObjet.msgHandler(msg)
-                            self.SendResponse(response=response)
-                            msgProcessed = True
+                            if response is not None:
+                                self.sendResponse(response=response)
+                                msgProcessed = True
             #  If no module instance handled the request, send en error
             if not msgProcessed:
                 self.sendUnsupportedMessageErrorResponse()
