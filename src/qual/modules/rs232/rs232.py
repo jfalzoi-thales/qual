@@ -1,9 +1,9 @@
 import serial
 import time
 
-from src.common.module.module import Module
-from src.common.gpb.python.RS232_pb2 import RS232Request, RS232Response
-from src.common.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from common.module.module import Module
+from common.gpb.python.RS232_pb2 import RS232Request, RS232Response
+from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 class Rs232(Module):
     def __init__(self, config={}):

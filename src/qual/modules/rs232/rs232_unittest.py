@@ -1,7 +1,7 @@
 import unittest
 import time
-from src.qual.modules.rs232.rs232 import Rs232
-from src.common.gpb.python.RS232_pb2 import RS232Request, RS232Response
+from qual.modules.rs232.rs232 import Rs232
+from common.gpb.python.RS232_pb2 import RS232Request, RS232Response
 
 class Test_Rs232(unittest.TestCase):
     def rs232test(self):
