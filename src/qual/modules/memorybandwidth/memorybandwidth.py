@@ -21,11 +21,11 @@ class MemoryBandwidth(Module):
 
     def hdlrMsg(self, memBandwRequest):
         response = MemoryBandwidthResponse()
-        if memBandwRequest.requestType == MemoryBandwidthRequest.STOP:
+        if memBandwRequest.body.requestType == MemoryBandwidthRequest.STOP:
             response = self.stop()
-        elif memBandwRequest.requestType == MemoryBandwidthRequest.RUN:
+        elif memBandwRequest.body.requestType == MemoryBandwidthRequest.RUN:
             response = self.start()
-        elif memBandwRequest.requestType == MemoryBandwidthRequest.REPORT:
+        elif memBandwRequest.body.requestType == MemoryBandwidthRequest.REPORT:
             response = self.report()
         else:
             print "Unexpected request"
