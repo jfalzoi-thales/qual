@@ -4,14 +4,21 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.HDDS_pb2 import GetReq, GetResp, SetReq, HDDSSetResp
 
 
+## HDDS Simulator Tester class
+#
 class HDDSClient(ThalesZMQClient):
+    ## Constructor
+    #
     def __init__(self):
         super(HDDSClient, self).__init__("tcp://localhost:40001")
 
+    ## Sends a "GetReq" message to the simulator and prints the response
+    #
     def sendGetReq(self, key):
         # Create a simple (one key) GetReq
         getReq = GetReq()
         getReq.key.append(key)
+        print "Request:  Get", key
 
         # Send a request and get the response
         response = self.sendRequest(ThalesZMQMessage(getReq))
@@ -22,20 +29,23 @@ class HDDSClient(ThalesZMQClient):
             getResp.ParseFromString(response.serializedBody)
             for valueResp in getResp.values:
                 if valueResp.success:
-                    print "Get", valueResp.keyValue.key, ":", valueResp.keyValue.value
+                    print "Response: Get", valueResp.keyValue.key, ":", valueResp.keyValue.value
                 else:
-                    print "Failed to get", valueResp.keyValue.key
+                    print "Response: Failed to get", valueResp.keyValue.key
         elif response.name == "ErrorMessage":
             print "Got error message from server"
         else:
             print "Error! Unknown response type"
 
+    ## Sends a "SetReq" message to the simulator and prints the response
+    #
     def sendSetReq(self, key, value):
         # Create a simple (one property) SetReq
         setReq = SetReq()
         prop = setReq.values.add()
         prop.key = key
         prop.value = value
+        print "Request:  Set", key, ":", value
 
         # Send a request and get the response
         response = self.sendRequest(ThalesZMQMessage(setReq))
@@ -46,9 +56,9 @@ class HDDSClient(ThalesZMQClient):
             setResp.ParseFromString(response.serializedBody)
             for valueResp in setResp.values:
                 if valueResp.success:
-                    print "Set", valueResp.keyValue.key, ":", valueResp.keyValue.value
+                    print "Response: Set", valueResp.keyValue.key, ":", valueResp.keyValue.value
                 else:
-                    print "Failed to set", valueResp.keyValue.key
+                    print "Response: Failed to set", valueResp.keyValue.key
         elif response.name == "ErrorMessage":
             print "Got error message from server"
         else:

@@ -4,7 +4,7 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.HDDS_pb2 import GetReq, GetResp, SetReq, HDDSSetResp
 
 
-## HDDS Simulator Class
+## HDDS Simulator class
 #
 # Implements a subset of the Host Domain Device Service, as specified
 # in the "MPS Host Domain Device Service ICD".  Specifically, it
