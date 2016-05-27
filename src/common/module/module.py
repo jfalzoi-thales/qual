@@ -81,15 +81,15 @@ class Module(object):
     # @todo : This is a unit test construct, QTA will call handlers directly.
     # @param     msg The message being procced.
     def msgHandler(self, msg):
-        self.log.debug('%s->%s' % (msg.__class__.__name__, msg.__str__()))
+        self.log.debug('%s->%s' % (msg.body.__class__.__name__, msg.body.__str__()))
         for item in self.msgHandlers:
-            if isinstance(msg, item[0]):
+            if isinstance(msg.body, item[0]):
                 retMsg = item[1](msg)
-                self.log.debug('%s<-%s' % (retMsg.__class__.__name__, retMsg.__str__()))
+                self.log.debug('%s<-%s' % (retMsg.body.__class__.__name__, retMsg.body.__str__()))
                 return retMsg
 
         raise ModuleException('Thread %s %s msg handler not defined' %
-                                          (self.name,msg.__class__.name,))
+                                          (self.name,msg.body.__class__.name,))
 
 
 

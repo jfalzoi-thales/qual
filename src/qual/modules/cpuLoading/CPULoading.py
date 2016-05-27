@@ -1,9 +1,8 @@
 from time import sleep
-import sys
 import subprocess
 from common.gpb.python import CPULoading_pb2
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-import module
+from common.module import module
 import CPULoader
 
 ## CPULoading Class Module
@@ -25,10 +24,10 @@ class CPULoading(module.Module):
 
     ## Handles incoming messages
     #
-    #  Receives zmq request and runs requested process
+    #  Receives tzmq request and runs requested process
     #
     #  @param     self
-    #  @param     msg       zmq format message
+    #  @param     msg       tzmq format message
     #  @return    reply     a CPULoadingResponse object
     def handler(self, msg):
         reply = CPULoading_pb2.CPULoadingResponse()
@@ -43,9 +42,9 @@ class CPULoading(module.Module):
         elif msg.body.requestType == CPULoading_pb2.CPULoadingRequest.REPORT:
             reply = self.report()
         else:
-            print("Unexpected Value")
+            self.log.error("Unexpected Request Type %d" %(msg.body.requestType))
 
-        return reply
+        return ThalesZMQMessage(reply)
 
     ## Starts lookbusy process to mimic specific CPU loads
     #
@@ -65,7 +64,7 @@ class CPULoading(module.Module):
             subprocess.Popen(["/usr/local/bin/lookbusy", "-qc", str(int(level))])
             sleep(1)
         else:
-            print("Unexpected Value")
+            self.log.error("Unexpected Value %d" %(level))
 
         return self.report()
 
@@ -117,104 +116,3 @@ class CPULoading(module.Module):
         self.loader.quit = True
         self.active = False
         sleep(2)
-        sys.exit()
-
-## Local Unit Test
-#
-#  Tests module functionality with simulated messages
-#
-if __name__=='__main__':
-    def testprint(tzmq):
-        print("Load Running: {} [0 is NO, 1 is YES]".format(tzmq.state))
-        print("Total Untilization: {}".format(tzmq.totalUtilization))
-        print("Core Untilization: {}\n".format(tzmq.coreUtilization))
-
-
-    test = CPULoading()
-    message = CPULoading_pb2.CPULoadingRequest()
-
-    sleep(3)
-
-    ## test REPORT message input before CPU load
-    message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
-    request = ThalesZMQMessage("CPULoadingRequest", message)
-    out = test.handler(request)
-
-    print("REPORT before CPU load:")
-    testprint(out)
-    sleep(3)
-
-    ## test RUN message with default level input and report
-    message.requestType = CPULoading_pb2.CPULoadingRequest.RUN
-    request = ThalesZMQMessage("CPULoadingRequest", message)
-    out = test.handler(request)
-
-    print("RUN with default level and report:")
-    testprint(out)
-    sleep(3)
-
-    ## test REPORT message input after CPU load
-    message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
-    request = ThalesZMQMessage("CPULoadingRequest", message)
-    out = test.handler(request)
-
-    print("REPORT after CPU load:")
-    testprint(out)
-    sleep(3)
-
-    ## test additional RUN with custom level
-    message.requestType = CPULoading_pb2.CPULoadingRequest.RUN
-    message.level = 50
-    request = ThalesZMQMessage("CPULoadingRequest", message)
-    out = test.handler(request)
-
-    print("RUN again with custom level while previous load running:")
-    testprint(out)
-    sleep(3)
-
-    ## test REPORT message input after additional RUN and custom level
-    message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
-    request = ThalesZMQMessage("CPULoadingRequest", message)
-    out = test.handler(request)
-
-    print("REPORT after starting additional load with custom level:")
-    testprint(out)
-    sleep(3)
-
-    ## test STOP message input and report
-    message.requestType = CPULoading_pb2.CPULoadingRequest.STOP
-    request = ThalesZMQMessage("CPULoadingRequest", message)
-    out = test.handler(request)
-
-    print("STOP and report:")
-    testprint(out)
-    sleep(3)
-
-    ## test REPORT message input after CPU load stop
-    message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
-    request = ThalesZMQMessage("CPULoadingRequest", message)
-    out = test.handler(request)
-
-    print("REPORT after stopping load:")
-    testprint(out)
-    sleep(3)
-
-    ## test STOP with no load
-    message.requestType = CPULoading_pb2.CPULoadingRequest.STOP
-    request = ThalesZMQMessage("CPULoadingRequest", message)
-    out = test.handler(request)
-
-    print("STOP with no load:")
-    testprint(out)
-    sleep(3)
-
-    ## test REPORT message input after stopping with no load
-    message.requestType = CPULoading_pb2.CPULoadingRequest.REPORT
-    request = ThalesZMQMessage("CPULoadingRequest", message)
-    out = test.handler(request)
-
-    print("REPORT after stopping with no load:")
-    testprint(out)
-    sleep(3)
-
-    test.terminate()
