@@ -1,19 +1,14 @@
 import subprocess
 import re
 
-from src.common.module.module import Module
-from src.common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
-
-class MemBandwMsgHdlr(object):
-    def __init__(self, memBandwRequest):
-        self.msg = memBandwRequest
-        super(MemBandwMsgHdlr, self).__init__()
-        pass
+from common.module.module import Module
+from common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
+from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 class MemoryBandwidth(Module):
     def __init__(self, config={}):
         super(MemoryBandwidth, self).__init__(config)
-        self.addMsgHandler(MemBandwMsgHdlr, self.start)
+        self.addMsgHandler(MemoryBandwidthRequest, self.hdlrMsg)
         self.addThread(self.runPmbw)
         self.addThread(self.runMemBandwithTest)
         self.subProcess = None
@@ -43,10 +38,10 @@ class MemoryBandwidth(Module):
         super(MemoryBandwidth, self).startThread()
         self.appState = MemoryBandwidthResponse.AppStateT.RUNNING
         status = MemoryBandwidthResponse(self.appState, self.lastBandwidthRead)
-        return status
+        return ThalesZMQMessage(status)
 
     def stop(self):
-        self.subProcess.terminate()
+        subprocess.Popen(["sudo", "pkill", "-9", "pmbw"])
         self.appState = MemoryBandwidthResponse.AppStateT.STOPPED
         status = MemoryBandwidthResponse(self.appState, self.lastBandwidthRead)
         return status
