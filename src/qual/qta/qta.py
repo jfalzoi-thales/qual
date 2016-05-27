@@ -6,8 +6,6 @@ from common.module.module import Module
 from google.protobuf.message import Message
 
 
-## Map to the
-
 ## Qual Test Application Class
 #
 # This class:
