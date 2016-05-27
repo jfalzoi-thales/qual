@@ -58,7 +58,7 @@ class CPULoading(module.Module):
             self.active = True
 
             ## kills any stray lookbusy instances and waits for pkill to complete
-            subprocess.Popen(["sudo", "pkill", "-9", "lookbusy"]).communicate()
+            subprocess.Popen(["pkill", "-9", "lookbusy"]).communicate()
 
             ## starts lookbusy instance
             subprocess.Popen(["/usr/local/bin/lookbusy", "-qc", str(int(level))])
@@ -77,7 +77,7 @@ class CPULoading(module.Module):
     def stop(self):
         self.active = False
         ## kills lookbusy instances and waits for pkill to complete
-        subprocess.Popen(["sudo", "pkill", "-9", "lookbusy"]).communicate()
+        subprocess.Popen(["pkill", "-9", "lookbusy"]).communicate()
 
         return self.report()
 
@@ -112,7 +112,7 @@ class CPULoading(module.Module):
     #  @param     self
     #  @return    loadResponse     a CPULoadingResponse object
     def terminate(self):
-        subprocess.Popen(["sudo", "pkill", "-9", "lookbusy"]).communicate()
+        subprocess.Popen(["pkill", "-9", "lookbusy"]).communicate()
         self.loader.quit = True
         self.active = False
         sleep(2)
