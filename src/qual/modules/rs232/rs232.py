@@ -38,46 +38,27 @@ class Rs232(Module):
     ## Opens and writes to the serial port
     #
     def rs232Write(self):
-        ser = serial.Serial(
-            port=self.portWriter,
-            baudrate=self.baudrate,
-            parity=self.parity,
-            stopbits=self.stopbits,
-            bytesize=self.bytesize
-        )
-        character = chr(0)
-        while True:
-            ser.write(character)
-            time.sleep(0.5)
-            if ord(character) < 255:
-                character = chr(ord(character) + 1)
-            else:
-                character = chr(0)
+        time.sleep(0.5)
+        self.serWriter.write(chr(self.characters[self.idxToWrite]))
+        if self.idxToWrite < 255:
+            self.idxToWrite += 1
+        else:
+            self.idxToWrite = 0
 
     ## Opens and reads from the serial port
     #
     def rs232Read(self):
-        ser = serial.Serial(
-            port=self.portReader,
-            baudrate=self.baudrate,
-            parity=self.parity,
-            stopbits=self.stopbits,
-            bytesize=self.bytesize
-        )
-        character = chr(0)
-        count = 0
-        while True:
-            read = ser.read(1)
-            if ord(read) != ord(character):
-                dif = ord(read) - count
-                character = read
-                self.mismatch += abs(dif)
-            else:
-                self.match += 1
-            if ord(character) < 255:
-                character = chr(ord(character) + 1)
-            else:
-                character = chr(0)
+        read = self.serReader.read(1)
+        if ord(read) != self.characters[self.idxToRead]:
+            dif = ord(read) - self.characters[self.idxToRead]
+            self.idxToRead = ord(read-1)
+            self.mismatch += abs(dif)
+        else:
+            self.match += 1
+        if self.idxToRead < 255:
+            self.idxToRead += 1
+        else:
+            self.idxToRead = 0
 
     ## Handles incoming messages
     #
@@ -103,12 +84,19 @@ class Rs232(Module):
     #  @param     self
     #  @return    self.report() a RS-232 Response object
     def start(self):
-        self.portWriter = self.config['portwriter']
-        self.portReader = self.config['portreader']
-        self.baudrate = self.config['baudrate']
-        self.parity= self.config['parity']
-        self.stopbits = self.config['stopbits']
-        self.bytesize = self.config['bytesize']
+        self.serWriter = serial.Serial(port=self.config['portwriter'],
+                                      baudrate=self.config['baudrate'],
+                                      parity=self.config['parity'],
+                                      stopbits=self.config['stopbits'],
+                                      bytesize=self.config['bytesize'])
+        self.serReader = serial.Serial(port=self.config['portreader'],
+                                      baudrate=self.config['baudrate'],
+                                      parity=self.config['parity'],
+                                      stopbits=self.config['stopbits'],
+                                      bytesize=self.config['bytesize'])
+        self.characters = range(0,256)
+        self.idxToRead = 0
+        self.idxToWrite = 0
         super(Rs232, self).startThread()
         self.appState = RS232Response.RUNNING
         status = RS232Response()
@@ -122,6 +110,7 @@ class Rs232(Module):
     #  @param     self
     #  @return    self.report() a RS-232 Response object
     def stop(self):
+        self._running = False
         self.appState =RS232Response.STOPPED
         status = RS232Response()
         status.state = self.appState
