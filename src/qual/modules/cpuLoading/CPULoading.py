@@ -91,7 +91,7 @@ class CPULoading(module.Module):
         results = self.loader.getcpuload()
         loadResponse = CPULoading_pb2.CPULoadingResponse()
 
-        if self.active == True:
+        if self.active:
             loadResponse.state = CPULoading_pb2.CPULoadingResponse.RUNNING
         else:
             loadResponse.state = CPULoading_pb2.CPULoadingResponse.STOPPED
