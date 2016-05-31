@@ -77,7 +77,9 @@ class MemoryBandwidth(Module):
     #  @param     self
     #  @return    self.report() a MemoryBandwidth Response object
     def stop(self):
+        self._running = False
         subprocess.Popen(["sudo", "pkill", "-9", "pmbw"])
+        self.stopThread()
         self.appState = MemoryBandwidthResponse.STOPPED
         status = MemoryBandwidthResponse()
         status.state = self.appState
@@ -98,22 +100,17 @@ class MemoryBandwidth(Module):
     ## Runs the PMBW tool
     #  @return    None
     def runPmbw(self):
-        while True:
-            self.subProcess = subprocess.Popen(["stdbuf", "-o", "L","/usr/local/bin/pmbw", self.M, self.s, self.P],
-                                               stdout=subprocess.PIPE,
-                                               stderr=subprocess.PIPE,
-                                               bufsize=1)
-            self.subProcess.wait()
-            self.log.info("Restarting Parallel Memory Bandwidth Tool.....")
+        self.subProcess = subprocess.Popen(["stdbuf", "-o", "L","/usr/local/bin/pmbw", self.M, self.s, self.P],
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE,
+                                           bufsize=1)
+        self.subProcess.wait()
 
     ## Reads the PMBW tool
     #  @return    None
     def runMemBandwithTest(self):
-        while True:
-            if isinstance(self.subProcess, subprocess.Popen):
-                line = self.subProcess.stdout.readline()
-                if not line:
-                    continue
-                else:
-                    num = re.search('(?<=bandwidth=).+\t', line)
-                    self.bandwidth = float(num.group(0))
+        if isinstance(self.subProcess, subprocess.Popen):
+            line = self.subProcess.stdout.readline()
+            if line:
+                num = re.search('(?<=bandwidth=).+\t', line)
+                self.bandwidth = float(num.group(0))
