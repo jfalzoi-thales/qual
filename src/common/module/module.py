@@ -30,7 +30,7 @@ class Module(object):
     #  @param     config Configuration data.  Stored here, but opague to this class
     def __init__(self, config):
         ## Used by threading methods to indicate the threads should keep running
-        self.__running = False
+        self._running = False
         ## Stored configuration data, passed in by constructor
         self.config = config
         ## Name of module.  Defaults to class name, may be overwritten by self.setName()
@@ -103,7 +103,7 @@ class Module(object):
     # @param     runMethod  The thread main function
     def _execute(self, runMethod):
         try:
-            while self.__running:
+            while self._running:
                 runMethod()
 
         except Exception as e:
@@ -124,10 +124,10 @@ class Module(object):
     # @param self
     def startThread(self):
 
-        if self.__running:
+        if self._running:
             raise ModuleException('Module %s is already running' % (self.name,))
 
-        self.__running = True
+        self._running = True
 
         for threadArg in self.threadArgs:
             thread = Thread(target=self._execute, name=self.name, kwargs=threadArg)
@@ -142,6 +142,7 @@ class Module(object):
     ## stops all Threads registered with self.addThread()
     # @param self
     def stopThread(self):
+        self._running = False
         timeout = datetime.datetime.now() + datetime.timedelta(seconds=5)
         for thread in self.threads:
             while (thread.isAlive() == True):
@@ -150,7 +151,7 @@ class Module(object):
                     raise ModuleException('Thread %s did not terminate' % (self.name,))
 
         self.threads = []
-        self.__running = False
+
 
         return
 
