@@ -47,11 +47,11 @@ class MemoryBandwidth(Module):
             response = self.stop()
         elif memBandwRequest.body.requestType == MemoryBandwidthRequest.RUN:
             response = self.start(memBandwRequest)
-        elif memBandwRequest.requestType == MemoryBandwidthRequest.REPORT:
-            response = self.body.report()
+        elif memBandwRequest.body.requestType == MemoryBandwidthRequest.REPORT:
+            response = self.report()
         else:
             print "Unexpected request"
-        return ThalesZMQMessage(response)
+        return response
 
 
     ## Starts runnung PMBW tool and reading the output
@@ -64,8 +64,10 @@ class MemoryBandwidth(Module):
         self.s = self.config['mSize']
         super(MemoryBandwidth, self).startThread()
         self.appState = MemoryBandwidthResponse.RUNNING
-        status = MemoryBandwidthResponse(self.appState, self.lastBandwidthRead)
-        return status
+        status = MemoryBandwidthResponse()
+        status.state = self.appState
+        status.memoryBandWidth = self.bandwidth
+        return ThalesZMQMessage(status)
 
     ## Stops runnung PMBW tool and reading the output
     #
@@ -74,7 +76,9 @@ class MemoryBandwidth(Module):
     def stop(self):
         subprocess.Popen(["sudo", "pkill", "-9", "pmbw"])
         self.appState = MemoryBandwidthResponse.STOPPED
-        status = MemoryBandwidthResponse(self.appState, self.lastBandwidthRead)
+        status = MemoryBandwidthResponse()
+        status.state = self.appState
+        status.memoryBandWidth = self.bandwidth
         return status
 
 
@@ -83,16 +87,18 @@ class MemoryBandwidth(Module):
     #  @param     self
     #  @return    self.report() a MemoryBandwidth Response object
     def report(self):
-        status = MemoryBandwidthResponse(self.appState, self.lastBandwidthRead)
+        status = MemoryBandwidthResponse()
+        status.state = self.appState
+        status.memoryBandWidth = self.bandwidth
         return status
 
     ## Runs the PMBW tool
     #  @return    None
     def runPmbw(self):
         while True:
-            self.subProcess = subprocess.Popen(["./pmbw", self.M, self.s, self.P],
+            self.subProcess = subprocess.Popen(["stdbuf", "-o", "L","/usr/local/bin/pmbw", self.M, self.s, self.P],
                                                stdout=subprocess.PIPE,
-                                               stderr=subprocess.PIPE)
+                                               bufsize=1)
 
     ## Reads the PMBW tool
     #  @return    None
@@ -104,4 +110,4 @@ class MemoryBandwidth(Module):
                     continue
                 else:
                     num = re.search('(?<=bandwidth=).+\t', line)
-                    self.lastBandwidthRead = float(num.group(0))
+                    self.bandwidth = float(num.group(0))
