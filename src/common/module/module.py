@@ -12,9 +12,9 @@ class Module(object):
 
     ## Class Method for returning configurations
     #
-    # Modules that require/desire parameteres passed to their constructors may
+    # Modules that require/desire parameters passed to their constructors may
     # implement this function in their class.  The return value is a "list of dict",
-    # each dictionary will be passed as the constructure to an instance of the module.
+    # each dictionary will be passed to the constructor for an instance of the module.
     # Therefore if multiple copies of the module are desired, a list of size >1 may
     # be created.
     #
@@ -22,7 +22,7 @@ class Module(object):
     #
     @classmethod
     def getConfigurations(cls):
-        return [{},]
+        return [{"name": "default"},]
 
 
     ## Constructor
@@ -83,11 +83,11 @@ class Module(object):
     # @todo : This is a unit test construct, QTA will call handlers directly.
     # @param     msg The message being procced.
     def msgHandler(self, msg):
-        self.log.debug('%s->%s' % (msg.body.__class__.__name__, msg.body.__str__()))
+        self.log.debug('Received %s\n%s' % (msg.body.__class__.__name__, msg.body.__str__()))
         for item in self.msgHandlers:
             if isinstance(msg.body, item[0]):
                 retMsg = item[1](msg)
-                self.log.debug('%s<-%s' % (retMsg.body.__class__.__name__, retMsg.body.__str__()))
+                self.log.debug('Sent %s\n%s' % (retMsg.body.__class__.__name__, retMsg.body.__str__()))
                 return retMsg
 
         raise ModuleException('Thread %s %s msg handler not defined' %

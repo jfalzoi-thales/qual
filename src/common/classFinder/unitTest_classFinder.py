@@ -1,7 +1,7 @@
 import unittest
 
 from common.classFinder.classFinder import ClassFinder
-from google.protobuf.reflection import GeneratedProtocolMessageType
+from google.protobuf.message import Message
 
 
 class TestStringMethods(unittest.TestCase):
@@ -16,9 +16,10 @@ class TestStringMethods(unittest.TestCase):
 
         )
 
+        classFinder = ClassFinder(rootPath='common.gpb.python',
+                                  baseClass=Message)
+
         for className in classNames :
-            classFinder= ClassFinder(rootPath='common.gpb',
-                                     baseClass=GeneratedProtocolMessageType)
             searchClass = classFinder.getClassByName(className)
             myMessage = searchClass()
 

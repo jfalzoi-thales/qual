@@ -37,7 +37,7 @@ class ClassFinder(object):
 
                     for name, obj in inspect.getmembers(sys.modules[moduleImport]):
                         if inspect.isclass(obj):
-                            if isinstance(obj, baseClass):
+                            if baseClass in obj.__bases__:
                                 self.messageMap[name] = obj
 
     ##Returns a class by name, or None if unknown
