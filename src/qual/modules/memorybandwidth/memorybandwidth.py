@@ -2,6 +2,7 @@ import subprocess
 import re
 
 from common.module.module import Module
+from common.logger.logger import Logger
 from common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
@@ -22,6 +23,8 @@ class MemoryBandwidth(Module):
         self.addThread(self.runMemBandwithTest)
         ## field to save the current Popen object
         self.subProcess = None
+        ## Logger
+        self.log = Logger("Test Memory Bandwith")
         ## field to save the application state
         self.appState = MemoryBandwidthResponse.STOPPED
         ## field to save the last bandwidth read
@@ -32,7 +35,7 @@ class MemoryBandwidth(Module):
     #
     #  @return      test configurations
     def getConfigurations(cls):
-        return [{'maxallocmem': '-M 109951162','numthreads': '-P 1', 'mSize': '-s 109951162'}]
+        return [{'maxallocmem': '-M 10000000','numthreads': '-P 1', 'mSize': '-s 10000000'}]
 
     ## Handles incoming messages
     #
@@ -51,7 +54,7 @@ class MemoryBandwidth(Module):
             response = self.report()
         else:
             print "Unexpected request"
-        return response
+        return ThalesZMQMessage(response)
 
 
     ## Starts runnung PMBW tool and reading the output
@@ -67,7 +70,7 @@ class MemoryBandwidth(Module):
         status = MemoryBandwidthResponse()
         status.state = self.appState
         status.memoryBandWidth = self.bandwidth
-        return ThalesZMQMessage(status)
+        return status
 
     ## Stops runnung PMBW tool and reading the output
     #
@@ -98,7 +101,10 @@ class MemoryBandwidth(Module):
         while True:
             self.subProcess = subprocess.Popen(["stdbuf", "-o", "L","/usr/local/bin/pmbw", self.M, self.s, self.P],
                                                stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE,
                                                bufsize=1)
+            self.subProcess.wait()
+            self.log.info("Restarting Parallel Memory Bandwidth Tool.....")
 
     ## Reads the PMBW tool
     #  @return    None
