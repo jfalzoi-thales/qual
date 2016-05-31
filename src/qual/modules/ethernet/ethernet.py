@@ -48,10 +48,12 @@ class Ethernet(module.Module):
         return ThalesZMQMessage(reply)
 
     def iperfTracker(self):
+        ## 'stdbuf -o L' modifies iperf3 to allow easily accessed line buffered output
         self.iperf = subprocess.Popen(["stdbuf", "-o", "L", "/usr/local/bin/iperf3", "-c", self.server, "-f", "m", "-t", "86400"], stdout=subprocess.PIPE, bufsize = 1)
         sleep(1)
 
         while self.active:
+            ## if iperf3 is already running, skip this.  This ensures that iperf3 restarts after it's 86400 second runtime
             if self.iperf.poll() is not None:
                 self.iperf = subprocess.Popen(["stdbuf", "-o", "L", "/usr/local/bin/iperf3", "-c", self.server, "-f", "m", "-t", "86400"], stdout=subprocess.PIPE, bufsize = 1)
                 sleep(1)
@@ -59,8 +61,9 @@ class Ethernet(module.Module):
             line = self.iperf.stdout.readline()
             stuff = line.split()
 
-            ## if the 10th field of data is a number and the number of fields is 11, then this is the information we want
-            if len(stuff) == 11 and stuff[9].replace(".", "").isdigit():
+            ## if the 8th field of data is "Mbits/sec" and the number of fields is 11(signifying non-total results), then this is the information we want
+            #  EXAMPLE OUTPUT: [  5]   0.00-1.00   sec  23.0 MBytes   193 Mbits/sec    0    211 KBytes
+            if len(stuff) == 11 and stuff[7] == "Mbits/sec":
                 self.ethInfo = "%s %s %s Retries" % (stuff[6], stuff[7], stuff[8])
 
     ## Starts iperf3 over a specific channel in order to simulate network traffic
