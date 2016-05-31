@@ -10,7 +10,7 @@ import CPULoader
 class CPULoading(module.Module):
     ## Constructor
     #  @param     self
-    def __init__(self, config):
+    def __init__(self, config = {}):
         ## initializes parent class
         super(CPULoading, self).__init__({})
         ## indicates whether or not a CPU load has been set
