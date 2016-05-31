@@ -135,7 +135,7 @@ class Module(object):
         self.__running = False
         timeout = datetime.datetime.now() + datetime.timedelta(seconds=5)
         for thread in self.threads:
-            while (thread.isAlive() == False):
+            while (thread.isAlive() == True):
                 sleep(0.1)
                 if datetime.datetime.now() > timeout:
                     raise ModuleException('Thread %s did not terminate' % (self.name,))
