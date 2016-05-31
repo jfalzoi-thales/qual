@@ -40,6 +40,12 @@ class QTARequestManager(ThalesZMQClient):
             else:
                 return
 
+            # Temporary for Sprint 1 demo: If this is an EthernetRequest, populate required fields
+            if msgClassName == "EthernetRequest":
+                msg.local = "ENET_1"
+                if msg.requestType == msgClass.RUN:
+                    msg.remote = "10.10.41.115"
+
             print "---------------------------------------------------------\n"
             print "Sending ", msg.__class__.__name__
             response = self.sendRequest(ThalesZMQMessage(msg))
