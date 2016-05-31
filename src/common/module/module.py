@@ -39,6 +39,8 @@ class Module(object):
         self.msgHandlers = []
         ## List of managed threads, populated by self.addThread()
         self.threads = []
+        ## Save the arguments for threads when they are configured, to use in their runtime constructions
+        self.threadArgs = []
 
         self.log = Logger(self.name)
 
@@ -115,14 +117,22 @@ class Module(object):
         threadArgs = {
             'runMethod': runMethod,
         }
-        thread = Thread(target=self._execute, name=self.name, kwargs=threadArgs)
-        self.threads.append(thread)
+        self.threadArgs.append(threadArgs)
         return
 
     ## Starts all Threads registered with self.addThread()
     # @param self
     def startThread(self):
+
+        if self.__running:
+            raise ModuleException('Module %s is already running' % (self.name,))
+
         self.__running = True
+
+        for threadArg in self.threadArgs:
+            thread = Thread(target=self._execute, name=self.name, kwargs=threadArg)
+            self.threads.append(thread)
+
         for thread in self.threads:
             if thread.isAlive():
                 raise ModuleException('Thread %s already active' % (self.name,))
@@ -132,13 +142,16 @@ class Module(object):
     ## stops all Threads registered with self.addThread()
     # @param self
     def stopThread(self):
-        self.__running = False
         timeout = datetime.datetime.now() + datetime.timedelta(seconds=5)
         for thread in self.threads:
             while (thread.isAlive() == False):
                 sleep(0.1)
                 if datetime.datetime.now() > timeout:
                     raise ModuleException('Thread %s did not terminate' % (self.name,))
+
+        self.threads = []
+        self.__running = False
+
         return
 
 
