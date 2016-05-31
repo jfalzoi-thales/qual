@@ -1,6 +1,9 @@
+# Generating GPB Files {#GPBBufferReadme}
+
 How to use protoc to compile .proto files into Python using Protocol Compiler 2.6.1:
 
-1. Download and unzip Protocol Compiler 2.6.1 binary for Windows: https://github.com/google/protobuf/releases/download/v2.6.1/protoc-2.6.1-win32.zip
+1. Download and unzip Protocol Compiler 2.6.1 binary for Windows: 
+   https://github.com/google/protobuf/releases/download/v2.6.1/protoc-2.6.1-win32.zip
 2. Navigate to the unzipped folder and copy protoc.exe
 3. Paste protoc.exe into the folder that contains the .proto files you wish to compile
 4. Open Command Prompt
