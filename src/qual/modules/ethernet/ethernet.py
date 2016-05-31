@@ -9,7 +9,7 @@ from common.module import module
 class Ethernet(module.Module):
     ## Constructor
     #  @param     self
-    def __init__(self, config):
+    def __init__(self, config = {}):
         ## initializes parent class
         super(Ethernet, self).__init__({})
         ## indicates whether or not iperf3 is running

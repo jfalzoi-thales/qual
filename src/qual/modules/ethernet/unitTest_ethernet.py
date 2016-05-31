@@ -12,7 +12,7 @@ class Test_Ethernet(unittest.TestCase):
     def test_basic(self):
         log = Logger(name='Test Ethernet')
         log.info('Running functionality test for Ethernet module:')
-        self.module = ethernet.Ethernet({})
+        self.module = ethernet.Ethernet()
 
         message = Ethernet_pb2.EthernetRequest()
         sleep(3)
