@@ -111,7 +111,10 @@ class Rs232(Module):
         self.bytesize = self.config['bytesize']
         super(Rs232, self).startThread()
         self.appState = RS232Response.RUNNING
-        status = RS232Response(self.appState, self.match, self.mismatch)
+        status = RS232Response()
+        status.state = self.appState
+        status.matches = self.match
+        status.mismatches = self.mismatch
         return status
 
     ## Stops sending and reading data through RS-232
@@ -120,7 +123,10 @@ class Rs232(Module):
     #  @return    self.report() a RS-232 Response object
     def stop(self):
         self.appState =RS232Response.STOPPED
-        status = RS232Response(self.appState, self.match, self.mismatch)
+        status = RS232Response()
+        status.state = self.appState
+        status.matches = self.match
+        status.mismatches = self.mismatch
         super(Rs232, self).stopThread()
         return status
 
@@ -130,5 +136,8 @@ class Rs232(Module):
     #  @param     self
     #  @return    self.report() a RS-232 Response object
     def report(self):
-        status = RS232Response(self.appState, self.match, self.mismatch)
+        status = RS232Response()
+        status.state = self.appState
+        status.matches = self.match
+        status.mismatches = self.mismatch
         return status
