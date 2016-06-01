@@ -1,4 +1,5 @@
 
+import sys
 import os
 import time
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
@@ -22,7 +23,7 @@ from common.gpb.python.ARINC717Driver_pb2 import Request, Response
 # per the "MAP Network Configuration" document.
 #
 class ARINC717DriverSimulator(ThalesZMQServer):
-    def __init__(self):
+    def __init__(self, wordRate=64):
         # Make the directory for the IPC link, otherwise ZMQ won't init
         ipcdir = "/tmp/arinc/driver/717"
         if not os.path.exists(ipcdir):
@@ -34,7 +35,11 @@ class ARINC717DriverSimulator(ThalesZMQServer):
         # Keep an "out of sync" flag so we can return different values
         self.outOfSync = False
 
+        # Save the word rate
+        self.wordRate = wordRate
+
         print "Started ARINC 717 Driver simulator on", self.address
+        print "Word rate is", wordRate, "words/sec"
 
     ## Called by base class when a request is received from a client.
     #
@@ -55,11 +60,11 @@ class ARINC717DriverSimulator(ThalesZMQServer):
                 responseMsg.errorCode = Response.NONE
                 responseMsg.frame.timestamp = int(time.time() * 1000)
 
-                # TODO: generate better data
-                responseMsg.frame.data = b"11abcdef12abcdef13abcdef14abcdef" \
-                                         b"21abcdef22abcdef23abcdef24abcdef" \
-                                         b"31abcdef32abcdef33abcdef34abcdef" \
-                                         b"41abcdef42abcdef43abcdef44abcdef"
+                # Generate frame data
+                responseMsg.frame.data = self.genSubFrame(1) + \
+                                         self.genSubFrame(2) + \
+                                         self.genSubFrame(3) + \
+                                         self.genSubFrame(4)
 
                 # Toggle outOfSync flag each request
                 responseMsg.frame.out_of_sync = self.outOfSync
@@ -88,8 +93,36 @@ class ARINC717DriverSimulator(ThalesZMQServer):
             # Send "Unsupported Message" error back to client
             self.sendUnsupportedMessageErrorResponse()
 
+    def genSubFrame(self, subFrameNum):
+        # Frame sync codes are defined by ARINC 717 standard
+        # Yes, it defines them in octal.
+        syncCodes = (0o1107, 0o2507, 0o5107, 0o6670)
+        fakeData = "@ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890#abcdefghijklmnopqrstuvwxyz"
+
+        # Build a string, starting with the sync code.
+        # ARINC 717 communicates in 12-bit words, and we put each word in two sequential bytes.
+        bytes = bytearray(2 * self.wordRate)
+        bytes[0] = syncCodes[subFrameNum - 1] >> 8
+        bytes[1] = syncCodes[subFrameNum - 1] & 0xFF
+
+        for i in range(1, self.wordRate):
+            bytes[i * 2]     = subFrameNum      # Use the sub-frame number as top 4 bits
+            bytes[i * 2 + 1] = fakeData[i % 64] # Printable characters for lower 8 bits
+
+        # Return as a string
+        return str(bytes)
 
 if __name__ == "__main__":
-    simulator = ARINC717DriverSimulator()
+    # Command-line argument can be used to specify number of words per sub-frame
+    rate = 64
+    if len(sys.argv) > 1:
+        arg = int(sys.argv[1])
+        # Make sure it's a valid rate
+        if arg in (32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
+            rate = arg
+        else:
+            print "Invalid rate specified; using default", rate
+
+    simulator = ARINC717DriverSimulator(rate)
     simulator.run()
     print "Exit ARINC 717 Driver simulator"
