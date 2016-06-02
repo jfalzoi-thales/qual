@@ -8,8 +8,8 @@ from common.module import module
 #
 class Ethernet(module.Module):
     ## Constructor
-    #  @param   self
-    #  @param   config  unused in Ethernet
+    #  @param     self
+    #  @param     config  Configuration for this module instance
     def __init__(self, config = {}):
         ## initializes parent class
         super(Ethernet, self).__init__({})

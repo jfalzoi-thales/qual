@@ -10,7 +10,8 @@ class ClassFinder(object):
     #@param rootPath : The root path to start searching for instances of baseClass
     #@param baseClass : The baseClass whose derivations we are collecting
     def __init__(self, rootPath, baseClass):
-        self.messageMap = {}
+        ##Map of classes to class names
+        self.classmap = {}
         self.searchInPackage(rootPath, baseClass)
 
     ## Recursively search a tree for instances of a class
@@ -38,12 +39,12 @@ class ClassFinder(object):
                     for name, obj in inspect.getmembers(sys.modules[moduleImport]):
                         if inspect.isclass(obj):
                             if baseClass in obj.__bases__:
-                                self.messageMap[name] = obj
+                                self.classmap[name] = obj
 
     ##Returns a class by name, or None if unknown
     def getClassByName(self, name):
-        if name in self.messageMap.keys() :
-            return self.messageMap[name]
+        if name in self.classmap.keys() :
+            return self.classmap[name]
         else:
             return None
 

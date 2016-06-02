@@ -1,0 +1,8 @@
+iperf_locale.lo: iperf_locale.c /usr/include/stdc-predef.h iperf_config.h \
+ version.h
+
+/usr/include/stdc-predef.h:
+
+iperf_config.h:
+
+version.h:

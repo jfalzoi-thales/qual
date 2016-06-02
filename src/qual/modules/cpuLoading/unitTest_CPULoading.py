@@ -6,6 +6,8 @@ from common.gpb.python import CPULoading_pb2
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.logger.logger import Logger
 
+# @cond doxygen_unittest
+
 ## CPULoading Unit Test
 #
 class Test_CPULoading(unittest.TestCase):
@@ -87,3 +89,5 @@ class Test_CPULoading(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+## @endcond

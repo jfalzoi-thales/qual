@@ -42,7 +42,7 @@ class MemoryBandwidth(Module):
     #  Receives tzmq request and runs requested process
     #
     #  @param     self
-    #  @param     MemoryBandwidth request       tzmq format message
+    #  @param     memBandwRequest  tzmq format message
     #  @return    response          an MemoryBandwidth Response object
     def hdlrMsg(self, memBandwRequest):
         response = MemoryBandwidthResponse()
@@ -60,6 +60,7 @@ class MemoryBandwidth(Module):
     ## Starts runnung PMBW tool and reading the output
     #
     #  @param     self
+    #  @param     msg  tzmq format message
     #  @return    self.report() a MemoryBandwidth Response object
     def start(self, msg):
         self.M = self.config['maxallocmem']
@@ -84,6 +85,7 @@ class MemoryBandwidth(Module):
         status = MemoryBandwidthResponse()
         status.state = self.appState
         status.memoryBandWidth = self.bandwidth
+        self.bandwidth = 0
         return status
 
 
