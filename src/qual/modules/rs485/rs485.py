@@ -76,6 +76,8 @@ class Rs485(Module):
         if rs485Request.body.requestType == RS485Request.STOP:
             response = self.stop()
         elif rs485Request.body.requestType == RS485Request.RUN:
+            if self.state == RS485Response.RUNNING:
+                self.stop()
             response = self.start()
         elif rs485Request.body.requestType == RS485Request.REPORT:
             response = self.report()
