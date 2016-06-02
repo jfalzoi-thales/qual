@@ -32,12 +32,16 @@ class Ethernet(module.Module):
         self.server = msg.body.remote
         # TODO: Need to handle real channels instead of dummies
         self.chan = msg.body.local
+        # TODO: Find out format for response output
         reply = Ethernet_pb2.EthernetResponse()
+
+        if not self._running:
+            self.ethInfo = "0 Mbits/sec 0 Retries"
 
         if msg.body.requestType == Ethernet_pb2.EthernetRequest.RUN:
             reply = self.start()
         elif msg.body.requestType == Ethernet_pb2.EthernetRequest.STOP:
-            reply = self.stop( )
+            reply = self.stop()
         elif msg.body.requestType == Ethernet_pb2.EthernetRequest.REPORT:
             reply = self.report()
         else:
@@ -45,23 +49,25 @@ class Ethernet(module.Module):
 
         return ThalesZMQMessage(reply)
 
-    def iperfTracker(self):
+    def startiperf(self):
         ## 'stdbuf -o L' modifies iperf3 to allow easily accessed line buffered output
-        self.iperf = subprocess.Popen(["stdbuf", "-o", "L", "/usr/local/bin/iperf3", "-c", self.server, "-f", "m", "-t", "86400"], stdout = subprocess.PIPE, bufsize = 1)
+        self.iperf = subprocess.Popen(
+            ["stdbuf", "-o", "L", "/usr/local/bin/iperf3", "-c", self.server, "-f", "m", "-t", "86400"],
+            stdout=subprocess.PIPE, bufsize=1)
         sleep(1)
 
-        while self._running:
-            ## if iperf3 is already running, skip this.  This ensures that iperf3 restarts after it's 86400 second runtime
-            if self.iperf.poll() is not None:
-                self.iperf = subprocess.Popen(["stdbuf", "-o", "L", "/usr/local/bin/iperf3", "-c", self.server, "-f", "m", "-t", "86400"], stdout = subprocess.PIPE, bufsize = 1)
-                sleep(1)
-            line = self.iperf.stdout.readline()
-            stuff = line.split()
+    def iperfTracker(self):
+        ## if iperf3 is already running, skip this.  This ensures that iperf3 restarts after it's 86400 second runtime
+        if self.iperf.poll() is not None:
+           self.startiperf()
 
-            ## if the 8th field of data is "Mbits/sec" and the number of fields is 11(signifying non-total results), then this is the information we want
-            #  EXAMPLE OUTPUT: [  5]   0.00-1.00   sec  23.0 MBytes   193 Mbits/sec    0    211 KBytes
-            if len(stuff) == 11 and stuff[7] == "Mbits/sec":
-                self.ethInfo = "%s %s %s Retries" % (stuff[6], stuff[7], stuff[8])
+        line = self.iperf.stdout.readline()
+        stuff = line.split()
+
+        ## if the 8th field of data is "Mbits/sec" and the number of fields is 11(signifying non-total results), then this is the information we want
+        #  EXAMPLE OUTPUT: [  5]   0.00-1.00   sec  23.0 MBytes   193 Mbits/sec    0    211 KBytes
+        if len(stuff) == 11 and stuff[7] == "Mbits/sec":
+            self.ethInfo = "%s %s %s Retries" % (stuff[6], stuff[7], stuff[8])
 
     ## Starts iperf3 over a specific channel in order to simulate network traffic
     #
@@ -76,6 +82,7 @@ class Ethernet(module.Module):
             if self._running:
                 return self.report()
 
+            self.startiperf()
             self.startThread()
 
         return self.report()
