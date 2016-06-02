@@ -2,21 +2,6 @@ System Module Diagram
 ---------------------
 ![System Modules](design.png "Modules")
 
-Requirements & Design
----------------------
-The QUAL system is functionally split into the following functional areas
-
-- GPB Message Buffers
-    + Based on Thales ICD Specifications :  [Overall Specification](file://something.pdf)
-    + Implemented to GPB standards: [reference](https://developers.google.com/protocol-buffers/)
-    + [Read About Generating GPB Files](@ref GPBBufferReadme)
-- ZeroMQ Message Queues
-    + say something
-- QTA Test Application Interface
-    + say something
-- QUAL Test Modules
-    + Say something?
-
 
 System Startup
 --------------

@@ -6,7 +6,6 @@ from common.logger.logger import Logger
 from common.module.exception import ModuleException
 
 ## Module Base class
-#@ingroup common
 class Module(object):
 
 
@@ -41,7 +40,7 @@ class Module(object):
         self.threads = []
         ## Save the arguments for threads when they are configured, to use in their runtime constructions
         self.threadArgs = []
-
+        ## Logger implementation, based on standard python logger
         self.log = Logger(self.name)
 
         return
@@ -72,7 +71,7 @@ class Module(object):
     #
     # @param     self
     # @param     msgClass  The class of GPB being handled
-    # @param     handler   A handler function (def <handlerName>(self, msg))
+    # @param     handler   A handler function (def (handlerName)(self, msg))
     def addMsgHandler(self, msgClass, handler):
         self.msgHandlers.append((msgClass, handler))
         return
@@ -112,7 +111,7 @@ class Module(object):
 
     ## Adds a Thread to the basic threading system, by specifying the thread's Main
     # @param self
-    # @param runMethod The thread main function (def <main>(self))
+    # @param runMethod The thread main function (def (main)(self))
     def addThread(self, runMethod):
         threadArgs = {
             'runMethod': runMethod,

@@ -9,7 +9,6 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 # Binds to a ZMQ socket and accepts messages that uses the ZMQ-GPB protocol
 # as defined by the "Thales Common Network Messaging" document and allows
 # receiving requests and sending responses (REQ-REP ZMQ pattern).
-#@ingroup zmq
 class ThalesZMQServer(object):
     ## Constructor
     #
