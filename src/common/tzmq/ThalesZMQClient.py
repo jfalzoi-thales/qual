@@ -12,7 +12,6 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 # Can be subclassed, or can just be used directly like this:
 #   client = ThalesZMQClient("tcp://localhost:5555")
 #   response = client.sendRequest(request)
-#
 class ThalesZMQClient(object):
     ## Constructor
     #

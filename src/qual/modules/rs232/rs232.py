@@ -1,102 +1,141 @@
 import serial
 import time
 
-from src.common.module.module import Module
-from src.common.module.unitTest import BaseMessage
-from src.common.gpb.python.RS232_pb2 import RS232Request, RS232Response
+from common.module.module import Module
+from common.gpb.python.RS232_pb2 import RS232Request, RS232Response
+from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
-class Rs232MsgHdlr(object):
-    def __init__(self, rs232Request):
-        self.msg = rs232Request
-        super(Rs232MsgHdlr, self).__init__()
-        pass
-
+## RS-232 Class Module
+#
 class Rs232(Module):
+    ## Constructor
+    #  @param       self
+    #  @param       config      Configuration for the instance is going to be created
     def __init__(self, config={}):
+        ## constructor of the parent class
         super(Rs232, self).__init__(config)
-        self.addMsgHandler(Rs232MsgHdlr, self.hdlrMsg)
+        ## open a writer serial port
+        self.serWriter = serial.Serial(port=self.config['portwriter'],
+                                      baudrate=self.config['baudrate'],
+                                      parity=self.config['parity'],
+                                      stopbits=self.config['stopbits'],
+                                      bytesize=self.config['bytesize'],
+                                      timeout=0.1,
+                                      rtscts=True)
+        ## open a reader serial port
+        self.serReader = serial.Serial(port=self.config['portreader'],
+                                      baudrate=self.config['baudrate'],
+                                      parity=self.config['parity'],
+                                      stopbits=self.config['stopbits'],
+                                      bytesize=self.config['bytesize'],
+                                      timeout=0.1,
+                                      rtscts=True)
+        ## adding the message handler
+        self.addMsgHandler(RS232Request, self.hdlrMsg)
+        ## thread that writes through RS-232
         self.addThread(self.rs232Write)
+        ## thread that reads through RS-232
         self.addThread(self.rs232Read)
-        self.appState = RS232Response.AppStateT.STOPPED
+        ## init the application state
+        self.appState = RS232Response.STOPPED
+        ## init match value found
         self.match = 0
+        ## init mismatch value found
         self.mismatch = 0
 
     @classmethod
+    ## Returns the test configurations for that module
+    #
+    #  @return      test configurations
     def getConfigurations(cls):
         return [
-                {'portwriter': '/dev/ttyUSB2','portreader': '/dev/ttyUSB3', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
+                {'portwriter': '/dev/ttyUSB4','portreader': '/dev/ttyUSB1', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
                 ]
-
+    ## Opens and writes to the serial port
+    #
     def rs232Write(self):
-        ser = serial.Serial(
-            port=self.portWriter,
-            baudrate=self.baudrate,
-            parity=self.parity,
-            stopbits=self.stopbits,
-            bytesize=self.bytesize
-        )
-        character = chr(0)
-        while True:
-            ser.write(character)
-            time.sleep(0.5)
-            if ord(character) < 255:
-                character = chr(ord(character) + 1)
-            else:
-                character = chr(0)
+        time.sleep(0.1)
+        self.serWriter.write(self.character)
+        if ord(self.character) + 1 > 255:
+            self.character = chr(0)
+        else:
+            aux = ord(self.character)
+            aux += 1
+            self.character = chr(aux)
 
+    ## Opens and reads from the serial port
+    #
     def rs232Read(self):
-        ser = serial.Serial(
-            port=self.portReader,
-            baudrate=self.baudrate,
-            parity=self.parity,
-            stopbits=self.stopbits,
-            bytesize=self.bytesize
-        )
-        character = chr(0)
-        count = 0
-        while True:
-            read = ser.read(1)
-            if ord(read) != ord(character):
-                dif = ord(read) - count
-                character = read
-                self.mismatch += abs(dif)
+        read = self.serReader.read()
+        if len(read) > 0:
+            if chr(ord(read)) != chr(self.counter):
+                self.mismatch += 1
+                self.counter = ord(read)+1
             else:
                 self.match += 1
-            if ord(character) < 255:
-                character = chr(ord(character) + 1)
-            else:
-                character = chr(0)
+                self.counter += 1
+                if self.counter > 255:
+                    self.counter = 0
 
+    ## Handles incoming messages
+    #
+    #  Receives tzmq request and runs requested process
+    #
+    #  @param     self
+    #  @param     rs232Request      tzmq format message
+    #  @return    response          an RS-232 Response object
     def hdlrMsg(self, rs232Request):
         response = RS232Response()
-        if rs232Request.requestType == RS232Request.STOP:
+        if rs232Request.body.requestType == RS232Request.STOP:
             response = self.stop()
-        elif rs232Request.requestType == RS232Request.RUN:
+        elif rs232Request.body.requestType == RS232Request.RUN:
             response = self.start()
-        elif rs232Request.requestType == RS232Request.REPORT:
+        elif rs232Request.body.requestType == RS232Request.REPORT:
             response = self.report()
         else:
             print "Unexpected request"
-        return response
+        return ThalesZMQMessage(response)
 
+    ## Starts sending and reading data through RS-232
+    #
+    #  @param     self
+    #  @return    self.report() a RS-232 Response object
     def start(self):
-        self.portWriter = self.config['portwriter']
-        self.portReader = self.config['portreader']
-        self.baudrate = self.config['baudrate']
-        self.parity= self.config['parity']
-        self.stopbits = self.config['stopbits']
-        self.bytesize = self.config['bytesize']
+        self.character = chr(0)
+        self.match = 0
+        self.counter = 0
+        self.mismatch = 0
         super(Rs232, self).startThread()
-        self.appState = RS232Response.AppStateT.RUNNING
-        status = RS232Response(self.appState, self.match, self.mismatch)
+        self.appState = RS232Response.RUNNING
+        status = RS232Response()
+        status.state = self.appState
+        status.matches = self.match
+        status.mismatches = self.mismatch
         return status
 
+    ## Stops sending and reading data through RS-232
+    #
+    #  @param     self
+    #  @return    self.report() a RS-232 Response object
     def stop(self):
-        self.appState =RS232Response.AppStateT.STOPPED
-        status = RS232Response(self.appState, self.match, self.mismatch)
-        super(Rs232, self).stopThread()
+        self._running = False
+        self.appState =RS232Response.STOPPED
+        status = RS232Response()
+        status.state = self.appState
+        status.matches = self.match
+        status.mismatches = self.mismatch
+        self.stopThread()
+        self.counter = self.character
         return status
 
+
+    ## Reports match and mismatch data
+    #
+    #  @param     self
+    #  @return    self.report() a RS-232 Response object
     def report(self):
-        status = RS232Response(self.appState, self.match, self.mismatch)
+        status = RS232Response()
+        status.state = self.appState
+        status.matches = self.match
+        status.mismatches = self.mismatch
         return status

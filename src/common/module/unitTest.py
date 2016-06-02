@@ -4,6 +4,7 @@ from time import sleep
 from common.logger.logger import Logger
 from common.module.module import Module
 
+# @cond doxygen_unittest
 
 class BaseMessage(object):
     pass
@@ -123,3 +124,4 @@ class Test_Module(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+## @endcond
