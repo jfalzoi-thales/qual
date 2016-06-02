@@ -112,7 +112,6 @@ class Rs485(Module):
         self.stopThread()
         return status
 
-
     ## Reports match and mismatch data
     #
     #  @param     self
