@@ -127,7 +127,8 @@ class Rs232(Module):
         status.matches = self.match
         status.mismatches = self.mismatch
         self.stopThread()
-        self.counter = self.character
+        self.match = 0
+        self.mismatch = 0
         return status
 
 
