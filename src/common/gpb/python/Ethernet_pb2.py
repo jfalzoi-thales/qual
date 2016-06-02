@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='Ethernet.proto',
   package='mpsqual',
-  serialized_pb=_b('\n\x0e\x45thernet.proto\x12\x07mpsqual\"\xa5\x01\n\x0f\x45thernetRequest\x12@\n\x0brequestType\x18\x01 \x02(\x0e\x32%.mpsqual.EthernetRequest.RequestTypeT:\x04STOP\x12\x0f\n\x05local\x18\x02 \x02(\t:\x00\x12\x10\n\x06remote\x18\x03 \x01(\t:\x00\"-\n\x0cRequestTypeT\x12\x08\n\x04STOP\x10\x00\x12\x07\n\x03RUN\x10\x01\x12\n\n\x06REPORT\x10\x02\"\x8c\x01\n\x10\x45thernetResponse\x12\x32\n\x05state\x18\x01 \x02(\x0e\x32#.mpsqual.EthernetResponse.AppStateT\x12\r\n\x05local\x18\x02 \x02(\t\x12\x0e\n\x06result\x18\x03 \x02(\t\"%\n\tAppStateT\x12\x0b\n\x07STOPPED\x10\x00\x12\x0b\n\x07RUNNING\x10\x01')
+  serialized_pb=_b('\n\x0e\x45thernet.proto\x12\x07mpsqual\"\xa5\x01\n\x0f\x45thernetRequest\x12@\n\x0brequestType\x18\x01 \x02(\x0e\x32%.mpsqual.EthernetRequest.RequestTypeT:\x04STOP\x12\x0f\n\x05local\x18\x02 \x02(\t:\x00\x12\x10\n\x06remote\x18\x03 \x01(\t:\x00\"-\n\x0cRequestTypeT\x12\x08\n\x04STOP\x10\x00\x12\x07\n\x03RUN\x10\x01\x12\n\n\x06REPORT\x10\x02\"\xa0\x01\n\x10\x45thernetResponse\x12\x32\n\x05state\x18\x01 \x02(\x0e\x32#.mpsqual.EthernetResponse.AppStateT\x12\r\n\x05local\x18\x02 \x02(\t\x12\x11\n\tbandwidth\x18\x03 \x02(\x02\x12\x0f\n\x07retries\x18\x04 \x02(\x02\"%\n\tAppStateT\x12\x0b\n\x07STOPPED\x10\x00\x12\x0b\n\x07RUNNING\x10\x01')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -67,8 +67,8 @@ _ETHERNETRESPONSE_APPSTATET = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=299,
-  serialized_end=336,
+  serialized_start=319,
+  serialized_end=356,
 )
 _sym_db.RegisterEnumDescriptor(_ETHERNETRESPONSE_APPSTATET)
 
@@ -140,9 +140,16 @@ _ETHERNETRESPONSE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='result', full_name='mpsqual.EthernetResponse.result', index=2,
-      number=3, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      name='bandwidth', full_name='mpsqual.EthernetResponse.bandwidth', index=2,
+      number=3, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='retries', full_name='mpsqual.EthernetResponse.retries', index=3,
+      number=4, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -159,7 +166,7 @@ _ETHERNETRESPONSE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=196,
-  serialized_end=336,
+  serialized_end=356,
 )
 
 _ETHERNETREQUEST.fields_by_name['requestType'].enum_type = _ETHERNETREQUEST_REQUESTTYPET

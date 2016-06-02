@@ -13,13 +13,14 @@ class Ethernet(module.Module):
     def __init__(self, config = {}):
         ## initializes parent class
         super(Ethernet, self).__init__({})
-        ## adds Ethernet handler to available message handlers
+        ## adds handler to available message handlers
         self.addMsgHandler(Ethernet_pb2.EthernetRequest, self.handler)
         self.chan = ""
         self.server = ""
         ## used to store current iperf subprocess
         self.iperf = None
-        self.ethInfo = ""
+        self.bandwidth = 0.0
+        self.retries = 0.0
         self.addThread(self.iperfTracker)
 
     ## Handles incoming messages
@@ -36,8 +37,11 @@ class Ethernet(module.Module):
         # TODO: Find out format for response output
         reply = Ethernet_pb2.EthernetResponse()
 
-        if not self._running:
-            self.ethInfo = "0 Mbits/sec 0 Retries"
+        ## resets bandwidth and retries values if not running and before a new run
+        #  this mainly handles the case where a re-RUN command is issued without a STOP
+        if not self._running or msg.body.requestType == Ethernet_pb2.EthernetRequest.RUN:
+            self.bandwidth = 0.0
+            self.retries = 0.0
 
         if msg.body.requestType == Ethernet_pb2.EthernetRequest.RUN:
             reply = self.start()
@@ -60,7 +64,7 @@ class Ethernet(module.Module):
     def iperfTracker(self):
         ## if iperf3 is already running, skip this.  This ensures that iperf3 restarts after it's 86400 second runtime
         if self.iperf.poll() is not None:
-           self.startiperf()
+            self.startiperf()
 
         line = self.iperf.stdout.readline()
         stuff = line.split()
@@ -68,7 +72,8 @@ class Ethernet(module.Module):
         ## if the 8th field of data is "Mbits/sec" and the number of fields is 11(signifying non-total results), then this is the information we want
         #  EXAMPLE OUTPUT: [  5]   0.00-1.00   sec  23.0 MBytes   193 Mbits/sec    0    211 KBytes
         if len(stuff) == 11 and stuff[7] == "Mbits/sec":
-            self.ethInfo = "%s %s %s Retries" % (stuff[6], stuff[7], stuff[8])
+            self.bandwidth = float(stuff[6])
+            self.retries += float(stuff[8])
 
     ## Starts iperf3 over a specific channel in order to simulate network traffic
     #
@@ -114,7 +119,8 @@ class Ethernet(module.Module):
             loadResponse.state = Ethernet_pb2.EthernetResponse.STOPPED
 
         loadResponse.local = self.chan
-        loadResponse.result = self.ethInfo
+        loadResponse.bandwidth = self.bandwidth
+        loadResponse.retries = self.retries
 
         return loadResponse
 
