@@ -84,6 +84,7 @@ class MemoryBandwidth(Module):
         status = MemoryBandwidthResponse()
         status.state = self.appState
         status.memoryBandWidth = self.bandwidth
+        self.bandwidth = 0
         return status
 
 
