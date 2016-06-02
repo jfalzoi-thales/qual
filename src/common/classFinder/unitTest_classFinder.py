@@ -3,7 +3,7 @@ import unittest
 from common.classFinder.classFinder import ClassFinder
 from google.protobuf.message import Message
 
-
+# @cond doxygen_unittest
 class TestStringMethods(unittest.TestCase):
 
     def test_findByName(self):
@@ -30,3 +30,4 @@ class TestStringMethods(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+## @endcond

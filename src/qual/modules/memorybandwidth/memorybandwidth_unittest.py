@@ -3,6 +3,8 @@ import time
 from qual.modules.memorybandwidth.memorybandwidth import MemoryBandwidth
 from common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthResponse, MemoryBandwidthRequest
 
+# @cond doxygen_unittest
+
 class Test_Rs232(unittest.TestCase):
     def rs232test(self):
         self.module =  MemoryBandwidth(config=MemoryBandwidth.getConfigurations()[0])
@@ -15,3 +17,5 @@ class Test_Rs232(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+## @endcond

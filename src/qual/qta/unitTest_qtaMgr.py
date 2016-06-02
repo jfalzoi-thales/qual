@@ -5,6 +5,8 @@ from common.classFinder.classFinder import ClassFinder
 from common.module.module import Module
 from google.protobuf.message import Message
 
+# @cond doxygen_unittest
+
 ## QTARequestManager
 #  Manage different type request to QTA Application
 class QTARequestManager(ThalesZMQClient):
@@ -76,11 +78,8 @@ class QTARequestManager(ThalesZMQClient):
             self.runTest(request[selectedModule])
 
 
-
-
-
-
 if __name__ == "__main__":
     man = QTARequestManager()
     man.runManager()
 
+## @endcond
