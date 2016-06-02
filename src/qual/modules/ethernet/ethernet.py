@@ -20,7 +20,7 @@ class Ethernet(module.Module):
         ## used to store current iperf subprocess
         self.iperf = None
         self.bandwidth = 0.0
-        self.retries = 0.0
+        self.retries = 0
         self.addThread(self.iperfTracker)
 
     ## Handles incoming messages
@@ -41,7 +41,7 @@ class Ethernet(module.Module):
         #  this mainly handles the case where a re-RUN command is issued without a STOP
         if not self._running or msg.body.requestType == Ethernet_pb2.EthernetRequest.RUN:
             self.bandwidth = 0.0
-            self.retries = 0.0
+            self.retries = 0
 
         if msg.body.requestType == Ethernet_pb2.EthernetRequest.RUN:
             reply = self.start()
@@ -73,7 +73,7 @@ class Ethernet(module.Module):
         #  EXAMPLE OUTPUT: [  5]   0.00-1.00   sec  23.0 MBytes   193 Mbits/sec    0    211 KBytes
         if len(stuff) == 11 and stuff[7] == "Mbits/sec":
             self.bandwidth = float(stuff[6])
-            self.retries += float(stuff[8])
+            self.retries += int(stuff[8])
 
     ## Starts iperf3 over a specific channel in order to simulate network traffic
     #
