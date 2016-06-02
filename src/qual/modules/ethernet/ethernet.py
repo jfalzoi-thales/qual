@@ -8,11 +8,12 @@ from common.module import module
 #
 class Ethernet(module.Module):
     ## Constructor
-    #  @param     self
+    #  @param   self
+    #  @param   config  unused in Ethernet
     def __init__(self, config = {}):
         ## initializes parent class
         super(Ethernet, self).__init__({})
-        ## adds Ethernet handler to available message handlers
+        ## adds handler to available message handlers
         self.addMsgHandler(Ethernet_pb2.EthernetRequest, self.handler)
         self.chan = ""
         self.server = ""
