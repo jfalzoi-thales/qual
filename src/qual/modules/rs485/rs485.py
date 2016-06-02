@@ -90,9 +90,9 @@ class Rs485(Module):
     #  @param     self
     #  @return    self.report() a RS-485 Response object
     def start(self):
-        self.startThread()
         self.matches = 0
         self.mismatches = 0
+        self.startThread()
         self.state = RS485Response.RUNNING
         status = RS485Response()
         status.state = self.state
@@ -106,12 +106,14 @@ class Rs485(Module):
     #  @return    self.report() a RS-485 Response object
     def stop(self):
         self._running = False
-        self.appState =RS485Response.STOPPED
+        self.state =RS485Response.STOPPED
         status = RS485Response()
         status.state = self.state
         status.matches = self.matches
         status.mismatches = self.mismatches
         self.stopThread()
+        self.matches = 0
+        self.mismatches = 0
         return status
 
     ## Reports match and mismatch data
