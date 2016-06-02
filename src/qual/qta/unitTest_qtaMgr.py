@@ -66,7 +66,7 @@ class QTARequestManager(ThalesZMQClient):
             print "Select a module:"
             for modClassName in self.__modClass.messageMap.keys():
                 for msgClassName in self.__qualMessage.messageMap.keys():
-                    if msgClassName.lower().endswith("request") and modClassName.lower() == msgClassName.lower()[:-7]:
+                    if msgClassName.lower().endswith("request") and modClassName.lower() in msgClassName.lower():
                         print "\t%d - %s" % (index, modClassName,)
                         request.append(msgClassName)
                         index += 1

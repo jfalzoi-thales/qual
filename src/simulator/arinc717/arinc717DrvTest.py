@@ -5,6 +5,8 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.ARINC717Driver_pb2 import Request, Response
 
 
+# @cond doxygen_unittest
+
 ## ARINC 717 Driver Simulator Tester class
 #
 class ARINC717DriverClient(ThalesZMQClient):
@@ -45,3 +47,4 @@ if __name__ == "__main__":
     sleep(0.5)
     print "\nResponse from second request:"
     client.sendReqMsg()
+## @endcond
