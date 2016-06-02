@@ -3,7 +3,7 @@ from common.gpb.python.MessageHeader_pb2 import MessageHeader
 
 
 ## Encapsulates a message as defined by the "Thales Common Network Messaging" document.
-#
+#@ingroup zmq
 class ThalesZMQMessage(object):
     ## Constructor
     #

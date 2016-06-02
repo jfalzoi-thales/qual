@@ -35,7 +35,7 @@ NOTSET = logging.NOTSET
 # log.warn('warn message')
 # log.error('error message')
 # log.critical('critical message')
-
+#@ingroup common
 class Logger(logging.getLoggerClass()):
 
     ## Constructor

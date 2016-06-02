@@ -4,6 +4,7 @@ import pkgutil
 import sys
 
 ## A class that searches a tree for instances of a class, and allows lookup by class name
+#@ingroup common
 class ClassFinder(object):
 
     ##Constructor

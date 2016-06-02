@@ -6,7 +6,7 @@ from common.logger.logger import Logger
 from common.module.exception import ModuleException
 
 ## Module Base class
-#
+#@ingroup common
 class Module(object):
 
 
