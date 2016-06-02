@@ -89,6 +89,8 @@ class Rs232(Module):
         if rs232Request.body.requestType == RS232Request.STOP:
             response = self.stop()
         elif rs232Request.body.requestType == RS232Request.RUN:
+            if self.appState == RS232Response.RUNNING:
+                self.stop()
             response = self.start()
         elif rs232Request.body.requestType == RS232Request.REPORT:
             response = self.report()
