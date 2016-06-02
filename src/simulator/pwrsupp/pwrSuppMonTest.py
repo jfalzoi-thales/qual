@@ -3,6 +3,7 @@ from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.PowerInfo_pb2 import GetPowerInfo, PowerInfo
 
+# @cond doxygen_unittest
 
 ## Power Supply Monitor Simulator Tester class
 #
@@ -50,4 +51,5 @@ if __name__ == "__main__":
     client.sendGetReq("ZL6105")
     client.sendGetReq("")
     client.sendGetReq("bogus_name")
+## @endcond
 

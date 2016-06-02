@@ -10,6 +10,7 @@ import CPULoader
 class CPULoading(module.Module):
     ## Constructor
     #  @param     self
+    #  @param     config  Configuration for this module instance
     def __init__(self, config = {}):
         ## initializes parent class
         super(CPULoading, self).__init__({})

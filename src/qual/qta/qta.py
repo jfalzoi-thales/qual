@@ -17,9 +17,6 @@ from google.protobuf.message import Message
 #
 class QualTestApp(ThalesZMQServer):
     ## Constructor
-    # @attrib : modInstances The map of {<class>:[<instances>...]}
-    # @attrib : module Classes
-    # @attrib : gpb Classes
     def __init__(self, ip='*', port=50001):
         self.__instances = {}
 
@@ -27,19 +24,19 @@ class QualTestApp(ThalesZMQServer):
         address = str.format('tcp://{}:{}',ip, port)
         super(QualTestApp, self).__init__(address=address)
 
-        # Set up a logger
+        ## Set up a logger
         self.log = Logger(name='QTA')
 
-        #  All available classes in QUAL modules for QTA,
+        ##  All available classes in QUAL modules for QTA,
         self.__modClasses = ClassFinder(rootPath='qual.modules',
                                         baseClass=Module)
 
-        #  All available classes in GPB modules for QTA,
+        ## All available classes in GPB modules for QTA,
         self.__gpbClasses = ClassFinder(rootPath='common.gpb.python',
                                         baseClass=Message)
 
         #  Create instances for each possible configuration
-        for className in self.__modClasses.messageMap.keys():
+        for className in self.__modClasses.classmap.keys():
             _class = self.__modClasses.getClassByName(className)
             _config = _class.getConfigurations()
             for config in _config:

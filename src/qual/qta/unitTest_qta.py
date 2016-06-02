@@ -8,6 +8,7 @@ from google.protobuf.message import Message
 from common.gpb.python.CPULoading_pb2 import CPULoadingRequest
 from common.gpb.python.RS232_pb2 import RS232Request
 
+# @cond doxygen_unittest
 
 ## QTA Tester class
 #
@@ -127,3 +128,4 @@ if __name__ == "__main__":
     # Run some tests
     client.test_CPULoading()
     client.test_RS232()
+## @endcond
