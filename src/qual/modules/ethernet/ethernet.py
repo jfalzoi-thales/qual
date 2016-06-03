@@ -4,7 +4,6 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.module import module
 
 ## Ethernet Module
-#
 class Ethernet(module.Module):
     ## Constructor
     #  @param     self
@@ -26,17 +25,17 @@ class Ethernet(module.Module):
 
     ## Handles incoming tzmq messages
     #  @param     self
-    #  @param     msg                           tzmq format message
-    #  @return    ThalesZMQMessage(response)    a ThalesZMQMessage object
+    #  @param     msg   tzmq format message
+    #  @return    ThalesZMQMessage object
     def handler(self, msg):
         self.server = msg.body.remote
         response = EthernetResponse()
-        # TODO: Need to handle real channels instead of dummies
+        #  TODO: Need to handle real channels instead of dummies
         response.local = msg.body.local
 
         #  Resets bandwidth and retries values if not running and before a new run;
         #  this mainly handles the case where a re-RUN command is issued without a STOP
-        if not self._running or msg.body.requestType == EthernetRequest.RUN:
+        if not self._running or (msg.body.requestType == EthernetRequest.RUN and msg.body.remote != ""):
             self.bandwidth = 0.0
             self.retries = 0
 
@@ -53,7 +52,6 @@ class Ethernet(module.Module):
 
     ## Starts iperf3 over a specific channel in order to simulate network traffic
     #  @param   self
-    #  @param   response    EthernetResponse object
     def startiperf(self):
         #  'stdbuf -o L' modifies iperf3 to allow easily accessed line buffered output
         self.iperf = subprocess.Popen(
@@ -62,7 +60,6 @@ class Ethernet(module.Module):
 
     ## Runs in thread to continually gather iperf3 data line by line and restarts iperf3 if process ends
     #  @param   self
-    #  @param   response    EthernetResponse object
     def iperfTracker(self):
         #  If iperf3 is already running, skip this.  This ensures that iperf3 restarts after it's 86400 second runtime
         if self.iperf.poll() is not None:
@@ -82,7 +79,7 @@ class Ethernet(module.Module):
     #  @param   self
     #  @param   response    EthernetResponse object
     def start(self, response):
-        if self.server != None:
+        if self.server != "":
             #  Kills any iperf3 instances and waits for pkill to complete;
             #  this allows for changes in server ip address if iperf3 is already running
             subprocess.Popen(["pkill", "-9", "iperf3"]).communicate()
@@ -115,7 +112,7 @@ class Ethernet(module.Module):
         response.retries = self.retries
 
     ## Attempts to stop instance gracefully
-    #  @param     self
+    #  @param   self
     def terminate(self):
         self._running = False
         subprocess.Popen(["pkill", "-9", "iperf3"]).communicate()
