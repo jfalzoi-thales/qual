@@ -28,7 +28,6 @@ class Ethernet(module.Module):
     #  @param     msg   tzmq format message
     #  @return    ThalesZMQMessage object
     def handler(self, msg):
-        self.server = msg.body.remote
         response = EthernetResponse()
         #  TODO: Need to handle real channels instead of dummies
         response.local = msg.body.local
@@ -36,6 +35,8 @@ class Ethernet(module.Module):
         #  Resets bandwidth and retries values if not running and before a new run;
         #  this mainly handles the case where a re-RUN command is issued without a STOP
         if not self._running or (msg.body.requestType == EthernetRequest.RUN and msg.body.remote != ""):
+            #  We don't want to overwrite the server if an empty server address is sent
+            self.server = msg.body.remote
             self.bandwidth = 0.0
             self.retries = 0
 
