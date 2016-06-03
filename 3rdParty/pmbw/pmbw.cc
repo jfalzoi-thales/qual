@@ -524,8 +524,6 @@ void* thread_master(void* cookie)
                        << "rate=" << runtime / testaccess;
 
                 std::cout << result.str() << std::endl;
-                std::ofstream resultfile("stats.txt", std::ios::app);
-                std::cout << result.str() << std::endl;
             }
         }
     }
@@ -759,8 +757,6 @@ int main(int argc, char* argv[])
     memset(g_memarea, 1, g_memsize);
 
     // *** perform memory tests
-
-    unlink("stats.txt");
 
     for (size_t i = 0; i < g_testlist.size(); ++i)
     {

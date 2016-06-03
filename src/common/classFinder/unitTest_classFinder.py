@@ -1,9 +1,9 @@
 import unittest
 
 from common.classFinder.classFinder import ClassFinder
-from google.protobuf.reflection import GeneratedProtocolMessageType
+from google.protobuf.message import Message
 
-
+# @cond doxygen_unittest
 class TestStringMethods(unittest.TestCase):
 
     def test_findByName(self):
@@ -16,9 +16,10 @@ class TestStringMethods(unittest.TestCase):
 
         )
 
+        classFinder = ClassFinder(rootPath='common.gpb.python',
+                                  baseClass=Message)
+
         for className in classNames :
-            classFinder= ClassFinder(rootPath='common.gpb',
-                                     baseClass=GeneratedProtocolMessageType)
             searchClass = classFinder.getClassByName(className)
             myMessage = searchClass()
 
@@ -29,3 +30,4 @@ class TestStringMethods(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+## @endcond
