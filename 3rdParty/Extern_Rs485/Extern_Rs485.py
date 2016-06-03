@@ -34,7 +34,7 @@ try:
                                bytesize=serial.EIGHTBITS,
                                timeout=3)
 except serial.SerialException:
-    log.info("Unable to initialize device %s" % (args.port,))
+    log.error("Unable to initialize device %s" % (args.port,))
 else:
     count = 0
     log.info("Device %s started..." % (args.port,))
