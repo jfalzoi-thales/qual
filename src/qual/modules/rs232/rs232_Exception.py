@@ -7,5 +7,6 @@ from common.logger.logger import Logger
 class RS232ModuleSerialException(ModuleException):
     def __init__(self, port):
         super(RS232ModuleSerialException, self).__init__()
-        self.log = Logger(name='RS-232 Module', level=logging.DEBUG)
-        self.log.error('Unable to open device %s.' % (port,))
+        self.msg = 'Unable to open device %s.' % (port,)
+        self.log = Logger(name='RS-232 Module', level=logging.FATAL)
+        self.log.error(self.msg)
