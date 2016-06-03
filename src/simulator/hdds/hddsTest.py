@@ -3,6 +3,7 @@ from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.HDDS_pb2 import GetReq, GetResp, SetReq, HDDSSetResp
 
+# @cond doxygen_unittest
 
 ## HDDS Simulator Tester class
 #
@@ -82,3 +83,4 @@ if __name__ == "__main__":
     client.sendGetReq("bogus_key")
     client.sendSetReq("bogus_key", "x")
 
+## @endcond

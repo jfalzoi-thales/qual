@@ -3,6 +3,7 @@ from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.SEMA_pb2 import RequestStatusMessage, ResponseMessage
 
+# @cond doxygen_unittest
 
 ## SEMA Driver Simulator Tester class
 #
@@ -45,3 +46,4 @@ if __name__ == "__main__":
     client.sendReqStatusMsg("BoardManufacturer")
     client.sendReqStatusMsg("BoardMaxTemp")
     client.sendReqStatusMsg("bogus_key")
+## @endcond
