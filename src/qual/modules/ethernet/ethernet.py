@@ -34,7 +34,6 @@ class Ethernet(module.Module):
         self.server = msg.body.remote
         # TODO: Need to handle real channels instead of dummies
         self.chan = msg.body.local
-        # TODO: Find out format for response output
         reply = Ethernet_pb2.EthernetResponse()
 
         ## resets bandwidth and retries values if not running and before a new run
@@ -59,7 +58,6 @@ class Ethernet(module.Module):
         self.iperf = subprocess.Popen(
             ["stdbuf", "-o", "L", "/usr/local/bin/iperf3", "-c", self.server, "-f", "m", "-t", "86400"],
             stdout=subprocess.PIPE, bufsize=1)
-        sleep(1)
 
     def iperfTracker(self):
         ## if iperf3 is already running, skip this.  This ensures that iperf3 restarts after it's 86400 second runtime

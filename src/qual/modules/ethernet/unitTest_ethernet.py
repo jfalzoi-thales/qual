@@ -93,6 +93,23 @@ class Test_Ethernet(unittest.TestCase):
         self.module.msgHandler(request)
         sleep(3)
 
+        ## test re-RUN after STOP
+        log.info("RUN iperf3:")
+        message.requestType = Ethernet_pb2.EthernetRequest.RUN
+        message.local = "ENET_10"
+        message.remote = "10.10.42.228"
+        request = ThalesZMQMessage(message)
+        self.module.msgHandler(request)
+        sleep(3)
+
+        ## test REPORT after iperf3 is is re-RUN
+        log.info("REPORT after iperf3:")
+        message.requestType = Ethernet_pb2.EthernetRequest.REPORT
+        message.local = "ENET_11"
+        request = ThalesZMQMessage(message)
+        self.module.msgHandler(request)
+        sleep(3)
+
         self.module.terminate()
 
         pass
