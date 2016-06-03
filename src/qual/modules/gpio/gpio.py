@@ -73,10 +73,8 @@ class GPIO(module.Module):
     def handler(self, msg):
         gpioResp = GPIOResponse()
 
-        # TODO: Handle "ALL" keyword for gpIn
-
         # First validate input pin, since all request types contain one
-        if str(msg.body.gpIn) not in self.inputPins:
+        if msg.body.gpIn != "ALL" and str(msg.body.gpIn) not in self.inputPins:
             self.log.error("Unknown GPIO input pin %s" % msg.body.gpIn)
         elif msg.body.requestType == GPIORequest.CONNECT:
             if str(msg.body.gpOut) not in self.outputPins:
@@ -99,17 +97,26 @@ class GPIO(module.Module):
     # @return a GPIOResponse object
     def connect(self, gpioReq):
         # Note: pins are already validated, so we don't have to do that here.
-        # If input pin is not in connection list, add it with counters set to zero
-        # (If input pin is already in connection list, just drop through to report)
-        if str(gpioReq.gpIn) not in self.connections:
+        # If input pin is specified as "ALL", discard all existing connections and
+        # connect all defined input pins to the specified output pin.
+        # If input pin is not in connection list, add it with counters set to zero.
+        # If input pin is already in connection list, just drop through to report.
+        if gpioReq.gpIn == "ALL":
+            # Get connections lock before modifying connections
+            self.connectionsLock.acquire()
+            self.connections.clear()
+            for inputPin in self.inputPins.keys():
+                self.connections[inputPin] = ConnectionInfo(str(gpioReq.gpOut))
+            self.connectionsLock.release()
+        elif str(gpioReq.gpIn) not in self.connections:
             # Get connections lock before modifying connections
             self.connectionsLock.acquire()
             self.connections[str(gpioReq.gpIn)] = ConnectionInfo(str(gpioReq.gpOut))
             self.connectionsLock.release()
 
-            # If thread is not running, start it
-            if not self._running:
-                self.startThread()
+        # If thread is not running, start it
+        if not self._running:
+            self.startThread()
 
         # Return a report
         return self.report(gpioReq)
@@ -121,15 +128,19 @@ class GPIO(module.Module):
     # @return a GPIOResponse object
     def disconnect(self, gpioReq):
         # Note: pins are already validated, so we don't have to do that here.
+        # If input pin is specified as "ALL", disconnect all inputs.
         # If input pin is in connection list, remove it.
-        # (If input pin is not in connection list, just drop through to report)
-        if str(gpioReq.gpIn) in self.connections:
+        # If input pin is not in connection list, just drop through to report.
+        if gpioReq.gpIn == "ALL" or str(gpioReq.gpIn) in self.connections:
             # Get report before processing the disconnect
             gpioResp = self.report(gpioReq)
 
             # Get connections lock before modifying connections.
             self.connectionsLock.acquire()
-            del self.connections[str(gpioReq.gpIn)]
+            if gpioReq.gpIn == "ALL":
+                self.connections.clear()
+            else:
+                del self.connections[str(gpioReq.gpIn)]
             self.connectionsLock.release()
 
             # Return the report
@@ -145,23 +156,38 @@ class GPIO(module.Module):
     # @return a GPIOResponse object
     def report(self, gpioReq):
         gpioResp = GPIOResponse()
-        gpioStatus = gpioResp.status.add()
-        gpioStatus.gpIn = gpioReq.gpIn
 
-        if str(gpioReq.gpIn) in self.connections:
-            connection = self.connections[str(gpioReq.gpIn)]
+        # Note: pins are already validated, so we don't have to do that here.
+        if gpioReq.gpIn == "ALL":
+            # Add status entries for all input pins
+            for inputPin in sorted(self.inputPins.keys()):
+                self.addPinStatus(gpioResp, inputPin, gpioReq.requestType == GPIORequest.DISCONNECT)
+        else:
+            # Add status entry for specified input pin
+            self.addPinStatus(gpioResp, str(gpioReq.gpIn), gpioReq.requestType == GPIORequest.DISCONNECT)
+
+        # Return the report
+        return gpioResp
+
+    ## Adds pin status entry to a GPIOResponse
+    #
+    # @param  gpioResp       Response message object
+    # @param  inputPin       Input pin for which to add information to the response
+    # @param  disconnecting  Indicates we are gathering info prior to a disconnect
+    def addPinStatus(self, gpioResp, inputPin, disconnecting):
+        gpioStatus = gpioResp.status.add()
+        gpioStatus.gpIn = inputPin
+
+        if inputPin in self.connections:
+            connection = self.connections[inputPin]
             gpioStatus.mismatchCount = connection.mismatches
             gpioStatus.gpOut = connection.outputPin
             # If we're disconnecting, set the connection state to disconnected
-            if gpioReq.requestType == GPIORequest.DISCONNECT:
-                gpioStatus.conState = GPIOResponse.DISCONNECTED
-            else:
-                gpioStatus.conState = GPIOResponse.CONNECTED
+            gpioStatus.conState = GPIOResponse.DISCONNECTED if disconnecting else GPIOResponse.CONNECTED
         else:
             gpioStatus.conState = GPIOResponse.DISCONNECTED
             gpioStatus.mismatchCount = 0
 
-        return gpioResp
 
     ## Run in a thread to toggle active GPIO outputs on and off every 2 seconds
     #
@@ -245,4 +271,3 @@ class GPIO(module.Module):
     def terminate(self):
         if self._running:
             self.stopThread()
-            #sleep(1)

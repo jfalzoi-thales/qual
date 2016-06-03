@@ -63,17 +63,17 @@ class Test_Ethernet(unittest.TestCase):
         self.module.msgHandler(ThalesZMQMessage(message))
         sleep(1)
 
-        log.info("=============== Report on linked input ===============")
-        message = GPIORequest()
-        message.requestType = GPIORequest.REPORT
-        message.gpIn = "PA_KYLN_IN1"
-        self.module.msgHandler(ThalesZMQMessage(message))
-        sleep(1)
-
         log.info("=============== Report on non-linked input ===============")
         message = GPIORequest()
         message.requestType = GPIORequest.REPORT
         message.gpIn = "PA_KYLN_IN2"
+        self.module.msgHandler(ThalesZMQMessage(message))
+        sleep(1)
+
+        log.info("=============== Report on all inputs ===============")
+        message = GPIORequest()
+        message.requestType = GPIORequest.REPORT
+        message.gpIn = "ALL"
         self.module.msgHandler(ThalesZMQMessage(message))
         sleep(1)
 
@@ -84,10 +84,32 @@ class Test_Ethernet(unittest.TestCase):
         self.module.msgHandler(ThalesZMQMessage(message))
         sleep(1)
 
-        log.info("=============== Disconnect non-linked input ===============")
+        log.info("=============== Connect all inputs ===============")
+        message = GPIORequest()
+        message.requestType = GPIORequest.CONNECT
+        message.gpIn = "ALL"
+        message.gpOut = "VA_KYLN_OUT3"
+        self.module.msgHandler(ThalesZMQMessage(message))
+        sleep(4)
+
+        log.info("=============== Report on all inputs ===============")
+        message = GPIORequest()
+        message.requestType = GPIORequest.REPORT
+        message.gpIn = "ALL"
+        self.module.msgHandler(ThalesZMQMessage(message))
+        sleep(2)
+
+        log.info("=============== Disconnect all inputs ===============")
         message = GPIORequest()
         message.requestType = GPIORequest.DISCONNECT
-        message.gpIn = "PA_KYLN_IN2"
+        message.gpIn = "ALL"
+        self.module.msgHandler(ThalesZMQMessage(message))
+        sleep(1)
+
+        log.info("=============== Report on all inputs ===============")
+        message = GPIORequest()
+        message.requestType = GPIORequest.REPORT
+        message.gpIn = "ALL"
         self.module.msgHandler(ThalesZMQMessage(message))
         sleep(1)
 
