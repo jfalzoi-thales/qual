@@ -26,23 +26,26 @@ args = cmdParameters.parse_args()
 ## Logger
 log = Logger(name="RS-485 External application", level=logging.DEBUG)
 
-serialPort = serial.Serial(port=args.port,
-                           baudrate=args.baudrate,
-                           parity=serial.PARITY_NONE,
-                           stopbits=serial.STOPBITS_ONE,
-                           bytesize=serial.EIGHTBITS,
-                           timeout=3)
-
-count = 0
-log.info("Started...")
-while True:
-    rX = serialPort.read()
-    if len(rX) > 0:
-        log.info("Data received: %s <--" % (rX,))
-        if args.mismatches and count % 5 == 0:
-            rX = chr(random.randint(0,255))
-            serialPort.write(rX)
-        else:
-            serialPort.write(rX)
-        log.info("Data sent:     %s -->" % (rX,))
-    count += 1
+try:
+    serialPort = serial.Serial(port=args.port,
+                               baudrate=args.baudrate,
+                               parity=serial.PARITY_NONE,
+                               stopbits=serial.STOPBITS_ONE,
+                               bytesize=serial.EIGHTBITS,
+                               timeout=3)
+except serial.SerialException:
+    log.info("Unable to initialize device %s" % (args.port,))
+else:
+    count = 0
+    log.info("Device %s started..." % (args.port,))
+    while True:
+        rX = serialPort.read()
+        if len(rX) > 0:
+            log.info("Data received: %s <--" % (rX,))
+            if args.mismatches and count % 5 == 0:
+                rX = chr(random.randint(0,255))
+                serialPort.write(rX)
+            else:
+                serialPort.write(rX)
+            log.info("Data sent:     %s -->" % (rX,))
+        count += 1
