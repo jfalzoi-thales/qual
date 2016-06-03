@@ -55,7 +55,7 @@ class QualTestApp(ThalesZMQServer):
                 else:
                     try:
                         obj = _class(config)
-                    except (RS232ModuleSerialException, RS485ModuleSerialException) as e:
+                    except ModuleException as e:
                         self.log.error("Unable to create instance of %s, Error msg: %s" % (className, e.msg,))
                     else:
                         self.log.info("Created instance of %s" % className)
