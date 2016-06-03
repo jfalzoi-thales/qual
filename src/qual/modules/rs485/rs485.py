@@ -6,6 +6,7 @@ from common.module.module import Module
 from common.gpb.python.RS485_pb2 import RS485Request, RS485Response
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.logger.logger import Logger
+from qual.modules.rs485.rs485_Exception import RS485ModuleSerialException
 
 ## RS-485 Class Module
 #
@@ -16,26 +17,30 @@ class Rs485(Module):
     def __init__(self, config={}):
         ## constructor of the parent class
         super(Rs485, self).__init__(config)
-        self.serial = serial.Serial(port=self.config['port'],
-                                       baudrate=self.config['baudrate'],
-                                       parity=self.config['parity'],
-                                       stopbits=self.config['stopbits'],
-                                       bytesize=self.config['bytesize'],
-                                       timeout=self.config['timeout'])
-        ## Log obj
-        self.log = Logger(name="Test RS-485", level=logging.DEBUG)
-        ## adding the message handler
-        self.addMsgHandler(RS485Request, self.handlerMessage)
-        ## thread that writes through RS-485
-        self.addThread(self.sendData)
-        ## init the application state
-        self.state = RS485Response.STOPPED
-        ## init match value found
-        self.matches = 0
-        ## init mismatch value found
-        self.mismatches = 0
-        ## character to be sent
-        self.tx = chr(0)
+        try:
+            self.serial = serial.Serial(port=self.config['port'],
+                                        baudrate=self.config['baudrate'],
+                                        parity=self.config['parity'],
+                                        stopbits=self.config['stopbits'],
+                                        bytesize=self.config['bytesize'],
+                                        timeout=self.config['timeout'])
+        except (serial.SerialException, OSError):
+            raise RS485ModuleSerialException(self.config['port'])
+        else:
+            ## Log obj
+            self.log = Logger(name="Test RS-485", level=logging.DEBUG)
+            ## adding the message handler
+            self.addMsgHandler(RS485Request, self.handlerMessage)
+            ## thread that writes through RS-485
+            self.addThread(self.sendData)
+            ## init the application state
+            self.state = RS485Response.STOPPED
+            ## init match value found
+            self.matches = 0
+            ## init mismatch value found
+            self.mismatches = 0
+            ## character to be sent
+            self.tx = chr(0)
 
     @classmethod
     ## Returns the test configurations for that module
