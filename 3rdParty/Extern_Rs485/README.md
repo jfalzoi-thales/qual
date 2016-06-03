@@ -3,4 +3,4 @@ This app reads through RS-485 device and echoes back the same data read.
 
     @arg: -b <Baud Rate>
     @arg: -p <Serial Port Device>
-    @arg: -m < 1 or 0 > When this argument is equal to 1, the application some times will send random data to QTA, tessting our mechanism 
+    @arg: -m When this argument is passed, the application some times will send random data to QTA, testing our mechanism 

@@ -7,20 +7,19 @@ from common.logger.logger import Logger
 
 cmdParameters = argparse.ArgumentParser(description="Runs the external application to be used by RS2485 Modeule")
 cmdParameters.add_argument('-p',
-                           '--port',
+                           dest='port',
                            type= str,
                            default= '/dev/ttyUSB5',
                            help= "Port")
 cmdParameters.add_argument('-b',
-                           '--baudrate',
+                           dest='baudrate',
                            type= int,
                            default= 115200,
                            help= "Baud Rate")
 cmdParameters.add_argument('-m',
-                           '--mismatches',
-                           type= bool,
-                           default= False,
-                           help= "Baud Rate")
+                           dest='mismatches',
+                           action="store_true",
+                           help= "Send some corrupted data")
 ## Parse the command line arguments
 args = cmdParameters.parse_args()
 
