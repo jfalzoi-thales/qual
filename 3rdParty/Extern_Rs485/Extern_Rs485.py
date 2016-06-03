@@ -18,8 +18,8 @@ cmdParameters.add_argument('-b',
                            help= "Baud Rate")
 cmdParameters.add_argument('-m',
                            '--mismatches',
-                           type= int,
-                           default= 0,
+                           type= bool,
+                           default= False,
                            help= "Baud Rate")
 ## Parse the command line arguments
 args = cmdParameters.parse_args()
@@ -40,7 +40,7 @@ while True:
     rX = serialPort.read()
     if len(rX) > 0:
         log.info("Data received: %s <--" % (rX,))
-        if args.mismatches == 1 and count % 5 == 0:
+        if args.mismatches and count % 5 == 0:
             rX = chr(random.randint(0,255))
             serialPort.write(rX)
         else:
