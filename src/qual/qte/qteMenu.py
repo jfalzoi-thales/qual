@@ -7,17 +7,17 @@ from google.protobuf.message import Message
 
 # @cond doxygen_unittest
 
-## QTARequestManager
+## Class that provides a menu-driven QTE simulator
 #  Manage different type request to QTA Application
-class QTARequestManager(ThalesZMQClient):
+class QTEMenu(ThalesZMQClient):
     def __init__(self):
-        super(QTARequestManager, self).__init__("tcp://localhost:50001")
+        super(QTEMenu, self).__init__("tcp://localhost:50001")
         self.__modClass = ClassFinder(rootPath='qual.modules',
                                      baseClass=ModuleMessages)
         self.__qualMessage = ClassFinder(rootPath='common.gpb.python',
                                      baseClass=Message)
 
-    def runTest(self, modMsgClass):
+    def moduleMenu(self, modMsgClass):
         print ""
         while True:
             try:
@@ -53,7 +53,7 @@ class QTARequestManager(ThalesZMQClient):
                 print respMsg
                 print "---------------------------------------------------------\n"
 
-    def runManager(self):
+    def run(self):
         while True:
             index = 0
             msgClassList = []
@@ -75,11 +75,11 @@ class QTARequestManager(ThalesZMQClient):
             if selectedModule < 0 or selectedModule >= index:
                 print "Valid range is %d to %d." % (0, index-1)
                 continue
-            self.runTest(msgClassList[selectedModule])
+            self.moduleMenu(msgClassList[selectedModule])
 
 
 if __name__ == "__main__":
-    man = QTARequestManager()
-    man.runManager()
+    qte = QTEMenu()
+    qte.run()
 
 ## @endcond
