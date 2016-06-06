@@ -1,4 +1,3 @@
-import os
 from common.gpb.python.SystemMonitoring_pb2 import SystemMonitoringRequest, SystemMonitoringResponse
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -12,23 +11,21 @@ class SystemMonitoring(module.Module):
     #  @param     self
     #  @param     config  Configuration for this module instance
     def __init__(self, config = {}):
-        ## initializes parent class
         super(SystemMonitoring, self).__init__({})
-        ## adds handler to available message handlers
-        self.addMsgHandler(SystemMonitoringRequest, self.handler)
-        #  Ensure directories for communication with simulators are present
-        pwripcdir = "tmp/pwr-supp-mon.sock"
-        semaipcdir = "tmp/sema-drv.sock"
-
-        if not os.path.exists(pwripcdir):
-            os.makedirs(pwripcdir)
-        if not os.path.exists(semaipcdir):
-            os.makedirs(semaipcdir)
-
         ## Connection to PowerInfo driver
         self.pwrClient = ThalesZMQClient("ipc:///tmp/pwr-supp-mon.sock")
         ## Connection to SEMA driver
         self.semaClient = ThalesZMQClient("ipc:///tmp/sema-drv.sock")
+        ## Temporary peripheral statistics retrieved from SEMA simulator
+        self.semaProperties = ["BIOSIndex", "BIOSVersion", "BoardHWRevision", "BoardManufacturer", "BoardMaxTemp",
+                               "BoardMinTemp", "BoardName", "BoardTemp", "BootCount", "BootVersion", "ChipsetID",
+                               "CPUMaxTemp", "CPUMinTemp", "CPUTemp", "MainPowerCurrent", "PowerConsumption",
+                               "PwrCycles",
+                               "PwrUpTime", "RestartEvent", "SerialNumber", "TotalUpTime", "Voltage_3V3S",
+                               "Voltage_1V05S",
+                               "Voltage_3V3A", "Voltage_1V5", "Voltage_5V", "Voltage_12V"]
+        #  Adds handler to available message handlers
+        self.addMsgHandler(SystemMonitoringRequest, self.handler)
 
     ## Sends GetPowerInfo request message to the PowerInfo driver
     #  @param   self
@@ -36,7 +33,8 @@ class SystemMonitoring(module.Module):
     def makePwrRequest(self, response):
         pwrInfo = PowerInfo()
         #  Sends a GetPowerInfo() request to driver which returns a tzmq message that is deserialized into pwrInfo
-        pwrInfo.ParseFromString(self.pwrClient.sendRequest(ThalesZMQMessage(GetPowerInfo())).serializedBody)
+        reply = self.pwrClient.sendRequest(ThalesZMQMessage(GetPowerInfo()))
+        pwrInfo.ParseFromString(reply.serializedBody)
 
         for value in pwrInfo.values:
             sensor = response.powerSupplyStatistics.add()
@@ -48,15 +46,14 @@ class SystemMonitoring(module.Module):
     #  @param   self
     #  @param   response    SystemMonitoringResponse object
     def makeSEMARequest(self, response):
-        #  Hardcoded to function with our simulator; needs more details to implement with real peripheral
-        properties = ["BIOSIndex", "BIOSVersion", "BoardHWRevision", "BoardManufacturer", "BoardMaxTemp", "BoardMinTemp", "BoardName", "BoardTemp", "BootCount", "BootVersion", "ChipsetID", "CPUMaxTemp", "CPUMinTemp", "CPUTemp", "MainPowerCurrent", "PowerConsumption", "PwrCycles", "PwrUpTime", "RestartEvent", "SerialNumber", "TotalUpTime", "Voltage_3V3S", "Voltage_1V05S", "Voltage_3V3A", "Voltage_1V5", "Voltage_5V", "Voltage_12V"]
         semaInfo = ResponseMessage()
 
-        for property in properties:
+        for property in self.semaProperties:
             request = RequestStatusMessage()
             request.name = property
             #  Sends a RequestStatusMessage() request to driver which returns a tzmq message that is deserialized into semaInfo
-            semaInfo.ParseFromString(self.semaClient.sendRequest(ThalesZMQMessage(request)).serializedBody)
+            reply = self.semaClient.sendRequest(ThalesZMQMessage(request))
+            semaInfo.ParseFromString(reply.serializedBody)
 
             if semaInfo.error == ResponseMessage.OK:
                 sema = response.semaStatistics.add()
