@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='SystemMonitoring.proto',
   package='mpsqual',
-  serialized_pb=_b('\n\x16SystemMonitoring.proto\x12\x07mpsqual\"\x19\n\x17SystemMonitoringRequest\"\x99\x03\n\x18SystemMonitoringResponse\x12L\n\x15powerSupplyStatistics\x18\x01 \x03(\x0b\x32-.mpsqual.SystemMonitoringResponse.SensorValue\x12\x43\n\x0esemaStatistics\x18\x02 \x03(\x0b\x32+.mpsqual.SystemMonitoringResponse.SemaValue\x12@\n\nswitchData\x18\x03 \x02(\x0b\x32,.mpsqual.SystemMonitoringResponse.SwitchData\x1a\x44\n\x0bSensorValue\x12\x12\n\ndeviceName\x18\x01 \x02(\t\x12\x12\n\nsensorName\x18\x02 \x02(\t\x12\r\n\x05value\x18\x03 \x02(\t\x1a,\n\tSemaValue\x12\x10\n\x08itemName\x18\x01 \x02(\t\x12\r\n\x05value\x18\x02 \x02(\t\x1a\x34\n\nSwitchData\x12\x12\n\ntemperture\x18\x01 \x02(\t\x12\x12\n\nstatistics\x18\x02 \x03(\t')
+  serialized_pb=_b('\n\x16SystemMonitoring.proto\x12\x07mpsqual\"\x19\n\x17SystemMonitoringRequest\"\x9a\x03\n\x18SystemMonitoringResponse\x12L\n\x15powerSupplyStatistics\x18\x01 \x03(\x0b\x32-.mpsqual.SystemMonitoringResponse.SensorValue\x12\x43\n\x0esemaStatistics\x18\x02 \x03(\x0b\x32+.mpsqual.SystemMonitoringResponse.SemaValue\x12@\n\nswitchData\x18\x03 \x02(\x0b\x32,.mpsqual.SystemMonitoringResponse.SwitchData\x1a\x44\n\x0bSensorValue\x12\x12\n\ndeviceName\x18\x01 \x02(\t\x12\x12\n\nsensorName\x18\x02 \x02(\t\x12\r\n\x05value\x18\x03 \x02(\t\x1a,\n\tSemaValue\x12\x10\n\x08itemName\x18\x01 \x02(\t\x12\r\n\x05value\x18\x02 \x02(\t\x1a\x35\n\nSwitchData\x12\x13\n\x0btemperature\x18\x01 \x02(\t\x12\x12\n\nstatistics\x18\x02 \x03(\t')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -135,7 +135,7 @@ _SYSTEMMONITORINGRESPONSE_SWITCHDATA = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='temperture', full_name='mpsqual.SystemMonitoringResponse.SwitchData.temperture', index=0,
+      name='temperature', full_name='mpsqual.SystemMonitoringResponse.SwitchData.temperature', index=0,
       number=1, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -160,7 +160,7 @@ _SYSTEMMONITORINGRESPONSE_SWITCHDATA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=420,
-  serialized_end=472,
+  serialized_end=473,
 )
 
 _SYSTEMMONITORINGRESPONSE = _descriptor.Descriptor(
@@ -203,7 +203,7 @@ _SYSTEMMONITORINGRESPONSE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=63,
-  serialized_end=472,
+  serialized_end=473,
 )
 
 _SYSTEMMONITORINGRESPONSE_SENSORVALUE.containing_type = _SYSTEMMONITORINGRESPONSE
