@@ -49,7 +49,9 @@ class MemoryBandwidth(Module):
         if memBandwRequest.body.requestType == MemoryBandwidthRequest.STOP:
             response = self.stop()
         elif memBandwRequest.body.requestType == MemoryBandwidthRequest.RUN:
-            response = self.start(memBandwRequest)
+            if self.appState == MemoryBandwidthResponse.RUNNING:
+                self.stop()
+            response = self.start()
         elif memBandwRequest.body.requestType == MemoryBandwidthRequest.REPORT:
             response = self.report()
         else:
@@ -62,7 +64,7 @@ class MemoryBandwidth(Module):
     #  @param     self
     #  @param     msg  tzmq format message
     #  @return    self.report() a MemoryBandwidth Response object
-    def start(self, msg):
+    def start(self):
         self.M = self.config['maxallocmem']
         self.P = self.config['numthreads']
         self.s = self.config['mSize']
