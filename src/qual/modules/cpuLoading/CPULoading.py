@@ -20,7 +20,7 @@ class CPULoading(module.Module):
         self.loader = CPULoader.CPULoader()
         ## starts CPULoader thread
         self.loader.start()
-        ## adds CPULoading handler to available message handlers
+        ## adds handler to available message handlers
         self.addMsgHandler(CPULoading_pb2.CPULoadingRequest, self.handler)
 
     ## Handles incoming messages
