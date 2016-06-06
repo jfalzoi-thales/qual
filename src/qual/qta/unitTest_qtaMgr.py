@@ -2,7 +2,7 @@ import time
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.classFinder.classFinder import ClassFinder
-from common.module.module import Module
+from common.module.modulemsgs import ModuleMessages
 from google.protobuf.message import Message
 
 # @cond doxygen_unittest
@@ -13,46 +13,38 @@ class QTARequestManager(ThalesZMQClient):
     def __init__(self):
         super(QTARequestManager, self).__init__("tcp://localhost:50001")
         self.__modClass = ClassFinder(rootPath='qual.modules',
-                                     baseClass=Module)
+                                     baseClass=ModuleMessages)
         self.__qualMessage = ClassFinder(rootPath='common.gpb.python',
                                      baseClass=Message)
 
-    def runTest(self, msgClassName):
-        msgClass = self.__qualMessage.getClassByName(msgClassName)
-        msg = msgClass()
+    def runTest(self, modMsgClass):
         print ""
         while True:
             try:
-                time.sleep(0.5)
-                print ("Choose an action:\n\t0 - Stop\n\t1 - Run\n\t2 - Report\n\t3 - Choose another module")
+                lastItem = 0
+                print "Choose an action for", modMsgClass.getMenuTitle()
+                for item in modMsgClass.getMenuItems():
+                    print "\t%d - %s" % (lastItem, item[0])
+                    lastItem += 1
+                print "\t%d - Choose another module" % lastItem
                 action = int(raw_input("Selection: "))
             except ValueError:
                 print "Input must be a number."
                 continue
-            if action < 0 or action > 3:
-                print "Valid range is 0 to 3."
+            if action < 0 or action > lastItem:
+                print "Valid range is 0 to %d." % lastItem
                 continue
             print
-            if action == 0:
-                msg.requestType = msgClass.STOP
-            elif action == 1:
-                msg.requestType = msgClass.RUN
-            elif action == 2:
-                msg.requestType = msgClass.REPORT
-            else:
+            if action == lastItem:
                 return
 
-            # Temporary for Sprint 1 demo: If this is an EthernetRequest, populate required fields
-            if msgClassName == "EthernetRequest":
-                msg.local = "ENET_1"
-                if msg.requestType == msgClass.RUN:
-                    msg.remote = "10.10.41.115"
+            msg = modMsgClass.getMenuItems()[action][1]()
 
             print "---------------------------------------------------------\n"
             print "Sending ", msg.__class__.__name__
             response = self.sendRequest(ThalesZMQMessage(msg))
             respClass = self.__qualMessage.getClassByName(response.name)
-            if respClass == None:
+            if respClass is None:
                 print "Unexpected Value response"
             else:
                 respMsg = respClass()
@@ -64,24 +56,26 @@ class QTARequestManager(ThalesZMQClient):
     def runManager(self):
         while True:
             index = 0
-            request = []
+            msgClassList = []
             print "Select a module:"
-            for modClassName in self.__modClass.classmap.keys():
-                for msgClassName in self.__qualMessage.classmap.keys():
-                    if msgClassName.lower().endswith("request") and modClassName.lower() == msgClassName.lower()[:-7]:
-                        print "\t%d - %s" % (index, modClassName,)
-                        request.append(msgClassName)
-                        index += 1
+            for msgClass in self.__modClass.classmap.values():
+                print "\t%d - %s" % (index, msgClass.getMenuTitle())
+                msgClassList.append(msgClass)
+                index += 1
 
             try:
                 selectedModule = int(raw_input("Selection: "))
             except ValueError:
                 print "Input must be a number."
                 continue
+            except KeyboardInterrupt:
+                print
+                return
+
             if selectedModule < 0 or selectedModule >= index:
                 print "Valid range is %d to %d." % (0, index-1)
                 continue
-            self.runTest(request[selectedModule])
+            self.runTest(msgClassList[selectedModule])
 
 
 if __name__ == "__main__":
