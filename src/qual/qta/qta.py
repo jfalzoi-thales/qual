@@ -40,7 +40,7 @@ class QualTestApp(ThalesZMQServer):
                                         baseClass=Message)
 
         #  Create instances for each possible configuration
-        for className in self.__modClasses.messageMap.keys():
+        for className in self.__modClasses.classmap.keys():
             _class = self.__modClasses.getClassByName(className)
             _config = _class.getConfigurations()
             for config in _config:
