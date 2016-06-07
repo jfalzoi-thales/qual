@@ -1,23 +1,38 @@
 import subprocess
+import os
 from common.gpb.python.Ethernet_pb2 import EthernetRequest, EthernetResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.module import module
+from common.module.module import Module, ModuleException
+
+
+## Ethernet Module Exception Class
+class EthernetModuleException(ModuleException):
+    def __init__(self, msg):
+        super(EthernetModuleException, self).__init__()
+        self.msg = msg
+
 
 ## Ethernet Module
-class Ethernet(module.Module):
+class Ethernet(Module):
     ## Constructor
     #  @param     self
     #  @param     config  Configuration for this module instance
     def __init__(self, config = {}):
         super(Ethernet, self).__init__({})
+
+        # check for existence of iperf3 executable
+        if not os.path.exists("/usr/local/bin/iperf3"):
+            raise EthernetModuleException("Unable to locate iperf3 executable")
+
         ## Used to store current iperf subprocess
         self.iperf = None
-        ## Indicates which remote iperf3 server should be communicated with
+        ## IP address of remote iperf3 server to communicate with
         self.server = ""
         ## Ethernet bandwidth reading from iperf3
         self.bandwidth = 0.0
         ## Cumulative number of retries over iperf3 run
         self.retries = 0
+
         #  Adds handler to available message handlers
         self.addMsgHandler(EthernetRequest, self.handler)
         #  Enables the use of iperfTraker() as a thread
