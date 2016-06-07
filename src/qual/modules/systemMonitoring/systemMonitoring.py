@@ -16,7 +16,7 @@ class SystemMonitoring(module.Module):
         self.pwrClient = ThalesZMQClient("ipc:///tmp/pwr-supp-mon.sock")
         ## Connection to SEMA driver
         self.semaClient = ThalesZMQClient("ipc:///tmp/sema-drv.sock")
-        ## Temporary peripheral statistics retrieved from SEMA simulator
+        ## Peripheral statistics to retrieve from SEMA driver
         self.semaProperties = ["BIOSIndex", "BIOSVersion", "BoardHWRevision", "BoardManufacturer", "BoardMaxTemp",
                                "BoardMinTemp", "BoardName", "BoardTemp", "BootCount", "BootVersion", "ChipsetID",
                                "CPUMaxTemp", "CPUMinTemp", "CPUTemp", "MainPowerCurrent", "PowerConsumption",
@@ -62,12 +62,14 @@ class SystemMonitoring(module.Module):
             else:
                 self.log.error("Property ERROR CODE: %d" % (semaInfo.error))
 
-    ## Sends request message to the ??? driver
-    #  TODO: Update once port temperature simulator is available
+    ## Sends request message to the Network Management Service
+    #  @todo    Update once Network Management Service is available
     #  @param   self
     #  @param   response    SystemMonitoringResponse object
-    def makePortRequest(self, response):
-        return
+    def makeNetworkMgmtRequest(self, response):
+        #  Temporary values until Network Management Service is available
+        response.switchData.temperature = "10,000,000 degrees"
+        response.switchData.statistics.append("SUPER SECRET STATISTICS")
 
     ## Handles incoming tzmq messages
     #  @param     self
@@ -77,8 +79,6 @@ class SystemMonitoring(module.Module):
         response = SystemMonitoringResponse()
         self.makePwrRequest(response)
         self.makeSEMARequest(response)
-        #  Temporary values until simulator is available
-        response.switchData.temperature = "10,000,000 degrees"
-        response.switchData.statistics.append("SUPER SECRET STATISTICS")
+        self.makeNetworkMgmtRequest(response)
 
         return ThalesZMQMessage(response)
