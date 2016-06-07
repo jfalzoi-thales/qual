@@ -13,7 +13,7 @@ from common.module.modulemsgs import ModuleMessages
 class CPULoadingMessages(ModuleMessages):
     @staticmethod
     def getMenuTitle():
-        return "CPULoading"
+        return "CPU Loading"
 
     @staticmethod
     def getMenuItems():

@@ -12,7 +12,7 @@ from common.module.modulemsgs import ModuleMessages
 class MemoryBandwidthMessages(ModuleMessages):
     @staticmethod
     def getMenuTitle():
-        return "MemoryBandwidth"
+        return "Memory Bandwidth"
 
     @staticmethod
     def getMenuItems():
@@ -46,7 +46,7 @@ class Test_MemoryBandwidth(unittest.TestCase):
         log.info('Running test...')
 
         # MemoryBandwidth Module Object
-        self.module =  MemoryBandwidth(config=MemoryBandwidth.getConfigurations()[0])
+        self.module = MemoryBandwidth(config=MemoryBandwidth.getConfigurations()[0])
 
         log.info("Send REPORT message before start running.")
         self.module.msgHandler(ThalesZMQMessage(MemoryBandwidthMessages.report()))
