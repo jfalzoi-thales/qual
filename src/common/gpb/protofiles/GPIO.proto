@@ -19,9 +19,10 @@ message GPIOResponse {
 	
 	message GpioStatus {
 		required ConStateT conState = 1;
-		required int32 mismatchCount = 2;
-		required string gpIn = 3;
-		optional string gpOut = 4;
+		required int32 matchCount = 2;
+		required int32 mismatchCount = 3;
+		required string gpIn = 4;
+		optional string gpOut = 5;
 	}
 	repeated GpioStatus status = 1;
 }

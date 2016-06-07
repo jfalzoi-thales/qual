@@ -78,7 +78,7 @@ class GPIO(module.Module):
             self.log.error("Unknown GPIO input pin %s" % msg.body.gpIn)
         elif msg.body.requestType == GPIORequest.CONNECT:
             if str(msg.body.gpOut) not in self.outputPins:
-                self.log.error("Unknown GPIO output pin %s" % msg.body.gpIn)
+                self.log.error("Unknown GPIO output pin %s" % msg.body.gpOut)
             else:
                 gpioResp = self.connect(msg.body)
         elif msg.body.requestType == GPIORequest.DISCONNECT:
@@ -180,12 +180,14 @@ class GPIO(module.Module):
 
         if inputPin in self.connections:
             connection = self.connections[inputPin]
+            gpioStatus.matchCount = connection.matches
             gpioStatus.mismatchCount = connection.mismatches
             gpioStatus.gpOut = connection.outputPin
             # If we're disconnecting, set the connection state to disconnected
             gpioStatus.conState = GPIOResponse.DISCONNECTED if disconnecting else GPIOResponse.CONNECTED
         else:
             gpioStatus.conState = GPIOResponse.DISCONNECTED
+            gpioStatus.matchCount = 0
             gpioStatus.mismatchCount = 0
 
 
@@ -206,7 +208,8 @@ class GPIO(module.Module):
         # For each input pin in the connection list, get its value and increment matches/mismatches
         for inputPin, connection in self.connections.items():
             pinInfo = self.inputPins[inputPin]
-            if pinInfo.func(pinInfo.name) == self.outputState:
+            inputState = pinInfo.func(pinInfo.name)
+            if inputState == self.outputState:
                 connection.matches += 1
             else:
                 connection.mismatches += 1
