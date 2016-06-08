@@ -1,31 +1,42 @@
-
-
-## Module Base class
 from common.classFinder.classFinder import ClassFinder
 from google.protobuf.message import Message
 from google.protobuf.descriptor import FieldDescriptor as FD
 
-
+## A class that serializes /Deserializes GPB buffers to/from JSON.
+#
+# Example:
+#  @code{.py}
+#         message = CPULoadingRequest()
+#         message.requestType = CPULoadingRequest.RUN
+#         message.level = 50
+#         messageName, json = JsonConversion.gpb2json(message)
+#         newMessage = JsonConversion.json2gpb(messageName, json)
+#         self.assertEqual(message.level, newMessage.level)
+#         self.assertEqual(message.requestType, newMessage.requestType)
+#  @endcode
 class JsonConversion(object):
 
     ## All available classes in GPB modules for QTA,
-    gpbClasses = ClassFinder(rootPath='common.gpb.python', baseClass=Message)
+    _knownGpbClasses = ClassFinder(rootPath='common.gpb.python', baseClass=Message)
 
-
+    ##Convert a GPB buffer object into a JSON object
+    #@param cls This is a class method
+    #@param pbMessage A GPB message object
+    #returns tuple, messagename, json message data
     @classmethod
-    def pb2json(cls, pbMessage):
+    def gpb2json(cls, pbMessage):
 
         fields = pbMessage.ListFields()
         json = {}
 
         for field, value in fields:
             if field.type == FD.TYPE_MESSAGE:
-                # Need to handle a nested message
-                typecast = lambda x: JsonConversion.pb2json(x)
+                # Need to handle a nested message, only use the json return code (thus [1])
+                typecast = lambda x: JsonConversion.gpb2json(x)[1]
             elif field.type == FD.TYPE_ENUM:
                 typecast = lambda x: field.enum_type.values_by_number[int(x)].name
-            elif field.type in JsonConversion.knownTypecasts:
-                typecast = JsonConversion.knownTypecasts[field.type]
+            elif field.type in JsonConversion._knownTypecasts:
+                typecast = JsonConversion._knownTypecasts[field.type]
             else:
                 raise Exception('%s.%s no typecast %d' % (pbMessage.__class__.__name__, field.name, field.type,))
 
@@ -39,23 +50,32 @@ class JsonConversion(object):
 
         return pbMessage.__class__.__name__, json
 
+    ##Convert a JSON object into a GPB Buffer
+    #@param cls This is a class method
+    #@param pbMessage A GPB message object, or string name of GPB message
+    #@param json JSON serialized message data
+    #returns GPB message object
     @classmethod
-    def json2pb(cls, pbMessage, json):
+    def json2gpb(cls, pbMessage, json):
 
         #If the 1st param is a classname, convert it to a class
         if isinstance(pbMessage, str):
-            pbMessage = JsonConversion.gpbClasses.getClassByName(pbMessage)
+            pbMessage = JsonConversion._knownGpbClasses.getClassByName(pbMessage)()
 
         for field in pbMessage.DESCRIPTOR.fields:
             if field.name not in json.keys():
+                #need to set default values that were not in json
+                if field.label != FD.LABEL_REPEATED :
+                    setattr(pbMessage, field.name, field.default_value)
                 continue
+
             if field.type == FD.TYPE_MESSAGE:
-                typecast =  lambda x: JsonConversion.json2pb(getattr(pbMessage, field.name), x)
+                typecast =  lambda x: JsonConversion.json2gpb(getattr(pbMessage, field.name), x)
                 pass
             elif field.type == FD.TYPE_ENUM:
                 typecast = lambda x: field.enum_type.values_by_name[unicode(x)].number
-            elif field.type in JsonConversion.knownTypecasts:
-                typecast = JsonConversion.knownTypecasts[field.type]
+            elif field.type in JsonConversion._knownTypecasts:
+                typecast = JsonConversion._knownTypecasts[field.type]
             else:
                 raise Exception('%s.%s no typecast %d' % (pbMessage.__class__.__name__, field.name, field.type,))
 
@@ -63,7 +83,7 @@ class JsonConversion(object):
                 valueList = getattr(pbMessage, field.name, [])
                 for item in json[field.name] :
                     if field.type == FD.TYPE_MESSAGE:
-                        JsonConversion.json2pb(valueList.add(), item)
+                        JsonConversion.json2gpb(valueList.add(), item)
                     else:
                         valueList.append(typecast(item))
 
@@ -71,7 +91,8 @@ class JsonConversion(object):
                 setattr(pbMessage, field.name, typecast(json[field.name]))
         return pbMessage
 
-    knownTypecasts = {
+    ##A quick table for easy value typecasting, lookup by GPB field type.
+    _knownTypecasts = {
         FD.TYPE_DOUBLE: float,
         FD.TYPE_FLOAT: float,
         FD.TYPE_INT64: long,
