@@ -51,7 +51,13 @@ class QTAClient(ThalesZMQClient):
         self.log.info("REPORT before CPU load:")
         message.requestType = CPULoadingRequest.REPORT
 
-        JsonConversion.encode(message)
+        output = JsonConversion.pb2json(message)
+
+        #messageName, fields = JsonConversion.encode(message)
+
+        #newMessage = JsonConversion.decode(messageName, fields)
+
+
 
         self.sendReqAndLogResp(ThalesZMQMessage(message))
         sleep(3)
