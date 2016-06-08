@@ -21,10 +21,9 @@ class JsonConversion(object):
         for field, value in fields:
             if field.type == FD.TYPE_MESSAGE:
                 # Need to handle a nested message
-                typecast = JsonConversion.pb2json
-                pass
+                typecast = lambda x: JsonConversion.pb2json(x)
             elif field.type == FD.TYPE_ENUM:
-                typecast = lambda x: 'Boo.%d' % (x,)
+                typecast = lambda x: field.enum_type.values_by_number[int(x)].name
             elif field.type in JsonConversion.knownTypecasts:
                 typecast = JsonConversion.knownTypecasts[field.type]
             else:
@@ -38,7 +37,39 @@ class JsonConversion(object):
             else:
                 json[field.name] = typecast(value)
 
-        return json
+        return pbMessage.__class__.__name__, json
+
+    @classmethod
+    def json2pb(cls, pbMessage, json):
+
+        #If the 1st param is a classname, convert it to a class
+        if isinstance(pbMessage, str):
+            pbMessage = JsonConversion.gpbClasses.getClassByName(pbMessage)
+
+        for field in pbMessage.DESCRIPTOR.fields:
+            if field.name not in json.keys():
+                continue
+            if field.type == FD.TYPE_MESSAGE:
+                typecast =  lambda x: JsonConversion.json2pb(getattr(pbMessage, field.name), x)
+                pass
+            elif field.type == FD.TYPE_ENUM:
+                typecast = lambda x: field.enum_type.values_by_name[unicode(x)].number
+            elif field.type in JsonConversion.knownTypecasts:
+                typecast = JsonConversion.knownTypecasts[field.type]
+            else:
+                raise Exception('%s.%s no typecast %d' % (pbMessage.__class__.__name__, field.name, field.type,))
+
+            if field.label == FD.LABEL_REPEATED:
+                valueList = getattr(pbMessage, field.name, [])
+                for item in json[field.name] :
+                    if field.type == FD.TYPE_MESSAGE:
+                        JsonConversion.json2pb(valueList.add(), item)
+                    else:
+                        valueList.append(typecast(item))
+
+            else:
+                setattr(pbMessage, field.name, typecast(json[field.name]))
+        return pbMessage
 
     knownTypecasts = {
         FD.TYPE_DOUBLE: float,
@@ -59,49 +90,3 @@ class JsonConversion(object):
         FD.TYPE_SINT64: long,
     }
 
-'''
-
-    @classmethod
-    def json2pb(cls, messageName, json):
-        pbMessage = JsonConversion.gpbClasses.getClassByName(messageName)
-
-        messageName, fields = JsonConversion.loadMessage(message)
-        return messageName, fields
-
-
-    @classmethod
-    def loadMessage(cls, message):
-        messageFields = {}
-        for field in message.DESCRIPTOR.fields:
-            messageFields[field.name] =  {
-                    'default' : field.default_value,
-                    'value': field.default_value
-            }
-
-
-        for field in message._fields.keys():
-            if field.name in messageFields.keys():
-                messageFields[field.name]['value'] = message._fields[field]
-
-
-        return message.DESCRIPTOR.name, messageFields
-
-    def test_CPULoading(self):
-        message = CPULoadingRequest()
-        newMessage = CPULoadingRequest()
-        self.log.info("REPORT before CPU load:")
-        message.requestType = CPULoadingRequest.REPORT
-
-        for field in message.DESCRIPTOR.fields :
-            print field.name
-
-        myDict = {}
-        for field in  message._fields.keys() :
-            myDict[field.name] = message._fields[field]
-
-
-
-
-        self.sendReqAndLogResp(ThalesZMQMessage(message))
-        sleep(3)
-'''
