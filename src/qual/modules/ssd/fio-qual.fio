@@ -1,6 +1,0 @@
-[global]
-rw=randrw
-size=1024m
-
-[QUAL-SSD]
-directory=/mnt/qual

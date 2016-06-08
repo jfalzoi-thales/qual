@@ -39,7 +39,7 @@ class Test_SSD(unittest.TestCase):
     #  @param     self
     def test_basic(self):
         log = Logger(name='SSD Module Test')
-        self.module = SSD()
+        self.module = SSD(config=SSD.getConfigurations()[0])
 
         log.info("RUN FIO tool")
         self.module.msgHandler(ThalesZMQMessage(SSDMessages.run()))
