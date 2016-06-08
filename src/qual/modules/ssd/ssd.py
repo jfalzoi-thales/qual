@@ -100,15 +100,15 @@ class SSD(Module):
         output = subprocess.check_output('df -h | grep qual || true',
                                          shell=True)
         if output != '':
-            unmount = subprocess.Popen('umount -l /mnt/qual',
+            unmount = subprocess.Popen('umount -l /qual0p1',
                                        stdout=DEVNULL,
                                        stderr=DEVNULL, shell=True)
             unmount.wait()
 
         ## Delete partitionif exists
-        output = subprocess.check_output('ls /dev/ | grep md0p1 ||true', shell=True)
+        output = subprocess.check_output('ls /dev/ | grep qual0p1 ||true', shell=True)
         if output != '':
-            output = subprocess.Popen('fdisk /dev/md0',
+            output = subprocess.Popen('fdisk /dev/qual0',
                                       stdout=DEVNULL,
                                       stderr=DEVNULL,
                                       stdin=subprocess.PIPE,
@@ -117,13 +117,13 @@ class SSD(Module):
             output.stdin.write('w\n')
 
         ## stop RAID configuration and free the devices
-        output = subprocess.check_output('ls /dev/ | grep md0 ||true', shell=True)
+        output = subprocess.check_output('ls /dev/ | grep qual0 ||true', shell=True)
         if output != '':
-            md0 = subprocess.Popen('mdadm --stop /dev/md0',
+            qual0 = subprocess.Popen('mdadm --stop /dev/qual0',
                                    stdout=DEVNULL,
                                    stderr=DEVNULL,
                                    shell=True)
-            md0.wait()
+            qual0.wait()
             subprocess.call('mdadm --zero-superblock %s %s' % (self.__dev0, self.__dev1,), shell=True)
 
     ## Creates the RAID-0
@@ -136,7 +136,7 @@ class SSD(Module):
             raise SSDModuleException(msg="Unable to open Device: %s" % (self.__dev1,))
         else:
             ## Create the RAID config
-            raid = subprocess.Popen('mdadm --create --verbose /dev/md0 --level=stripe --raid-devices=2 %s %s' % (self.__dev0, self.__dev1,),
+            raid = subprocess.Popen('mdadm --create --verbose /dev/qual0 --level=stripe --raid-devices=2 %s %s' % (self.__dev0, self.__dev1,),
                                     stdout=DEVNULL,
                                     stderr=DEVNULL,
                                     shell=True,
@@ -145,7 +145,7 @@ class SSD(Module):
             raid.wait()
 
             ## Create the partition
-            partition = subprocess.Popen('fdisk /dev/md0',
+            partition = subprocess.Popen('fdisk /dev/qual0',
                                          stdout=DEVNULL,
                                          stderr=DEVNULL,
                                          shell=True,
@@ -159,7 +159,7 @@ class SSD(Module):
             partition.wait()
 
             ## Mount the partition with ext4
-            partition = subprocess.Popen('mkfs.ext4 /dev/md0p1',
+            partition = subprocess.Popen('mkfs.ext4 /dev/qual0p1',
                                          stdout=DEVNULL,
                                          stderr=DEVNULL,
                                          shell=True)
@@ -167,7 +167,7 @@ class SSD(Module):
             if not os.path.exists('/mnt/qual'):
                 os.makedirs('/mnt/qual')
             try:
-                subprocess.call('mount -t ext4 --rw /dev/md0p1 /mnt/qual',
+                subprocess.call('mount -t ext4 --rw /dev/qual0p1 /mnt/qual',
                                  stdout=DEVNULL,
                                  stderr=DEVNULL,
                                  shell=True)
