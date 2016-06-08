@@ -1,0 +1,24 @@
+package mpsqual;
+
+message HDAudioRequest {
+	enum RequestTypeT {
+		DISCONNECT = 0;
+		CONNECT = 1;
+		REPORT = 2;
+	}
+	
+	required RequestTypeT requestType = 1 [default = DISCONNECT];
+	optional string source = 2 [default = ""];
+	optional float volume = 3;
+}
+
+message HDAudioResponse {
+	enum AppStateT {
+		DISCONNECTED = 0;
+		CONNECTED = 1;
+	}
+	
+	required AppStateT appState = 1 [default = DISCONNECTED];
+	required string source = 2 [default = ""];
+	required float volume = 3;
+}

@@ -1,0 +1,21 @@
+package mpsqual;
+
+message MemoryBandwidthRequest { 
+	enum RequestTypeT {
+		STOP = 0;
+		RUN = 1;
+		REPORT = 2;
+	}
+	
+	required RequestTypeT requestType = 1 [default = STOP];
+}
+
+message MemoryBandwidthResponse {
+	enum AppStateT {
+		STOPPED	= 0;
+		RUNNING	= 1;
+	}
+	
+	required AppStateT state = 1;
+	required float memoryBandWidth = 2; 
+}

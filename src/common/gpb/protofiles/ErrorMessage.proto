@@ -1,0 +1,6 @@
+package mpsqual;
+
+message ErrorMessage {
+	required uint32 error_code = 1;
+	optional string error_description = 2;
+}

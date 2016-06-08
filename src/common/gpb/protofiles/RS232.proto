@@ -1,0 +1,21 @@
+package mpsqual;
+
+message RS232Request {
+	enum RequestTypeT {
+		STOP = 0;
+		RUN = 1;
+		REPORT = 2;
+	}
+	required RequestTypeT requestType = 1 [default = STOP];
+}
+
+message RS232Response {
+	enum AppStateT {
+		STOPPED	= 0;
+		RUNNING	= 1;
+	}
+	
+	required AppStateT state = 1;
+	required uint32 matches = 2 [default = 0];
+	required uint32 mismatches = 3 [default = 0];
+}
