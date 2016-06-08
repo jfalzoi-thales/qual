@@ -1,23 +1,37 @@
 from time import sleep
 import subprocess
+import os
 from common.gpb.python import CPULoading_pb2
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.module import module
+from common.module.module import Module, ModuleException
 import CPULoader
 
-## CPULoading Class Module
-#
-class CPULoading(module.Module):
+
+## CPU Loading Module Exception Class
+class CPULoadingModuleException(ModuleException):
+    def __init__(self, msg):
+        super(CPULoadingModuleException, self).__init__()
+        self.msg = msg
+
+
+## CPU Loading Module Class
+class CPULoading(Module):
     ## Constructor
     #  @param     self
     #  @param     config  Configuration for this module instance
     def __init__(self, config = {}):
-        ## initializes parent class
+        # initializes parent class
         super(CPULoading, self).__init__({})
+
+        # check for existence of lookbusy executable
+        if not os.path.exists("/usr/local/bin/lookbusy"):
+            raise CPULoadingModuleException("Unable to locate lookbusy executable")
+
         ## indicates whether or not a CPU load has been set
         self.active = False
-        ## initializes CPULoader thread which continually gathers CPU load information
+        ## CPULoader thread which continually gathers CPU load information
         self.loader = CPULoader.CPULoader()
+
         ## starts CPULoader thread
         self.loader.start()
         ## adds handler to available message handlers
@@ -63,7 +77,6 @@ class CPULoading(module.Module):
 
             ## starts lookbusy instance
             subprocess.Popen(["/usr/local/bin/lookbusy", "-qc", str(int(level))])
-            sleep(1)
         else:
             self.log.error("Unexpected Value %d" %(level))
 
