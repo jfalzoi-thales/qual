@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='GPIO.proto',
   package='mpsqual',
-  serialized_pb=_b('\n\nGPIO.proto\x12\x07mpsqual\"\xab\x01\n\x0bGPIORequest\x12\x42\n\x0brequestType\x18\x01 \x02(\x0e\x32!.mpsqual.GPIORequest.RequestTypeT:\nDISCONNECT\x12\x0e\n\x04gpIn\x18\x02 \x02(\t:\x00\x12\x0f\n\x05gpOut\x18\x03 \x01(\t:\x00\"7\n\x0cRequestTypeT\x12\x0e\n\nDISCONNECT\x10\x00\x12\x0b\n\x07\x43ONNECT\x10\x01\x12\n\n\x06REPORT\x10\x02\"\xe3\x01\n\x0cGPIOResponse\x12\x30\n\x06status\x18\x01 \x03(\x0b\x32 .mpsqual.GPIOResponse.GpioStatus\x1as\n\nGpioStatus\x12\x31\n\x08\x63onState\x18\x01 \x02(\x0e\x32\x1f.mpsqual.GPIOResponse.ConStateT\x12\x15\n\rmismatchCount\x18\x02 \x02(\x05\x12\x0c\n\x04gpIn\x18\x03 \x02(\t\x12\r\n\x05gpOut\x18\x04 \x01(\t\",\n\tConStateT\x12\x10\n\x0c\x44ISCONNECTED\x10\x00\x12\r\n\tCONNECTED\x10\x01')
+  serialized_pb=_b('\n\nGPIO.proto\x12\x07mpsqual\"\xab\x01\n\x0bGPIORequest\x12\x42\n\x0brequestType\x18\x01 \x02(\x0e\x32!.mpsqual.GPIORequest.RequestTypeT:\nDISCONNECT\x12\x0e\n\x04gpIn\x18\x02 \x02(\t:\x00\x12\x0f\n\x05gpOut\x18\x03 \x01(\t:\x00\"7\n\x0cRequestTypeT\x12\x0e\n\nDISCONNECT\x10\x00\x12\x0b\n\x07\x43ONNECT\x10\x01\x12\n\n\x06REPORT\x10\x02\"\xf8\x01\n\x0cGPIOResponse\x12\x30\n\x06status\x18\x01 \x03(\x0b\x32 .mpsqual.GPIOResponse.GpioStatus\x1a\x87\x01\n\nGpioStatus\x12\x31\n\x08\x63onState\x18\x01 \x02(\x0e\x32\x1f.mpsqual.GPIOResponse.ConStateT\x12\x12\n\nmatchCount\x18\x02 \x02(\x05\x12\x15\n\rmismatchCount\x18\x03 \x02(\x05\x12\x0c\n\x04gpIn\x18\x04 \x02(\t\x12\r\n\x05gpOut\x18\x05 \x01(\t\",\n\tConStateT\x12\x10\n\x0c\x44ISCONNECTED\x10\x00\x12\r\n\tCONNECTED\x10\x01')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -67,8 +67,8 @@ _GPIORESPONSE_CONSTATET = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=381,
-  serialized_end=425,
+  serialized_start=402,
+  serialized_end=446,
 )
 _sym_db.RegisterEnumDescriptor(_GPIORESPONSE_CONSTATET)
 
@@ -133,22 +133,29 @@ _GPIORESPONSE_GPIOSTATUS = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='mismatchCount', full_name='mpsqual.GPIOResponse.GpioStatus.mismatchCount', index=1,
+      name='matchCount', full_name='mpsqual.GPIOResponse.GpioStatus.matchCount', index=1,
       number=2, type=5, cpp_type=1, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='gpIn', full_name='mpsqual.GPIOResponse.GpioStatus.gpIn', index=2,
-      number=3, type=9, cpp_type=9, label=2,
+      name='mismatchCount', full_name='mpsqual.GPIOResponse.GpioStatus.mismatchCount', index=2,
+      number=3, type=5, cpp_type=1, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='gpIn', full_name='mpsqual.GPIOResponse.GpioStatus.gpIn', index=3,
+      number=4, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='gpOut', full_name='mpsqual.GPIOResponse.GpioStatus.gpOut', index=3,
-      number=4, type=9, cpp_type=9, label=1,
+      name='gpOut', full_name='mpsqual.GPIOResponse.GpioStatus.gpOut', index=4,
+      number=5, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -164,8 +171,8 @@ _GPIORESPONSE_GPIOSTATUS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=264,
-  serialized_end=379,
+  serialized_start=265,
+  serialized_end=400,
 )
 
 _GPIORESPONSE = _descriptor.Descriptor(
@@ -195,7 +202,7 @@ _GPIORESPONSE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=198,
-  serialized_end=425,
+  serialized_end=446,
 )
 
 _GPIOREQUEST.fields_by_name['requestType'].enum_type = _GPIOREQUEST_REQUESTTYPET
