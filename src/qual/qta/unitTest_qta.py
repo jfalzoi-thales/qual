@@ -1,7 +1,5 @@
 
 from time import sleep
-
-from common.gpb.jsonConversion.jsonConversion import JsonConversion
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.classFinder.classFinder import ClassFinder
@@ -50,10 +48,6 @@ class QTAClient(ThalesZMQClient):
 
         self.log.info("REPORT before CPU load:")
         message.requestType = CPULoadingRequest.REPORT
-
-        messageName, json = JsonConversion.gpb2json(message)
-        newMessage = JsonConversion.json2gpb(messageName, json)
-
         self.sendReqAndLogResp(ThalesZMQMessage(message))
         sleep(3)
 
