@@ -1,127 +1,135 @@
-from time import sleep
 import subprocess
-from common.gpb.python import Ethernet_pb2
+import os
+from common.gpb.python.Ethernet_pb2 import EthernetRequest, EthernetResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.module import module
+from common.module.module import Module, ModuleException
+
+
+## Ethernet Module Exception Class
+class EthernetModuleException(ModuleException):
+    def __init__(self, msg):
+        super(EthernetModuleException, self).__init__()
+        self.msg = msg
+
 
 ## Ethernet Module
-#
-class Ethernet(module.Module):
+class Ethernet(Module):
     ## Constructor
     #  @param     self
     #  @param     config  Configuration for this module instance
     def __init__(self, config = {}):
-        ## initializes parent class
         super(Ethernet, self).__init__({})
-        ## adds Ethernet handler to available message handlers
-        self.addMsgHandler(Ethernet_pb2.EthernetRequest, self.handler)
-        self.chan = ""
-        self.server = ""
-        ## used to store current iperf subprocess
+
+        # check for existence of iperf3 executable
+        if not os.path.exists("/usr/local/bin/iperf3"):
+            raise EthernetModuleException("Unable to locate iperf3 executable")
+
+        ## Used to store current iperf subprocess
         self.iperf = None
-        self.ethInfo = ""
+        ## IP address of remote iperf3 server to communicate with
+        self.server = ""
+        ## Ethernet bandwidth reading from iperf3
+        self.bandwidth = 0.0
+        ## Cumulative number of retries over iperf3 run
+        self.retries = 0
+
+        #  Adds handler to available message handlers
+        self.addMsgHandler(EthernetRequest, self.handler)
+        #  Enables the use of iperfTraker() as a thread
         self.addThread(self.iperfTracker)
 
-    ## Handles incoming messages
-    #
-    #  Receives tzmq request and runs requested process
-    #
+    ## Handles incoming tzmq messages
     #  @param     self
-    #  @param     msg       tzmq format message
-    #  @return    reply     a ThalesZMQMessage object
+    #  @param     msg   tzmq format message
+    #  @return    ThalesZMQMessage object
     def handler(self, msg):
-        self.server = msg.body.remote
-        # TODO: Need to handle real channels instead of dummies
-        self.chan = msg.body.local
-        # TODO: Find out format for response output
-        reply = Ethernet_pb2.EthernetResponse()
+        response = EthernetResponse()
+        #  TODO: Need to handle real channels instead of dummies
+        response.local = msg.body.local
 
-        if not self._running:
-            self.ethInfo = "0 Mbits/sec 0 Retries"
+        #  Resets bandwidth and retries values if not running and before a new run;
+        #  this mainly handles the case where a re-RUN command is issued without a STOP
+        if not self._running or (msg.body.requestType == EthernetRequest.RUN and msg.body.remote != ""):
+            #  We don't want to overwrite the server if an empty server address is sent
+            self.server = msg.body.remote
+            self.bandwidth = 0.0
+            self.retries = 0
 
-        if msg.body.requestType == Ethernet_pb2.EthernetRequest.RUN:
-            reply = self.start()
-        elif msg.body.requestType == Ethernet_pb2.EthernetRequest.STOP:
-            reply = self.stop()
-        elif msg.body.requestType == Ethernet_pb2.EthernetRequest.REPORT:
-            reply = self.report()
+        if msg.body.requestType == EthernetRequest.RUN:
+            self.start(response)
+        elif msg.body.requestType == EthernetRequest.STOP:
+            self.stop(response)
+        elif msg.body.requestType == EthernetRequest.REPORT:
+            self.report(response)
         else:
             self.log.error("Unexpected Request Type %d" % (msg.body.requestType))
 
-        return ThalesZMQMessage(reply)
+        return ThalesZMQMessage(response)
 
+    ## Starts iperf3 over a specific channel in order to simulate network traffic
+    #  @param   self
     def startiperf(self):
-        ## 'stdbuf -o L' modifies iperf3 to allow easily accessed line buffered output
+        #  'stdbuf -o L' modifies iperf3 to allow easily accessed line buffered output
         self.iperf = subprocess.Popen(
             ["stdbuf", "-o", "L", "/usr/local/bin/iperf3", "-c", self.server, "-f", "m", "-t", "86400"],
             stdout=subprocess.PIPE, bufsize=1)
-        sleep(1)
 
+    ## Runs in thread to continually gather iperf3 data line by line and restarts iperf3 if process ends
+    #  @param   self
     def iperfTracker(self):
-        ## if iperf3 is already running, skip this.  This ensures that iperf3 restarts after it's 86400 second runtime
+        #  If iperf3 is already running, skip this.  This ensures that iperf3 restarts after it's 86400 second runtime
         if self.iperf.poll() is not None:
-           self.startiperf()
+            self.startiperf()
 
         line = self.iperf.stdout.readline()
         stuff = line.split()
 
-        ## if the 8th field of data is "Mbits/sec" and the number of fields is 11(signifying non-total results), then this is the information we want
+        #  If the 8th field of data is "Mbits/sec" and the number of fields is 11(signifying non-total results),
+        #  then this is the information we want
         #  EXAMPLE OUTPUT: [  5]   0.00-1.00   sec  23.0 MBytes   193 Mbits/sec    0    211 KBytes
         if len(stuff) == 11 and stuff[7] == "Mbits/sec":
-            self.ethInfo = "%s %s %s Retries" % (stuff[6], stuff[7], stuff[8])
+            self.bandwidth = float(stuff[6])
+            self.retries += int(stuff[8])
 
-    ## Starts iperf3 over a specific channel in order to simulate network traffic
-    #
-    #  @param     self
-    #  @return    self.report() an EthernetResponse object generated by report() function
-    def start(self):
-        if self.server != None:
-            ## kills any iperf3 instances and waits for pkill to complete
+    ## Cleans up stray iperf3, calls startiperf(), and reports
+    #  @param   self
+    #  @param   response    EthernetResponse object
+    def start(self, response):
+        if self.server != "":
+            #  Kills any iperf3 instances and waits for pkill to complete;
             #  this allows for changes in server ip address if iperf3 is already running
             subprocess.Popen(["pkill", "-9", "iperf3"]).communicate()
 
-            if self._running:
-                return self.report()
+            if not self._running:
+                self.startiperf()
+                self.startThread()
 
-            self.startiperf()
-            self.startThread()
-
-        return self.report()
+        self.report(response)
 
     ## Stops iperf3 over a specific channel
-    #
-    #  @param     self
-    #  @return    self.report() an EthernetResponse object generated by report() function
-    def stop(self):
+    #  @param   self
+    #  @param   response    EthernetResponse object
+    def stop(self, response):
         self._running = False
         subprocess.Popen(["pkill", "-9", "iperf3"]).communicate()
         self.stopThread()
-
-        return self.report()
+        self.report(response)
 
     ## Reports current iperf3 status
-    #
-    #  Stores iperf3 information as a GPB object
-    #
-    #  @param     self
-    #  @return    loadResponse  an EthernetResponse object
-    def report(self):
-        loadResponse = Ethernet_pb2.EthernetResponse()
-
+    #  @param   self
+    #  @param   response    EthernetResponse object
+    def report(self, response):
         if self._running:
-            loadResponse.state = Ethernet_pb2.EthernetResponse.RUNNING
+            response.state = EthernetResponse.RUNNING
         else:
-            loadResponse.state = Ethernet_pb2.EthernetResponse.STOPPED
+            response.state = EthernetResponse.STOPPED
 
-        loadResponse.local = self.chan
-        loadResponse.result = self.ethInfo
+        response.bandwidth = self.bandwidth
+        response.retries = self.retries
 
-        return loadResponse
-
-    ## Attempts to kill processes gracefully
-    #  @param     self
+    ## Attempts to stop instance gracefully
+    #  @param   self
     def terminate(self):
         self._running = False
         subprocess.Popen(["pkill", "-9", "iperf3"]).communicate()
         self.stopThread()
-        sleep(2)

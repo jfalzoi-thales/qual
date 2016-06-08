@@ -16,7 +16,7 @@ message SystemMonitoringResponse {
 	}
 
 	message SwitchData {
-		required string temperture = 1;
+		required string temperature = 1;
 		repeated string statistics = 2;
 	}
 

@@ -4,6 +4,7 @@ import time
 from common.module.module import Module
 from common.gpb.python.RS232_pb2 import RS232Request, RS232Response
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from qual.modules.rs232.rs232_Exception import RS232ModuleSerialException
 
 ## RS-232 Class Module
 #
@@ -14,34 +15,42 @@ class Rs232(Module):
     def __init__(self, config={}):
         ## constructor of the parent class
         super(Rs232, self).__init__(config)
-        ## open a writer serial port
-        self.serWriter = serial.Serial(port=self.config['portwriter'],
-                                      baudrate=self.config['baudrate'],
-                                      parity=self.config['parity'],
-                                      stopbits=self.config['stopbits'],
-                                      bytesize=self.config['bytesize'],
-                                      timeout=0.1,
-                                      rtscts=True)
-        ## open a reader serial port
-        self.serReader = serial.Serial(port=self.config['portreader'],
-                                      baudrate=self.config['baudrate'],
-                                      parity=self.config['parity'],
-                                      stopbits=self.config['stopbits'],
-                                      bytesize=self.config['bytesize'],
-                                      timeout=0.1,
-                                      rtscts=True)
-        ## adding the message handler
-        self.addMsgHandler(RS232Request, self.hdlrMsg)
-        ## thread that writes through RS-232
-        self.addThread(self.rs232Write)
-        ## thread that reads through RS-232
-        self.addThread(self.rs232Read)
-        ## init the application state
-        self.appState = RS232Response.STOPPED
-        ## init match value found
-        self.match = 0
-        ## init mismatch value found
-        self.mismatch = 0
+        try:
+            ## open a writer serial port
+            self.serWriter = serial.Serial(port=self.config['portwriter'],
+                                          baudrate=self.config['baudrate'],
+                                          parity=self.config['parity'],
+                                          stopbits=self.config['stopbits'],
+                                          bytesize=self.config['bytesize'],
+                                          timeout=0.1,
+                                          rtscts=True)
+        except (serial.SerialException, OSError):
+            raise RS232ModuleSerialException(self.config['portwriter'])
+        else:
+            try:
+                ## open a reader serial port
+                self.serReader = serial.Serial(port=self.config['portreader'],
+                                              baudrate=self.config['baudrate'],
+                                              parity=self.config['parity'],
+                                              stopbits=self.config['stopbits'],
+                                              bytesize=self.config['bytesize'],
+                                              timeout=0.1,
+                                              rtscts=True)
+            except (serial.SerialException, OSError):
+                raise RS232ModuleSerialException(self.config['portreader'])
+            else:
+                ## adding the message handler
+                self.addMsgHandler(RS232Request, self.hdlrMsg)
+                ## thread that writes through RS-232
+                self.addThread(self.rs232Write)
+                ## thread that reads through RS-232
+                self.addThread(self.rs232Read)
+                ## init the application state
+                self.appState = RS232Response.STOPPED
+                ## init match value found
+                self.match = 0
+                ## init mismatch value found
+                self.mismatch = 0
 
     @classmethod
     ## Returns the test configurations for that module
@@ -89,6 +98,8 @@ class Rs232(Module):
         if rs232Request.body.requestType == RS232Request.STOP:
             response = self.stop()
         elif rs232Request.body.requestType == RS232Request.RUN:
+            if self.appState == RS232Response.RUNNING:
+                self.stop()
             response = self.start()
         elif rs232Request.body.requestType == RS232Request.REPORT:
             response = self.report()
