@@ -1,4 +1,5 @@
 
+import sys
 import os
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -10,11 +11,13 @@ class InputInfo(object):
     def __init__(self):
         super(InputInfo, self).__init__()
         ## Data is available (has been written but not read)
-        self.dataAvailable = False
+        self.dataAvailable = True
         ## Data word
-        self.data = 0
+        self.data = 0x1EFEFB00 # Start with some bogus data in the buffer
         ## Timestamp
         self.timestamp = 0
+        ## Count of words written; used for error mode
+        self.wordCount = 0
 
 ## ARINC 429 Driver Simulator class
 #
@@ -36,10 +39,13 @@ class InputInfo(object):
 # defines output to input connections, and whenever data is transmitted on an
 # output channel in that table, the data shows up on the linked input channel.
 #
+# Optionally, the simulator may be started with the argument "-e" which enables
+# error introduction mode, which will damage the data value every 10th Tx request.
+#
 class ARINC429DriverSimulator(ThalesZMQServer):
     ## Constructor
     #
-    def __init__(self):
+    def __init__(self, introduceErrors):
         # Make the directory for the IPC link, otherwise ZMQ won't init
         ipcdir = "/tmp/arinc/driver/429"
         if not os.path.exists(ipcdir):
@@ -48,6 +54,9 @@ class ARINC429DriverSimulator(ThalesZMQServer):
         # Now we can init the base class
         super(ARINC429DriverSimulator, self).__init__("ipc:///tmp/arinc/driver/429/device")
         print "Started ARINC429Driver simulator on", self.address
+
+        ## Error introduction mode is enabled
+        self.introduceErrors = introduceErrors
 
         # Dict of input channels with info for each one
         self.inputChannels = {"ARINC_429_RX1": InputInfo(),
@@ -95,7 +104,7 @@ class ARINC429DriverSimulator(ThalesZMQServer):
                 print "RX Request with unknown input channel:", arincReq.channelName
                 arincResp.errorCode = Response.INVALID_CHANNEL
             else:
-                print "RX request:", arincReq.channelName
+                # print "RX request:", arincReq.channelName
                 arincResp.errorCode = Response.NONE
                 arincResp.inputData.overwrite = False
                 inputInfo = self.inputChannels[str(arincReq.channelName)]
@@ -112,12 +121,17 @@ class ARINC429DriverSimulator(ThalesZMQServer):
                 print "TX Request with unknown output channel:", arincReq.channelName
                 arincResp.errorCode = Response.INVALID_CHANNEL
             else:
-                print "TX request:", arincReq.channelName, ":", arincReq.outputData.data[0].data
+                # print "TX request:", arincReq.channelName, ":", arincReq.outputData.data[0].data
                 arincResp.errorCode = Response.NONE
                 # "Write" to each of the linked RX channels
                 for inputName in self.loopbackMap[str(arincReq.channelName)]:
                     inputInfo = self.inputChannels[inputName]
-                    inputInfo.data = arincReq.outputData.data[0].data
+                    inputInfo.wordCount += 1
+                    if self.introduceErrors and inputInfo.wordCount % 10 == 0:
+                        print "Introducing error on channel %s data 0x%x" % (inputName, arincReq.outputData.data[0].data)
+                        inputInfo.data = arincReq.outputData.data[0].data | 0x1FFFFB00
+                    else:
+                        inputInfo.data = arincReq.outputData.data[0].data
                     inputInfo.timestamp = arincReq.outputData.data[0].timestamp
                     inputInfo.dataAvailable = True
 
@@ -131,6 +145,11 @@ class ARINC429DriverSimulator(ThalesZMQServer):
 
 
 if __name__ == "__main__":
-    simulator = ARINC429DriverSimulator()
+    # Command-line argument can be used to specify whether to introduce errors
+    introduceErrors = False
+    if len(sys.argv) > 1 and sys.argv[1] == "-e":
+        print "Error mode enabled: errors will be introduced every 10 words"
+        introduceErrors = True
+    simulator = ARINC429DriverSimulator(introduceErrors)
     simulator.run()
     print "Exit ARINC429Driver simulator"

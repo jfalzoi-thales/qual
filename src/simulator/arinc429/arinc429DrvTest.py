@@ -19,7 +19,7 @@ class ARINC429DriverClient(ThalesZMQClient):
         rxReq = Request()
         rxReq.channelName = channel
         rxReq.type = Request.RECEIVE_DATA
-        print "\nRequest:  Rx", channel
+        print "Request:  Rx", channel, ":"
 
         # Send a request and get the response
         response = self.sendRequest(ThalesZMQMessage(rxReq))
@@ -29,7 +29,15 @@ class ARINC429DriverClient(ThalesZMQClient):
             rxResp = Response()
             rxResp.ParseFromString(response.serializedBody)
             if rxResp.errorCode == Response.NONE:
-                print "Response: Rx", rxResp.channelName, ":", rxResp.inputData
+                if len(rxResp.inputData.data) == 0:
+                    print "Response: Rx %s : No data available" % rxResp.channelName
+                elif len(rxResp.inputData.data) == 1:
+                    print "Response: Rx %s : data 0x%x  timestamp %d" % \
+                          (rxResp.channelName,
+                           rxResp.inputData.data[0].data,
+                           rxResp.inputData.data[0].timestamp)
+                else:
+                    print "Response: Rx", rxResp.channelName, ":", rxResp.inputData
             elif rxResp.errorCode == Response.INVALID_CHANNEL:
                 print "Response: Invalid receive channel", rxResp.channelName
             else:
@@ -48,7 +56,7 @@ class ARINC429DriverClient(ThalesZMQClient):
         word = txReq.outputData.data.add()
         word.data = data
         word.timestamp = int(time.time() * 1000)
-        print "\nRequest:  Tx", channel, ":", data
+        print "Request:  Tx %s : data 0x%x  timestamp %d" % (channel, word.data, word.timestamp)
 
         # Send a request and get the response
         response = self.sendRequest(ThalesZMQMessage(txReq))
@@ -58,7 +66,7 @@ class ARINC429DriverClient(ThalesZMQClient):
             txResp = Response()
             txResp.ParseFromString(response.serializedBody)
             if txResp.errorCode == Response.NONE:
-                print "Response: Tx", txResp.channelName, "OK"
+                print "Response: Tx", txResp.channelName, ": OK"
             elif txResp.errorCode == Response.INVALID_CHANNEL:
                 print "Response: Invalid transmit channel", txResp.channelName
             else:
@@ -74,9 +82,23 @@ if __name__ == "__main__":
     client = ARINC429DriverClient()
 
     # Send some Tx/Rx requests.
-    client.sendTxRequest("ARINC_429_TX1", 12345)
-    client.sendRxRequest("ARINC_429_RX1")
-    client.sendRxRequest("ARINC_429_RX1")
+    print "\nTx request with invalid name:"
     client.sendTxRequest("ARINC_429_BOGUS", 0)
+
+    print "\nRx request with invalid name:"
     client.sendRxRequest("ARINC_429_BOGUS")
+
+    print "\nInitial read to get stale data on the channel, if any:"
+    client.sendRxRequest("ARINC_429_RX1")
+
+    print "\nSend some valid Tx/Rx requests:"
+    for i in range(11):
+        print
+        time.sleep(0.1)
+        client.sendTxRequest("ARINC_429_TX1", (i + 1) << 10)
+        client.sendRxRequest("ARINC_429_RX1")
+
+    print "\nRx without a Tx - should get no data:"
+    client.sendRxRequest("ARINC_429_RX1")
+
 ## @endcond
