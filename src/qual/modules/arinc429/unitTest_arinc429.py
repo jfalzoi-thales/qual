@@ -175,18 +175,6 @@ class Test_ARINC429(unittest.TestCase):
         self.module.msgHandler(ThalesZMQMessage(ARINC429Messages.reportAll()))
         sleep(1)
 
-        log.info("==== Connect linked pair and wait 20s to test Simulator Error Mode ====")
-        self.module.msgHandler(ThalesZMQMessage(ARINC429Messages.connectIn1Out1()))
-        sleep(20)
-
-        log.info("==== Report Results ====")
-        self.module.msgHandler(ThalesZMQMessage(ARINC429Messages.reportIn1()))
-        sleep(1)
-
-        log.info("==== Disconnect linked input ====")
-        self.module.msgHandler(ThalesZMQMessage(ARINC429Messages.disconnectIn1()))
-        sleep(1)
-
         log.info("Terminating module...")
         self.module.terminate()
 
