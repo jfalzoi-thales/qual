@@ -58,8 +58,6 @@ class SSD(Module):
             if self.state == SSDResponse.RUNNING:
                 self.stop()
             response = self.start()
-        elif request.body.requestType == SSDRequest.REPORT:
-            response = self.report()
         else:
             self.__log.info("Unexpected request")
         return ThalesZMQMessage(response)
