@@ -9,7 +9,7 @@ from qual.modules.ssd.ssd import SSD
 
 # @cond doxygen_unittest
 
-## Ethernet Messages
+## SSD Messages
 class SSDMessages(ModuleMessages):
     @staticmethod
     def getMenuTitle():
@@ -33,7 +33,7 @@ class SSDMessages(ModuleMessages):
         return message
 
 
-## Ethernet Unit Test
+## SSD Unit Test
 class Test_SSD(unittest.TestCase):
     ## Basic functionality test for SSD module
     #  @param     self
