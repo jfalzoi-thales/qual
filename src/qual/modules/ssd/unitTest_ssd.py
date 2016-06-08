@@ -34,7 +34,7 @@ class SSDMessages(ModuleMessages):
 
 
 ## Ethernet Unit Test
-class Test_Ethernet(unittest.TestCase):
+class Test_SSD(unittest.TestCase):
     ## Basic functionality test for SSD module
     #  @param     self
     def test_basic(self):

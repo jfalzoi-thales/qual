@@ -61,7 +61,7 @@ class SSD(Module):
         elif request.body.requestType == SSDRequest.REPORT:
             response = self.report()
         else:
-            print "Unexpected request"
+            self.__log.info("Unexpected request")
         return ThalesZMQMessage(response)
 
     ## Starts running FIO tool
