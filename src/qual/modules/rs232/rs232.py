@@ -34,7 +34,7 @@ class Rs232(Module):
                                               parity=self.config['parity'],
                                               stopbits=self.config['stopbits'],
                                               bytesize=self.config['bytesize'],
-                                              timeout=0.1,
+                                              timeout=0.5,
                                               rtscts=True)
             except (serial.SerialException, OSError):
                 raise RS232ModuleSerialException(self.config['portreader'])
@@ -42,9 +42,11 @@ class Rs232(Module):
                 ## adding the message handler
                 self.addMsgHandler(RS232Request, self.hdlrMsg)
                 ## thread that writes through RS-232
-                self.addThread(self.rs232Write)
-                ## thread that reads through RS-232
-                self.addThread(self.rs232Read)
+                self.addThread(self.rs232WriteRead)
+                ## written characteres
+                self.written = 0
+                ## read characteres
+                self.read = 0
                 ## init the application state
                 self.appState = RS232Response.STOPPED
                 ## init match value found
@@ -58,34 +60,9 @@ class Rs232(Module):
     #  @return      test configurations
     def getConfigurations(cls):
         return [
-                {'portwriter': '/dev/ttyUSB4','portreader': '/dev/ttyUSB1', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
+                {'portwriter': '/dev/ttyUSB1','portreader': '/dev/ttyUSB2', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
                 ]
-    ## Opens and writes to the serial port
-    #
-    def rs232Write(self):
-        time.sleep(0.1)
-        self.serWriter.write(self.character)
-        if ord(self.character) + 1 > 255:
-            self.character = chr(0)
-        else:
-            aux = ord(self.character)
-            aux += 1
-            self.character = chr(aux)
-
-    ## Opens and reads from the serial port
-    #
-    def rs232Read(self):
-        read = self.serReader.read()
-        if len(read) > 0:
-            if chr(ord(read)) != chr(self.counter):
-                self.mismatch += 1
-                self.counter = ord(read)+1
-            else:
-                self.match += 1
-                self.counter += 1
-                if self.counter > 255:
-                    self.counter = 0
-
+    
     ## Handles incoming messages
     #
     #  Receives tzmq request and runs requested process
@@ -130,13 +107,13 @@ class Rs232(Module):
     #  @return    self.report() a RS-232 Response object
     def stop(self):
         self._running = False
+        self.stopThread()
         self.appState =RS232Response.STOPPED
+        ##Create the response object
         status = RS232Response()
         status.state = self.appState
         status.matches = self.match
         status.mismatches = self.mismatch
-        self.stopThread()
-        self.counter = self.character
         return status
 
 
@@ -145,8 +122,35 @@ class Rs232(Module):
     #  @param     self
     #  @return    self.report() a RS-232 Response object
     def report(self):
+        ##Create the response object
         status = RS232Response()
         status.state = self.appState
         status.matches = self.match
         status.mismatches = self.mismatch
         return status
+
+    ## Reports match and mismatch data
+    #
+    #  @param     self
+    def rs232WriteRead(self):
+        ## write the character current
+        self.serWriter.write(self.character)
+        self.written += 1
+        ## read the written character
+        chars = self.serReader.read(self.written-self.read)
+        if len(chars) > 0:
+            self.read += 1
+
+        ## check the input
+        for char in chars:
+            if char != self.character:
+                self.mismatch += 1
+            else:
+                self.match += 1
+
+        ## increment the character
+        char = ord(self.character)+1
+        if char > 255:
+            self.character = chr(0)
+        else:
+            self.character = chr(char)
