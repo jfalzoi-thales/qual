@@ -28,6 +28,7 @@ class ARINC429(module.Module):
     #  @param     config  Configuration for this module instance
     def __init__(self, config = {}):
         super(ARINC429, self).__init__({})
+
         ## Named tuple type to store channel info
         self.ChanInfo = collections.namedtuple("ChanInfo", "name chan")
         ## Dict mapping output channels to handler and handler channel name
@@ -51,8 +52,10 @@ class ARINC429(module.Module):
         self.connectionsLock = threading.Lock()
         #  Ensure directory for communication with ARINC429 driver is present
         ipcdir = "/tmp/arinc/driver/429"
+
         if not os.path.exists(ipcdir):
             os.makedirs(ipcdir)
+
         ## Connection to ARINC429 driver
         self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/429/device")
         #  Set up thread to toggle outputs
@@ -141,6 +144,9 @@ class ARINC429(module.Module):
 
             self.connectionsLock.release()
 
+            if len(self.connections) == 0:
+                self.stopThread()
+
             return
 
         self.report(request, response)
@@ -167,8 +173,8 @@ class ARINC429(module.Module):
         status = response.status.add()
         status.sink = inputChan
         status.source = ""
-
         self.connectionsLock.acquire()
+
         if inputChan in self.connections:
             connection = self.connections[inputChan]
             status.source = connection.outputChan
@@ -188,7 +194,7 @@ class ARINC429(module.Module):
     ## Run in a thread to update incremental output
     #  @param  self
     def sendData(self):
-        word = 0
+        words = {}
 
         #  Increments 17 unreserved bits of data up to max and resets
         if self.increment < 131071:
@@ -209,6 +215,7 @@ class ARINC429(module.Module):
             pbit = (pbit & 0x11111111) * 0x11111111
             pbit = (((pbit >> 28) & 1) + 1) & 1
             word = (pbit << 31) + word
+            words[outputChan] = word
             self.transmit(chanInfo.name, word)
 
             for connection in self.connections.values():
@@ -222,7 +229,7 @@ class ARINC429(module.Module):
 
             if reply != -1:
                 connection.rcvCount += 1
-            if reply == -1 or reply != word:
+            if reply == -1 or reply != words[connection.outputChan]:
                 connection.errorCount += 1
 
         #  And release the lock
