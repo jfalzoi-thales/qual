@@ -103,38 +103,22 @@ class SSD(Module):
     #  @param   self
     def deleteConfig(self):
         # Unmount the filesystem if mounted
-        output = subprocess.check_output('mount | fgrep %s || true' % self.__raidFS,
-                                         shell=True)
-        if output != '':
-            self.__log.info("Unmounting existing RAID filesystem")
-            cmd = 'umount %s' % self.__raidFS
-            self.__log.debug(cmd)
-            unmount = subprocess.Popen(cmd,
-                                       stdout=DEVNULL,
-                                       shell=True)
-            unmount.wait()
+        if self.checkIfMounted(self.__raidFS, True):
+            self.__log.info("Unmounting existing RAID volume")
+            self.runCommand('umount %s' % self.__raidFS)
 
             # Be sure it actually unmounted
-            output = subprocess.check_output('mount | fgrep %s || true' % self.__raidFS,
-                                             shell=True)
-            if output != '':
-                raise SSDModuleException(msg="Unable to unmount existing RAID volume")
+            self.checkIfMounted(self.__raidFS, False,
+                                failText="Unable to unmount existing RAID volume")
 
         # Stop RAID configuration and free the devices
         if os.path.exists(self.__raidDev):
             self.__log.info("Deactivating existing RAID volume")
-            cmd = 'mdadm --stop %s --quiet' % self.__raidDev
-            self.__log.debug(cmd)
-            qual0 = subprocess.Popen(cmd,
-                                     stdout=DEVNULL,
-                                     shell=True)
-            qual0.wait()
+            self.runCommand('mdadm --stop %s --quiet' % self.__raidDev,
+                            failText="Unable to deactivate existing RAID volume")
 
             self.__log.info("Zeroing RAID component superblocks")
-            cmd = 'mdadm --zero-superblock %s %s' % (self.__dev0, self.__dev1,)
-            self.__log.debug(cmd)
-            subprocess.call(cmd,
-                            shell=True)
+            self.runCommand('mdadm --zero-superblock %s %s' % (self.__dev0, self.__dev1,))
 
     ## Creates the RAID-0
     #
@@ -148,46 +132,28 @@ class SSD(Module):
             raise SSDModuleException(msg="Unable to open Device: %s" % (self.__dev1,))
 
         # Check that the configured RAID component devices are not mounted
-        output = subprocess.check_output('mount | fgrep %s || true' % self.__dev0,
-                                         shell=True)
-        if output != '':
-            raise SSDModuleException(msg='Configured device %s is already in use' % self.__dev0)
-        output = subprocess.check_output('mount | fgrep %s || true' % self.__dev1,
-                                         shell=True)
-        if output != '':
-            raise SSDModuleException(msg='Configured device %s is already in use' % self.__dev1)
+        self.checkIfMounted(self.__dev0, False,
+                            failText='Configured device %s is already in use' % self.__dev0)
+        self.checkIfMounted(self.__dev1, False,
+                            failText='Configured device %s is already in use' % self.__dev0)
 
         # Zero out beginning of each component device so mdadm doesn't complain
         self.__log.info("Zeroing RAID component headers")
-        cmd = "dd if=/dev/zero of=%s bs=512 count=32" % self.__dev0
-        self.__log.debug(cmd)
-        dd0 = subprocess.Popen(cmd,
-                               stderr=DEVNULL,
-                               shell=True)
-        dd0.wait()
-
-        cmd = "dd if=/dev/zero of=%s bs=512 count=32" % self.__dev1
-        self.__log.debug(cmd)
-        dd1 = subprocess.Popen(cmd,
-                               stderr=DEVNULL,
-                               shell=True)
-        dd1.wait()
+        self.runCommand("dd if=/dev/zero of=%s bs=512 count=32 status=none" % self.__dev0)
+        self.runCommand("dd if=/dev/zero of=%s bs=512 count=32 status=none" % self.__dev1)
 
         # Create the RAID volume
         self.__log.info("Creating RAID volume")
-        cmd = 'mdadm --create %s --run --quiet --level=stripe --raid-devices=2 %s %s' % \
-              (self.__raidDev, self.__dev0, self.__dev1)
-        self.__log.debug(cmd)
-        raid = subprocess.Popen(cmd,
-                                stdout=DEVNULL,
-                                shell=True)
-        raid.wait()
+        self.runCommand('mdadm --create %s --run --quiet --level=stripe --raid-devices=2 %s %s' % \
+                        (self.__raidDev, self.__dev0, self.__dev1),
+                        failText='Unable to create RAID volume')
 
         # Check that RAID volume was successfully created
         if not os.path.exists(self.__raidDev):
             raise SSDModuleException(msg="Unable to create RAID volume")
 
         # Create the partition
+        # TODO: Better way of scripting fdisk than just firing commands at it blindly?
         self.__log.info("Creating RAID partition")
         cmd = 'fdisk %s' % self.__raidDev
         self.__log.debug(cmd)
@@ -214,28 +180,53 @@ class SSD(Module):
 
         # Create the ext4 filesystem and mount it
         self.__log.info("Creating RAID filesystem")
-        cmd = 'mkfs.ext4 -q %s' % raidPart
-        self.__log.debug(cmd)
-        partition = subprocess.Popen(cmd,
-                                     stdout=DEVNULL,
-                                     shell=True)
-        partition.wait()
+        self.runCommand('mkfs.ext4 -q %s' % raidPart,
+                        failText='Unable to create RAID filesystem')
 
+        # Create the mount point if not present
         if not os.path.exists(self.__raidFS):
             os.makedirs(self.__raidFS)
 
         self.__log.info("Mounting RAID filesystem")
-        cmd = 'mount -t ext4 --rw %s %s' % (raidPart, self.__raidFS)
-        self.__log.debug(cmd)
-        subprocess.call(cmd,
-                        stdout=DEVNULL,
-                        shell=True)
+        self.runCommand('mount -t ext4 --rw %s %s' % (raidPart, self.__raidFS),
+                        failText='Unable to mount the RAID partition.')
 
         # Check that filesystem was successfully mounted
-        output = subprocess.check_output('mount | fgrep %s || true' % self.__raidFS,
+        self.checkIfMounted(self.__raidFS, True,
+                            failText='Unable to mount the RAID partition.')
+
+    ## Runs a command, and can raise an exception if the command fails
+    #
+    #  @param   self
+    #  @param   cmd       Command to run (single string, will be run with shell=True)
+    #  @param   failText  Text to include in exception; if not provided, exception will not be raised
+    def runCommand(self, cmd, failText=''):
+        self.__log.debug(cmd)
+        rc = subprocess.call(cmd,
+                             stdout=DEVNULL,
+                             shell=True)
+        self.__log.debug("Command return code: %d" % rc)
+        if rc != 0 and failText != '':
+            raise SSDModuleException(msg=failText)
+
+    ## Check to see if a filesystem is mounted or not, and raise exception
+    #
+    #  @param   self
+    #  @param   fs        Device name or mount point of filesystem to search for
+    #  @param   mounted   Expect filesystem to be mounted or not
+    #  @param   failText  Text to include in exception; if not provided, exception will not be raised
+    #  @return  True if mounted, False if not
+    def checkIfMounted(self, fs, mounted, failText=''):
+        self.__log.debug("Checking if filesystem %s %s mounted" % (fs, "is" if mounted else "is not"))
+        cmd = 'mount | fgrep %s || true' % fs
+        self.__log.debug(cmd)
+        output = subprocess.check_output(cmd,
                                          shell=True)
-        if output == '':
-            raise SSDModuleException(msg='Unable to mount the partition.')
+        self.__log.debug("Command returned: %s" % output)
+        isMounted = output != ''
+        if isMounted != mounted and failText != '':
+            raise SSDModuleException(msg=failText)
+        return isMounted
 
     ## Creates config file for FIO tool
     #
