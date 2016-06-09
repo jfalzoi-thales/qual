@@ -1,13 +1,13 @@
 import unittest
 from time import sleep
 
-import CPULoading
+import cpuLoading
 from common.gpb.python.CPULoading_pb2 import CPULoadingRequest
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.logger.logger import Logger
 from common.module.modulemsgs import ModuleMessages
 
-# @cond doxygen_unittest
+#  @cond doxygen_unittest
 
 ## CPULoading Messages
 class CPULoadingMessages(ModuleMessages):
@@ -53,7 +53,8 @@ class Test_CPULoading(unittest.TestCase):
         log = Logger(name='Test CPU Loading')
         log.info('Running functionality test for CPULoading module:')
 
-        self.module = CPULoading.CPULoading()
+        self.module = cpuLoading.CPULoading()
+        sleep(1)
 
         log.info("REPORT before CPU load:")
         self.module.msgHandler(ThalesZMQMessage(CPULoadingMessages.report()))
