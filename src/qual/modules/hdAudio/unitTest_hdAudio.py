@@ -26,7 +26,7 @@ class HDAudioMessages(ModuleMessages):
     def connectTest1():
         message = HDAudioRequest()
         message.requestType = HDAudioRequest.CONNECT
-        message.source='braindamage.wav'
+        message.source='/HDAudio/braindamage.wav'
         message.volume=100
         return message
 
@@ -34,7 +34,7 @@ class HDAudioMessages(ModuleMessages):
     def connectTest2():
         message = HDAudioRequest()
         message.requestType = HDAudioRequest.CONNECT
-        message.source='comfortablynumb.wav'
+        message.source='/HDAudio/comfortablynumb.wav'
         message.volume=50
         return message
 
