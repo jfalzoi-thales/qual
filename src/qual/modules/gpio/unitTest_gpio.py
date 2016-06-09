@@ -23,7 +23,7 @@ class GPIOMessages(ModuleMessages):
                 ("Connect input 1 to output 1",    GPIOMessages.connectIn1Out1),
                 ("Connect input 2 to output 1",    GPIOMessages.connectIn2Out1),
                 ("Connect input 2 to output 2",    GPIOMessages.connectIn2Out2),
-                ("Connect all inputs to output 3", GPIOMessages.connectIn1Out1),
+                ("Connect all inputs to output 3", GPIOMessages.connectInAllOut3),
                 ("Disconnect input 1",             GPIOMessages.disconnectIn1),
                 ("Disconnect all inputs",          GPIOMessages.disconnectAll)]
 

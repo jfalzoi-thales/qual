@@ -32,11 +32,10 @@ class Ethernet(Module):
         self.bandwidth = 0.0
         ## Cumulative number of retries over iperf3 run
         self.retries = 0
-
-        #  Adds handler to available message handlers
-        self.addMsgHandler(EthernetRequest, self.handler)
         #  Enables the use of iperfTraker() as a thread
         self.addThread(self.iperfTracker)
+        #  Adds handler to available message handlers
+        self.addMsgHandler(EthernetRequest, self.handler)
 
     ## Handles incoming tzmq messages
     #  @param     self
