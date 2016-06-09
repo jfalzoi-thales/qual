@@ -24,8 +24,7 @@ class SSD(Module):
         ## logs
         self.__log = Logger("SSD Module", level=INFO)
         ## Devices
-        self.__dev0 = config['dev0']
-        self.__dev1 = config['dev1']
+        self.__devices = config['devices']
         ## RAID device
         self.__raidDev = "/dev/md/qual0"
         ## RAID filesystem mount point
@@ -48,7 +47,7 @@ class SSD(Module):
     #  @return      test configurations
     def getConfigurations(cls):
         return [
-                {'dev0':'/dev/sdb1', 'dev1':'/dev/sdc1'},
+                {'devices':('/dev/sdb1', '/dev/sdc1', '/dev/sdd1', '/dev/sde1')},
                 ]
 
     ## Handles incoming messages
@@ -118,34 +117,32 @@ class SSD(Module):
                             failText="Unable to deactivate existing RAID volume")
 
             self.__log.info("Zeroing RAID component superblocks")
-            self.runCommand('mdadm --zero-superblock %s %s' % (self.__dev0, self.__dev1,))
+            for dev in self.__devices:
+                self.runCommand('mdadm --zero-superblock %s' % dev)
 
     ## Creates the RAID-0
     #
     #  @param   self
     def raid0(self):
         # Check that configured RAID component devices exist
-        # TODO: Support more than two devices
-        if not os.path.exists(self.__dev0):
-            raise SSDModuleException(msg="Unable to open Device: %s" % (self.__dev0,))
-        elif not os.path.exists(self.__dev1):
-            raise SSDModuleException(msg="Unable to open Device: %s" % (self.__dev1,))
+        for dev in self.__devices:
+            if not os.path.exists(dev):
+                raise SSDModuleException(msg="Configured device %s not present" % dev)
 
         # Check that the configured RAID component devices are not mounted
-        self.checkIfMounted(self.__dev0, False,
-                            failText='Configured device %s is already in use' % self.__dev0)
-        self.checkIfMounted(self.__dev1, False,
-                            failText='Configured device %s is already in use' % self.__dev0)
+        for dev in self.__devices:
+            self.checkIfMounted(dev, False,
+                                failText='Configured device %s is already in use' % dev)
 
         # Zero out beginning of each component device so mdadm doesn't complain
         self.__log.info("Zeroing RAID component headers")
-        self.runCommand("dd if=/dev/zero of=%s bs=512 count=32 status=none" % self.__dev0)
-        self.runCommand("dd if=/dev/zero of=%s bs=512 count=32 status=none" % self.__dev1)
+        for dev in self.__devices:
+            self.runCommand("dd if=/dev/zero of=%s bs=512 count=32 status=none" % dev)
 
         # Create the RAID volume
         self.__log.info("Creating RAID volume")
-        self.runCommand('mdadm --create %s --run --quiet --level=stripe --raid-devices=2 %s %s' % \
-                        (self.__raidDev, self.__dev0, self.__dev1),
+        self.runCommand('mdadm --create %s --run --quiet --level=stripe --raid-devices=%d %s' % \
+                        (self.__raidDev, len(self.__devices), " ".join(self.__devices)),
                         failText='Unable to create RAID volume')
 
         # Check that RAID volume was successfully created

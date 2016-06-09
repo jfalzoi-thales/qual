@@ -6,6 +6,7 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.logger.logger import Logger
 from common.module.modulemsgs import ModuleMessages
 from qual.modules.ssd.ssd import SSD
+from qual.modules.ssd.ssd_Exception import SSDModuleException
 
 # @cond doxygen_unittest
 
@@ -39,7 +40,11 @@ class Test_SSD(unittest.TestCase):
     #  @param     self
     def test_basic(self):
         log = Logger(name='SSD Module Test')
-        self.module = SSD(config=SSD.getConfigurations()[0])
+        try:
+            self.module = SSD(config=SSD.getConfigurations()[0])
+        except SSDModuleException as e:
+            log.error("Unable to create instance of SSD: %s" % e.msg)
+            return
 
         log.info("RUN FIO tool")
         self.module.msgHandler(ThalesZMQMessage(SSDMessages.run()))

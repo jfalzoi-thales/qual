@@ -47,7 +47,7 @@ class QualTestApp(ThalesZMQServer):
                 if self.__instances.has_key(className):
                     try:
                         obj = _class(config)
-                    except ModuleException:
+                    except ModuleException as e:
                         self.log.error("Unable to create instance of %s, Error msg: %s" % (className, e.msg,))
                     else:
                         self.log.info("Created instance of %s" % className)
