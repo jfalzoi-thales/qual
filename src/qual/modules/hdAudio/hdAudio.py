@@ -15,8 +15,6 @@ class HDAudio(Module):
     #  @param     config  Configuration for this module instance
     def __init__(self, config={}):
         super(HDAudio, self).__init__({})
-        ## Log for this module
-        self.__log = Logger(name='HD Audio', level=DEBUG)
         ## Add Audio Message handler
         self.addMsgHandler(HDAudioRequest, self.handler)
         ## Add the thread that will play the audio
