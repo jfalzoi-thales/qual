@@ -1,5 +1,5 @@
 import collections
-from time import time
+from time import time, sleep
 import threading
 import os
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
@@ -28,8 +28,6 @@ class ARINC429(module.Module):
     #  @param     config  Configuration for this module instance
     def __init__(self, config = {}):
         super(ARINC429, self).__init__({})
-        ## Add handler to available message handlers
-        self.addMsgHandler(ARINC429Request, self.handler)
         ## Named tuple type to store channel info
         self.ChanInfo = collections.namedtuple("ChanInfo", "name chan")
         ## Dict mapping output channels to handler and handler channel name
@@ -46,12 +44,12 @@ class ARINC429(module.Module):
                           "ARINC_429_RX6":  self.ChanInfo("ARINC_429_RX6", 5),
                           "ARINC_429_RX7":  self.ChanInfo("ARINC_429_RX7", 6)}
         ## Counter for data incrementing
-        self.output = 0
+        self.increment = 0
         ## Dict of connections; key is input channel, value is a ConnectionInfo object
         self.connections = {}
         ## Lock for access to connections dict
         self.connectionsLock = threading.Lock()
-        #  Ensure directory for communication with ARINC717 driver is present
+        #  Ensure directory for communication with ARINC429 driver is present
         ipcdir = "/tmp/arinc/driver/429"
         if not os.path.exists(ipcdir):
             os.makedirs(ipcdir)
@@ -59,6 +57,8 @@ class ARINC429(module.Module):
         self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/429/device")
         #  Set up thread to toggle outputs
         self.addThread(self.sendData)
+        #  Add handler to available message handlers
+        self.addMsgHandler(ARINC429Request, self.handler)
 
     ## Handles incoming request messages
     #  @param    self
@@ -101,6 +101,8 @@ class ARINC429(module.Module):
 
             for inputChan in self.inputChans.keys():
                 self.connections[inputChan] = ConnectionInfo(str(request.source))
+                #  Clear out any old driver responses
+                self.receive(inputChan)
 
             self.connectionsLock.release()
         elif str(request.sink) not in self.connections:
@@ -139,6 +141,8 @@ class ARINC429(module.Module):
 
             self.connectionsLock.release()
 
+            return
+
         self.report(request, response)
 
     ## Handles ARINC429 requests with requestType of REPORT
@@ -164,6 +168,7 @@ class ARINC429(module.Module):
         status.sink = inputChan
         status.source = ""
 
+        self.connectionsLock.acquire()
         if inputChan in self.connections:
             connection = self.connections[inputChan]
             status.source = connection.outputChan
@@ -178,24 +183,26 @@ class ARINC429(module.Module):
             status.rcvCount = 0
             status.errorCount = 0
 
+        self.connectionsLock.release()
+
     ## Run in a thread to update incremental output
     #  @param  self
     def sendData(self):
         word = 0
 
         #  Increments 17 unreserved bits of data up to max and resets
-        if self.output < 131071:
-            self.output += 1
+        if self.increment < 131071:
+            self.increment += 1
         else:
-            self.output = 0
+            self.increment = 0
 
         #  Get connections lock before accessing connections.
         self.connectionsLock.acquire()
 
-        #  For each unique output channel in the connection list, set the new state
+        #  For each unique output channel in the connection list, send a word of data
         for outputChan in {c.outputChan for c in self.connections.values()}:
             chanInfo = self.outputChans[outputChan]
-            word = (chanInfo.chan << 27) + (self.output << 10)
+            word = (chanInfo.chan << 27) + (self.increment << 10)
             #  Parity bit calculation
             pbit = word^(word >> 1)
             pbit ^= pbit >> 2
@@ -211,14 +218,18 @@ class ARINC429(module.Module):
         #  For each input channel in the connection list, get its value and increment matches/mismatches
         for inputChan, connection in self.connections.items():
             chanInfo = self.inputChans[inputChan]
+            reply = self.receive(chanInfo.name)
 
-            if self.receive(chanInfo.name) == word:
+            if reply != -1:
                 connection.rcvCount += 1
-            else:
+            if reply == -1 or reply != word:
                 connection.errorCount += 1
 
         #  And release the lock
         self.connectionsLock.release()
+        #  If this task is too slow, decrease this delay
+        #  Without this delay, sendData is capable of re-acquiring lock before other blocked functions
+        sleep(.00001)
 
     ## Sends a transmit request to the ARINC429 Driver
     #  @param  self
@@ -265,11 +276,11 @@ class ARINC429(module.Module):
                 if rxResp.inputData.data:
                     return rxResp.inputData.data[0].data
                 else:
-                    return
+                    return -1
 
         self.log.error("Error return from GPIO Manager for channel %s" % chanName)
 
-        return False
+        return -1
 
     ## Attempts to kill processes gracefully
     #  @param     self

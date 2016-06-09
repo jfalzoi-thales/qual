@@ -18,12 +18,12 @@ class ARINC429Messages(ModuleMessages):
     @staticmethod
     def getMenuItems():
         return [("Report for input 1",             ARINC429Messages.reportIn1),
-                ("Report for input 2",             ARINC429Messages.reportIn2),
+                ("Report for input 3",             ARINC429Messages.reportIn3),
                 ("Report for all inputs",          ARINC429Messages.reportAll),
                 ("Connect input 1 to output 1",    ARINC429Messages.connectIn1Out1),
-                ("Connect input 2 to output 1",    ARINC429Messages.connectIn2Out1),
-                ("Connect input 2 to output 2",    ARINC429Messages.connectIn2Out2),
-                ("Connect all inputs to output 3", ARINC429Messages.connectIn1Out1),
+                ("Connect input 3 to output 1",    ARINC429Messages.connectIn3Out1),
+                ("Connect input 3 to output 2",    ARINC429Messages.connectIn3Out2),
+                ("Connect all inputs to output 3", ARINC429Messages.connectInAllOut3),
                 ("Disconnect input 1",             ARINC429Messages.disconnectIn1),
                 ("Disconnect all inputs",          ARINC429Messages.disconnectAll)]
 
@@ -35,7 +35,7 @@ class ARINC429Messages(ModuleMessages):
         return message
 
     @staticmethod
-    def reportIn2():
+    def reportIn3():
         message = ARINC429Request()
         message.requestType = ARINC429Request.REPORT
         message.sink = "ARINC_429_RX2"
@@ -57,18 +57,18 @@ class ARINC429Messages(ModuleMessages):
         return message
 
     @staticmethod
-    def connectIn2Out1():
+    def connectIn3Out1():
         message = ARINC429Request()
         message.requestType = ARINC429Request.CONNECT
-        message.sink = "ARINC_429_RX2"
+        message.sink = "ARINC_429_RX3"
         message.source = "ARINC_429_TX1"
         return message
 
     @staticmethod
-    def connectIn2Out2():
+    def connectIn3Out2():
         message = ARINC429Request()
         message.requestType = ARINC429Request.CONNECT
-        message.sink = "ARINC_429_RX2"
+        message.sink = "ARINC_429_RX3"
         message.source = "ARINC_429_TX2"
         return message
 
@@ -115,7 +115,6 @@ class ARINC429Messages(ModuleMessages):
     def __init__(self):
         super(ARINC429Messages, self).__init__()
 
-
 ## ARINC429 Unit Test
 class Test_ARINC429(unittest.TestCase):
     def test_basic(self):
@@ -131,24 +130,24 @@ class Test_ARINC429(unittest.TestCase):
         self.module.msgHandler(ThalesZMQMessage(ARINC429Messages.connectIn1Out1()))
         sleep(1)
 
-        log.info("==== Connect second pin to same output ====")
-        self.module.msgHandler(ThalesZMQMessage(ARINC429Messages.connectIn2Out1()))
+        log.info("==== Connect third channel to same output ====")
+        self.module.msgHandler(ThalesZMQMessage(ARINC429Messages.connectIn3Out1()))
         sleep(1)
 
-        log.info("==== Try to reconnect connected pin ====")
-        self.module.msgHandler(ThalesZMQMessage(ARINC429Messages.connectIn2Out2()))
+        log.info("==== Try to reconnect connected channel ====")
+        self.module.msgHandler(ThalesZMQMessage(ARINC429Messages.connectIn3Out2()))
         sleep(1)
 
-        log.info("==== Bogus input pin specified ====")
+        log.info("==== Bogus input channel specified ====")
         self.module.msgHandler(ThalesZMQMessage(ARINC429Messages.connectInBogus()))
         sleep(1)
 
-        log.info("==== Bogus output pin specified ====")
+        log.info("==== Bogus output channel specified ====")
         self.module.msgHandler(ThalesZMQMessage(ARINC429Messages.connectOutBogus()))
         sleep(1)
 
         log.info("==== Report on non-linked input ====")
-        self.module.msgHandler(ThalesZMQMessage(ARINC429Messages.reportIn2()))
+        self.module.msgHandler(ThalesZMQMessage(ARINC429Messages.reportIn3()))
         sleep(1)
 
         log.info("==== Report on all inputs ====")
