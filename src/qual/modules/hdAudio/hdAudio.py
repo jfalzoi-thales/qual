@@ -48,10 +48,10 @@ class HDAudio(Module):
             try:
                 ## Check if the volume is in a correct range
                 if request.volume < 0 or request.volume > 100:
-                    self.__log.warning('Invalid volume range. Changed to 100.')
+                    self.log.warning('Invalid volume range. Changed to 100.')
                     request.volume = 100
             except ValueError:
-                self.__log.warning('Wrong message value. Changed to 100.')
+                self.log.warning('Wrong message value. Changed to 100.')
                 request.volume = 100
             ## Start the module
             response = self.start(request.source, request.volume)
