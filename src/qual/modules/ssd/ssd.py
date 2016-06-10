@@ -132,6 +132,9 @@ class SSD(Module):
             self.checkIfMounted(dev, False,
                                 failText='Configured device %s is already in use' % dev)
 
+        # Checks are done, let's get started!
+        self.log.info('Initializing the SSD file system, this may take some time...')
+
         # Zero out beginning of each component device so mdadm doesn't complain
         self.log.info("Zeroing RAID component headers")
         for dev in self.__devices:
@@ -248,7 +251,6 @@ class SSD(Module):
     #
     #  @param   self
     def initFS(self):
-        self.log.info('Initializing the SSD file system, this may take some time...')
         # Delete the previous RAID config if exists
         self.deleteConfig()
         # Create the RAID configuration
