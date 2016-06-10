@@ -122,17 +122,6 @@ class SSD(Module):
     #
     #  @param   self
     def raid0(self):
-        # Check that configured RAID component devices exist
-        for dev in self.__devices:
-            if not os.path.exists(dev):
-                raise SSDModuleException(msg="Configured device %s not present" % dev)
-
-        # Check that the configured RAID component devices are not mounted
-        for dev in self.__devices:
-            self.checkIfMounted(dev, False,
-                                failText='Configured device %s is already in use' % dev)
-
-        # Checks are done, let's get started!
         self.log.info('Initializing the SSD file system, this may take some time...')
 
         # Zero out beginning of each component device so mdadm doesn't complain
@@ -251,6 +240,16 @@ class SSD(Module):
     #
     #  @param   self
     def initFS(self):
+        # Check that configured RAID component devices exist
+        for dev in self.__devices:
+            if not os.path.exists(dev):
+                raise SSDModuleException(msg="Configured device %s not present" % dev)
+
+        # Check that the configured RAID component devices are not mounted
+        for dev in self.__devices:
+            self.checkIfMounted(dev, False,
+                                failText='Configured device %s is already in use' % dev)
+
         # Delete the previous RAID config if exists
         self.deleteConfig()
         # Create the RAID configuration
