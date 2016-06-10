@@ -1,5 +1,6 @@
 
 import zmq
+from common.logger.logger import Logger
 from common.gpb.python.ErrorMessage_pb2 import ErrorMessage
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
@@ -15,10 +16,16 @@ class ThalesZMQServer(object):
     # @param address ZMQ address string for socket to bind to
     #
     def __init__(self, address):
+        ## Logger implementation, based on standard python logger
+        self.log = Logger(type(self).__name__)
+        ## ZMQ address for socket to bind to
         self.address = address
+        ## ZMQ context
         self.zcontext = zmq.Context.instance()
+        ## ZMQ socket
         self.zsocket = self.zcontext.socket(zmq.REP)
         self.zsocket.bind(self.address)
+        self.log.info("Listening for GPB requests on %s" % self.address)
 
     ## Starts up a loop that handles requests.
     #
@@ -38,7 +45,7 @@ class ThalesZMQServer(object):
             if len(requestData) >= 3:
                 # If message has more than 3 parts, log a warning, but proceed anyway
                 if len(requestData) > 3:
-                    print "Warning: received request message with", len(requestData), "parts"
+                    self.log.warning("Received GPB message with %d parts" % len(requestData))
 
                 # Package request data into a message object
                 request = ThalesZMQMessage(name=str(requestData[0]))
@@ -48,7 +55,7 @@ class ThalesZMQServer(object):
                 # Hand the request off to to HandleRequest(), which will return the response
                 response = self.handleRequest(request)
             else:
-                print "Malformed message received; ignoring"
+                self.log.error("Malformed GPB message received; ignoring")
                 response = self.getMalformedMessageErrorResponse()
 
             # Send the response message back to the client.

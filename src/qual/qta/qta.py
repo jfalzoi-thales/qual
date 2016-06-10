@@ -1,6 +1,6 @@
 
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
-from common.logger.logger import Logger
+from common.tzmq.JsonZMQServer import JsonZMQServer
 from common.classFinder.classFinder import ClassFinder
 from common.module.module import Module
 from common.module.exception import ModuleException
@@ -18,24 +18,23 @@ from google.protobuf.message import Message
 #
 class QualTestApp(ThalesZMQServer):
     ## Constructor
-    # @attrib : modInstances The map of {<class>:[<instances>...]}
-    # @attrib : module Classes
-    # @attrib : gpb Classes
+    # @param ip   IP address to listen on
+    # @param port TCP port to listen on
     def __init__(self, ip='*', port=50001):
-        self.__instances = {}
-
-        #  Address to be bended
+        # Construct address to listen on
         address = str.format('tcp://{}:{}',ip, port)
+
+        # Init the superclass
         super(QualTestApp, self).__init__(address=address)
 
-        # Set up a logger
-        self.log = Logger(name='QTA')
+        ## Map of {<class>:[<instances>...]}
+        self.__instances = {}
 
-        #  All available classes in QUAL modules for QTA,
+        ## All available classes in QUAL modules for QTA
         self.__modClasses = ClassFinder(rootPath='qual.modules',
                                         baseClass=Module)
 
-        #  All available classes in GPB modules for QTA,
+        ## All available classes in GPB modules for QTA
         self.__gpbClasses = ClassFinder(rootPath='common.gpb.python',
                                         baseClass=Message)
 
@@ -48,7 +47,7 @@ class QualTestApp(ThalesZMQServer):
                     try:
                         obj = _class(config)
                     except ModuleException as e:
-                        self.log.error("Unable to create instance of %s, Error msg: %s" % (className, e.msg,))
+                        self.log.error("Unable to create instance of %s: %s" % (className, e.msg,))
                     else:
                         self.log.info("Created instance of %s" % className)
                         self.__instances[className].append(obj)
@@ -56,7 +55,7 @@ class QualTestApp(ThalesZMQServer):
                     try:
                         obj = _class(config)
                     except ModuleException as e:
-                        self.log.error("Unable to create instance of %s, Error msg: %s" % (className, e.msg,))
+                        self.log.error("Unable to create instance of %s: %s" % (className, e.msg,))
                     else:
                         self.log.info("Created instance of %s" % className)
                         self.__instances[className] = [obj]
@@ -105,7 +104,38 @@ class QualTestApp(ThalesZMQServer):
         # Return the response so that it will get sent back to the client
         return response
 
+
+# Class to set up a listener for JSON messages and hand them off to the main QTA class
+class QtaJsonHelper(JsonZMQServer):
+    ## Constructor
+    # @param qta  The main QTA instance this will be linked to
+    # @param ip   IP address to listen on
+    # @param port TCP port to listen on
+    def __init__(self, qta, ip='*', port=50002):
+        ## QTA instance we will be linked to
+        self.qta = qta
+
+        #  Address to listen on
+        address = str.format('tcp://{}:{}',ip, port)
+
+        # Init the superclass
+        super(QtaJsonHelper, self).__init__(address=address)
+
+    ## Called by base class when a request is received from a client.
+    #
+    # @param request ThalesZMQMessage containing received request
+    # @return        ThalesZMQMessage response to send back to the client
+    def handleRequest(self, request):
+        # Just hand off to the QTA request handler and return its response
+        return self.qta.handleRequest(request)
+
+
 if __name__ == "__main__":
-    # Create a QTA instance and start it running
+    # Create a QTA instance and the JSON helper
     qta = QualTestApp()
-    qta.run()
+    jsonHelper = QtaJsonHelper(qta)
+
+    # For now, can only run QTA (handles GPB messages) or helper (handles JSON messages)
+    # TODO: Run the JSON helper in a thread, and set up locking in qta.handleRequest()
+    #qta.run()
+    jsonHelper.run()
