@@ -26,12 +26,12 @@ class JsonZMQServer(object):
         ## ZMQ socket
         self.zsocket = self.zcontext.socket(zmq.REP)
         self.zsocket.bind(self.address)
-        self.log.info("Listening for JSON requests on %s" % self.address)
 
     ## Starts up a loop that handles requests.
     #
     # Will only return if canceled (e.g. Ctrl-C).
     def run(self):
+        self.log.info("Listening for JSON requests on %s" % self.address)
         while True:
             # This will block waiting for a request
             try:

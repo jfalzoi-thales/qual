@@ -25,13 +25,13 @@ class ThalesZMQServer(object):
         ## ZMQ socket
         self.zsocket = self.zcontext.socket(zmq.REP)
         self.zsocket.bind(self.address)
-        self.log.info("Listening for GPB requests on %s" % self.address)
 
     ## Starts up a loop that handles requests.
     #
     # Will only return if canceled (e.g. Ctrl-C).
     #
     def run(self):
+        self.log.info("Listening for GPB requests on %s" % self.address)
         while True:
             # This will block waiting for a request
             try:
@@ -47,8 +47,12 @@ class ThalesZMQServer(object):
                 if len(requestData) > 3:
                     self.log.warning("Received GPB message with %d parts" % len(requestData))
 
+                # Request class name is in first part
+                reqName = str(requestData[0])
+                self.log.debug("Received GPB %s" % reqName)
+
                 # Package request data into a message object
-                request = ThalesZMQMessage(name=str(requestData[0]))
+                request = ThalesZMQMessage(name=reqName)
                 request.header.ParseFromString(requestData[1])
                 request.serializedBody = requestData[2]
 
@@ -61,6 +65,7 @@ class ThalesZMQServer(object):
             # Send the response message back to the client.
             # Thales message is a multipart message made up of string name,
             # serialized header, and serialized body
+            self.log.debug("Sending GPB %s" % response.name)
             self.zsocket.send_multipart((response.name, response.serializedHeader, response.serializedBody))
 
     ## Called when a request is received from a client.
