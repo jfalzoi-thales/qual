@@ -34,7 +34,7 @@ class Rs232(Module):
                                               parity=self.config['parity'],
                                               stopbits=self.config['stopbits'],
                                               bytesize=self.config['bytesize'],
-                                              timeout=0.5,
+                                              timeout=0.01,
                                               rtscts=True)
             except (serial.SerialException, OSError):
                 raise RS232ModuleSerialException(self.config['portreader'])
@@ -62,7 +62,7 @@ class Rs232(Module):
         return [
                 {'portwriter': '/dev/ttyUSB1','portreader': '/dev/ttyUSB2', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
                 ]
-    
+
     ## Handles incoming messages
     #
     #  Receives tzmq request and runs requested process
@@ -134,23 +134,23 @@ class Rs232(Module):
     #  @param     self
     def rs232WriteRead(self):
         ## write the character current
-        self.serWriter.write(self.character)
+        written = chr(self.written % 256)
+        self.serWriter.write(written)
         self.written += 1
-        ## read the written character
-        chars = self.serReader.read(self.written-self.read)
-        if len(chars) > 0:
-            self.read += 1
 
-        ## check the input
-        for char in chars:
-            if char != self.character:
+        ## read all written characters
+        chars = []
+        while True:
+            char = self.serReader.read()
+            if char:
+                chars.append(char)
+            else:
+                break
+        self.read += len(chars)
+
+        for index,char in enumerate(chars):
+            expected =  (self.written - (len(chars)) + index) % 256
+            if ord(char) != expected:
                 self.mismatch += 1
             else:
                 self.match += 1
-
-        ## increment the character
-        char = ord(self.character)+1
-        if char > 255:
-            self.character = chr(0)
-        else:
-            self.character = chr(char)
