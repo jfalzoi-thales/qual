@@ -1,4 +1,5 @@
 
+from threading import Thread, Lock
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 from common.tzmq.JsonZMQServer import JsonZMQServer
 from common.classFinder.classFinder import ClassFinder
@@ -38,6 +39,9 @@ class QualTestApp(ThalesZMQServer):
         self.__gpbClasses = ClassFinder(rootPath='common.gpb.python',
                                         baseClass=Message)
 
+        ## Lock for access to handler
+        self.handlerLock = Lock()
+
         #  Create instances for each possible configuration
         for className in self.__modClasses.classmap.keys():
             _class = self.__modClasses.getClassByName(className)
@@ -67,6 +71,9 @@ class QualTestApp(ThalesZMQServer):
     # @param request ThalesZMQMessage containing received request
     # @return        ThalesZMQMessage response to send back to the client
     def handleRequest(self, request):
+        # Whole function is inside lock because both GPB and JSON servers use it
+        self.handlerLock.acquire()
+
         # This will be the response we send back; set to None until someone handles the request
         response = None
 
@@ -100,6 +107,9 @@ class QualTestApp(ThalesZMQServer):
         if response is None:
             self.log.warning("No handler for received message of class: %s" % request.name)
             response = self.getUnsupportedMessageErrorResponse()
+
+        # Whole function is inside lock because both GPB and JSON servers use it
+        self.handlerLock.release()
 
         # Return the response so that it will get sent back to the client
         return response
@@ -135,7 +145,9 @@ if __name__ == "__main__":
     qta = QualTestApp()
     jsonHelper = QtaJsonHelper(qta)
 
-    # For now, can only run QTA (handles GPB messages) or helper (handles JSON messages)
-    # TODO: Run the JSON helper in a thread, and set up locking in qta.handleRequest()
-    #qta.run()
-    jsonHelper.run()
+    # Create a thread for the JSON helper (handles JSON messages)
+    thread = Thread(target=jsonHelper.run, name="QtaJsonHelper")
+    thread.start()
+
+    # Start the QTA running (handles GPB messages) - function won't return
+    qta.run()
