@@ -86,12 +86,12 @@ class ARINC717DriverSimulator(ThalesZMQServer):
                 responseMsg.errorCode = Response.INVALID_REQ
 
             # Send response back to client
-            self.sendResponse(ThalesZMQMessage(responseMsg))
+            return ThalesZMQMessage(responseMsg)
 
         else:
             print "Error! Unknown request type"
             # Send "Unsupported Message" error back to client
-            self.sendUnsupportedMessageErrorResponse()
+            return self.getUnsupportedMessageErrorResponse()
 
     def genSubFrame(self, subFrameNum):
         # Frame sync codes are defined by ARINC 717 standard

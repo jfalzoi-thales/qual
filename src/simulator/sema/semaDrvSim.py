@@ -74,12 +74,12 @@ class SEMADriverSimulator(ThalesZMQServer):
                 responseMsg.error = ResponseMessage.INVALID_NAME
 
             # Send response back to client
-            self.sendResponse(ThalesZMQMessage(responseMsg))
+            return ThalesZMQMessage(responseMsg)
 
         else:
             print "Error! Unknown request type"
             # Send "Unsupported Message" error back to client
-            self.sendUnsupportedMessageErrorResponse()
+            return self.getUnsupportedMessageErrorResponse()
 
 
 if __name__ == "__main__":

@@ -80,10 +80,10 @@ class ARINC429DriverSimulator(ThalesZMQServer):
     def handleRequest(self, request):
         # Route messages based on type
         if request.name == "Request":
-            self.handleARINC429Req(request)
+            return self.handleARINC429Req(request)
         else:
             print "Error! Unsupported request type"
-            self.sendUnsupportedMessageErrorResponse()
+            return self.getUnsupportedMessageErrorResponse()
 
     ## Handle request of type "Request"
     #
@@ -141,7 +141,7 @@ class ARINC429DriverSimulator(ThalesZMQServer):
             arincResp.errorCode = Response.NOT_SUPPORTED
 
         # Send response back to client
-        self.sendResponse(ThalesZMQMessage(arincResp))
+        return ThalesZMQMessage(arincResp)
 
 
 if __name__ == "__main__":

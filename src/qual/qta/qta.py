@@ -65,37 +65,45 @@ class QualTestApp(ThalesZMQServer):
 
     ## Called by base class when a request is received from a client.
     #
-    # @param request ThalesZMQMessage object containing received request
-    #
+    # @param request ThalesZMQMessage containing received request
+    # @return        ThalesZMQMessage response to send back to the client
     def handleRequest(self, request):
-        # Route messages based on type
-        requestClass = self.__gpbClasses.getClassByName(request.name)
-        if requestClass is None:
-            self.log.warning("Unknown message class in request: %s" % request.name)
-            self.sendUnsupportedMessageErrorResponse()
-        else:
-            #  Create the message to pass to the module instances
-            msg = requestClass()
-            msg.ParseFromString(request.serializedBody)
-            #  Update the request
-            request.body = msg
-            #   Get the correct module
-            msgProcessed = False
+        # This will be the response we send back; set to None until someone handles the request
+        response = None
+
+        # Deserialize the message body if necessary
+        if request.body is None:
+            requestClass = self.__gpbClasses.getClassByName(request.name)
+            if requestClass is None:
+                self.log.warning("Unknown message class in request: %s" % request.name)
+                response = self.getUnsupportedMessageErrorResponse()
+            else:
+                # Create a GPB object of the correct message class and deserialize into it
+                msg = requestClass()
+                msg.ParseFromString(request.serializedBody)
+                # Update the request
+                request.body = msg
+
+        if response is None:
+            # Get the correct module
             for _module in self.__instances.itervalues():
-                for modObjet in _module:
-                    for msgHandler in modObjet.msgHandlers:
-                        #  if the message class matches one of the instances, pass the message
-                        if msgHandler[0] == msg.__class__:
-                            #  Get the ThalesZMQ response object
-                            self.log.debug("Passing %s message to %s module" % (request.name, modObjet.__class__.__name__))
-                            response = modObjet.msgHandler(request)
+                for modObject in _module:
+                    for msgHandler in modObject.msgHandlers:
+                        # If the message class matches one of the instances, pass the message
+                        if msgHandler[0] == request.body.__class__:
+                            # Get the ThalesZMQ response object
+                            self.log.debug("Passing %s message to %s module" % (request.name, modObject.__class__.__name__))
+                            response = modObject.msgHandler(request)
                             if response is not None:
-                                self.sendResponse(response=response)
-                                msgProcessed = True
-            #  If no module instance handled the request, send en error
-            if not msgProcessed:
-                self.log.warning("No handler for received message of class: %s" % request.name)
-                self.sendUnsupportedMessageErrorResponse()
+                                break
+
+        # If no module instance handled the request, return an error
+        if response is None:
+            self.log.warning("No handler for received message of class: %s" % request.name)
+            response = self.getUnsupportedMessageErrorResponse()
+
+        # Return the response so that it will get sent back to the client
+        return response
 
 if __name__ == "__main__":
     # Create a QTA instance and start it running
