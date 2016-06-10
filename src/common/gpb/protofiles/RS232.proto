@@ -16,6 +16,7 @@ message RS232Response {
 	}
 	
 	required AppStateT state = 1;
-	required uint32 matches = 2 [default = 0];
-	required uint32 mismatches = 3 [default = 0];
+	required uint32 xmtCount = 2 [default = 0];
+	required uint32 matches = 3 [default = 0];
+	required uint32 mismatches = 4 [default = 0];
 }

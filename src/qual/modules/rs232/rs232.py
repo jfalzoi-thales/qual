@@ -39,19 +39,19 @@ class Rs232(Module):
             except (serial.SerialException, OSError):
                 raise RS232ModuleSerialException(self.config['portreader'])
             else:
-                ## adding the message handler
+                # adding the message handler
                 self.addMsgHandler(RS232Request, self.hdlrMsg)
-                ## thread that writes through RS-232
+                # thread that writes through RS-232
                 self.addThread(self.rs232WriteRead)
-                ## written characteres
+                ## written characters
                 self.written = 0
-                ## read characteres
+                ## read characters
                 self.read = 0
-                ## init the application state
+                ## application state
                 self.appState = RS232Response.STOPPED
-                ## init match value found
+                ## match value found
                 self.match = 0
-                ## init mismatch value found
+                ## mismatch value found
                 self.mismatch = 0
 
     @classmethod
@@ -89,16 +89,14 @@ class Rs232(Module):
     #  @param     self
     #  @return    self.report() a RS-232 Response object
     def start(self):
-        self.character = chr(0)
+        # Make sure all values are cleared
+        self.written = 0
+        self.read = 0
         self.match = 0
-        self.counter = 0
         self.mismatch = 0
-        super(Rs232, self).startThread()
         self.appState = RS232Response.RUNNING
-        status = RS232Response()
-        status.state = self.appState
-        status.matches = self.match
-        status.mismatches = self.mismatch
+        status = self.report()
+        self.startThread()
         return status
 
     ## Stops sending and reading data through RS-232
@@ -108,12 +106,12 @@ class Rs232(Module):
     def stop(self):
         self._running = False
         self.stopThread()
-        self.appState =RS232Response.STOPPED
-        ##Create the response object
-        status = RS232Response()
-        status.state = self.appState
-        status.matches = self.match
-        status.mismatches = self.mismatch
+        self.appState = RS232Response.STOPPED
+        status = self.report()
+        self.written = 0
+        self.read = 0
+        self.match = 0
+        self.mismatch = 0
         return status
 
 
@@ -122,14 +120,15 @@ class Rs232(Module):
     #  @param     self
     #  @return    self.report() a RS-232 Response object
     def report(self):
-        ##Create the response object
+        # Create the response object
         status = RS232Response()
         status.state = self.appState
+        status.xmtCount = self.written
         status.matches = self.match
         status.mismatches = self.mismatch
         return status
 
-    ## Reports match and mismatch data
+    ## Function that does all writing and reading, run in a thread
     #
     #  @param     self
     def rs232WriteRead(self):

@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='RS232.proto',
   package='mpsqual',
-  serialized_pb=_b('\n\x0bRS232.proto\x12\x07mpsqual\"|\n\x0cRS232Request\x12=\n\x0brequestType\x18\x01 \x02(\x0e\x32\".mpsqual.RS232Request.RequestTypeT:\x04STOP\"-\n\x0cRequestTypeT\x12\x08\n\x04STOP\x10\x00\x12\x07\n\x03RUN\x10\x01\x12\n\n\x06REPORT\x10\x02\"\x92\x01\n\rRS232Response\x12/\n\x05state\x18\x01 \x02(\x0e\x32 .mpsqual.RS232Response.AppStateT\x12\x12\n\x07matches\x18\x02 \x02(\r:\x01\x30\x12\x15\n\nmismatches\x18\x03 \x02(\r:\x01\x30\"%\n\tAppStateT\x12\x0b\n\x07STOPPED\x10\x00\x12\x0b\n\x07RUNNING\x10\x01')
+  serialized_pb=_b('\n\x0bRS232.proto\x12\x07mpsqual\"|\n\x0cRS232Request\x12=\n\x0brequestType\x18\x01 \x02(\x0e\x32\".mpsqual.RS232Request.RequestTypeT:\x04STOP\"-\n\x0cRequestTypeT\x12\x08\n\x04STOP\x10\x00\x12\x07\n\x03RUN\x10\x01\x12\n\n\x06REPORT\x10\x02\"\xa7\x01\n\rRS232Response\x12/\n\x05state\x18\x01 \x02(\x0e\x32 .mpsqual.RS232Response.AppStateT\x12\x13\n\x08xmtCount\x18\x02 \x02(\r:\x01\x30\x12\x12\n\x07matches\x18\x03 \x02(\r:\x01\x30\x12\x15\n\nmismatches\x18\x04 \x02(\r:\x01\x30\"%\n\tAppStateT\x12\x0b\n\x07STOPPED\x10\x00\x12\x0b\n\x07RUNNING\x10\x01')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -67,8 +67,8 @@ _RS232RESPONSE_APPSTATET = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=260,
-  serialized_end=297,
+  serialized_start=281,
+  serialized_end=318,
 )
 _sym_db.RegisterEnumDescriptor(_RS232RESPONSE_APPSTATET)
 
@@ -119,15 +119,22 @@ _RS232RESPONSE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='matches', full_name='mpsqual.RS232Response.matches', index=1,
+      name='xmtCount', full_name='mpsqual.RS232Response.xmtCount', index=1,
       number=2, type=13, cpp_type=3, label=2,
       has_default_value=True, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='mismatches', full_name='mpsqual.RS232Response.mismatches', index=2,
+      name='matches', full_name='mpsqual.RS232Response.matches', index=2,
       number=3, type=13, cpp_type=3, label=2,
+      has_default_value=True, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='mismatches', full_name='mpsqual.RS232Response.mismatches', index=3,
+      number=4, type=13, cpp_type=3, label=2,
       has_default_value=True, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -145,7 +152,7 @@ _RS232RESPONSE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=151,
-  serialized_end=297,
+  serialized_end=318,
 )
 
 _RS232REQUEST.fields_by_name['requestType'].enum_type = _RS232REQUEST_REQUESTTYPET
