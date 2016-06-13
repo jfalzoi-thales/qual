@@ -88,7 +88,17 @@ class JsonConversion(object):
                         valueList.append(typecast(item))
 
             else:
-                setattr(pbMessage, field.name, typecast(json[field.name]))
+                typecastValue = typecast(json[field.name])
+                if field.type == FD.TYPE_MESSAGE:
+                    # If this assignment is to a composite field (like a sub-message) we will get
+                    # an attribute error. so use CopyFrom for messages.
+                    setField = getattr(pbMessage, field.name, None)
+                    if setField is None:
+                        raise Exception('%s field getAttr error' % (field.name))
+                    setField.CopyFrom(typecastValue)
+                else:
+                    setattr(pbMessage, field.name, typecastValue)
+
         return pbMessage
 
     ##A quick table for easy value typecasting, lookup by GPB field type.
