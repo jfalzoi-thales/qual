@@ -58,10 +58,10 @@ class GPIOManagerSimulator(ThalesZMQServer):
     def handleRequest(self, request):
         # Route messages based on type
         if request.name == "RequestMessage":
-            self.handleGpioReq(request)
+            return self.handleGpioReq(request)
         else:
             print "Error! Unsupported request type"
-            self.sendUnsupportedMessageErrorResponse()
+            return self.getUnsupportedMessageErrorResponse()
 
     ## Handle request of type "RequestMessage"
     #
@@ -106,7 +106,7 @@ class GPIOManagerSimulator(ThalesZMQServer):
             gpioResp.error = ResponseMessage.IMPROPER_REQUEST_TYPE
 
         # Send response back to client
-        self.sendResponse(ThalesZMQMessage(gpioResp))
+        return ThalesZMQMessage(gpioResp)
 
 
 if __name__ == "__main__":

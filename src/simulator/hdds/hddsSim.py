@@ -60,12 +60,12 @@ class HDDSSimulator(ThalesZMQServer):
     def handleRequest(self, request):
         # Route messages based on type
         if request.name == "GetReq":
-            self.handleGetReq(request)
+            return self.handleGetReq(request)
         elif request.name == "SetReq":
-            self.handleSetReq(request)
+            return self.handleSetReq(request)
         else:
             print "Error! Unsupported request type"
-            self.sendUnsupportedMessageErrorResponse()
+            return self.getUnsupportedMessageErrorResponse()
 
     ## Handle request of type "GetReq"
     #
@@ -96,7 +96,7 @@ class HDDSSimulator(ThalesZMQServer):
                 valueResp.error.error_description = "Invalid/unsupported key in HDDS_GET message"
 
         # Send response back to client
-        self.sendResponse(ThalesZMQMessage(getResp))
+        return ThalesZMQMessage(getResp)
 
     ## Handle request of type "SetReq"
     #
@@ -131,7 +131,7 @@ class HDDSSimulator(ThalesZMQServer):
                 valueResp.error.error_description = "Invalid/unsupported key in HDDS_SET message"
 
         # Send response back to client
-        self.sendResponse(ThalesZMQMessage(setResp))
+        return ThalesZMQMessage(setResp)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 
 import zmq
+from common.logger.logger import Logger
 from common.gpb.python.ErrorMessage_pb2 import ErrorMessage
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
@@ -15,8 +16,13 @@ class ThalesZMQServer(object):
     # @param address ZMQ address string for socket to bind to
     #
     def __init__(self, address):
+        ## Logger implementation, based on standard python logger
+        self.log = Logger(type(self).__name__)
+        ## ZMQ address for socket to bind to
         self.address = address
+        ## ZMQ context
         self.zcontext = zmq.Context.instance()
+        ## ZMQ socket
         self.zsocket = self.zcontext.socket(zmq.REP)
         self.zsocket.bind(self.address)
 
@@ -25,6 +31,7 @@ class ThalesZMQServer(object):
     # Will only return if canceled (e.g. Ctrl-C).
     #
     def run(self):
+        self.log.info("Listening for GPB requests on %s" % self.address)
         while True:
             # This will block waiting for a request
             try:
@@ -32,65 +39,72 @@ class ThalesZMQServer(object):
             except KeyboardInterrupt:
                 return
 
+            response = None
+
             # We expect Thales messages to have 3 parts
             if len(requestData) >= 3:
                 # If message has more than 3 parts, log a warning, but proceed anyway
                 if len(requestData) > 3:
-                    print "Warning: received request message with", len(requestData), "parts"
+                    self.log.warning("Received GPB message with %d parts" % len(requestData))
 
-                # Package request data into a message object and hand off to HandleRequest()
-                request = ThalesZMQMessage(name=str(requestData[0]))
+                # Request class name is in first part
+                reqName = str(requestData[0])
+                self.log.debug("Received GPB %s" % reqName)
+
+                # Package request data into a message object
+                request = ThalesZMQMessage(name=reqName)
                 request.header.ParseFromString(requestData[1])
                 request.serializedBody = requestData[2]
-                self.handleRequest(request)
+
+                # Hand the request off to to HandleRequest(), which will return the response
+                response = self.handleRequest(request)
             else:
-                print "Malformed message received; ignoring"
-                self.sendMalformedMessageErrorResponse()
+                self.log.error("Malformed GPB message received; ignoring")
+                response = self.getMalformedMessageErrorResponse()
+
+            # Send the response message back to the client.
+            # Thales message is a multipart message made up of string name,
+            # serialized header, and serialized body
+            self.log.debug("Sending GPB %s" % response.name)
+            self.zsocket.send_multipart((response.name, response.serializedHeader, response.serializedBody))
 
     ## Called when a request is received from a client.
     #
-    # Should be implemented in the derived class, and should call a method that sends a
-    # response message or error message back to the client.
+    # Should be implemented in the derived class, and must return a
+    # response message or error message to send back to the client.
     #
-    # @param request ThalesZMQMessage object containing received request
-    #
+    # @param request ThalesZMQMessage containing received request
+    # @return        ThalesZMQMessage response to send back to the client
     def handleRequest(self, request):
-        # Base class method just sends an "Unsupported message" error response.
+        # Base class method just returns an "Unsupported message" error response.
         # Derived class should override this and do something useful.
-        self.sendUnsupportedMessageErrorResponse()
+        return self.getUnsupportedMessageErrorResponse()
 
-    ## Sends a (non-error) response to the client
-    #
-    # @param response ThalesZMQMessage object containing response to send
-    #
-    def sendResponse(self, response):
-        # Thales message is a multipart message made up of string name,
-        # serialized header, and serialized body
-        self.zsocket.send_multipart((response.name, response.serializedHeader, response.serializedBody))
-
-    ## Sends an error response to the client
+    ## Returns an error response message
     #
     # @param code Numeric error code
     # @param description Text description of error
-    #
-    def sendErrorResponse(self, code, description):
+    # @return ThalesZMQMessage containing ErrorMessage
+    @staticmethod
+    def getErrorResponse(code, description):
         # Create an ErrorMessage and encapsulate in a ThalesZMQMessage
         errorMessage = ErrorMessage()
         errorMessage.error_code = code
         errorMessage.error_description = description
-        response = ThalesZMQMessage(errorMessage)
+        return ThalesZMQMessage(errorMessage)
 
-        # Send the message as the response
-        self.sendResponse(response)
-
-    ## Sends an error response of type "Unsupported message" to the client
+    ## Returns an error response message of type "Unsupported message"
     #
-    def sendUnsupportedMessageErrorResponse(self):
+    # @return ThalesZMQMessage containing ErrorMessage
+    @staticmethod
+    def getUnsupportedMessageErrorResponse():
         # Note: This error code was taken from the HDDS ICD; may not be correct usage
-        self.sendErrorResponse(1000, "Unsupported GPB message received")
+        return ThalesZMQServer.getErrorResponse(1000, "Unsupported message received")
 
-    ## Sends an error response of type "Malformed message" to the client
+    ## Returns an error response message of type "Malformed message"
     #
-    def sendMalformedMessageErrorResponse(self):
+    # @return ThalesZMQMessage containing ErrorMessage
+    @staticmethod
+    def getMalformedMessageErrorResponse():
         # Note: This error code was taken from the HDDS ICD; may not be correct usage
-        self.sendErrorResponse(1000, "Malformed GPB message received")
+        return ThalesZMQServer.getErrorResponse(1000, "Malformed message received")

@@ -1,5 +1,6 @@
-import time
+import argparse
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
+from common.tzmq.JsonZMQClient import JsonZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.classFinder.classFinder import ClassFinder
 from common.module.modulemsgs import ModuleMessages
@@ -9,14 +10,33 @@ from google.protobuf.message import Message
 
 ## Class that provides a menu-driven QTE simulator
 #  Manage different type request to QTA Application
-class QTEMenu(ThalesZMQClient):
-    def __init__(self):
-        super(QTEMenu, self).__init__("tcp://localhost:50001")
+class QTEMenu(object):
+    ## Constructor
+    # @param server  Host name or IP address of QTA
+    # @param useJson Use JSON instead of GPB to communicate with QTA
+    def __init__(self, server="localhost", useJson=False):
+        super(QTEMenu, self).__init__()
+
+        ## ClassFinder for module ModuleMessages classes
         self.__modClass = ClassFinder(rootPath='qual.modules',
                                      baseClass=ModuleMessages)
+        ## ClassFinder for GPB message classes
         self.__qualMessage = ClassFinder(rootPath='common.gpb.python',
-                                     baseClass=Message)
+                                         baseClass=Message)
 
+        # Construct address to connect to
+        address = str.format('tcp://{}:{}', server, 50002 if useJson else 50001)
+
+        if useJson:
+            ## Client connection to QTA
+            self.client = JsonZMQClient(address)
+            print "Opened connection to", address, "for JSON messaging"
+        else:
+            ## Client connection to QTA
+            self.client = ThalesZMQClient(address)
+            print "Opened connection to", address, "for GPB messaging"
+
+    ## Print a menu of actions for a particular module
     def moduleMenu(self, modMsgClass):
         print ""
         while True:
@@ -42,7 +62,7 @@ class QTEMenu(ThalesZMQClient):
 
             print "---------------------------------------------------------\n"
             print "Sending ", msg.__class__.__name__
-            response = self.sendRequest(ThalesZMQMessage(msg))
+            response = self.client.sendRequest(ThalesZMQMessage(msg))
             respClass = self.__qualMessage.getClassByName(response.name)
             if respClass is None:
                 print "Unexpected Value response"
@@ -53,6 +73,7 @@ class QTEMenu(ThalesZMQClient):
                 print respMsg
                 print "---------------------------------------------------------\n"
 
+    # Print a list of modules and allow the user to select one
     def run(self):
         while True:
             index = 0
@@ -79,7 +100,21 @@ class QTEMenu(ThalesZMQClient):
 
 
 if __name__ == "__main__":
-    qte = QTEMenu()
+    # Parse command line arguments
+    cmdParameters = argparse.ArgumentParser(description="Provides a menu-driven test interface to the QTA.")
+    cmdParameters.add_argument('-s',
+                               dest='server',
+                               type=str,
+                               default="localhost",
+                               help="Host name or IP address of server")
+    cmdParameters.add_argument('-j',
+                               dest='useJson',
+                               action="store_true",
+                               help="Use JSON format instead of GPB")
+    args = cmdParameters.parse_args()
+
+    # Initialize and run the QTE
+    qte = QTEMenu(args.server, args.useJson)
     qte.run()
 
 ## @endcond

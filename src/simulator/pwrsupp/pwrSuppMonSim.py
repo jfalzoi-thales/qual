@@ -107,12 +107,12 @@ class PwrSuppMonSimulator(ThalesZMQServer):
                 powerInfo.errorCode = PowerInfo.INVALID_DEVICE_NAME
 
             # Send response back to client
-            self.sendResponse(ThalesZMQMessage(powerInfo))
+            return ThalesZMQMessage(powerInfo)
 
         else:
             print "Error! Unknown request type"
             # Send "Unsupported Message" error back to client
-            self.sendUnsupportedMessageErrorResponse()
+            return self.getUnsupportedMessageErrorResponse()
 
     def AddAllToResponse(self, name, powerInfo):
         for key, value in self.properties[name].items():
