@@ -34,22 +34,24 @@ class Rs232(Module):
                                               parity=self.config['parity'],
                                               stopbits=self.config['stopbits'],
                                               bytesize=self.config['bytesize'],
-                                              timeout=0.1,
+                                              timeout=0.01,
                                               rtscts=True)
             except (serial.SerialException, OSError):
                 raise RS232ModuleSerialException(self.config['portreader'])
             else:
-                ## adding the message handler
+                # adding the message handler
                 self.addMsgHandler(RS232Request, self.hdlrMsg)
-                ## thread that writes through RS-232
-                self.addThread(self.rs232Write)
-                ## thread that reads through RS-232
-                self.addThread(self.rs232Read)
-                ## init the application state
+                # thread that writes through RS-232
+                self.addThread(self.rs232WriteRead)
+                ## written characters
+                self.written = 0
+                ## read characters
+                self.read = 0
+                ## application state
                 self.appState = RS232Response.STOPPED
-                ## init match value found
+                ## match value found
                 self.match = 0
-                ## init mismatch value found
+                ## mismatch value found
                 self.mismatch = 0
 
     @classmethod
@@ -58,33 +60,8 @@ class Rs232(Module):
     #  @return      test configurations
     def getConfigurations(cls):
         return [
-                {'portwriter': '/dev/ttyUSB4','portreader': '/dev/ttyUSB1', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
+                {'portwriter': '/dev/ttyUSB1','portreader': '/dev/ttyUSB2', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
                 ]
-    ## Opens and writes to the serial port
-    #
-    def rs232Write(self):
-        time.sleep(0.1)
-        self.serWriter.write(self.character)
-        if ord(self.character) + 1 > 255:
-            self.character = chr(0)
-        else:
-            aux = ord(self.character)
-            aux += 1
-            self.character = chr(aux)
-
-    ## Opens and reads from the serial port
-    #
-    def rs232Read(self):
-        read = self.serReader.read()
-        if len(read) > 0:
-            if chr(ord(read)) != chr(self.counter):
-                self.mismatch += 1
-                self.counter = ord(read)+1
-            else:
-                self.match += 1
-                self.counter += 1
-                if self.counter > 255:
-                    self.counter = 0
 
     ## Handles incoming messages
     #
@@ -112,16 +89,14 @@ class Rs232(Module):
     #  @param     self
     #  @return    self.report() a RS-232 Response object
     def start(self):
-        self.character = chr(0)
+        # Make sure all values are cleared
+        self.written = 0
+        self.read = 0
         self.match = 0
-        self.counter = 0
         self.mismatch = 0
-        super(Rs232, self).startThread()
         self.appState = RS232Response.RUNNING
-        status = RS232Response()
-        status.state = self.appState
-        status.matches = self.match
-        status.mismatches = self.mismatch
+        status = self.report()
+        self.startThread()
         return status
 
     ## Stops sending and reading data through RS-232
@@ -130,13 +105,13 @@ class Rs232(Module):
     #  @return    self.report() a RS-232 Response object
     def stop(self):
         self._running = False
-        self.appState =RS232Response.STOPPED
-        status = RS232Response()
-        status.state = self.appState
-        status.matches = self.match
-        status.mismatches = self.mismatch
         self.stopThread()
-        self.counter = self.character
+        self.appState = RS232Response.STOPPED
+        status = self.report()
+        self.written = 0
+        self.read = 0
+        self.match = 0
+        self.mismatch = 0
         return status
 
 
@@ -145,8 +120,36 @@ class Rs232(Module):
     #  @param     self
     #  @return    self.report() a RS-232 Response object
     def report(self):
+        # Create the response object
         status = RS232Response()
         status.state = self.appState
+        status.xmtCount = self.written
         status.matches = self.match
         status.mismatches = self.mismatch
         return status
+
+    ## Function that does all writing and reading, run in a thread
+    #
+    #  @param     self
+    def rs232WriteRead(self):
+        ## write the character current
+        written = chr(self.written % 256)
+        self.serWriter.write(written)
+        self.written += 1
+
+        ## read all written characters
+        chars = []
+        while True:
+            char = self.serReader.read()
+            if char:
+                chars.append(char)
+            else:
+                break
+        self.read += len(chars)
+
+        for index,char in enumerate(chars):
+            expected =  (self.written - (len(chars)) + index) % 256
+            if ord(char) != expected:
+                self.mismatch += 1
+            else:
+                self.match += 1
