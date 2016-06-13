@@ -68,10 +68,16 @@ class TestJsonConverstion(unittest.TestCase):
     def test_subMessage(self):
         message = SystemMonitoringResponse()
         message.switchData.statistics.append("SUPER SECRET STATISTICS")
+        message.switchData.statistics.append("MORE SECRET STATISTICS")
         message.switchData.temperature = "10,000,000 degrees"
 
         messageName, json = JsonConversion.gpb2json(message)
         newMessage = JsonConversion.json2gpb(messageName, json)
+        self.assertEqual(newMessage.switchData.temperature, "10,000,000 degrees")
+        self.assertEqual(len(newMessage.switchData.statistics), 2)
+        self.assertEqual(newMessage.switchData.statistics[0], "SUPER SECRET STATISTICS")
+        self.assertEqual(newMessage.switchData.statistics[1], "MORE SECRET STATISTICS")
+
         return
 
 if __name__ == '__main__':
