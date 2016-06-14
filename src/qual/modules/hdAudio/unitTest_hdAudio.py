@@ -17,16 +17,16 @@ class HDAudioMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [('Disconnect', HDAudioMessages.disconnect),
+        return [("Report",  HDAudioMessages.report),
                 ('Connect Test 1', HDAudioMessages.connectTest1),
                 ('Connect Test 2', HDAudioMessages.connectTest2),
-                ("Report",  HDAudioMessages.report),]
+                ('Disconnect', HDAudioMessages.disconnect)]
 
     @staticmethod
     def connectTest1():
         message = HDAudioRequest()
         message.requestType = HDAudioRequest.CONNECT
-        message.source='/HDAudio/braindamage.wav'
+        message.source='braindamage.wav'
         message.volume=100
         return message
 
@@ -34,7 +34,7 @@ class HDAudioMessages(ModuleMessages):
     def connectTest2():
         message = HDAudioRequest()
         message.requestType = HDAudioRequest.CONNECT
-        message.source='/HDAudio/comfortablynumb.wav'
+        message.source='comfortablynumb.wav'
         message.volume=50
         return message
 

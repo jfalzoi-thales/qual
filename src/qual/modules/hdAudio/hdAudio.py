@@ -1,11 +1,11 @@
 import os
 import subprocess
+from time import sleep
 
 from common.gpb.python.HDAudio_pb2 import HDAudioRequest, HDAudioResponse
 from common.module.module import Module
 from common.logger.logger import Logger, DEBUG
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from qual.modules.hdAudio.hdAudio_Exception import HDAudioModuleException
 
 ## HD Audio class
 #
@@ -22,7 +22,7 @@ class HDAudio(Module):
         ## State of the application
         self.state = HDAudioResponse.DISCONNECTED
         ## Source audio file
-        self.file = 'default'
+        self.file = ''
         ## Volume
         self.volume = 100.0
 
@@ -43,18 +43,21 @@ class HDAudio(Module):
             if self.state == HDAudioResponse.CONNECTED:
                 self.stop()
             ## Check if the audio file in source exists
-            if not os.path.exists('../modules/hdAudio/%s' % (request.source,)):
-                raise HDAudioModuleException(msg='Missing audio File %s' % (request.source,))
-            try:
-                ## Check if the volume is in a correct range
-                if request.volume < 0 or request.volume > 100:
-                    self.log.warning('Invalid volume range. Changed to 100.')
+            ## TODO: Make this path configurable
+            if not os.path.exists('qual/modules/hdAudio/HDAudio/%s' % (request.source,)):
+                self.log.error('Missing audio File %s' % (request.source,))
+                response = self.report()
+            else:
+                try:
+                    ## Check if the volume is in a correct range
+                    if request.volume < 0 or request.volume > 100:
+                        self.log.warning('Invalid volume range. Changed to 100.')
+                        request.volume = 100
+                except ValueError:
+                    self.log.warning('Wrong message value. Changed to 100.')
                     request.volume = 100
-            except ValueError:
-                self.log.warning('Wrong message value. Changed to 100.')
-                request.volume = 100
-            ## Start the module
-            response = self.start(request.source, request.volume)
+                ## Start the module
+                response = self.start(request.source, request.volume)
         elif request.requestType == HDAudioRequest.DISCONNECT:
             response = self.stop()
         elif request.requestType == HDAudioRequest.REPORT:
@@ -85,6 +88,7 @@ class HDAudio(Module):
         proc.wait()
         self.stopThread()
         self.state = HDAudioResponse.DISCONNECTED
+        self.file = ''
         ## Create the response
         response = HDAudioResponse()
         response.appState = self.state
@@ -108,7 +112,23 @@ class HDAudio(Module):
     #
     # @param  self
     def play(self):
-        proc = subprocess.Popen(['amixer', 'sset', 'Master', str(self.volume)+'%'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        proc.wait()
-        proc = subprocess.Popen(['aplay', '-V', 'stereo', '../modules/hdAudio/%s' % (self.file,)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        proc.wait()
+        cmd=['amixer', '-q', 'sset', 'Master', str(self.volume)+'%']
+        self.log.debug("Set volume: %s" % " ".join(cmd))
+        rc = subprocess.call(cmd)
+        if rc != 0:
+            self.log.error("Error setting volume")
+            sleep(0.5)
+
+        cmd=['aplay', '-q', 'qual/modules/hdAudio/HDAudio/%s' % (self.file,)]
+        self.log.debug("Play audio: %s" % " ".join(cmd))
+        try:
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            if "Interrupted system call" in e.output:
+                self.log.debug("Audio player stopped")
+            else:
+                self.log.error("Error playing audio: %s" % e.output)
+                sleep(0.5)
+
+        # Make sure thread doesn't spin too fast
+        sleep(0.1)
