@@ -5,6 +5,9 @@ from common.gpb.python.HDAudio_pb2 import HDAudioRequest
 from common.gpb.python.PowerInfo_pb2 import PowerInfo
 
 # @cond doxygen_unittest
+from common.gpb.python.SystemMonitoring_pb2 import SystemMonitoringResponse
+
+
 class TestJsonConverstion(unittest.TestCase):
 
     def test_basic(self):
@@ -62,7 +65,20 @@ class TestJsonConverstion(unittest.TestCase):
         self.assertEqual(len(message.values), 5)
         self.assertEqual(message.values[3].name, 'Name_3')
 
+    def test_subMessage(self):
+        message = SystemMonitoringResponse()
+        message.switchData.statistics.append("SUPER SECRET STATISTICS")
+        message.switchData.statistics.append("MORE SECRET STATISTICS")
+        message.switchData.temperature = "10,000,000 degrees"
 
+        messageName, json = JsonConversion.gpb2json(message)
+        newMessage = JsonConversion.json2gpb(messageName, json)
+        self.assertEqual(newMessage.switchData.temperature, "10,000,000 degrees")
+        self.assertEqual(len(newMessage.switchData.statistics), 2)
+        self.assertEqual(newMessage.switchData.statistics[0], "SUPER SECRET STATISTICS")
+        self.assertEqual(newMessage.switchData.statistics[1], "MORE SECRET STATISTICS")
+
+        return
 
 if __name__ == '__main__':
     unittest.main()
