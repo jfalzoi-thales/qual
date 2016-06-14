@@ -17,6 +17,7 @@ message RS485Response {
 	}
 	
 	required AppStateT state = 1;
-	required uint32 matches = 2;
-	required uint32 mismatches = 3;
+	required uint32 xmtCount = 2;
+	required uint32 matches = 3;
+	required uint32 mismatches = 4;
 }

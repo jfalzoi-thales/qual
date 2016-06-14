@@ -222,6 +222,9 @@ class ARINC429(module.Module):
                 if connection.outputChan == outputChan:
                     connection.xmtCount += 1
 
+        #  Sleep a bit before attempting to receive, to allow time for messages to arrive
+        sleep(.05)
+
         #  For each input channel in the connection list, get its value and increment matches/mismatches
         for inputChan, connection in self.connections.items():
             chanInfo = self.inputChans[inputChan]

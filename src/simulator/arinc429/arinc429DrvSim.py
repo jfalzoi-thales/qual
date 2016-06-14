@@ -1,6 +1,7 @@
 
 import sys
 import os
+from common.logger import logger
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.ARINC429Driver_pb2 import Request, Response
@@ -53,10 +54,14 @@ class ARINC429DriverSimulator(ThalesZMQServer):
 
         # Now we can init the base class
         super(ARINC429DriverSimulator, self).__init__("ipc:///tmp/arinc/driver/429/device")
-        print "Started ARINC429Driver simulator on", self.address
+
+        # Turn down ThalesZMQServer debug level
+        self.log.setLevel(logger.INFO)
 
         ## Error introduction mode is enabled
         self.introduceErrors = introduceErrors
+        if self.introduceErrors:
+            self.log.info("Error mode enabled: errors will be introduced every 10 words")
 
         # Dict of input channels with info for each one
         self.inputChannels = {"ARINC_429_RX1": InputInfo(),
@@ -128,7 +133,7 @@ class ARINC429DriverSimulator(ThalesZMQServer):
                     inputInfo = self.inputChannels[inputName]
                     inputInfo.wordCount += 1
                     if self.introduceErrors and inputInfo.wordCount % 10 == 0:
-                        print "Introducing error on channel %s data 0x%x" % (inputName, arincReq.outputData.data[0].data)
+                        #print "Introducing error on channel %s data 0x%x" % (inputName, arincReq.outputData.data[0].data)
                         inputInfo.data = arincReq.outputData.data[0].data | 0x1FFFFB00
                     else:
                         inputInfo.data = arincReq.outputData.data[0].data
@@ -148,7 +153,6 @@ if __name__ == "__main__":
     # Command-line argument can be used to specify whether to introduce errors
     introduceErrors = False
     if len(sys.argv) > 1 and sys.argv[1] == "-e":
-        print "Error mode enabled: errors will be introduced every 10 words"
         introduceErrors = True
     simulator = ARINC429DriverSimulator(introduceErrors)
     simulator.run()

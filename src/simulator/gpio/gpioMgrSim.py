@@ -1,4 +1,5 @@
 
+from common.logger import logger
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.GPIOManager_pb2 import RequestMessage, ResponseMessage, INPUT, OUTPUT
@@ -27,7 +28,9 @@ class GPIOManagerSimulator(ThalesZMQServer):
         # TODO: On target system this needs to be on VLAN 301, IP address 192.168.1.4
         # per the "MAP Network Configuration" document.
         super(GPIOManagerSimulator, self).__init__("ipc:///tmp/gpio-mgr.sock")
-        print "Started GPIOManager simulator on", self.address
+
+        # Turn down ThalesZMQServer debug level
+        self.log.setLevel(logger.INFO)
 
         # List of pins that can be get/set
         self.pins = {"OUTPUT_1_PIN_A6": False,
@@ -96,7 +99,7 @@ class GPIOManagerSimulator(ThalesZMQServer):
             gpioResp.error = ResponseMessage.OK
             # If this is a GPIO output, simulate loopback by setting linked input value
             if gpioReq.pin_name in self.loopbackMap:
-                print "Setting linked GPIO", self.loopbackMap[gpioReq.pin_name], ":", gpioReq.value
+                #print "Setting linked GPIO", self.loopbackMap[gpioReq.pin_name], ":", gpioReq.value
                 self.pins[self.loopbackMap[gpioReq.pin_name]] = gpioReq.value
 
         else:

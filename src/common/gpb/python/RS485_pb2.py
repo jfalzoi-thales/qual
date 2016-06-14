@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='RS485.proto',
   package='mpsqual',
-  serialized_pb=_b('\n\x0bRS485.proto\x12\x07mpsqual\"|\n\x0cRS485Request\x12=\n\x0brequestType\x18\x01 \x02(\x0e\x32\".mpsqual.RS485Request.RequestTypeT:\x04STOP\"-\n\x0cRequestTypeT\x12\x08\n\x04STOP\x10\x00\x12\x07\n\x03RUN\x10\x01\x12\n\n\x06REPORT\x10\x02\"\x8c\x01\n\rRS485Response\x12/\n\x05state\x18\x01 \x02(\x0e\x32 .mpsqual.RS485Response.AppStateT\x12\x0f\n\x07matches\x18\x02 \x02(\r\x12\x12\n\nmismatches\x18\x03 \x02(\r\"%\n\tAppStateT\x12\x0b\n\x07STOPPED\x10\x00\x12\x0b\n\x07RUNNING\x10\x01')
+  serialized_pb=_b('\n\x0bRS485.proto\x12\x07mpsqual\"|\n\x0cRS485Request\x12=\n\x0brequestType\x18\x01 \x02(\x0e\x32\".mpsqual.RS485Request.RequestTypeT:\x04STOP\"-\n\x0cRequestTypeT\x12\x08\n\x04STOP\x10\x00\x12\x07\n\x03RUN\x10\x01\x12\n\n\x06REPORT\x10\x02\"\x9e\x01\n\rRS485Response\x12/\n\x05state\x18\x01 \x02(\x0e\x32 .mpsqual.RS485Response.AppStateT\x12\x10\n\x08xmtCount\x18\x02 \x02(\r\x12\x0f\n\x07matches\x18\x03 \x02(\r\x12\x12\n\nmismatches\x18\x04 \x02(\r\"%\n\tAppStateT\x12\x0b\n\x07STOPPED\x10\x00\x12\x0b\n\x07RUNNING\x10\x01')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -67,8 +67,8 @@ _RS485RESPONSE_APPSTATET = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=254,
-  serialized_end=291,
+  serialized_start=272,
+  serialized_end=309,
 )
 _sym_db.RegisterEnumDescriptor(_RS485RESPONSE_APPSTATET)
 
@@ -119,15 +119,22 @@ _RS485RESPONSE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='matches', full_name='mpsqual.RS485Response.matches', index=1,
+      name='xmtCount', full_name='mpsqual.RS485Response.xmtCount', index=1,
       number=2, type=13, cpp_type=3, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='mismatches', full_name='mpsqual.RS485Response.mismatches', index=2,
+      name='matches', full_name='mpsqual.RS485Response.matches', index=2,
       number=3, type=13, cpp_type=3, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='mismatches', full_name='mpsqual.RS485Response.mismatches', index=3,
+      number=4, type=13, cpp_type=3, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -145,7 +152,7 @@ _RS485RESPONSE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=151,
-  serialized_end=291,
+  serialized_end=309,
 )
 
 _RS485REQUEST.fields_by_name['requestType'].enum_type = _RS485REQUEST_REQUESTTYPET

@@ -1,4 +1,5 @@
 
+from common.logger import logger
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.SEMA_pb2 import RequestStatusMessage, ResponseMessage
@@ -18,7 +19,9 @@ from common.gpb.python.SEMA_pb2 import RequestStatusMessage, ResponseMessage
 class SEMADriverSimulator(ThalesZMQServer):
     def __init__(self):
         super(SEMADriverSimulator, self).__init__("ipc:///tmp/sema-drv.sock")
-        print "Started SEMA Driver simulator on", self.address
+
+        # Turn down ThalesZMQServer debug level
+        self.log.setLevel(logger.INFO)
 
         # List of properties that can be retrieved.
         # Taken from the "Logical Name" table in the document
