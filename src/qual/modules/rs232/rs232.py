@@ -17,42 +17,30 @@ class Rs232(Module):
         super(Rs232, self).__init__(config)
         try:
             ## open a writer serial port
-            self.serWriter = serial.Serial(port=self.config['portwriter'],
-                                          baudrate=self.config['baudrate'],
-                                          parity=self.config['parity'],
-                                          stopbits=self.config['stopbits'],
-                                          bytesize=self.config['bytesize'],
-                                          timeout=0.1,
-                                          rtscts=True)
+            self.serial = serial.Serial(port=self.config['port'],
+                                        baudrate=self.config['baudrate'],
+                                        parity=self.config['parity'],
+                                        stopbits=self.config['stopbits'],
+                                        bytesize=self.config['bytesize'],
+                                        timeout=0.1,
+                                        rtscts=True)
         except (serial.SerialException, OSError):
-            raise RS232ModuleSerialException(self.config['portwriter'])
+            raise RS232ModuleSerialException(self.config['port'])
         else:
-            try:
-                ## open a reader serial port
-                self.serReader = serial.Serial(port=self.config['portreader'],
-                                              baudrate=self.config['baudrate'],
-                                              parity=self.config['parity'],
-                                              stopbits=self.config['stopbits'],
-                                              bytesize=self.config['bytesize'],
-                                              timeout=0.01,
-                                              rtscts=True)
-            except (serial.SerialException, OSError):
-                raise RS232ModuleSerialException(self.config['portreader'])
-            else:
-                # adding the message handler
-                self.addMsgHandler(RS232Request, self.hdlrMsg)
-                # thread that writes through RS-232
-                self.addThread(self.rs232WriteRead)
-                ## written characters
-                self.written = 0
-                ## read characters
-                self.read = 0
-                ## application state
-                self.appState = RS232Response.STOPPED
-                ## match value found
-                self.match = 0
-                ## mismatch value found
-                self.mismatch = 0
+            # adding the message handler
+            self.addMsgHandler(RS232Request, self.hdlrMsg)
+            # thread that writes through RS-232
+            self.addThread(self.rs232WriteRead)
+            ## written characters
+            self.written = 0
+            ## read characters
+            self.read = 0
+            ## application state
+            self.appState = RS232Response.STOPPED
+            ## match value found
+            self.match = 0
+            ## mismatch value found
+            self.mismatch = 0
 
     @classmethod
     ## Returns the test configurations for that module
@@ -60,7 +48,7 @@ class Rs232(Module):
     #  @return      test configurations
     def getConfigurations(cls):
         return [
-                {'portwriter': '/dev/ttyUSB1','portreader': '/dev/ttyUSB2', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
+                {'port': '/dev/ttyUSB1', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
                 ]
 
     ## Handles incoming messages
@@ -134,13 +122,13 @@ class Rs232(Module):
     def rs232WriteRead(self):
         ## write the character current
         written = chr(self.written % 256)
-        self.serWriter.write(written)
+        self.serial.write(written)
         self.written += 1
 
         ## read all written characters
         chars = []
         while True:
-            char = self.serReader.read()
+            char = self.serial.read()
             if char:
                 chars.append(char)
             else:
