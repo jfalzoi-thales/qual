@@ -1,33 +1,15 @@
-# Module - HD Audio {#ModuleHDAudioReadme}
+HD Audio Module
+===============
+The	HD Audio Application consists of the MPS outputting analog audio signals by converting the specified digital source	through	the	Carrier	Card HD Audio Codec.
 
-Heading
-=======
-Sub-heading
------------
-### Another deeper heading
- 
-Paragraphs are separated
-by a blank line.
-
-Two spaces at the end of a line leave a  
-line break.
-
-Text attributes _italic_, *italic*, __bold__, **bold**, `monospace`.
-
-Horizontal rule:
-
----
-
-Bullet list:
-
-  * apples
-  * oranges
-  * pears
-
-Numbered list:
-
-  1. apples
-  2. oranges
-  3. pears
-
-A [link](http://example.com).
+##### HD Audio Request
+  - enum RequestTypeT {DISCONNECT=0; CONNECT=1; REPORT=2}
+  - required RequestTypeT requestType = 1 [default = DISCONNECT];
+  - optional string source = 2 [default = ""];
+  - optional float volume = 3;
+  
+##### HD Audio Response
+  - enum AppStateT {DISCONNECTED=0; CONNECTED=1}  
+  - required AppStateT appState = 1 [default = DISCONNECTED];
+  - required string source = 2 [default=""]
+  - required float volume = 3;
