@@ -155,13 +155,14 @@ class SSD(Module):
         partition.stdin.write('\n')
         partition.stdin.write('\n')
         partition.stdin.write('w\n')
-        partition.wait()
+        rc = partition.wait()
+        self.log.debug("Command return code: %d" % rc)
 
         # RAID partition is RAID device with "p1" appended
         raidPart = "%sp1" % self.__raidDev
 
         # Check that partition was successfully created - need a bit of a delay before device shows up
-        time.sleep(0.25)
+        time.sleep(0.5)
         if not os.path.exists(raidPart):
             raise SSDModuleException(msg="Unable to create RAID partition")
 
