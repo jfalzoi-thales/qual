@@ -5,13 +5,13 @@ Setup:
 ------
   - Place the __qual.tar.gz__ into the folder where	it’s going to be used.
   - Unzip __qual__ file.
-  - Once the it’s uncompressed, list qual directory, and there should be 3 subdirectories (3party, common and qual)
+  - Once the it’s uncompressed, list qual directory, and there should be 3 subdirectories (3rdParty, common and qual)
 ```sh
 $ ls qual
 ```
-  - Move into 3party directory. This directory contains all package and	tools required to run the MPS Software Qualification.
+  - Move into 3rdParty directory. This directory contains all package and	tools required to run the MPS Software Qualification.
 ```sh
-$ cd 3party
+$ cd 3rdParty
 ```
   - Run:
 ```sh
@@ -24,14 +24,14 @@ $ sudo ./setup.sh
 
 Now, the system should be ready to run the MPS Software Qualification.
 
-3pary Aplications
------------------
+3rdParty Aplications
+------------------
 ##### RS-485
   - In order to run RS-485 Module, an external application should be launched to send data through RS-485 devices to the QTA.
   - Open a terminal.
   - Move to Extern_Rs485 subdirectory.
 ```sh
-$ cd 3party/Extern_Rs485
+$ cd 3rdParty/Extern_Rs485
 ```
   - Run Extern_Rs485 -h to see the available options.
 ```sh
