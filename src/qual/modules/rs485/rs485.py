@@ -33,11 +33,13 @@ class Rs485(Module):
             self.addMsgHandler(RS485Request, self.handlerMessage)
             ## thread that writes through RS-485
             self.addThread(self.sendData)
-            ## init the application state
+            ## written characters
+            self.written = 0
+            ## application state
             self.state = RS485Response.STOPPED
-            ## init match value found
+            ## match value found
             self.matches = 0
-            ## init mismatch value found
+            ## mismatch value found
             self.mismatches = 0
             ## character to be sent
             self.tx = chr(0)
@@ -50,10 +52,12 @@ class Rs485(Module):
         return [
                 {'port': '/dev/ttyUSB4', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS, 'timeout': 3},
                 ]
+
     ## Sends the data and expects the same response
     #
     def sendData(self):
         self.serial.write(self.tx)
+        self.written += 1
         # time.sleep(0.5)
         rx = self.serial.read()
         if len(rx) == 0:
@@ -95,14 +99,12 @@ class Rs485(Module):
     #  @param     self
     #  @return    self.report() a RS-485 Response object
     def start(self):
+        self.written = 0
         self.matches = 0
         self.mismatches = 0
-        self.startThread()
         self.state = RS485Response.RUNNING
-        status = RS485Response()
-        status.state = self.state
-        status.matches = self.matches
-        status.mismatches = self.mismatches
+        status = self.report()
+        self.startThread()
         return status
 
     ## Stops sending and reading data through RS-485
@@ -111,12 +113,10 @@ class Rs485(Module):
     #  @return    self.report() a RS-485 Response object
     def stop(self):
         self._running = False
-        self.state =RS485Response.STOPPED
-        status = RS485Response()
-        status.state = self.state
-        status.matches = self.matches
-        status.mismatches = self.mismatches
+        self.state = RS485Response.STOPPED
+        status = self.report()
         self.stopThread()
+        self.written = 0
         self.matches = 0
         self.mismatches = 0
         return status
@@ -128,6 +128,7 @@ class Rs485(Module):
     def report(self):
         status = RS485Response()
         status.state = self.state
+        status.xmtCount = self.written
         status.matches = self.matches
         status.mismatches = self.mismatches
         return status
