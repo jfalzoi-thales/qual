@@ -79,7 +79,7 @@ class QTEMenu(object):
             index = 0
             msgClassList = []
             print "Select a module:"
-            for msgClass in self.__modClass.classmap.values():
+            for msgClass in sorted(self.__modClass.classmap.values(), key=lambda e: e.getMenuTitle()):
                 print "\t%d - %s" % (index, msgClass.getMenuTitle())
                 msgClassList.append(msgClass)
                 index += 1
