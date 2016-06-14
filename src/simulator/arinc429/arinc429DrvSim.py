@@ -60,7 +60,8 @@ class ARINC429DriverSimulator(ThalesZMQServer):
 
         ## Error introduction mode is enabled
         self.introduceErrors = introduceErrors
-        self.log.info("Error mode enabled: errors will be introduced every 10 words")
+        if self.introduceErrors:
+            self.log.info("Error mode enabled: errors will be introduced every 10 words")
 
         # Dict of input channels with info for each one
         self.inputChannels = {"ARINC_429_RX1": InputInfo(),
