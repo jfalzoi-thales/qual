@@ -1,4 +1,5 @@
 
+from common.logger import logger
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.PowerInfo_pb2 import GetPowerInfo, PowerInfo
@@ -17,10 +18,12 @@ from common.gpb.python.PowerInfo_pb2 import GetPowerInfo, PowerInfo
 # The Power Supply ZMQ service uses IPC at ipc:///tmp/pwr-supp-mon.sock
 # per the "MAP Network Configuration" document.
 #
-class PwrSuppMonSimulator(ThalesZMQServer):
+class PowerSupplyMonSimulator(ThalesZMQServer):
     def __init__(self):
-        super(PwrSuppMonSimulator, self).__init__("ipc:///tmp/pwr-supp-mon.sock")
-        print "Started Power Supply Monitor simulator on", self.address
+        super(PowerSupplyMonSimulator, self).__init__("ipc:///tmp/pwr-supp-mon.sock")
+
+        # Turn down ThalesZMQServer debug level
+        self.log.setLevel(logger.INFO)
 
         # List of devices and properties that can be retrieved.
         # Device names were taken from the example power supply configuration
@@ -123,6 +126,6 @@ class PwrSuppMonSimulator(ThalesZMQServer):
 
 
 if __name__ == "__main__":
-    simulator = PwrSuppMonSimulator()
+    simulator = PowerSupplyMonSimulator()
     simulator.run()
     print "Exit Power Supply Monitor simulator"

@@ -2,6 +2,7 @@
 import sys
 import os
 import time
+from common.logger import logger
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.ARINC717Driver_pb2 import Request, Response
@@ -32,14 +33,16 @@ class ARINC717DriverSimulator(ThalesZMQServer):
         # Now we can init the base class
         super(ARINC717DriverSimulator, self).__init__("ipc:///tmp/arinc/driver/717/device")
 
+        # Turn down ThalesZMQServer debug level
+        self.log.setLevel(logger.INFO)
+
         # Keep an "out of sync" flag so we can return different values
         self.outOfSync = False
 
         # Save the word rate
         self.wordRate = wordRate
 
-        print "Started ARINC 717 Driver simulator on", self.address
-        print "Word rate is", wordRate, "words/sec"
+        self.log.info("Word rate is %d words/sec" % wordRate)
 
     ## Called by base class when a request is received from a client.
     #
