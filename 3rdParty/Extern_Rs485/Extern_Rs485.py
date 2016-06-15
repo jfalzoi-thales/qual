@@ -41,11 +41,11 @@ else:
     while True:
         rX = serialPort.read()
         if len(rX) > 0:
-            log.info("Data received: %s <--" % (rX,))
+            #log.info("Data received: %s <--" % (rX,))
             if args.mismatches and count % 5 == 0:
                 rX = chr(random.randint(0,255))
                 serialPort.write(rX)
             else:
                 serialPort.write(rX)
-            log.info("Data sent:     %s -->" % (rX,))
+            #log.info("Data sent:     %s -->" % (rX,))
         count += 1

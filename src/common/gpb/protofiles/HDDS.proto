@@ -1,0 +1,33 @@
+package mpsqual;
+
+message GetReq {
+	repeated string key = 1;
+}
+
+message GetResp {
+	repeated ValueResp values = 1;
+}
+
+message SetReq {
+	repeated Property values = 1;
+}
+
+message HDDSSetResp {
+	repeated ValueResp values = 1;
+}
+
+message ValueResp {
+	required bool success = 1;
+	required Property keyValue = 2;
+	optional ErrorMessage error = 3;
+}
+
+message Property {
+	required string key = 1;
+	required string value = 2;
+}
+
+message ErrorMessage {
+	required uint32 error_code = 1;
+	optional string error_description = 2;
+}

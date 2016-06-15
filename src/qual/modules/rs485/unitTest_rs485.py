@@ -2,84 +2,85 @@ import unittest
 import time
 
 from qual.modules.rs485.rs485 import Rs485
-from common.gpb.python import RS485_pb2
+from common.gpb.python.RS485_pb2 import RS485Request
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.logger.logger import Logger
+from common.module.modulemsgs import ModuleMessages
 
-# @cond doxygen_unittest
+## RS-485 Messages
+class RS485Messages(ModuleMessages):
+    @staticmethod
+    def getMenuTitle():
+        return "RS-485"
 
+    @staticmethod
+    def getMenuItems():
+        return [("Report",  RS485Messages.report),
+                ("Run",     RS485Messages.run),
+                ("Stop",    RS485Messages.stop)]
 
-## CPULoading Unit Test
-#
+    @staticmethod
+    def report():
+        message = RS485Request()
+        message.requestType = RS485Request.REPORT
+        return message
+
+    @staticmethod
+    def run():
+        message = RS485Request()
+        message.requestType = RS485Request.RUN
+        return message
+
+    @staticmethod
+    def stop():
+        message = RS485Request()
+        message.requestType = RS485Request.STOP
+        return message
+
+## RS-485 Unit Test
 class Test_RS485(unittest.TestCase):
     def test_basic(self):
-        ## Logging the initialization
+        # Initialize logging
         log = Logger(name='Test RS485')
         log.info('Running test...')
 
-        ## RS485 Module Object
+        # RS485 Module Object
         self.module = Rs485()
 
-        ## Creating request message
-        message = RS485_pb2.RS485Request()
-        time.sleep(3)
-
-        ## Send the REPORT message
         log.info("Send REPORT message before start running.")
-        message.requestType = RS485_pb2.RS485Request.REPORT
-        request = ThalesZMQMessage(message)
-        self.module.msgHandler(request)
+        self.module.msgHandler(ThalesZMQMessage(RS485Messages.report()))
         time.sleep(3)
 
-        ## Send the RUN message
         log.info("Send RUN message.")
-        message.requestType = RS485_pb2.RS485Request.RUN
-        request = ThalesZMQMessage(message)
-        self.module.msgHandler(request)
+        self.module.msgHandler(ThalesZMQMessage(RS485Messages.run()))
         time.sleep(3)
 
-        ## Send REPORT messages every 2 seconds
+        log.info("Send REPORT messages for 20 seconds.")
         for i in range(10):
             log.info("Sending REPORT message.")
-            message.requestType = RS485_pb2.RS485Request.REPORT
-            request = ThalesZMQMessage(message)
-            self.module.msgHandler(request)
+            self.module.msgHandler(ThalesZMQMessage(RS485Messages.report()))
             time.sleep(2)
 
-        ## Send the STOP message
-        log.info("Sending STOP message.")
-        message.requestType = RS485_pb2.RS485Request.STOP
-        request = ThalesZMQMessage(message)
-        self.module.msgHandler(request)
+        log.info("Send STOP message.")
+        self.module.msgHandler(ThalesZMQMessage(RS485Messages.stop()))
         time.sleep(3)
 
-        ## Send the REPORT message
-        log.info("Send REPORT message before start running.")
-        message.requestType = RS485_pb2.RS485Request.REPORT
-        request = ThalesZMQMessage(message)
-        self.module.msgHandler(request)
+        log.info("Send REPORT message after stop.")
+        self.module.msgHandler(ThalesZMQMessage(RS485Messages.report()))
         time.sleep(3)
 
-        ## Send the RUN message
-        log.info("Send RUN message.")
-        message.requestType = RS485_pb2.RS485Request.RUN
-        request = ThalesZMQMessage(message)
-        self.module.msgHandler(request)
+        log.info("Send RUN message after stop.")
+        self.module.msgHandler(ThalesZMQMessage(RS485Messages.run()))
         time.sleep(3)
 
-        ## Send REPORT messages every 2 seconds
+        log.info("Send REPORT messages for 20 seconds.")
         for i in range(10):
             log.info("Sending REPORT message.")
-            message.requestType = RS485_pb2.RS485Request.REPORT
-            request = ThalesZMQMessage(message)
-            self.module.msgHandler(request)
+            self.module.msgHandler(ThalesZMQMessage(RS485Messages.report()))
             time.sleep(2)
 
-        ## Send the STOP message
-        log.info("Sending STOP message.")
-        message.requestType = RS485_pb2.RS485Request.STOP
-        request = ThalesZMQMessage(message)
-        self.module.msgHandler(request)
+        log.info("Send STOP message.")
+        self.module.msgHandler(ThalesZMQMessage(RS485Messages.stop()))
         time.sleep(3)
 
         self.module.terminate()
@@ -88,5 +89,3 @@ class Test_RS485(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-# @endcond

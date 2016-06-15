@@ -1,0 +1,87 @@
+package mpsqual;
+
+message Request {
+	enum RequestTypeEnum {
+		RECEIVE_FRAME = 1;
+		GET_CONFIG = 2;
+		SET_CONFIG = 3;
+	}
+	
+    required RequestTypeEnum type = 1;
+    optional ChannelConfig config = 2;
+}
+message Response {
+	enum ResponseTypeEnum {
+		FRAME = 1;
+		CONFIG = 2;
+		STATUS = 3;
+	}
+	
+	enum ErrorCodeEnum {
+		NONE = 0;
+		NOT_SUPPORTED = 1;
+		INVALID_REQ = 2;
+		INVALID_CONFIG = 3;
+		OPERATION_FAILED = 4;
+		OPERATION_NOT_AVAILABLE = 5;
+		OTHER = 6;
+	}
+	
+    required ResponseTypeEnum type   = 1;
+    required ErrorCodeEnum errorCode = 2;
+	
+    oneof param {
+        ChannelConfig config = 3;
+        Frame frame = 4;
+    }
+}
+message Event {
+	enum EventTypeEnum {
+		OVERWRITE = 1;
+		OUT_OF_SYNC = 2;
+		DRIVER_ERROR = 3;
+		DEVICE_ERROR = 4;
+	}
+	
+	enum ErrorCodeEnum {
+		NONE = 0;
+		NOT_SUPPORTED = 1;
+		INVALID_REQ = 2;
+		INVALID_CONFIG = 3;
+		OPERATION_FAILED = 4;
+		OPERATION_NOT_AVAILABLE = 5;
+		OTHER = 6;
+	}
+	
+    required EventTypeEnum type = 1;
+    required ErrorCodeEnum errorCode = 2;
+    optional ChannelConfig config = 3;
+}
+message ChannelConfig {
+	enum DecoderEnum {
+		HBP = 1;
+		BPRZ = 2;
+	}
+	
+	enum RateEnum {
+		WPS_32 = 1;
+		WPS_64 = 2;
+		WPS_128 = 3;
+		WPS_256 = 4;
+		WPS_512 = 5;
+		WPS_1024 = 6;
+		WPS_2048 = 7;
+		WPS_4096 = 8;
+		WPS_8192 = 9;
+	}	
+	
+    required DecoderEnum decoder = 1;
+    required RateEnum rate = 2;
+}
+
+message Frame {
+    required uint64 timestamp = 1;
+    required bytes data = 2;
+    optional bool overwrite = 3;
+    optional bool out_of_sync = 4;
+    }
