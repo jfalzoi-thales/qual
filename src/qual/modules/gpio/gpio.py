@@ -28,7 +28,7 @@ class GPIO(module.Module):
     #  @param     config  Configuration for this module instance
     def __init__(self, config = {}):
         super(GPIO, self).__init__({})
-        ## Add GPIO handler to available message handlers
+        # Add GPIO handler to available message handlers
         self.addMsgHandler(GPIORequest, self.handler)
 
         ## Named tuple type to store pin info
@@ -94,7 +94,7 @@ class GPIO(module.Module):
     #
     # @param  self
     # @param  gpioReq  Message body with request details
-    # @return a GPIOResponse object
+    # @return a GPIOResponse message to be returned to the client
     def connect(self, gpioReq):
         # Note: pins are already validated, so we don't have to do that here.
         # If input pin is specified as "ALL", discard all existing connections and
@@ -125,7 +125,7 @@ class GPIO(module.Module):
     #
     # @param  self
     # @param  gpioReq  Message body with request details
-    # @return a GPIOResponse object
+    # @return a GPIOResponse message to be returned to the client
     def disconnect(self, gpioReq):
         # Note: pins are already validated, so we don't have to do that here.
         # If input pin is specified as "ALL", disconnect all inputs.
@@ -153,7 +153,7 @@ class GPIO(module.Module):
     #
     # @param  self
     # @param  gpioReq  Message body with request details
-    # @return a GPIOResponse object
+    # @return a GPIOResponse message to be returned to the client
     def report(self, gpioReq):
         gpioResp = GPIOResponse()
 
@@ -171,6 +171,7 @@ class GPIO(module.Module):
 
     ## Adds pin status entry to a GPIOResponse
     #
+    # @param  self
     # @param  gpioResp       Response message object
     # @param  inputPin       Input pin for which to add information to the response
     # @param  disconnecting  Indicates we are gathering info prior to a disconnect
@@ -269,7 +270,7 @@ class GPIO(module.Module):
         self.log.error("Error return from GPIO Manager for pin %s" % pinName)
         return False
 
-    ## Attempts to kill processes gracefully
+    ## Stops background thread
     #  @param     self
     def terminate(self):
         if self._running:
