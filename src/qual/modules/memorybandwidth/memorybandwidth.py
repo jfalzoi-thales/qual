@@ -1,26 +1,33 @@
 import subprocess
 import re
+import os
 
-from common.module.module import Module
+from common.module.module import Module, ModuleException
 from common.logger.logger import Logger
 from common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
-## MemoryBandwidth Class Module
-#
+
+## Memory Bandwidth Module Exception Class
+class MemoryBandwidthModuleException(ModuleException):
+    def __init__(self, msg):
+        super(MemoryBandwidthModuleException, self).__init__()
+        self.msg = msg
+
+
+## Memory Bandwidth Module Class
 class MemoryBandwidth(Module):
     ## Constructor
     #  @param       self
     #  @param       config      Configuration for the instance is going to be created
     def __init__(self, config={}):
-        ## constructor of the parent class
+        # constructor of the parent class
         super(MemoryBandwidth, self).__init__(config)
-        ## adding the message handler
-        self.addMsgHandler(MemoryBandwidthRequest, self.hdlrMsg)
-        ## thread that run PMBW tool
-        self.addThread(self.runPmbw)
-        ## thread that reads the PMBW output
-        self.addThread(self.runMemBandwithTest)
+
+        # check for existence of pmbw executable
+        if not os.path.exists("/usr/local/bin/pmbw"):
+            raise MemoryBandwidthModuleException("Unable to locate pmbw executable")
+
         ## field to save the current Popen object
         self.subProcess = None
         ## Logger
@@ -29,6 +36,13 @@ class MemoryBandwidth(Module):
         self.appState = MemoryBandwidthResponse.STOPPED
         ## field to save the last bandwidth read
         self.bandwidth = 0
+
+        # adding the message handler
+        self.addMsgHandler(MemoryBandwidthRequest, self.hdlrMsg)
+        # thread that run PMBW tool
+        self.addThread(self.runPmbw)
+        # thread that reads the PMBW output
+        self.addThread(self.runMemBandwithTest)
 
     @classmethod
     ## Returns the test configurations for that module
@@ -42,7 +56,7 @@ class MemoryBandwidth(Module):
     #  Receives tzmq request and runs requested process
     #
     #  @param     self
-    #  @param     MemoryBandwidth request       tzmq format message
+    #  @param     memBandwRequest  tzmq format message
     #  @return    response          an MemoryBandwidth Response object
     def hdlrMsg(self, memBandwRequest):
         response = MemoryBandwidthResponse()
@@ -62,6 +76,7 @@ class MemoryBandwidth(Module):
     ## Starts runnung PMBW tool and reading the output
     #
     #  @param     self
+    #  @param     msg  tzmq format message
     #  @return    self.report() a MemoryBandwidth Response object
     def start(self):
         self.M = self.config['maxallocmem']
@@ -80,7 +95,7 @@ class MemoryBandwidth(Module):
     #  @return    self.report() a MemoryBandwidth Response object
     def stop(self):
         self._running = False
-        subprocess.Popen(["sudo", "pkill", "-9", "pmbw"])
+        subprocess.Popen(["pkill", "-9", "pmbw"])
         self.stopThread()
         self.appState = MemoryBandwidthResponse.STOPPED
         status = MemoryBandwidthResponse()
