@@ -36,12 +36,12 @@ $ cd qual/src/
 ```sh
 $ ./simulators/startsims.sh
 ```
-  - Second window is used fro QTA.
+  - Second window is used for QTA.
   - Log as root and run:
 ```sh
 $ python qual/qta/qta.py
 ```
-  - Third window is used for QTE meu.
+  - Third window is used for QTE menu.
   - Run:
 ```sh
 $ python qual/qte/qteMenu.py -j
@@ -49,10 +49,10 @@ $ python qual/qte/qteMenu.py -j
   - Can specify IP address by adding argument: -s xxx.xxx.xxx.xxx 
   - A list of all modules available should diplay and from there, follow the option prompts.
 
-STOP QTA  
+STOP QTA
 --------
   - Run:
 ```sh
 $ <ctrl> + z
-$ sudo kill -9 %1
+$ kill -9 %1
 ```
