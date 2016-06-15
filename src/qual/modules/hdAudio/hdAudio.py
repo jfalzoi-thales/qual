@@ -15,9 +15,16 @@ class HDAudio(Module):
     #  @param     config  Configuration for this module instance
     def __init__(self, config={}):
         super(HDAudio, self).__init__({})
-        ## Add Audio Message handler
+        # Add Audio Message handler
         self.addMsgHandler(HDAudioRequest, self.handler)
-        ## Add the thread that will play the audio
+
+        # "pulseaudio --start" will start pulseaudio daemon if it's not running
+        # (and it's OK to do this even if it's already running)
+        DEVNULL = open(os.devnull, 'wb')
+        self.log.info("Starting pulseaudio daemon")
+        subprocess.call(['pulseaudio', '--start'], stderr=DEVNULL)
+
+        # Add the thread that will play the audio
         self.addThread(self.play)
         ## State of the application
         self.state = HDAudioResponse.DISCONNECTED

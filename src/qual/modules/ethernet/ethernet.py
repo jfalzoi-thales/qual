@@ -19,11 +19,6 @@ class Ethernet(Module):
     #  @param     config  Configuration for this module instance
     def __init__(self, config = {}):
         super(Ethernet, self).__init__({})
-
-        # check for existence of iperf3 executable
-        if not os.path.exists("/usr/local/bin/iperf3"):
-            raise EthernetModuleException("Unable to locate iperf3 executable")
-
         ## Used to store current iperf subprocess
         self.iperf = None
         ## IP address of remote iperf3 server to communicate with
@@ -70,7 +65,7 @@ class Ethernet(Module):
     def startiperf(self):
         #  'stdbuf -o L' modifies iperf3 to allow easily accessed line buffered output
         self.iperf = subprocess.Popen(
-            ["stdbuf", "-o", "L", "/usr/local/bin/iperf3", "-c", self.server, "-f", "m", "-t", "86400"],
+            ["stdbuf", "-o", "L", "iperf3", "-c", self.server, "-f", "m", "-t", "86400"],
             stdout=subprocess.PIPE, bufsize=1)
 
     ## Runs in thread to continually gather iperf3 data line by line and restarts iperf3 if process ends

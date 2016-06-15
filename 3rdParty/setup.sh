@@ -20,17 +20,6 @@ NOTINSTALLED="not installed."
 MISSING="missing"
 
 ###############################################
-## Export Python local package               ##
-cd ..
-cd "src"
-PYTHONPATH=$(pwd)
-export PYTHONPATH
-cd $MAIN_WD
-
-echo -e $STATUS $PYTHONPATH" added."
-echo "-----------------------------------------------------------------------------------"
-
-###############################################
 ## Install: Parallel Memory Bandwidth (PMBW) ##
 PMBW="pmbw"
 
@@ -177,7 +166,7 @@ INST=$(pip list | grep "pyzmq")
 
 if [[ $INST == "" ]]
 then
-    easy_install $PYZMQ_PKG
+    easy_install $PYZMQ_PKG 2> /dev/null
     echo -e $STATUS "PyZMQ" $INSTALLED
 else
     echo -e $STATUS "PyZMQ" $INSTALLED

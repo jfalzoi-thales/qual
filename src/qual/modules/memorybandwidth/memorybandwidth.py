@@ -23,11 +23,6 @@ class MemoryBandwidth(Module):
     def __init__(self, config={}):
         # constructor of the parent class
         super(MemoryBandwidth, self).__init__(config)
-
-        # check for existence of pmbw executable
-        if not os.path.exists("/usr/local/bin/pmbw"):
-            raise MemoryBandwidthModuleException("Unable to locate pmbw executable")
-
         ## field to save the current Popen object
         self.subProcess = None
         ## Logger
@@ -118,7 +113,7 @@ class MemoryBandwidth(Module):
     ## Runs the PMBW tool
     #  @return    None
     def runPmbw(self):
-        self.subProcess = subprocess.Popen(["stdbuf", "-o", "L","/usr/local/bin/pmbw", self.M, self.s, self.P],
+        self.subProcess = subprocess.Popen(["stdbuf", "-o", "L", "pmbw", self.M, self.s, self.P],
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE,
                                            bufsize=1)

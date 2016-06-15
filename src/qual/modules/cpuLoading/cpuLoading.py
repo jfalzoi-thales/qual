@@ -19,18 +19,13 @@ class CPULoading(Module):
     def __init__(self, config = {}):
         #  Initializes parent class
         super(CPULoading, self).__init__({})
-
-        #  Check for existence of lookbusy executable
-        if not os.path.exists("/usr/local/bin/lookbusy"):
-            raise CPULoadingModuleException("Unable to locate lookbusy executable")
-
         ## Indicates whether or not a CPU load has been set
         self.active = False
         ## CPULoader thread which continually gathers CPU load information
         self.loader = CPULoader()
-        ## Starts CPULoader thread
+        # Starts CPULoader thread
         self.loader.start()
-        ## Adds handler to available message handlers
+        # Adds handler to available message handlers
         self.addMsgHandler(CPULoadingRequest, self.handler)
 
     ## Handles incoming messages
@@ -66,7 +61,7 @@ class CPULoading(Module):
             #  Kills any stray lookbusy instances and waits for pkill to complete
             subprocess.Popen(["pkill", "-9", "lookbusy"]).communicate()
             #  Starts lookbusy instance
-            subprocess.Popen(["/usr/local/bin/lookbusy", "-qc", str(int(level))])
+            subprocess.Popen(["lookbusy", "-qc", str(int(level))])
         else:
             self.log.error("Unexpected Value %d" %(level))
 

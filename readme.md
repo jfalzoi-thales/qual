@@ -24,38 +24,35 @@ $ sudo ./setup.sh
 
 Now, the system should be ready to run the MPS Software Qualification.
 
-3rdParty Aplications
-------------------
-##### RS-485
-  - In order to run RS-485 Module, an external application should be launched to send data through RS-485 devices to the QTA.
-  - Open a terminal.
-  - Move to Extern_Rs485 subdirectory.
-```sh
-$ cd 3rdParty/Extern_Rs485
-```
-  - Run Extern_Rs485 -h to see the available options.
-```sh
-$ sudo python Extern_Rs485.py
-```
-  - Run Extern_Rs485
-```sh
-$ sudo python Extern_Rs485.py -p <port> -b <baudrate> [-m]
-```
-
-_Note that if run Extern_Rs485 with -m arg, some corrupted data will be sent._
-
 Running
 -------
-  - Open a terminal.
-  - Move to qta subdirectory and run thw __QTA__ application:
+  - Open 3 terminals.
+  - In All 3 windows move to qual/src:
 ```sh
-$ cd qual/src/qual/qta3.
-$ sudo python qta.py
+$ cd qual/src/
 ```
-  - Open another terminal.
-  - Move to QTE subdirectory and run __QTE__ application.
+  - First window is used to run the simulators. 
+  - Run
 ```sh
-$ cd qual/src/qual/qte
-$ sudo python qteMenu.py
+$ ./simulators/startsims.sh
 ```
+  - Second window is used for QTA.
+  - Log as root and run:
+```sh
+$ python qual/qta/qta.py
+```
+  - Third window is used for QTE menu.
+  - Run:
+```sh
+$ python qual/qte/qteMenu.py -j
+```
+  - Can specify IP address by adding argument: -s xxx.xxx.xxx.xxx 
   - A list of all modules available should diplay and from there, follow the option prompts.
+
+STOP QTA
+--------
+  - Run:
+```sh
+$ <ctrl> + z
+$ kill -9 %1
+```
