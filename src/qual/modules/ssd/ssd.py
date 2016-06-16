@@ -21,10 +21,8 @@ class SSD(Module):
         # constructor of the parent class
         super(SSD, self).__init__(config)
 
-        ## Devices
-        self.__devices = config['devices']
         ## RAID device
-        self.__raidDev = "/dev/md/qual0"
+        self.__raidDev = "/dev/md/raid_unprotected_0"
         ## RAID filesystem mount point
         self.__raidFS = "/mnt/qual"
         ## Location of FIO config file
@@ -32,21 +30,14 @@ class SSD(Module):
         ## Application state
         self.state = SSDResponse.STOPPED
 
-        # Init the required File System
+        # Init the RAID filesystem
         self.initFS()
+        # Create the FIO config file
+        self.createFioConfig()
         # adding the thread
         self.addThread(self.runTool)
         # adding the message handler
         self.addMsgHandler(SSDRequest, self.handlerMessage)
-
-    @classmethod
-    ## Returns the test configurations for that module
-    #
-    #  @return      test configurations
-    def getConfigurations(cls):
-        return [
-                {'devices':('/dev/sdb1', '/dev/sdc1', '/dev/sdd1', '/dev/sde1')},
-                ]
 
     ## Handles incoming messages
     #
@@ -94,11 +85,12 @@ class SSD(Module):
         status.state = self.state
         return status
 
-
-    ## Unmount and delete partition
+    ## Creates the RAID-0
     #
     #  @param   self
-    def deleteConfig(self):
+    def initFS(self):
+        self.log.info('Initializing the SSD file system, this may take some time...')
+
         # Unmount the filesystem if mounted
         if self.checkIfMounted(self.__raidFS, True):
             self.log.info("Unmounting existing RAID volume")
@@ -108,31 +100,20 @@ class SSD(Module):
             self.checkIfMounted(self.__raidFS, False,
                                 failText="Unable to unmount existing RAID volume")
 
-        # Stop RAID configuration and free the devices
-        if os.path.exists(self.__raidDev):
-            self.log.info("Deactivating existing RAID volume")
-            self.runCommand('mdadm --stop %s --quiet' % self.__raidDev,
-                            failText="Unable to deactivate existing RAID volume")
+        # Determine which RAID setup script to use
+        makeraid = "mpsinst-makeraid"
+        makeraidUSB = "qual/modules/ssd/mpsinst-makeraid-usb.sh"
+        if os.path.exists("/sbin/%s" % makeraid):
+            self.log.info("Using system mpsinst-makeraid tool")
+        elif os.path.exists(makeraidUSB):
+            self.log.warning("Using debug USB mpsinst-makeraid tool")
+            makeraid = makeraidUSB
+        else:
+           raise SSDModuleException("Unable to locate mpsinst-makeraid script")
 
-            self.log.info("Zeroing RAID component superblocks")
-            for dev in self.__devices:
-                self.runCommand('mdadm --zero-superblock %s' % dev)
-
-    ## Creates the RAID-0
-    #
-    #  @param   self
-    def raid0(self):
-        self.log.info('Initializing the SSD file system, this may take some time...')
-
-        # Zero out beginning of each component device so mdadm doesn't complain
-        self.log.info("Zeroing RAID component headers")
-        for dev in self.__devices:
-            self.runCommand("dd if=/dev/zero of=%s bs=512 count=32 status=none" % dev)
-
-        # Create the RAID volume
+        # Create the RAID volume using script
         self.log.info("Creating RAID volume")
-        self.runCommand('mdadm --create %s --run --quiet --level=stripe --raid-devices=%d %s' % \
-                        (self.__raidDev, len(self.__devices), " ".join(self.__devices)),
+        self.runCommand('%s 10 \"YES,CLEAR_MY_DISKS\" > /tmp/makeraid.log 2>&1' % makeraid,
                         failText='Unable to create RAID volume')
 
         # Check that RAID volume was successfully created
@@ -158,13 +139,22 @@ class SSD(Module):
         rc = partition.wait()
         self.log.debug("Command return code: %d" % rc)
 
-        # RAID partition is RAID device with "p1" appended
-        raidPart = "%sp1" % self.__raidDev
+        # RAID device name is probably a symbolic link
+        realDev = os.readlink(self.__raidDev)
+        # If it's a relative link, convert it to absolute
+        if realDev[0] == '.':
+            realDev = os.path.join(os.path.dirname(self.__raidDev), realDev)
+        # RAID partition is linked RAID device with "p1" appended
+        raidPart = "%sp1" % realDev
 
         # Check that partition was successfully created - need a bit of a delay before device shows up
         time.sleep(0.5)
         if not os.path.exists(raidPart):
-            raise SSDModuleException(msg="Unable to create RAID partition")
+            # Sleep a bit longer and try again
+            self.log.debug("Waiting for device %s to appear..." % raidPart)
+            time.sleep(2)
+            if not os.path.exists(raidPart):
+                raise SSDModuleException(msg="Unable to create RAID partition")
 
         # Create the ext4 filesystem and mount it
         self.log.info("Creating RAID filesystem")
@@ -183,6 +173,8 @@ class SSD(Module):
         self.checkIfMounted(self.__raidFS, True,
                             failText='Unable to mount the RAID partition.')
 
+        self.log.info('RAID filesystem initialized.')
+
     ## Runs a command, and can raise an exception if the command fails
     #
     #  @param   self
@@ -191,7 +183,6 @@ class SSD(Module):
     def runCommand(self, cmd, failText=''):
         self.log.debug(cmd)
         rc = subprocess.call(cmd,
-                             stdout=DEVNULL,
                              shell=True)
         self.log.debug("Command return code: %d" % rc)
         if rc != 0 and failText != '':
@@ -207,10 +198,10 @@ class SSD(Module):
     def checkIfMounted(self, fs, mounted, failText=''):
         self.log.debug("Checking if filesystem %s %s mounted" % (fs, "is" if mounted else "is not"))
         cmd = 'mount | fgrep %s || true' % fs
-        self.log.debug(cmd)
+        #self.log.debug(cmd)
         output = subprocess.check_output(cmd,
                                          shell=True)
-        self.log.debug("Command returned: %s" % output)
+        #self.log.debug("Command returned: %s" % output)
         isMounted = output != ''
         if isMounted != mounted and failText != '':
             raise SSDModuleException(msg=failText)
@@ -236,27 +227,3 @@ class SSD(Module):
                                stdout=DEVNULL,
                                stderr=DEVNULL)
         sub.wait()
-
-    ## Inits the requierd File System
-    #
-    #  @param   self
-    def initFS(self):
-        # Check that configured RAID component devices exist
-        for dev in self.__devices:
-            if not os.path.exists(dev):
-                raise SSDModuleException(msg="Configured device %s not present" % dev)
-
-        # Check that the configured RAID component devices are not mounted
-        for dev in self.__devices:
-            self.checkIfMounted(dev, False,
-                                failText='Configured device %s is already in use' % dev)
-
-        # Delete the previous RAID config if exists
-        self.deleteConfig()
-        # Create the RAID configuration
-        self.raid0()
-        # log
-        self.log.info('SSD file system initialized.')
-
-        # Create the FIO config file
-        self.createFioConfig()
