@@ -17,6 +17,8 @@ The TE may also request a report, in which case the MPS will respond with the st
   - optional string source = 3 [default = “”];
   
 ##### ARINC 429 Response:  
+The ARINC 429 Response Message is sent by the MPS in response to any type of request.  
+  
   - enum ConStateT {DISCONNECTED = 0; CONNECTED = 1};
   - message StatusMessage {required string sink=1; required string source=2 [default = “”]; required ConStateT conState=3; required uint32 xmtCount=4; required uint32 rcvCount=5; required uint32 errorCount=6}
   - repeated StatusMessage status = 1;

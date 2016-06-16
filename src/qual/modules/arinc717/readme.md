@@ -10,6 +10,8 @@ The ARINC 717 Frame Request Message is sent by the TE to control the application
   - required RequestTypeT requestType = 1 [default = STOP];
   
 ##### ARINC 717 Frame Response:  
+The ARINC 717 Frame Response Message is sent by the MPS to report the application state, the frame sync state and most the recently received complete frame.  
+
   - enum AppStateT {STOPPED=0; RUNNING=1};
   - enum FrameSync {NO_SYNC=0; SYNCED=1};
   - required AppStateT state = 1;

@@ -10,6 +10,8 @@ application	state.
   - required RequestTypeT requestType = 1 [default = OFF];
   
 ##### Memory Bandwidth Response:  
+The Memory Bandwidth Response Message is sent by the MPS to report the current memory bandwidth statistics.
+
   - enum AppStateT {STOPPED=0; RUNNING=1}
   - required RequestTypeT requestType = 1 [default = STOP];
   - required float memoryBandWidth = 2;

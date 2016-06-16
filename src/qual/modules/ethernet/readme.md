@@ -12,7 +12,9 @@ the response is sent without starting the measurement.
   - optional string remote = 3 [default = “”];
   
 ##### Ethernet Response:  
-  - enum AppStateT {STOPPED=0; RUNNING=1}
+The Ethernet Response Message is sent by the MPS acknowledge an Ethernet Request message and provide statistics related to the iPerf measurement.  
+
+  - enum AppStateT {STOPPED=0; RUNNING=1};
   - required AppStateT state = 1;
   - required string local = 2;
   - required string result = 3;

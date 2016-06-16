@@ -13,7 +13,9 @@ CPU utilization (default 80%).
   - optional float level;
   
 ##### CPU Loading Response:  
-  - enum AppStateT {STOPPED=0; RUNNING=1}
+The CPU Loading Response Message is sent by the MPS to provide the current processor utilization statistics and the state of the application (RUN or STOP).  
+
+  - enum AppStateT {STOPPED=0; RUNNING=1};
   - required AppStateT state = 1;
   - required float totalUtilization = 2;
   - repeated float coreUtilization = 3;

@@ -14,6 +14,8 @@ If the optional volume parameter is included the output volume will be set accor
   - optional string remote = 3 [default = “”];
   
 ##### HD Audio Response:  
+The HD Audio Response Message is sent by the MPS to report the state of the connection after the request is processed.  
+  
   - enum AppStateT {STOPPED=0; RUNNING=1}
   - required AppStateT state = 1;
   - required string source = 2 [default = ""];
