@@ -1,7 +1,10 @@
 import unittest
+
+
 from common.gpb.jsonConversion.jsonConversion import JsonConversion
 from common.gpb.python.CPULoading_pb2 import CPULoadingRequest
 from common.gpb.python.HDAudio_pb2 import HDAudioRequest
+from common.gpb.python.HDDS_pb2 import GetResp
 from common.gpb.python.PowerInfo_pb2 import PowerInfo
 
 # @cond doxygen_unittest
@@ -79,6 +82,29 @@ class TestJsonConverstion(unittest.TestCase):
         self.assertEqual(newMessage.switchData.statistics[1], "MORE SECRET STATISTICS")
 
         return
+
+    def test_HDDSResp(self):
+        message = GetResp()
+        valueResp = message.values.add()
+        valueResp.keyValue.key = "k"
+        valueResp.keyValue.value = "v"
+        valueResp.success = False
+        valueResp.error.error_code = 1001
+        valueResp.error.error_description = "error"
+
+        messageName, json = JsonConversion.gpb2json(message)
+        newMessage = JsonConversion.json2gpb(messageName, json)
+        newValue = newMessage.values[0]
+        self.assertEqual(newValue.keyValue.key, "k")
+        self.assertEqual(newValue.keyValue.value, "v")
+        self.assertFalse(newValue.success)
+        self.assertEqual(newValue.error.error_code, 1001)
+        self.assertEqual(newValue.error.error_description, "error")
+
+        return
+
+
+
 
 if __name__ == '__main__':
     unittest.main()
