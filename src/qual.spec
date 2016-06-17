@@ -3,7 +3,7 @@
 #
 Name: qual
 Summary: An application used drive MPS hardware
-Version: 1.0
+Version: 1.1
 Release: 1
 License: FILL IN LATER
 Group: Applications/Engineering
@@ -18,10 +18,9 @@ Fill in a better description. :D
 
 %install
 mkdir -p $RPM_BUILD_ROOT/usr/lib/systemd/system/
-mv qual.service $RPM_BUILD_ROOT/usr/lib/systemd/system/
 mkdir -p $RPM_BUILD_ROOT/etc/systemd/system/multi-user.target.wants/
-cp $RPM_BUILD_ROOT/usr/lib/systemd/system/qual.service $RPM_BUILD_ROOT/etc/systemd/system/multi-user.target.wants/
-ln -s $RPM_BUILD_ROOT/usr/lib/systemd/system/qual.service $RPM_BUILD_ROOT/etc/systemd/system/multi-user.target.wants/
+mv qual.service $RPM_BUILD_ROOT/etc/systemd/system/multi-user.target.wants/
+ln -s $RPM_BUILD_ROOT/usr/lib/systemd/system/ $RPM_BUILD_ROOT/etc/systemd/system/multi-user.target.wants/qual.service
 mkdir -p $RPM_BUILD_ROOT/thales/qual/src/
 cp -r * $RPM_BUILD_ROOT/thales/qual/src/
 
@@ -30,6 +29,9 @@ cp -r * $RPM_BUILD_ROOT/thales/qual/src/
 /thales/qual/src/*
 
 %changelog
+* Fri Jun 17 2016 Unknown name 1.1-1
+- 
+
 * Fri Jun 17 2016 Christopher Wallace <cwallace@tklabs.com> 1.0-1
 - Initial tito tool tag
 
