@@ -13,8 +13,9 @@ class HDDS(Module):
         #  Initialize parent class
         super(HDDS, self).__init__({})
 
-        ## Connection to HDDS
+        ## Client connection to the Host Domain Device Service
         self.hddsClient = ThalesZMQClient("tcp://localhost:40001")
+
         #  Add handlers to available message handlers
         self.addMsgHandler(GetReq, self.getHandler)
         self.addMsgHandler(SetReq, self.setHandler)
