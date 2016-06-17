@@ -5,7 +5,7 @@ channel in order to load and verify both the transmitter and receiver circuits.
 The transmitted and received data are then compared and mismatches reported.  
 
 ##### RS-485 Request:
-The RS232Request Message is sent by the TE to initiate or halt transmission and verification of RS-485 data according to the test procedure.	
+The RS485Request Message is sent by the TE to initiate or halt transmission and verification of RS-485 data according to the test procedure.	
 
   - enum RequestTypeT {STOP=0; RUN=1; REPORT=2};
   - required RequestTypeT requestType = 1 [default = STOP];
