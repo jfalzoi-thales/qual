@@ -4,6 +4,7 @@ Description=Start QUAL simulators and QTA
 [Service]
 Type=idle
 ExecStart=/thales/qual/src/qual.sh
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
