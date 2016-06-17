@@ -17,4 +17,4 @@ python simulator/pwrsupp/pwrSuppMonSim.py &
 sleep 1
 python simulator/sema/semaDrvSim.py &
 sleep 1
-python ../3rdParty/Extern_Rs485/Extern_Rs485.py -m
+#python ../3rdParty/Extern_Rs485/Extern_Rs485.py -m
