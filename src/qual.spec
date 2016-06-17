@@ -27,5 +27,5 @@ cp -r * $RPM_BUILD_ROOT/thales/qual/src/
 /thales/qual/src/*
 
 %changelog
-* Wed Jun 15 2016 Christopher Wallace <cwallace@tklabs.com> 1.0-1
+* Fri Jun 17 2016 Christopher Wallace <cwallace@tklabs.com> 1.0-1
 - Initial Qual RPM
