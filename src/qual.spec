@@ -30,4 +30,7 @@ cp -r * $RPM_BUILD_ROOT/thales/qual/src/
 
 %changelog
 * Fri Jun 17 2016 Christopher Wallace <cwallace@tklabs.com> 1.0-1
+- Initial tito tool tag 
+
+* Fri Jun 17 2016 Christopher Wallace <cwallace@tklabs.com> 1.0-1
 - Initial Qual RPM
