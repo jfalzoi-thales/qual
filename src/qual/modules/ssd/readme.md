@@ -1,4 +1,4 @@
-# SSD Application
+# SSD Module
 The purpose of the SSD Utilization Application is to exercise the SSD RAID.  
 The SSD Test deletes all existing RAID configurations prior to drive preparation operations, configures the four (4) internal  
 SSDs in a RAID-0 configuration during test initialization, creates a non-bootable partition after RAID volume preparation,  
