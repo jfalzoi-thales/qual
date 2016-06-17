@@ -19,8 +19,8 @@ Fill in a better description. :D
 %install
 mkdir -p $RPM_BUILD_ROOT/usr/lib/systemd/system/
 mkdir -p $RPM_BUILD_ROOT/etc/systemd/system/multi-user.target.wants/
-mv qual.service $RPM_BUILD_ROOT/usr/lib/systemd/system/
-ln -s /usr/lib/systemd/system/qual.service $RPM_BUILD_ROOT/etc/systemd/system/multi-user.target.wants/
+cp qual.service $RPM_BUILD_ROOT/usr/lib/systemd/system/
+ln -s /usr/lib/systemd/system/qual.service $RPM_BUILD_ROOT/etc/systemd/system/multi-user.target.wants
 mkdir -p $RPM_BUILD_ROOT/thales/qual/src/
 cp -r * $RPM_BUILD_ROOT/thales/qual/src/
 
@@ -30,8 +30,5 @@ cp -r * $RPM_BUILD_ROOT/thales/qual/src/
 /thales/qual/src/*
 
 %changelog
-* Fri Jun 17 2016 Christopher Wallace <cwallace@tklabs.com> 1.0-1
-- Initial tito tool tag
-
 * Fri Jun 17 2016 Christopher Wallace <cwallace@tklabs.com> 1.0-1
 - Initial Qual RPM
