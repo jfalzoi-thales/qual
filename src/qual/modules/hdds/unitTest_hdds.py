@@ -37,7 +37,7 @@ class HDDSMessages(ModuleMessages):
     @staticmethod
     def setSingle():
         message = SetReq()
-        prop = message.values.add()
+        prop = message.HDDSValue.add()
         prop.key = "external_pins.output.pin_a6"
         prop.value = "HIGH"
         return message
@@ -51,7 +51,7 @@ class HDDSMessages(ModuleMessages):
     @staticmethod
     def setBogus():
         message = SetReq()
-        prop = message.values.add()
+        prop = message.HDDSValue.add()
         prop.key = "bogus_key"
         prop.value = "x"
         return message

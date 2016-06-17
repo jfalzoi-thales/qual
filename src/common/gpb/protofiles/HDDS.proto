@@ -1,25 +1,34 @@
 package mpsqual;
 
+enum ErrCode {
+	FAILURE_INVALID_MESSAGE = 1000;
+	FAILURE_INVALID_KEY     = 1001;
+	FAILURE_INVALID_VALUE   = 1002;
+	FAILURE_SET_UNSUPPORTED = 1003;
+	FAILURE_GET_FAILED      = 1004;
+	FAILURE_SET_FAILED      = 1005;
+}
+
 message GetReq {
 	repeated string key = 1;
 }
 
 message GetResp {
-	repeated ValueResp values = 1;
+	repeated ValueResp HDDSValue = 1;
 }
 
 message SetReq {
-	repeated Property values = 1;
+	repeated Property HDDSValue = 1;
 }
 
-message HDDSSetResp {
-	repeated ValueResp values = 1;
+message SetResp {
+	repeated ValueResp HDDSValue = 1;
 }
 
 message ValueResp {
 	required bool success = 1;
-	required Property keyValue = 2;
-	optional ErrorMessage error = 3;
+	optional ErrorMsg error = 2;
+	optional Property value = 3;
 }
 
 message Property {
@@ -27,7 +36,7 @@ message Property {
 	required string value = 2;
 }
 
-message ErrorMessage {
+message ErrorMsg {
 	required uint32 error_code = 1;
-	optional string error_description = 2;
+	optional string description = 2;
 }

@@ -1,6 +1,6 @@
 
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.gpb.python.HDDS_pb2 import GetReq, GetResp, SetReq, HDDSSetResp
+from common.gpb.python.HDDS_pb2 import GetReq, GetResp, SetReq, SetResp
 from common.gpb.python.ErrorMessage_pb2 import ErrorMessage
 from common.module.module import Module
 
@@ -55,8 +55,8 @@ class HDDS(Module):
         response = self.hddsClient.sendRequest(msg)
 
         # Check that we got back the expected response and deserialize for debugging purposes
-        if response.name == "HDDSSetResp":
-            setResp = HDDSSetResp()
+        if response.name == "SetResp":
+            setResp = SetResp()
             setResp.ParseFromString(response.serializedBody)
             response.body = setResp
         elif response.name == "ErrorMessage":
