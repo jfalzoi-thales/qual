@@ -1,0 +1,23 @@
+package mpsqual;
+
+message RS485Request {
+	enum RequestTypeT {
+		STOP = 0;
+		RUN = 1;
+		REPORT = 2;
+	}
+	
+	required RequestTypeT requestType = 1 [default = STOP];
+}
+
+message RS485Response {
+	enum AppStateT {
+		STOPPED	= 0;
+		RUNNING	= 1;
+	}
+	
+	required AppStateT state = 1;
+	required uint32 xmtCount = 2;
+	required uint32 matches = 3;
+	required uint32 mismatches = 4;
+}

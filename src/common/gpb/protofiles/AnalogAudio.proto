@@ -1,0 +1,28 @@
+package mpsqual;
+
+message AnalogAudioRequest {
+	enum RequestTypeT {
+		DISCONNECT = 0;
+		CONNECT	= 1;
+		REPORT = 2;
+	}
+	
+	required RequestTypeT requestType = 1 [default = DISCONNECT];
+	required string sink = 2 [default = "ALL"];
+	optional string source = 3 [default = ""];
+}
+
+message AnalogAudioResponse {
+	enum ConnectionStateT {
+		DISCONNECTED = 0;
+		CONNECTED = 1;
+	}
+	
+	message OutputStatus {
+		required string sink = 1;
+		required string source = 2 [default = ""];
+		required ConnectionStateT state = 3 [default = DISCONNECTED];
+	}
+
+	repeated OutputStatus loopback = 1;
+}
