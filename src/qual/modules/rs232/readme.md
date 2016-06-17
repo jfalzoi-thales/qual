@@ -1,6 +1,5 @@
+# RS-232 Module
 
-  
-  # RS-232 Module
 The purpose of the RS-485 Application is to simulate loading of the RS-485 bus components and detect
 any failures thereof. The test strategy is to generate output on the RS-485 channel which will be
 externally echoed by the TE back to the MPS RS-485 channel in order to load and verify both the
