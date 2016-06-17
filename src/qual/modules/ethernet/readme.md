@@ -17,4 +17,5 @@ The Ethernet Response Message is sent by the MPS acknowledge an Ethernet Request
   - enum AppStateT {STOPPED=0; RUNNING=1};
   - required AppStateT state = 1;
   - required string local = 2;
-  - required string result = 3;
+  - required float bandwidth = 3;
+  -	required uint32 retries = 4;
