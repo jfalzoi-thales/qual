@@ -1,81 +1,63 @@
-import copy
 import inspect
 import os
 import sys
-import threading
 
-from ConfigParser import SafeConfigParser
+from ConfigParser import SafeConfigParser, NoOptionError
+from common.configurableObject.exception import ConfigurableObjectException
 from common.configurableObject.platform import PLATFORM
-
+from common.logger.logger import Logger
 
 
 ## A class loads configuration files from INI.
 #
-from common.logger.logger import Logger
-
-
 class ConfigurableObject(object):
-    __sem = threading.Semaphore()
-    __iniParser = None
 
-    platform = PLATFORM
-    configFile = None
-    unitTestExecution = 'unittest' in sys.modules
+    def __init__(self):
 
-    @classmethod
-    def __readFile(cls):
-        ## Back up to the src directory, then go into config
-        moduleDir = os.path.dirname(inspect.getsourcefile(cls))
+        ## Logger implementation, based on standard python logger
+        self.log = Logger(type(self).__name__)
+        self.unitTestExecution = 'unittest' in sys.modules
+
+        moduleDir = os.path.dirname(inspect.getsourcefile(self.__class__))
         while os.path.basename(moduleDir) != 'src':
             moduleDir = os.path.dirname(moduleDir)
-        cls.configFile = moduleDir + os.path.sep + 'qual'+ os.path.sep + 'config'+ os.path.sep + cls.platform + '.ini'
-
-        cls.__iniParser = SafeConfigParser()
-        cls.__iniParser.read(cls.configFile)
+        self.__iniFile = moduleDir + os.path.sep + 'qual' + os.path.sep + 'config' + os.path.sep + PLATFORM + '.ini'
+        self.__iniParser = SafeConfigParser()
+        self.__iniParser.read(self.__iniFile)
 
 
         return
 
-    def __init__(self, sectionName = None):
-        ConfigurableObject.__sem.acquire()
-        if ConfigurableObject.__iniParser is None:
-            ConfigurableObject.__readFile()
-        ConfigurableObject.__sem.release()
+    def loadConfig(self, attributes=(), sectionName = None):
 
         if sectionName is None:
-            sectionName = self.__class__.__name__
-        self.sectionName = sectionName
+            sectionName = type(self).__name__
 
-        self.log = Logger('config_%s' % (self.sectionName))
+        for attribute in attributes :
 
+            if self.__iniParser.has_option(sectionName, attribute) :
+                try:
+                    current = getattr(self, attribute)
+                except AttributeError:
+                    current = 'stringValue'
+                if isinstance(current, bool) :
+                    handler = self.__iniParser.getboolean
+                elif isinstance(current, int) :
+                    handler = self.__iniParser.getint
+                elif isinstance(current, float) :
+                    handler = self.__iniParser.getfloat
+                elif isinstance(current, str) :
+                    handler = self.__iniParser.get
+                else:
+                    raise ConfigurableObjectException('Could not configure Field %s, unsupported Type' % (attribute,))
+            else:
+                self.log.info('Setting configuration value %s without default' % (attribute,))
+                handler = self.__iniParser.get
+
+            try:
+                setattr(self, attribute, handler(sectionName, attribute))
+            except NoOptionError:
+                pass
 
         return
-
-    def loadConfig(self, defaults={}):
-
-        retVal = copy.deepcopy(defaults)
-        parser = ConfigurableObject.__iniParser
-
-        if self.sectionName not in parser.sections():
-            self.log.warning('Section %s not found in %s' % (self.sectionName, ConfigurableObject.configFile))
-            return retVal
-
-        for field, value in parser.items(self.sectionName) :
-            if field not in retVal.keys() :
-                self.log.debug('undefined key %s set to %s' % (field, value))
-                retVal[field] = value
-            else :
-                if isinstance(retVal[field], int) :
-                    retVal[field] = parser.getint(self.sectionName, field)
-                elif isinstance(retVal[field], float) :
-                    retVal[field] = parser.getfloat(self.sectionName, field)
-                elif isinstance(retVal[field], bool) :
-                    retVal[field] = parser.getboolean(self.sectionName, field)
-                else:
-                    retVal[field] = value
-                self.log.debug('defined key %s set to %s' % (field, value))
-
-        print 'YIP'
-        return retVal
-
 
