@@ -1,4 +1,5 @@
 
+from common.logger import logger
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.HDDS_pb2 import GetReq, GetResp, SetReq, HDDSSetResp
@@ -28,7 +29,9 @@ class HDDSSimulator(ThalesZMQServer):
         # TODO: On target system this needs to be on VLAN 301, IP address 192.168.1.4
         # per the "MAP Network Configuration" document.
         super(HDDSSimulator, self).__init__("tcp://*:40001")
-        print "Started HDDS simulator on", self.address
+
+        # Turn down ThalesZMQServer debug level
+        self.log.setLevel(logger.INFO)
 
         # List of properties that can be get/set
         self.properties = {"carrier_card.switch.temperature": "50.4",
