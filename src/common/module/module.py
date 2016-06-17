@@ -32,6 +32,9 @@ class Module(ConfigurableObject):
         self.threads = []
         ## Save the arguments for threads when they are configured, to use in their runtime constructions
         self.threadArgs = []
+        ## Record if we are executing in the unittest environment
+        self.unitTestExecution = 'unittest' in sys.modules
+
 
         return
 

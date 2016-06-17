@@ -12,16 +12,18 @@ from common.logger.logger import Logger
 #
 class ConfigurableObject(object):
 
-    def __init__(self):
+    def __init__(self, iniFile=None):
 
         ## Logger implementation, based on standard python logger
         self.log = Logger(type(self).__name__)
-        self.unitTestExecution = 'unittest' in sys.modules
 
-        moduleDir = os.path.dirname(inspect.getsourcefile(self.__class__))
-        while os.path.basename(moduleDir) != 'src':
-            moduleDir = os.path.dirname(moduleDir)
-        self.__iniFile = moduleDir + os.path.sep + 'qual' + os.path.sep + 'config' + os.path.sep + PLATFORM + '.ini'
+        self.__iniFile = iniFile
+        if self.__iniFile is None:
+            moduleDir = os.path.dirname(inspect.getsourcefile(self.__class__))
+            while os.path.basename(moduleDir) != 'src':
+                moduleDir = os.path.dirname(moduleDir)
+            self.__iniFile = moduleDir + os.path.sep + 'qual' + os.path.sep + 'config' + os.path.sep + PLATFORM + '.ini'
+
         self.__iniParser = SafeConfigParser()
         self.__iniParser.read(self.__iniFile)
 
