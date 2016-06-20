@@ -28,14 +28,14 @@ class Rs485(Module):
 
 
         try:
-            self.serial = serial.Serial(port=self.config['port'],
-                                        baudrate=self.config['baudrate'],
-                                        parity=self.config['parity'],
-                                        stopbits=self.config['stopbits'],
-                                        bytesize=self.config['bytesize'],
-                                        timeout=self.config['timeout'])
+            self.serial = serial.Serial(port=self.port,
+                                        baudrate=self.baudrate,
+                                        parity=self.parity,
+                                        stopbits=self.stopbits,
+                                        bytesize=self.bytesize,
+                                        timeout=self.timeout)
         except (serial.SerialException, OSError):
-            raise RS485ModuleSerialException(self.config['port'])
+            raise RS485ModuleSerialException(self.port)
         else:
             ## Log obj
             self.log = Logger(name="Test RS-485", level=logging.DEBUG)
