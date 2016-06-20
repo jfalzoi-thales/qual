@@ -12,7 +12,7 @@ from common.logger.logger import Logger
 #
 class ConfigurableObject(object):
 
-    def __init__(self, config=None):
+    def __init__(self, configSection=None):
 
         ## Logger implementation, based on standard python logger
         self.log = Logger(type(self).__name__)
@@ -20,11 +20,39 @@ class ConfigurableObject(object):
         self.__iniPath = self._findConfig()
         self.__iniParser = SafeConfigParser()
         self.__iniParser.read(self.__iniPath)
-        self.__iniSection = config if config is not None else type(self).__name__
+        self.__iniSection = configSection if configSection is not None else type(self).__name__
 
         return
 
+    ## Class Method for returning configurations
+    #
+    # This function returns the INI sections that will be used to instantiate the modules.
+    # By default, 1 instance of the module will be created, and will be initialized using
+    # a sections that matches the classname of the module (e.g. Ethernet).
+    #
+    # If this method is overridden, a different sections name could be used, or if multiple
+    # section names are listed then mulitple instances of the module will be created, one
+    # for each section name
+    #
+    # Example:
+    #   for config in Example.getConfigurations():
+    #    example = Example(config=config)
+    #
+    #
+    # @param cls Class, passed to classMethod
+    #
+    @classmethod
+    def getConfigurations(cls):
+        return [cls.__name__, ]
+
+
     def _findConfig(self):
+        #
+        # Search for the INI file.
+        # For each of the following 3, look in the CWD first, then the config folder second. (Total 6 checks)
+        # 1) If this is running as a unit test, look for a unitTest.ini first
+        # 2) Then look for platform.ini, which should be present on the target
+        # 3) Then look for virtualMachine, which should always be present for testing
 
         iniCandidates = ['platform', 'virtualMachine']
         if 'unittest' in sys.modules:
