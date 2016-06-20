@@ -3,7 +3,7 @@
 #
 Name: qual
 Summary: An application used drive MPS hardware
-Version: 1.1
+Version: 1.0
 Release: 1
 License: FILL IN LATER
 Group: Applications/Engineering
@@ -30,11 +30,5 @@ cp -r * $RPM_BUILD_ROOT/thales/qual/src/
 /thales/qual/src/*
 
 %changelog
-* Fri Jun 17 2016 Christopher Wallace <cwallace@tklabs.com> 1.1-1
-- QUAL-101 : Updated qual.service (cwallace@tklabs.com)
-
-* Fri Jun 17 2016 Christopher Wallace <cwallace@tklabs.com> 1.0-1
-- Intitial tito tool tag 
-
 * Fri Jun 17 2016 Christopher Wallace <cwallace@tklabs.com> 1.0-1
 - Initial Qual RPM

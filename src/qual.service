@@ -3,7 +3,7 @@ Description=Start QUAL simulators and QTA
 
 [Service]
 Type=idle
-ExecStart=/thales/qual/src/qual.sh
+ExecStart=/bin/sh /thales/qual/src/qual.sh
 Restart=always
 RestartSec=3s
 
