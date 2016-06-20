@@ -10,8 +10,8 @@ class SystemMonitoring(module.Module):
     ## Constructor
     #  @param     self
     #  @param     config  Configuration for this module instance
-    def __init__(self, config = {}):
-        super(SystemMonitoring, self).__init__({})
+    def __init__(self, config = None):
+        super(SystemMonitoring, self).__init__(config)
         ## Connection to PowerInfo driver
         self.pwrClient = ThalesZMQClient("ipc:///tmp/pwr-supp-mon.sock")
         ## Connection to SEMA driver

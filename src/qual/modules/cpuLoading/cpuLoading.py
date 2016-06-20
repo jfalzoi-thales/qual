@@ -16,9 +16,9 @@ class CPULoading(Module):
     ## Constructor
     #  @param   self
     #  @param   config  Configuration for this module instance
-    def __init__(self, config = {}):
+    def __init__(self, config = None):
         #  Initializes parent class
-        super(CPULoading, self).__init__({})
+        super(CPULoading, self).__init__(config)
         ## Indicates whether or not a CPU load has been set
         self.active = False
         ## CPULoader thread which continually gathers CPU load information

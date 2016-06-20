@@ -17,7 +17,7 @@ class SSD(Module):
     ## Constructor
     #  @param       self
     #  @param       config      Configuration for the instance is going to be created
-    def __init__(self, config={}):
+    def __init__(self, config=None):
         # constructor of the parent class
         super(SSD, self).__init__(config)
 

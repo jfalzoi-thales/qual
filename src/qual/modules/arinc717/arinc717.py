@@ -10,9 +10,9 @@ class ARINC717(Module):
     ## Constructor
     #  @param   self
     #  @param   config  Configuration for this module instance
-    def __init__(self, config = {}):
+    def __init__(self, config =None):
         #  Initialize parent class
-        super(ARINC717, self).__init__({})
+        super(ARINC717, self).__init__(config)
 
         #  Ensure directory for communication with ARINC717 driver is present
         ipcdir = "/tmp/arinc/driver/717"

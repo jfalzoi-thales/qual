@@ -20,7 +20,7 @@ class MemoryBandwidth(Module):
     ## Constructor
     #  @param       self
     #  @param       config      Configuration for the instance is going to be created
-    def __init__(self, config={}):
+    def __init__(self, config=None):
         # constructor of the parent class
         super(MemoryBandwidth, self).__init__(config)
         ## field to save the current Popen object
@@ -32,6 +32,11 @@ class MemoryBandwidth(Module):
         ## field to save the last bandwidth read
         self.bandwidth = 0
 
+        self.maxallocmem='-M 10000000'
+        self.numthreads='-P 1'
+        self.mSize='-s 10000000'
+        self.loadConfig(attributes=('maxallocmem','numthreads','mSize'))
+
         # adding the message handler
         self.addMsgHandler(MemoryBandwidthRequest, self.hdlrMsg)
         # thread that run PMBW tool
@@ -39,12 +44,8 @@ class MemoryBandwidth(Module):
         # thread that reads the PMBW output
         self.addThread(self.runMemBandwithTest)
 
-    @classmethod
-    ## Returns the test configurations for that module
-    #
-    #  @return      test configurations
-    def getConfigurations(cls):
-        return [{'maxallocmem': '-M 10000000','numthreads': '-P 1', 'mSize': '-s 10000000'}]
+
+
 
     ## Handles incoming messages
     #

@@ -16,11 +16,11 @@ class ConfigurableObject(object):
 
         ## Logger implementation, based on standard python logger
         self.log = Logger(type(self).__name__)
-        self.__iniFile = None
-        self.__iniPath = self._findConfig()
-        self.__iniParser = SafeConfigParser()
-        self.__iniParser.read(self.__iniPath)
-        self.__iniSection = configSection if configSection is not None else type(self).__name__
+        self._iniFile = None
+        self._iniPath = self._findConfig()
+        self._iniParser = SafeConfigParser()
+        self._iniParser.read(self._iniPath)
+        self._iniSection = configSection if configSection is not None else type(self).__name__
 
         return
 
@@ -56,32 +56,36 @@ class ConfigurableObject(object):
     def loadConfig(self, attributes):
 
         for attribute in attributes:
-            if self.__iniParser.has_option(self.__iniSection, attribute):
+            if self._iniParser.has_option(self._iniSection, attribute):
                 try:
                     current = getattr(self, attribute)
                 except AttributeError:
                     current = 'stringValue'
+
                 if isinstance(current, bool):
-                    handler = self.__iniParser.getboolean
+                    handler = self._iniParser.getboolean
                 elif isinstance(current, int):
-                    handler = self.__iniParser.getint
+                    handler = self._iniParser.getint
                 elif isinstance(current, float):
-                    handler = self.__iniParser.getfloat
+                    handler = self._iniParser.getfloat
                 elif isinstance(current, str):
-                    handler = self.__iniParser.get
+                    handler = self._iniParser.get
                 else:
                     raise ConfigurableObjectException(
                         'Could not configure Field %s, unsupported Type' % (attribute,))
+
+                try:
+                    setattr(self, attribute, handler(self._iniSection, attribute))
+                    print 'here!'
+                except NoOptionError:
+                    pass
+
             else:
                 self.log.info('Setting configuration value %s without default' % (attribute,))
-                handler = self.__iniParser.get
+                handler = self._iniParser.get
 
-            try:
-                setattr(self, attribute, handler(self.__iniSection, attribute))
-            except NoOptionError:
-                pass
 
-            return
+        return
 
 
     def _findConfig(self):

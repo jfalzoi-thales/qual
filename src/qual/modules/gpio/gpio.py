@@ -26,8 +26,8 @@ class GPIO(module.Module):
     ## Constructor
     #  @param     self
     #  @param     config  Configuration for this module instance
-    def __init__(self, config = {}):
-        super(GPIO, self).__init__({})
+    def __init__(self, config = None):
+        super(GPIO, self).__init__(config)
         # Add GPIO handler to available message handlers
         self.addMsgHandler(GPIORequest, self.handler)
 

@@ -14,9 +14,19 @@ class Rs485(Module):
     ## Constructor
     #  @param       self
     #  @param       config      Configuration for the instance is going to be created
-    def __init__(self, config={}):
+    def __init__(self, config=None):
         ## constructor of the parent class
         super(Rs485, self).__init__(config)
+
+        self.port= '/dev/ttyUSB4'
+        self.baudrate= 115200
+        self.parity= serial.PARITY_NONE
+        self.stopbits= serial.STOPBITS_ONE
+        self.bytesize= serial.EIGHTBITS
+        self.timeout= 3
+        self.loadConfig(attributes=('port','baudrate','parity','stopbits','bytesize', 'timeout'))
+
+
         try:
             self.serial = serial.Serial(port=self.config['port'],
                                         baudrate=self.config['baudrate'],
@@ -44,14 +54,6 @@ class Rs485(Module):
             ## character to be sent
             self.tx = chr(0)
 
-    @classmethod
-    ## Returns the test configurations for that module
-    #
-    #  @return      test configurations
-    def getConfigurations(cls):
-        return [
-                {'port': '/dev/ttyUSB4', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS, 'timeout': 3},
-                ]
 
     ## Sends the data and expects the same response
     #
