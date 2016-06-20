@@ -3,8 +3,8 @@ from time import sleep
 
 import gpio
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.GPIO_pb2 import GPIORequest
-from common.logger.logger import Logger
+from common.gpb.python.GPIO_pb2 import GPIORequest, GPIOResponse
+from common.logger import logger
 from common.module.modulemsgs import ModuleMessages
 
 # @cond doxygen_unittest
@@ -25,6 +25,7 @@ class GPIOMessages(ModuleMessages):
                 ("Connect input 2 to output 2",    GPIOMessages.connectIn2Out2),
                 ("Connect all inputs to output 3", GPIOMessages.connectInAllOut3),
                 ("Disconnect input 1",             GPIOMessages.disconnectIn1),
+                ("Disconnect input 2",             GPIOMessages.disconnectIn2),
                 ("Disconnect all inputs",          GPIOMessages.disconnectAll)]
 
     @staticmethod
@@ -88,6 +89,13 @@ class GPIOMessages(ModuleMessages):
         return message
 
     @staticmethod
+    def disconnectIn2():
+        message = GPIORequest()
+        message.requestType = GPIORequest.DISCONNECT
+        message.gpIn = "PA_KYLN_IN2"
+        return message
+
+    @staticmethod
     def disconnectAll():
         message = GPIORequest()
         message.requestType = GPIORequest.DISCONNECT
@@ -118,67 +126,282 @@ class GPIOMessages(ModuleMessages):
 
 ## GPIO Unit Test
 class Test_GPIO(unittest.TestCase):
-    def test_basic(self):
-        log = Logger(name='Test GPIO')
-        log.info('Running functionality test for GPIO module:')
-        self.module = gpio.GPIO()
+    ## Static logger instance
+    log = None
 
+    ## Static module instance
+    module = None
+
+    ## Setup for the GPIO test cases
+    # This is run only once before running any test cases
+    @classmethod
+    def setUpClass(cls):
+        # Create a logger so we can add details to a multi-step test case
+        cls.log = logger.Logger(name='Test GPIO')
+        cls.log.info('++++ Setup before GPIO module unit tests ++++')
+        # Create the module
+        cls.module = gpio.GPIO()
+        # Uncomment this if you don't want to see module debug messages
+        #cls.module.log.setLevel(logger.INFO)
+
+    ## Teardown when done with GPIO test cases
+    # This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.log.info("++++ Teardown after GPIO module unit tests ++++")
+        cls.module.terminate()
+
+    ## Test setup
+    # This is run before each test case; we use it to make sure we
+    # start each test case with the module in a known state
+    def setUp(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("==== Reset module state ====")
+        module.msgHandler(ThalesZMQMessage(GPIOMessages.disconnectAll()))
+
+    ## Test case: Try to connect an invalid input pin
+    # Should return an empty GPIOResponse
+    def test_invalidInput(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: Invalid input pin specified ****")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectInBogus()))
+        # Invalid input pin will return an empty GPIOResponse
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 0)
+        log.info("==== Test complete ====")
+
+    # Test case: Try to connect an invalid output pin
+    # Should return an empty GPIOResponse
+    def test_invalidOutput(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: Invalid output pin specified ****")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectOutBogus()))
+        # Invalid output pin will return an empty GPIOResponse
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 0)
+        log.info("==== Test complete ====")
+
+    ## Test case: Try to reconnect a connected input pin
+    # Should return a GPIOResponse showing pin still connected to original output
+    def test_reconnect(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: Try to reconnect a connected input pin ****")
         log.info("==== Report before connecting ====")
-        self.module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn1()))
-        sleep(1)
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn2()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
+        self.assertEqual(response.body.status[0].matchCount, 0)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN2")
+        self.assertEqual(response.body.status[0].gpOut, "")
+
+        log.info("==== Connect input ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn2Out1()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
+        self.assertEqual(response.body.status[0].matchCount, 0)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN2")
+        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+
+        log.info("==== Try to connect input to different output ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn2Out2()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
+        self.assertEqual(response.body.status[0].matchCount, 0)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN2")
+        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+        log.info("==== Test complete ====")
+
+    ## Test case: Connect a linked input/output pair
+    # This test case will connect a "linked" pair, wait 4 seconds, then
+    # verify that the report indicates 4-5 matches and 0 mismatches.
+    # It also verifies that the report is cleared when read back
+    # after a disconnect.
+    def test_linkedPair(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: Connect a linked input/output pair ****")
+        log.info("==== Report before connecting ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn1()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
+        self.assertEqual(response.body.status[0].matchCount, 0)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpOut, "")
 
         log.info("==== Connect linked pair ====")
-        self.module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn1Out1()))
-        sleep(1)
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn1Out1()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
+        self.assertEqual(response.body.status[0].matchCount, 0)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
 
-        log.info("==== Connect second pin to same output ====")
-        self.module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn2Out1()))
-        sleep(1)
+        log.info("==== Wait 4 seconds to accumulate statistics ====")
+        sleep(4.1)
 
-        log.info("==== Try to reconnect connected pin ====")
-        self.module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn2Out2()))
-        sleep(1)
+        log.info("==== Get report after 4 seconds ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn1()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
+        self.assertGreaterEqual(response.body.status[0].matchCount, 4)
+        self.assertLessEqual(response.body.status[0].matchCount, 5)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
 
-        log.info("==== Bogus input pin specified ====")
-        self.module.msgHandler(ThalesZMQMessage(GPIOMessages.connectInBogus()))
-        sleep(1)
+        log.info("==== Disconnect connected pair ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.disconnectIn1()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
+        self.assertGreaterEqual(response.body.status[0].matchCount, 4)
+        self.assertLessEqual(response.body.status[0].matchCount, 5)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
 
-        log.info("==== Bogus output pin specified ====")
-        self.module.msgHandler(ThalesZMQMessage(GPIOMessages.connectOutBogus()))
-        sleep(1)
+        log.info("==== Report after disconnect ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn1()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
+        self.assertEqual(response.body.status[0].matchCount, 0)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpOut, "")
+        log.info("==== Test complete ====")
 
-        log.info("==== Report on non-linked input ====")
-        self.module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn2()))
-        sleep(1)
+    ## Test case: Connect an unlinked input/output pair
+    # This test case will connect an "unlinked" pair, wait 4 seconds, then
+    # verify that the report indicates 2-3 matches and 2-3 mismatches.
+    def test_unlinkedPair(self):
+        log = self.__class__.log
+        module = self.__class__.module
 
-        log.info("==== Report on all inputs ====")
-        self.module.msgHandler(ThalesZMQMessage(GPIOMessages.reportAll()))
-        sleep(1)
+        log.info("**** Test case: Connect an unlinked input/output pair ****")
+        log.info("==== Report before connecting ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn1()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
+        self.assertEqual(response.body.status[0].matchCount, 0)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpOut, "")
 
-        log.info("==== Disconnect linked input ====")
-        self.module.msgHandler(ThalesZMQMessage(GPIOMessages.disconnectIn1()))
-        sleep(1)
+        log.info("==== Connect unlinked pair ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn2Out1()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
+        self.assertEqual(response.body.status[0].matchCount, 0)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN2")
+        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+
+        log.info("==== Wait 4 seconds to accumulate statistics ====")
+        sleep(4.1)
+
+        log.info("==== Disconnect connected pair and check results ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.disconnectIn2()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
+        self.assertGreaterEqual(response.body.status[0].matchCount, 2)
+        self.assertLessEqual(response.body.status[0].matchCount, 3)
+        self.assertGreaterEqual(response.body.status[0].mismatchCount, 2)
+        self.assertLessEqual(response.body.status[0].mismatchCount, 3)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN2")
+        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+        log.info("==== Test complete ====")
+
+    ## Test case: Use of the "ALL" parameter
+    # Tests CONNECT, DISCONNECT, and REPORT messages with the input
+    # pin specified as "ALL" perform the correct actions.
+    def test_allparam(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        numInputs = len(module.inputPins)
+
+        log.info("**** Test case: Test use of the \"ALL\" parameter ****")
+        log.info("==== Report on all inputs before connect ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportAll()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), numInputs)
+        for gpioStat in response.body.status:
+            # All pins should be disconnected
+            self.assertEqual(gpioStat.conState, GPIOResponse.DISCONNECTED)
+            self.assertEqual(gpioStat.gpOut, "")
 
         log.info("==== Connect all inputs ====")
-        self.module.msgHandler(ThalesZMQMessage(GPIOMessages.connectInAllOut3()))
-        sleep(4)
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectInAllOut3()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), numInputs)
+        for gpioStat in response.body.status:
+            # All pins should be connected to output 3
+            self.assertEqual(gpioStat.conState, GPIOResponse.CONNECTED)
+            self.assertEqual(gpioStat.gpOut, "VA_KYLN_OUT3")
 
-        log.info("==== Report on all inputs ====")
-        self.module.msgHandler(ThalesZMQMessage(GPIOMessages.reportAll()))
-        sleep(2)
+        log.info("==== Report on all inputs after connect ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportAll()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), numInputs)
+        for gpioStat in response.body.status:
+            # All pins should still be connected to output 3
+            self.assertEqual(gpioStat.conState, GPIOResponse.CONNECTED)
+            self.assertEqual(gpioStat.gpOut, "VA_KYLN_OUT3")
 
-        log.info("==== Disconnect all inputs ====")
-        self.module.msgHandler(ThalesZMQMessage(GPIOMessages.disconnectAll()))
-        sleep(1)
+        log.info("==== Wait 4 seconds to accumulate statistics ====")
+        sleep(4.1)
 
-        log.info("==== Report on all inputs ====")
-        self.module.msgHandler(ThalesZMQMessage(GPIOMessages.reportAll()))
-        sleep(1)
+        log.info("==== Disconnect all inputs and check stats ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.disconnectAll()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), numInputs)
+        for gpioStat in response.body.status:
+            # All pins just got disconnected from output 3
+            self.assertEqual(gpioStat.conState, GPIOResponse.DISCONNECTED)
+            self.assertEqual(gpioStat.gpOut, "VA_KYLN_OUT3")
+            if (gpioStat.gpIn == "PA_KYLN_IN3"):
+                self.assertGreaterEqual(gpioStat.matchCount, 4)
+                self.assertLessEqual(gpioStat.matchCount, 5)
+                self.assertEqual(gpioStat.mismatchCount, 0)
+            else:
+                self.assertGreaterEqual(gpioStat.matchCount, 2)
+                self.assertLessEqual(gpioStat.matchCount, 3)
+                self.assertGreaterEqual(gpioStat.mismatchCount, 2)
+                self.assertLessEqual(gpioStat.mismatchCount, 3)
 
-        log.info("Terminating module...")
-        self.module.terminate()
+        log.info("==== Report on all inputs after disconnect ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportAll()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), numInputs)
+        for gpioStat in response.body.status:
+            # All pins disconnected again
+            self.assertEqual(gpioStat.conState, GPIOResponse.DISCONNECTED)
+            self.assertEqual(gpioStat.gpOut, "")
+        log.info("==== Test complete ====")
 
-        pass
 
 if __name__ == '__main__':
     unittest.main()
