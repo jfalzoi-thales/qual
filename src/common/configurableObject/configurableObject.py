@@ -1,17 +1,17 @@
 import inspect
 import os
 import sys
-
-
 from ConfigParser import SafeConfigParser, NoOptionError
 from common.configurableObject.exception import ConfigurableObjectException
 from common.logger.logger import Logger
 
 
 ## A class loads configuration files from INI.
-#
 class ConfigurableObject(object):
 
+    ##Constructor
+    # @param cls Class, passed to classMethod
+    # @param configSection INI File section to read configuration from (default to class name)
     def __init__(self, configSection=None):
 
         ## Logger implementation, based on standard python logger
@@ -45,6 +45,44 @@ class ConfigurableObject(object):
     def getConfigurations(cls):
         return [cls.__name__, ]
 
+    ## Load class attributes/member variables from INI files
+    #
+    # This function accepts a list of member variable names that will be
+    # overridden by values in an INI file.  The File location and Section name
+    # are determined in the constructor.  Each variable name will be set by a value
+    # of the same type as the current value.
+    #
+    #@param attributes A List of member variable names (strings) to be set by INI values
+    def loadConfig(self, attributes):
+
+        for attribute in attributes:
+            if self.__iniParser.has_option(self.__iniSection, attribute):
+                try:
+                    current = getattr(self, attribute)
+                except AttributeError:
+                    current = 'stringValue'
+                if isinstance(current, bool):
+                    handler = self.__iniParser.getboolean
+                elif isinstance(current, int):
+                    handler = self.__iniParser.getint
+                elif isinstance(current, float):
+                    handler = self.__iniParser.getfloat
+                elif isinstance(current, str):
+                    handler = self.__iniParser.get
+                else:
+                    raise ConfigurableObjectException(
+                        'Could not configure Field %s, unsupported Type' % (attribute,))
+            else:
+                self.log.info('Setting configuration value %s without default' % (attribute,))
+                handler = self.__iniParser.get
+
+            try:
+                setattr(self, attribute, handler(self.__iniSection, attribute))
+            except NoOptionError:
+                pass
+
+            return
+
 
     def _findConfig(self):
         #
@@ -77,34 +115,4 @@ class ConfigurableObject(object):
                 return filepath
 
         raise ConfigurableObjectException('INI File not found')
-
-
-    def loadConfig(self, attributes=()):
-
-        for attribute in attributes :
-            if self.__iniParser.has_option(self.__iniSection, attribute) :
-                try:
-                    current = getattr(self, attribute)
-                except AttributeError:
-                    current = 'stringValue'
-                if isinstance(current, bool) :
-                    handler = self.__iniParser.getboolean
-                elif isinstance(current, int) :
-                    handler = self.__iniParser.getint
-                elif isinstance(current, float) :
-                    handler = self.__iniParser.getfloat
-                elif isinstance(current, str) :
-                    handler = self.__iniParser.get
-                else:
-                    raise ConfigurableObjectException('Could not configure Field %s, unsupported Type' % (attribute,))
-            else:
-                self.log.info('Setting configuration value %s without default' % (attribute,))
-                handler = self.__iniParser.get
-
-            try:
-                setattr(self, attribute, handler(self.__iniSection, attribute))
-            except NoOptionError:
-                pass
-
-        return
 
