@@ -17,9 +17,9 @@ class testObject1(ConfigurableObject):
         return
 
 class Test_ConfigurableObject(unittest.TestCase):
-
+    
     def test_basic(self):
-        testObject = testObject1()
+        testObject = testObject1() #Use testObject1 as the INI Section Name
         self.assertTrue(testObject.bool1)
         self.assertTrue(testObject.bool2)
         self.assertTrue(testObject.bool3)
@@ -28,7 +28,7 @@ class Test_ConfigurableObject(unittest.TestCase):
         self.assertEqual(testObject.string1, 'Goodbye')
 
     def test_customConfig(self):
-        testObject = testObject1(self._testMethodName)
+        testObject = testObject1(self._testMethodName) #Use the test case name as the INI Section Name
         self.assertTrue(testObject.bool1)
         self.assertTrue(testObject.bool2)
         self.assertTrue(testObject.bool3)

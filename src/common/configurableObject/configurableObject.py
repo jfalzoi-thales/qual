@@ -5,7 +5,6 @@ import sys
 
 from ConfigParser import SafeConfigParser, NoOptionError
 from common.configurableObject.exception import ConfigurableObjectException
-from common.configurableObject.platform import PLATFORM
 from common.logger.logger import Logger
 
 
@@ -22,7 +21,6 @@ class ConfigurableObject(object):
         self.__iniParser = SafeConfigParser()
         self.__iniParser.read(self.__iniPath)
         self.__iniSection = config if config is not None else type(self).__name__
-
 
         return
 
@@ -55,17 +53,8 @@ class ConfigurableObject(object):
 
     def loadConfig(self, attributes=()):
 
-        '''
-        if self.__iniParser == 'unitTest':
-            import unittest
-            sectionName = unittest.TestCase.id()
-        else:
-        '''
-        sectionName = self.__iniSection
-
-
         for attribute in attributes :
-            if self.__iniParser.has_option(sectionName, attribute) :
+            if self.__iniParser.has_option(self.__iniSection, attribute) :
                 try:
                     current = getattr(self, attribute)
                 except AttributeError:
@@ -85,7 +74,7 @@ class ConfigurableObject(object):
                 handler = self.__iniParser.get
 
             try:
-                setattr(self, attribute, handler(sectionName, attribute))
+                setattr(self, attribute, handler(self.__iniSection, attribute))
             except NoOptionError:
                 pass
 

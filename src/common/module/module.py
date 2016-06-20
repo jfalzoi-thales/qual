@@ -16,9 +16,9 @@ class Module(ConfigurableObject):
 
     ## Constructor
     #  @param     self
-    #  @param     config Configuration data.  Stored here, but opague to this class
+    #  @param     config Configuration section lable (INI Section name)
     def __init__(self, config):
-        super(Module, self).__init__()
+        super(Module, self).__init__(config)
 
         ## Used by threading methods to indicate the threads should keep running
         self._running = False
