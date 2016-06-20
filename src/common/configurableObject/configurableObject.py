@@ -2,6 +2,7 @@ import inspect
 import os
 import sys
 
+
 from ConfigParser import SafeConfigParser, NoOptionError
 from common.configurableObject.exception import ConfigurableObjectException
 from common.configurableObject.platform import PLATFORM
@@ -12,31 +13,58 @@ from common.logger.logger import Logger
 #
 class ConfigurableObject(object):
 
-    def __init__(self, iniFile=None):
+    def __init__(self, config=None):
 
         ## Logger implementation, based on standard python logger
         self.log = Logger(type(self).__name__)
-
-        self.__iniFile = iniFile
-        if self.__iniFile is None:
-            moduleDir = os.path.dirname(inspect.getsourcefile(self.__class__))
-            while os.path.basename(moduleDir) != 'src':
-                moduleDir = os.path.dirname(moduleDir)
-            self.__iniFile = moduleDir + os.path.sep + 'qual' + os.path.sep + 'config' + os.path.sep + PLATFORM + '.ini'
-
+        self.__iniFile = None
+        self.__iniPath = self._findConfig()
         self.__iniParser = SafeConfigParser()
-        self.__iniParser.read(self.__iniFile)
+        self.__iniParser.read(self.__iniPath)
+        self.__iniSection = config if config is not None else type(self).__name__
 
 
         return
 
-    def loadConfig(self, attributes=(), sectionName = None):
+    def _findConfig(self):
 
-        if sectionName is None:
-            sectionName = type(self).__name__
+        iniCandidates = ['platform', 'virtualMachine']
+        if 'unittest' in sys.modules:
+            iniCandidates.insert(0, 'unitTest')
+        for iniFile in iniCandidates:
+
+            #First, look in the local directory
+            if os.path.isfile('%s.ini' % (iniFile)):
+                self.__iniFile = iniFile
+                return '%s.ini' % (iniFile)
+
+            #If its not there, look in the config directory
+            moduleDir = os.path.dirname(inspect.getsourcefile(self.__class__))
+            while os.path.basename(moduleDir) != 'src':
+                moduleDir = os.path.dirname(moduleDir)
+            moduleDir = moduleDir + os.path.sep + 'qual' + os.path.sep + 'config'
+            if not os.path.isdir(moduleDir):
+                raise ConfigurableObjectException('Could not find configuration directory %s' % (moduleDir,))
+            filepath = moduleDir + os.path.sep + iniFile + '.ini'
+            if os.path.isfile(filepath):
+                self.__iniFile = iniFile
+                return filepath
+
+        raise ConfigurableObjectException('INI File not found')
+
+
+    def loadConfig(self, attributes=()):
+
+        '''
+        if self.__iniParser == 'unitTest':
+            import unittest
+            sectionName = unittest.TestCase.id()
+        else:
+        '''
+        sectionName = self.__iniSection
+
 
         for attribute in attributes :
-
             if self.__iniParser.has_option(sectionName, attribute) :
                 try:
                     current = getattr(self, attribute)
