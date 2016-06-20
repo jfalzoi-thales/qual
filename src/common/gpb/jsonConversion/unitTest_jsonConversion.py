@@ -83,7 +83,7 @@ class TestJsonConverstion(unittest.TestCase):
 
         return
 
-    def test_HDDSResp(self):
+    def test_HDDSResp1(self):
         message = GetResp()
         valueResp = message.values.add()
         valueResp.keyValue.key = "k"
@@ -100,6 +100,21 @@ class TestJsonConverstion(unittest.TestCase):
         self.assertFalse(newValue.success)
         self.assertEqual(newValue.error.error_code, 1001)
         self.assertEqual(newValue.error.error_description, "error")
+
+    def test_HDDSResp2(self):
+        message = GetResp()
+        valueResp = message.values.add()
+        valueResp.keyValue.key = "k"
+        valueResp.keyValue.value = "v"
+        valueResp.success = False
+
+        messageName, json = JsonConversion.gpb2json(message)
+        newMessage = JsonConversion.json2gpb(messageName, json)
+        newValue = newMessage.values[0]
+        self.assertEqual(newValue.keyValue.key, "k")
+        self.assertEqual(newValue.keyValue.value, "v")
+        self.assertFalse(newValue.success)
+
 
         return
 
