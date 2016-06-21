@@ -3,6 +3,7 @@
 
 import sys
 _b=sys.version_info[0]<3 and (lambda x:x) or (lambda x:x.encode('latin1'))
+from google.protobuf.internal import enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
@@ -18,10 +19,55 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='HDDS.proto',
   package='mpsqual',
-  serialized_pb=_b('\n\nHDDS.proto\x12\x07mpsqual\"\x15\n\x06GetReq\x12\x0b\n\x03key\x18\x01 \x03(\t\"-\n\x07GetResp\x12\"\n\x06values\x18\x01 \x03(\x0b\x32\x12.mpsqual.ValueResp\"+\n\x06SetReq\x12!\n\x06values\x18\x01 \x03(\x0b\x32\x11.mpsqual.Property\"1\n\x0bHDDSSetResp\x12\"\n\x06values\x18\x01 \x03(\x0b\x32\x12.mpsqual.ValueResp\"g\n\tValueResp\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12#\n\x08keyValue\x18\x02 \x02(\x0b\x32\x11.mpsqual.Property\x12$\n\x05\x65rror\x18\x03 \x01(\x0b\x32\x15.mpsqual.ErrorMessage\"&\n\x08Property\x12\x0b\n\x03key\x18\x01 \x02(\t\x12\r\n\x05value\x18\x02 \x02(\t\"=\n\x0c\x45rrorMessage\x12\x12\n\nerror_code\x18\x01 \x02(\r\x12\x19\n\x11\x65rror_description\x18\x02 \x01(\t')
+  serialized_pb=_b('\n\nHDDS.proto\x12\x07mpsqual\"\x15\n\x06GetReq\x12\x0b\n\x03key\x18\x01 \x03(\t\"0\n\x07GetResp\x12%\n\tHDDSValue\x18\x01 \x03(\x0b\x32\x12.mpsqual.ValueResp\".\n\x06SetReq\x12$\n\tHDDSValue\x18\x01 \x03(\x0b\x32\x11.mpsqual.Property\"0\n\x07SetResp\x12%\n\tHDDSValue\x18\x01 \x03(\x0b\x32\x12.mpsqual.ValueResp\"`\n\tValueResp\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12 \n\x05\x65rror\x18\x02 \x01(\x0b\x32\x11.mpsqual.ErrorMsg\x12 \n\x05value\x18\x03 \x01(\x0b\x32\x11.mpsqual.Property\"&\n\x08Property\x12\x0b\n\x03key\x18\x01 \x02(\t\x12\r\n\x05value\x18\x02 \x02(\t\"3\n\x08\x45rrorMsg\x12\x12\n\nerror_code\x18\x01 \x02(\r\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t*\xad\x01\n\x07\x45rrCode\x12\x1c\n\x17\x46\x41ILURE_INVALID_MESSAGE\x10\xe8\x07\x12\x18\n\x13\x46\x41ILURE_INVALID_KEY\x10\xe9\x07\x12\x1a\n\x15\x46\x41ILURE_INVALID_VALUE\x10\xea\x07\x12\x1c\n\x17\x46\x41ILURE_SET_UNSUPPORTED\x10\xeb\x07\x12\x17\n\x12\x46\x41ILURE_GET_FAILED\x10\xec\x07\x12\x17\n\x12\x46\x41ILURE_SET_FAILED\x10\xed\x07')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
+_ERRCODE = _descriptor.EnumDescriptor(
+  name='ErrCode',
+  full_name='mpsqual.ErrCode',
+  filename=None,
+  file=DESCRIPTOR,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='FAILURE_INVALID_MESSAGE', index=0, number=1000,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='FAILURE_INVALID_KEY', index=1, number=1001,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='FAILURE_INVALID_VALUE', index=2, number=1002,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='FAILURE_SET_UNSUPPORTED', index=3, number=1003,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='FAILURE_GET_FAILED', index=4, number=1004,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='FAILURE_SET_FAILED', index=5, number=1005,
+      options=None,
+      type=None),
+  ],
+  containing_type=None,
+  options=None,
+  serialized_start=386,
+  serialized_end=559,
+)
+_sym_db.RegisterEnumDescriptor(_ERRCODE)
+
+ErrCode = enum_type_wrapper.EnumTypeWrapper(_ERRCODE)
+FAILURE_INVALID_MESSAGE = 1000
+FAILURE_INVALID_KEY = 1001
+FAILURE_INVALID_VALUE = 1002
+FAILURE_SET_UNSUPPORTED = 1003
+FAILURE_GET_FAILED = 1004
+FAILURE_SET_FAILED = 1005
 
 
 
@@ -63,7 +109,7 @@ _GETRESP = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='values', full_name='mpsqual.GetResp.values', index=0,
+      name='HDDSValue', full_name='mpsqual.GetResp.HDDSValue', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -81,7 +127,7 @@ _GETRESP = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=46,
-  serialized_end=91,
+  serialized_end=94,
 )
 
 
@@ -93,7 +139,7 @@ _SETREQ = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='values', full_name='mpsqual.SetReq.values', index=0,
+      name='HDDSValue', full_name='mpsqual.SetReq.HDDSValue', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -110,20 +156,20 @@ _SETREQ = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=93,
-  serialized_end=136,
+  serialized_start=96,
+  serialized_end=142,
 )
 
 
-_HDDSSETRESP = _descriptor.Descriptor(
-  name='HDDSSetResp',
-  full_name='mpsqual.HDDSSetResp',
+_SETRESP = _descriptor.Descriptor(
+  name='SetResp',
+  full_name='mpsqual.SetResp',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='values', full_name='mpsqual.HDDSSetResp.values', index=0,
+      name='HDDSValue', full_name='mpsqual.SetResp.HDDSValue', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -140,8 +186,8 @@ _HDDSSETRESP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=138,
-  serialized_end=187,
+  serialized_start=144,
+  serialized_end=192,
 )
 
 
@@ -160,14 +206,14 @@ _VALUERESP = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='keyValue', full_name='mpsqual.ValueResp.keyValue', index=1,
-      number=2, type=11, cpp_type=10, label=2,
+      name='error', full_name='mpsqual.ValueResp.error', index=1,
+      number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='error', full_name='mpsqual.ValueResp.error', index=2,
+      name='value', full_name='mpsqual.ValueResp.value', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -184,8 +230,8 @@ _VALUERESP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=189,
-  serialized_end=292,
+  serialized_start=194,
+  serialized_end=290,
 )
 
 
@@ -221,27 +267,27 @@ _PROPERTY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=294,
-  serialized_end=332,
+  serialized_start=292,
+  serialized_end=330,
 )
 
 
-_ERRORMESSAGE = _descriptor.Descriptor(
-  name='ErrorMessage',
-  full_name='mpsqual.ErrorMessage',
+_ERRORMSG = _descriptor.Descriptor(
+  name='ErrorMsg',
+  full_name='mpsqual.ErrorMsg',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='error_code', full_name='mpsqual.ErrorMessage.error_code', index=0,
+      name='error_code', full_name='mpsqual.ErrorMsg.error_code', index=0,
       number=1, type=13, cpp_type=3, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='error_description', full_name='mpsqual.ErrorMessage.error_description', index=1,
+      name='description', full_name='mpsqual.ErrorMsg.description', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -258,22 +304,23 @@ _ERRORMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=334,
-  serialized_end=395,
+  serialized_start=332,
+  serialized_end=383,
 )
 
-_GETRESP.fields_by_name['values'].message_type = _VALUERESP
-_SETREQ.fields_by_name['values'].message_type = _PROPERTY
-_HDDSSETRESP.fields_by_name['values'].message_type = _VALUERESP
-_VALUERESP.fields_by_name['keyValue'].message_type = _PROPERTY
-_VALUERESP.fields_by_name['error'].message_type = _ERRORMESSAGE
+_GETRESP.fields_by_name['HDDSValue'].message_type = _VALUERESP
+_SETREQ.fields_by_name['HDDSValue'].message_type = _PROPERTY
+_SETRESP.fields_by_name['HDDSValue'].message_type = _VALUERESP
+_VALUERESP.fields_by_name['error'].message_type = _ERRORMSG
+_VALUERESP.fields_by_name['value'].message_type = _PROPERTY
 DESCRIPTOR.message_types_by_name['GetReq'] = _GETREQ
 DESCRIPTOR.message_types_by_name['GetResp'] = _GETRESP
 DESCRIPTOR.message_types_by_name['SetReq'] = _SETREQ
-DESCRIPTOR.message_types_by_name['HDDSSetResp'] = _HDDSSETRESP
+DESCRIPTOR.message_types_by_name['SetResp'] = _SETRESP
 DESCRIPTOR.message_types_by_name['ValueResp'] = _VALUERESP
 DESCRIPTOR.message_types_by_name['Property'] = _PROPERTY
-DESCRIPTOR.message_types_by_name['ErrorMessage'] = _ERRORMESSAGE
+DESCRIPTOR.message_types_by_name['ErrorMsg'] = _ERRORMSG
+DESCRIPTOR.enum_types_by_name['ErrCode'] = _ERRCODE
 
 GetReq = _reflection.GeneratedProtocolMessageType('GetReq', (_message.Message,), dict(
   DESCRIPTOR = _GETREQ,
@@ -296,12 +343,12 @@ SetReq = _reflection.GeneratedProtocolMessageType('SetReq', (_message.Message,),
   ))
 _sym_db.RegisterMessage(SetReq)
 
-HDDSSetResp = _reflection.GeneratedProtocolMessageType('HDDSSetResp', (_message.Message,), dict(
-  DESCRIPTOR = _HDDSSETRESP,
+SetResp = _reflection.GeneratedProtocolMessageType('SetResp', (_message.Message,), dict(
+  DESCRIPTOR = _SETRESP,
   __module__ = 'HDDS_pb2'
-  # @@protoc_insertion_point(class_scope:mpsqual.HDDSSetResp)
+  # @@protoc_insertion_point(class_scope:mpsqual.SetResp)
   ))
-_sym_db.RegisterMessage(HDDSSetResp)
+_sym_db.RegisterMessage(SetResp)
 
 ValueResp = _reflection.GeneratedProtocolMessageType('ValueResp', (_message.Message,), dict(
   DESCRIPTOR = _VALUERESP,
@@ -317,12 +364,12 @@ Property = _reflection.GeneratedProtocolMessageType('Property', (_message.Messag
   ))
 _sym_db.RegisterMessage(Property)
 
-ErrorMessage = _reflection.GeneratedProtocolMessageType('ErrorMessage', (_message.Message,), dict(
-  DESCRIPTOR = _ERRORMESSAGE,
+ErrorMsg = _reflection.GeneratedProtocolMessageType('ErrorMsg', (_message.Message,), dict(
+  DESCRIPTOR = _ERRORMSG,
   __module__ = 'HDDS_pb2'
-  # @@protoc_insertion_point(class_scope:mpsqual.ErrorMessage)
+  # @@protoc_insertion_point(class_scope:mpsqual.ErrorMsg)
   ))
-_sym_db.RegisterMessage(ErrorMessage)
+_sym_db.RegisterMessage(ErrorMsg)
 
 
 # @@protoc_insertion_point(module_scope)

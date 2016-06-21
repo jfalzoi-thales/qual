@@ -38,7 +38,7 @@ class ARINC429Messages(ModuleMessages):
     def reportIn3():
         message = ARINC429Request()
         message.requestType = ARINC429Request.REPORT
-        message.sink = "ARINC_429_RX2"
+        message.sink = "ARINC_429_RX3"
         return message
 
     @staticmethod

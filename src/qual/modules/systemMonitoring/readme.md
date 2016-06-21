@@ -1,4 +1,4 @@
-# System Monitoring
+# System Monitoring Module
 
 ##### System Monitoring Request:
 The System Monitoring Request Message is sent by the TE to request the MPS temperature, current, and voltage values obtained from internal sensors.  
