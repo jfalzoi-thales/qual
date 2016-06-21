@@ -76,13 +76,11 @@ class ConfigurableObject(object):
 
                 try:
                     setattr(self, attribute, handler(self._iniSection, attribute))
-                    print 'here!'
                 except NoOptionError:
                     pass
 
             else:
-                self.log.info('Setting configuration value %s without default' % (attribute,))
-                handler = self._iniParser.get
+                self.log.debug('Config %s not in INI %s:%s ' % (attribute,self._iniFile,self._iniSection))
 
 
         return
