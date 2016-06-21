@@ -1,7 +1,8 @@
 import inspect
 import logging
 import logging.handlers
-import platform
+
+from common.configurableObject.configurableObject import ConfigurableObject
 
 CRITICAL = logging.CRITICAL
 FATAL = logging.FATAL
@@ -37,20 +38,29 @@ NOTSET = logging.NOTSET
 # log.warn('warn message')
 # log.error('error message')
 # log.critical('critical message')
-class Logger(logging.getLoggerClass()):
+class Logger(logging.getLoggerClass(), ConfigurableObject):
 
     ## Constructor
     #  @param     name  The name of the debug channel, if not set will be the caller's module name
     #  @param     level The minimum debug level that will be added to the log
     def __init__(self, name=None, level=NOTSET):
 
+        self.logLevel = level
+        self.syslogAddress = 'localhost'
+        self.syslogPort = 514
+        self.syslogTCP = False
+
         if name is None:
             name = self._getCallerModule().__name__
 
-        super(Logger, self).__init__(name, level=level)
+
+        logging.getLoggerClass().__init__(self, name, level=self.logLevel)
+        ConfigurableObject.__init__(self, name)
+
+        self.loadConfig(attributes=('logLevel','syslogAddress','syslogPort','syslogTCP',))
         self._formatConsoleChannel()
         self._formatSyslogChannel()
-        self.setLevel(level)
+        self.setLevel(self.logLevel)
 
     # Gets the caller's module name as a default logger name
     def _getCallerModule(self):
@@ -73,7 +83,7 @@ class Logger(logging.getLoggerClass()):
         #     ch =  logging.handlers.SysLogHandler(address = '/dev/log')
         # else:
         #     ch =  logging.handlers.SysLogHandler(address = '/dev/log')
-        ch = logging.handlers.SysLogHandler()
+        ch = logging.handlers.SysLogHandler(address=(self.syslogAddress, self.syslogPort))
 
         ch.setLevel(DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')

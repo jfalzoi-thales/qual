@@ -1,3 +1,4 @@
+from logging import Logger
 from threading import Thread
 from time import sleep
 import datetime
@@ -28,7 +29,8 @@ class Module(ConfigurableObject):
         self.threadArgs = []
         ## Record if we are executing in the unittest environment
         self.unitTestExecution = 'unittest' in sys.modules
-
+        ## Logger implementation, based on standard python logger
+        self.log = Logger(type(self).__name__)
 
         return
 
