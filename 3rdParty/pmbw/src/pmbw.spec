@@ -28,5 +28,8 @@ make
 /usr/bin/stats2gnuplot
 
 %changelog
+* Tue Jun 21 2016 Christopher Wallace <cwallace@tklabs.com> 0.6.2-1
+- Initial tito tool tag 
+
 * Tue Jun 21 2016 Christopher Wallace <cwallace@tklabs.com> 0.6.2
 - Created pmbw.spec file
