@@ -101,7 +101,7 @@ class ConfigurableObject(object):
 
             #First, look in the local directory
             if os.path.isfile('%s.ini' % (iniFile)):
-                self.__iniFile = iniFile
+                self._iniFile = iniFile
                 return '%s.ini' % (iniFile)
 
             #If its not there, look in the config directory
@@ -113,7 +113,7 @@ class ConfigurableObject(object):
                 raise ConfigurableObjectException('Could not find configuration directory %s' % (moduleDir,))
             filepath = moduleDir + os.path.sep + iniFile + '.ini'
             if os.path.isfile(filepath):
-                self.__iniFile = iniFile
+                self._iniFile = iniFile
                 return filepath
 
         raise ConfigurableObjectException('INI File not found')
