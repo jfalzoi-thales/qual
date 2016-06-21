@@ -66,7 +66,8 @@ class JsonConversion(object):
             if field.name not in json.keys():
                 #need to set default values that were not in json
                 if field.label != FD.LABEL_REPEATED :
-                    setattr(pbMessage, field.name, field.default_value)
+                    if field.has_default_value :
+                        setattr(pbMessage, field.name, field.default_value)
                 continue
 
             if field.type == FD.TYPE_MESSAGE:
