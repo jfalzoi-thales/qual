@@ -1,11 +1,9 @@
 import serial
-import logging
 import time
 
 from common.module.module import Module
 from common.gpb.python.RS485_pb2 import RS485Request, RS485Response
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
 from qual.modules.rs485.rs485_Exception import RS485ModuleSerialException
 
 ## RS-485 Class Module
@@ -37,8 +35,6 @@ class Rs485(Module):
         except (serial.SerialException, OSError):
             raise RS485ModuleSerialException(self.port)
         else:
-            ## Log obj
-            self.log = Logger(name="Test RS-485", level=logging.DEBUG)
             ## adding the message handler
             self.addMsgHandler(RS485Request, self.handlerMessage)
             ## thread that writes through RS-485
