@@ -106,9 +106,14 @@ class ConfigurableObject(object):
 
             #If its not there, look in the config directory
             moduleDir = os.path.dirname(inspect.getsourcefile(self.__class__))
-            while os.path.basename(moduleDir) != 'src':
-                moduleDir = os.path.dirname(moduleDir)
-            moduleDir = moduleDir + os.path.sep + 'qual' + os.path.sep + 'config'
+            if 'src' in moduleDir:
+                while os.path.basename(moduleDir) != 'src':
+                    moduleDir = os.path.dirname(moduleDir)
+                moduleDir = moduleDir + os.path.sep + 'qual' + os.path.sep + 'config'
+            else:
+                # Try relative to the current directory
+                moduleDir = 'qual' + os.path.sep + 'config'
+
             if not os.path.isdir(moduleDir):
                 raise ConfigurableObjectException('Could not find configuration directory %s' % (moduleDir,))
             filepath = moduleDir + os.path.sep + iniFile + '.ini'
