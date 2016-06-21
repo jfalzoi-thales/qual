@@ -29,6 +29,11 @@ cp -r * $RPM_BUILD_ROOT/thales/qual/src/
 /etc/systemd/system/multi-user.target.wants/qual-vm.service
 /thales/qual/src/*
 
+%post
+rm /sbin/mpsinst-makeraid
+rm /etc/udev/rules.d/80*
+rm /etc/udev/rules.d/95*
+
 %changelog
 * Tue Jun 21 2016 Christopher Wallace <cwallace@tklabs.com> 1.0-1
 - Initial tito tool tag 
