@@ -1,14 +1,8 @@
-import inspect
-import os
-from ConfigParser import SafeConfigParser, ConfigParser
 from threading import Thread
 from time import sleep
 import datetime
-
 import sys
-
 from common.configurableObject.configurableObject import ConfigurableObject
-from common.logger.logger import Logger
 from common.module.exception import ModuleException
 
 ## Module Base class
