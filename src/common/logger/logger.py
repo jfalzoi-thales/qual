@@ -1,5 +1,7 @@
 import inspect
 import logging
+import logging.handlers
+import platform
 
 CRITICAL = logging.CRITICAL
 FATAL = logging.FATAL
@@ -46,7 +48,8 @@ class Logger(logging.getLoggerClass()):
             name = self._getCallerModule().__name__
 
         super(Logger, self).__init__(name, level=level)
-        self._formatDebugChannel()
+        self._formatConsoleChannel()
+        self._formatSyslogChannel()
         self.setLevel(level)
 
     # Gets the caller's module name as a default logger name
@@ -56,8 +59,22 @@ class Logger(logging.getLoggerClass()):
         return module
 
     # Formats a basic channel for everything debug and above
-    def _formatDebugChannel(self):
+    def _formatConsoleChannel(self):
         ch = logging.StreamHandler()
+        ch.setLevel(DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        ch.setFormatter(formatter)
+        self.addHandler(ch)
+
+    # Formats a basic channel for everything debug and above
+    def _formatSyslogChannel(self):
+
+        # if platform.system() == 'Linux' :
+        #     ch =  logging.handlers.SysLogHandler(address = '/dev/log')
+        # else:
+        #     ch =  logging.handlers.SysLogHandler(address = '/dev/log')
+        ch = logging.handlers.SysLogHandler()
+
         ch.setLevel(DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         ch.setFormatter(formatter)
