@@ -13,8 +13,8 @@ class HDAudio(Module):
     ## Constructor
     #  @param     self
     #  @param     config  Configuration for this module instance
-    def __init__(self, config={}):
-        super(HDAudio, self).__init__({})
+    def __init__(self, config=None):
+        super(HDAudio, self).__init__(config)
         # Add Audio Message handler
         self.addMsgHandler(HDAudioRequest, self.handler)
 

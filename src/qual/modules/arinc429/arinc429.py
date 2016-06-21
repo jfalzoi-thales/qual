@@ -26,8 +26,8 @@ class ARINC429(module.Module):
     ## Constructor
     #  @param     self
     #  @param     config  Configuration for this module instance
-    def __init__(self, config = {}):
-        super(ARINC429, self).__init__({})
+    def __init__(self, config = None):
+        super(ARINC429, self).__init__(config)
 
         ## Named tuple type to store channel info
         self.ChanInfo = collections.namedtuple("ChanInfo", "name chan")

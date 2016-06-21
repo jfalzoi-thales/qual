@@ -6,121 +6,89 @@ from common.module.module import Module
 
 # @cond doxygen_unittest
 
+
 class BaseMessage(object):
     pass
 
-class StartMessage(BaseMessage):
-    def __init__(self, interval):
-        self.interval = interval
-        super(StartMessage, self).__init__()
-
-class StopMessage(BaseMessage):
-    def __init__(self):
-        super(StopMessage, self).__init__()
-        pass
 
 class RequestReportMessage(BaseMessage):
     def __init__(self):
+        self.response = False
+        self.counter = 0
         super(RequestReportMessage, self).__init__()
-        pass
 
-class StatusRequestMessage(BaseMessage):
-    def __init__(self, value1, value2):
-        self.value1 = value1
-        self.value2 = value2
-        super(StatusRequestMessage, self).__init__()
-        pass
+class MessageContainer(object):
+    def __init__(self, body):
+        self.body =body
 
 
 class Example(Module):
 
-    def __init__(self, config={}):
+    def __init__(self, config=None):
         super(Example, self).__init__(config)
-        self.addMsgHandler(StopMessage, self.stop)
-        self.addMsgHandler(StartMessage, self.start)
+        self.interval = 0
+        self.counter = 0
+        self.loadConfig(attributes=('interval',))
         self.addMsgHandler(RequestReportMessage, self.report)
         self.addThread(self.runCounter1)
-        self.addThread(self.runCounter2)
 
     @classmethod
     def getConfigurations(cls):
-        return [{'initial': 0},{'initial':2000}]
+        return ('Example', 'Example2')
 
     #Thread Execution function, must return quickly
     def runCounter1(self):
-        self.counter1 += 1
+        self.counter += 1
         sleep(self.interval/1000.0)
-        #self.log('counter now %d' % (self.counter))
+        self.log.debug('counter now %d' % (self.counter))
         return
-
-    #Thread Execution function, must return quickly
-    def runCounter2(self):
-        self.counter2 += 11
-        sleep(self.interval/10000.0)
-        #self.log('counter now %d' % (self.counter))
-        return
-
-
-    #Thread Setup Function
-    # e.g. Setup member variables, thread will be started in the Super
-    def start(self, msg):
-        self.counter1 = self.config['initial']
-        self.counter2 = self.config['initial']
-        self.interval = msg.interval
-        super(Example, self).startThread()
-        status = StatusRequestMessage(self.counter1,self.counter2)
-        return status
-
-    # Thread Cleanup function, thread will be stopped in the Super
-    #
-    def stop(self, msg):
-        status = StatusRequestMessage(self.counter1,self.counter2)
-        super(Example, self).stopThread()
-        return status
 
     def report(self, msg):
-        status = StatusRequestMessage(self.counter1,self.counter2)
-        return status
+        msg.response = True
+        msg.counter = self.counter
+        return MessageContainer(body=msg)
+
 
 
 class Test_Module(unittest.TestCase):
 
+    def setUp(self):
+        self.log = Logger(name=self._testMethodName)
 
-    def test_basic(self):
-        log = Logger(name='Test1')
-        log.info('Test 1 - Run 1 Module with multiple Threads')
-        self.module = Example(config=Example.getConfigurations()[0])
-        self.module.msgHandler(StartMessage(interval=100))
-        for loop in range(10) :
-            sleep(1)
-            status = self.module.msgHandler(RequestReportMessage())
-            log.info('Status reported as %d %d' % (status.value1, status.value2))
-        self.module.msgHandler(StopMessage())
-        pass
+    def test_config(self):
+        module1 = Example(config=Example.getConfigurations()[0])
+        module2 = Example(config=Example.getConfigurations()[1])
+        self.assertEqual(module1.interval, 1000)
+        self.assertEqual(module2.interval, 2000)
 
-    def test_basic2(self):
-        log = Logger(name='Test2')
+    def test_message(self):
+        module1 = Example(config=Example.getConfigurations()[0])
+        msg = MessageContainer(body=RequestReportMessage())
+        self.assertFalse(msg.body.response)
+        status = module1.msgHandler(msg)
+        self.assertTrue(status.body.response)
 
-        log.info('Test 2 - Run Multiple Modules')
-        configs = Example.getConfigurations()
-        log.info('There are %d configs' % (len(configs)))
-        modules = []
-        for config in configs:
-            module = Example(config=config)
-            modules.append(module)
+    def test_thread(self):
+        testSeconds = 10
+        module1 = Example(config=Example.getConfigurations()[0])
+        module1.startThread()
+        sleep(testSeconds)
+        module1.stopThread()
+        msg = MessageContainer(body=RequestReportMessage())
+        self.assertFalse(msg.body.response)
+        status = module1.msgHandler(msg)
+        self.assertTrue(status.body.response)
+        self.assertEqual(status.body.counter, testSeconds)
 
-        for module in modules:
-            module.msgHandler(StartMessage(interval=100))
-        for loop in range(10) :
-            sleep(1)
-            log.info('Looping--------->')
-            for module in modules:
-                status = module.msgHandler(RequestReportMessage())
-                log.info('Status reported as %d %d' % (status.value1, status.value2))
-            log.info('<---------Looping')
-        for module in modules:
-            module.msgHandler(StopMessage())
-        pass
+        #Make sure it stopped
+        sleep(5)
+        msg = MessageContainer(body=RequestReportMessage())
+        status = module1.msgHandler(msg)
+        self.assertEqual(status.body.counter, testSeconds)
+
+
+
+
 
 if __name__ == '__main__':
     unittest.main()

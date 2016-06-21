@@ -9,9 +9,9 @@ class HDDS(Module):
     ## Constructor
     #  @param   self
     #  @param   config  Configuration for this module instance
-    def __init__(self, config = {}):
+    def __init__(self, config = None):
         #  Initialize parent class
-        super(HDDS, self).__init__({})
+        super(HDDS, self).__init__(config)
 
         ## Client connection to the Host Domain Device Service
         self.hddsClient = ThalesZMQClient("tcp://localhost:40001")

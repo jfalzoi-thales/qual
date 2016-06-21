@@ -12,20 +12,28 @@ class Rs232(Module):
     ## Constructor
     #  @param       self
     #  @param       config      Configuration for the instance is going to be created
-    def __init__(self, config={}):
+    def __init__(self, config=None):
         ## constructor of the parent class
         super(Rs232, self).__init__(config)
+
+        self.port = '/dev/ttyUSB1'
+        self.baudrate = 115200
+        self.parity = serial.PARITY_NONE
+        self.stopbits = serial.STOPBITS_ONE
+        self.bytesize = serial.EIGHTBITS
+        self.loadConfig(attributes=('port','baudrate','parity','stopbits','bytesize'))
+
         try:
             ## open a writer serial port
-            self.serial = serial.Serial(port=self.config['port'],
-                                        baudrate=self.config['baudrate'],
-                                        parity=self.config['parity'],
-                                        stopbits=self.config['stopbits'],
-                                        bytesize=self.config['bytesize'],
+            self.serial = serial.Serial(port=self.port,
+                                        baudrate=self.baudrate,
+                                        parity=self.parity,
+                                        stopbits=self.stopbits,
+                                        bytesize=self.bytesize,
                                         timeout=0.1,
                                         rtscts=True)
         except (serial.SerialException, OSError):
-            raise RS232ModuleSerialException(self.config['port'])
+            raise RS232ModuleSerialException(self.port)
         else:
             # adding the message handler
             self.addMsgHandler(RS232Request, self.hdlrMsg)
@@ -42,14 +50,6 @@ class Rs232(Module):
             ## mismatch value found
             self.mismatch = 0
 
-    @classmethod
-    ## Returns the test configurations for that module
-    #
-    #  @return      test configurations
-    def getConfigurations(cls):
-        return [
-                {'port': '/dev/ttyUSB1', 'baudrate': 115200, 'parity': serial.PARITY_NONE, 'stopbits': serial.STOPBITS_ONE, 'bytesize': serial.EIGHTBITS},
-                ]
 
     ## Handles incoming messages
     #

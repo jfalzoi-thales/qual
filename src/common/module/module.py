@@ -1,33 +1,19 @@
 from threading import Thread
 from time import sleep
 import datetime
-
-from common.logger.logger import Logger
+import sys
+from common.configurableObject.configurableObject import ConfigurableObject
 from common.module.exception import ModuleException
 
 ## Module Base class
-class Module(object):
-
-
-    ## Class Method for returning configurations
-    #
-    # Modules that require/desire parameters passed to their constructors may
-    # implement this function in their class.  The return value is a "list of dict",
-    # each dictionary will be passed to the constructor for an instance of the module.
-    # Therefore if multiple copies of the module are desired, a list of size >1 may
-    # be created.
-    #
-    # @param cls Class, passed to classMethod
-    #
-    @classmethod
-    def getConfigurations(cls):
-        return [{"name": "default"},]
-
+class Module(ConfigurableObject):
 
     ## Constructor
     #  @param     self
-    #  @param     config Configuration data.  Stored here, but opague to this class
+    #  @param     config Configuration section lable (INI Section name)
     def __init__(self, config):
+        super(Module, self).__init__(config)
+
         ## Used by threading methods to indicate the threads should keep running
         self._running = False
         ## Stored configuration data, passed in by constructor
@@ -40,8 +26,9 @@ class Module(object):
         self.threads = []
         ## Save the arguments for threads when they are configured, to use in their runtime constructions
         self.threadArgs = []
-        ## Logger implementation, based on standard python logger
-        self.log = Logger(self.name)
+        ## Record if we are executing in the unittest environment
+        self.unitTestExecution = 'unittest' in sys.modules
+
 
         return
 

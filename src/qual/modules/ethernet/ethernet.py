@@ -17,8 +17,8 @@ class Ethernet(Module):
     ## Constructor
     #  @param     self
     #  @param     config  Configuration for this module instance
-    def __init__(self, config = {}):
-        super(Ethernet, self).__init__({})
+    def __init__(self, config = None):
+        super(Ethernet, self).__init__(config)
         ## Used to store current iperf subprocess
         self.iperf = None
         ## IP address of remote iperf3 server to communicate with
