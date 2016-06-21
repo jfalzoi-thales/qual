@@ -1,7 +1,4 @@
-# Module - GPIO {#ModuleGPIOReadme}
-
-Description
-===========
+# GPIO Module
 
 The GPIO module covers exercising MPS general purpose discrete inputs and
 outputs.  During testing, the MPS hardware will be configured with certain
@@ -15,11 +12,15 @@ defined as when the input pin state does not match the current state of the
 associated output pin.
 
 
-GPIO Request
-============
-
+##### GPIO Request
 The GPIO Request Message is sent by the TE to establish or remove a loopback 
-connection, or request statistics regarding the connection.   
+connection, or request statistics regarding the connection:
+
+  - required RequestTypeT requestType = 1 [default = DISCONNECT];
+  - required string gpIn  = 2 [default = ""];
+  - optional string gpOut = 3 [default = ""];
+
+The behavior is as follows:
 
   * When the request type is __CONNECT__, the __gpIn__ parameter must be an 
     unconnected GP input and the __gpOut__ parameter must be a GP output.
@@ -30,29 +31,25 @@ connection, or request statistics regarding the connection.
     __gpOut__ and __gpIn__ pins is removed. 
   * When the request type is __REPORT__, the connection for __gpIn__ is unchanged
     and the response message is sent. 
+  * For all request types, if __gpIn__ is “ALL” then each input is connected to the
+    one __gpOut__, disconnected from its current output if any, or reported, as
+    appropriate for the request type.
 
-For all request types, if __gpIn__ is “ALL” then each input is connected to the
-one __gpOut__, disconnected from its current output if any, or reported, as
-appropriate for the request type.
-
-The GPIO Request fields are as follows:
-
-  * __requestType__: One of the following:
-    + __STOP__: Requests the application to halt and reply with a report;
-      report will include the counter values just prior to stopping 
-    + __RUN__: Requests the application to run and reply with a report
-    + __REPORT__: Requests the application to respond with a report
-  * __gpIn__  	MPS discrete input
-  * __gpOut__	MPS discrete output (ignored for DISCONNECT or REPORT)
-
-
-GPIO Response
-=============
-
+##### GPIO Response
 The GPIO Response Message is sent to provide the connection state and loopback
-statistics for one or more GPIO inputs. The GPIO Response contains one or more
-__GpioStatus__ blocks, each describing the status of a GPIO input.  Each
-__GpioStatus__ block contains:
+statistics for one or more GPIO inputs: 
+
+  - repeated GpioStatus status = 1;
+
+Each GpioStatus block describes the status of a GPIO input:
+
+  - required ConStateT conState = 1;
+  - required int32 matchCount = 2;
+  - required int32 mismatchCount = 3;
+  - required string gpIn = 4;
+  - optional string gpOut = 5;
+
+The GpioStatus fields are as follows:
 
   * __conState__: One of the following:
     + __DISCONNECTED__ when the reply is generated the connection does not exist
