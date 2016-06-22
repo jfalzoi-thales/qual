@@ -63,26 +63,30 @@ class Test_HDAudio(unittest.TestCase):
 
         log.info("==== Play one file ====")
         self.module.msgHandler(ThalesZMQMessage(HDAudioMessages.connectTest1()))
-        sleep(1)
+        sleep(4)
 
         log.info("==== Play a second file ====")
         self.module.msgHandler(ThalesZMQMessage(HDAudioMessages.connectTest2()))
-        sleep(1)
+        sleep(4)
 
         log.info("==== Stop playing ====")
-        self.module.msgHandler(ThalesZMQMessage(HDAudioMessages.stop()))
+        self.module.msgHandler(ThalesZMQMessage(HDAudioMessages.disconnect()))
         sleep(1)
 
-        log.info("==== Paly again ====")
+        log.info("==== Play again ====")
         self.module.msgHandler(ThalesZMQMessage(HDAudioMessages.connectTest1()))
-        sleep(1)
+        sleep(4)
 
         log.info("==== Stop playing ====")
-        self.module.msgHandler(ThalesZMQMessage(HDAudioMessages.stop()))
+        self.module.msgHandler(ThalesZMQMessage(HDAudioMessages.disconnect()))
         sleep(1)
 
         log.info("Terminating module...")
         self.module.terminate()
 
         pass
+
+if __name__ == '__main__':
+    unittest.main()
+
 ## @endcond

@@ -2,7 +2,7 @@ from common.gpb.python.SystemMonitoring_pb2 import SystemMonitoringRequest, Syst
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.PowerInfo_pb2 import GetPowerInfo, PowerInfo
-from common.gpb.python.SEMA_pb2 import RequestStatusMessage, ResponseMessage
+from common.gpb.python.SEMA_pb2 import RequestStatusMessage, ResponseStatusMessage
 from common.module import module
 
 ## SystemMonitoring Module
@@ -46,16 +46,16 @@ class SystemMonitoring(module.Module):
     #  @param   self
     #  @param   response    SystemMonitoringResponse object
     def makeSEMARequest(self, response):
-        semaInfo = ResponseMessage()
+        semaInfo = ResponseStatusMessage()
 
-        for property in self.semaProperties:
+        for prop in self.semaProperties:
             request = RequestStatusMessage()
-            request.name = property
+            request.name = prop
             #  Sends a RequestStatusMessage() request to driver which returns a tzmq message that is deserialized into semaInfo
             reply = self.semaClient.sendRequest(ThalesZMQMessage(request))
             semaInfo.ParseFromString(reply.serializedBody)
 
-            if semaInfo.error == ResponseMessage.OK:
+            if semaInfo.error == ResponseStatusMessage.STATUS_OK:
                 sema = response.semaStatistics.add()
                 sema.itemName = semaInfo.name
                 sema.value = semaInfo.value

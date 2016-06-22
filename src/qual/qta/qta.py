@@ -1,5 +1,6 @@
 
 from threading import Thread, Lock
+from common.configurableObject.configurableObject import ConfigurableObject
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 from common.tzmq.JsonZMQServer import JsonZMQServer
 from common.classFinder.classFinder import ClassFinder
@@ -17,16 +18,20 @@ from google.protobuf.message import Message
 #  - Receives Thales ZMQ messages and routes to appropriate module instance
 #  - For each incoming message, sends a response is sent back over ZMQ to the caller
 #
-class QualTestApp(ThalesZMQServer):
+class QualTestApp(ConfigurableObject):
     ## Constructor
     # @param ip   IP address to listen on
     # @param port TCP port to listen on
-    def __init__(self, ip='*', port=50001):
-        # Construct address to listen on
-        address = str.format('tcp://{}:{}',ip, port)
-
+    def __init__(self):
         # Init the superclass
-        super(QualTestApp, self).__init__(address=address)
+        super(QualTestApp, self).__init__(None)
+
+        ## Address to use for GPB listener
+        self.gpbServiceAddress = "tcp://*:50001"
+        ## Address to use for JSON listener
+        self.jsonServiceAddress = "tcp://*:50002"
+        # Read config file and update specified instance variables
+        self.loadConfig(attributes=('gpbServiceAddress','jsonServiceAddress'))
 
         ## Map of {<class>:[<instances>...]}
         self.__instances = {}
@@ -66,7 +71,7 @@ class QualTestApp(ThalesZMQServer):
 
         self.log.info("Initialization complete")
 
-    ## Called by base class when a request is received from a client.
+    ## Called by ZMQ handlers when a request is received from a client.
     #
     # @param request ThalesZMQMessage containing received request
     # @return        ThalesZMQMessage response to send back to the client
@@ -82,7 +87,7 @@ class QualTestApp(ThalesZMQServer):
             requestClass = self.__gpbClasses.getClassByName(request.name)
             if requestClass is None:
                 self.log.warning("Unknown message class in request: %s" % request.name)
-                response = self.getUnsupportedMessageErrorResponse()
+                response = ThalesZMQServer.getUnsupportedMessageErrorResponse()
             else:
                 # Create a GPB object of the correct message class and deserialize into it
                 msg = requestClass()
@@ -106,7 +111,7 @@ class QualTestApp(ThalesZMQServer):
         # If no module instance handled the request, return an error
         if response is None:
             self.log.warning("No handler for received message of class: %s" % request.name)
-            response = self.getUnsupportedMessageErrorResponse()
+            response = ThalesZMQServer.getUnsupportedMessageErrorResponse()
 
         # Whole function is inside lock because both GPB and JSON servers use it
         self.handlerLock.release()
@@ -115,21 +120,38 @@ class QualTestApp(ThalesZMQServer):
         return response
 
 
-# Class to set up a listener for JSON messages and hand them off to the main QTA class
-class QtaJsonHelper(JsonZMQServer):
+# Class to set up a listener for GPB messages and hand them off to the main QTA class
+class QtaGpbListener(ThalesZMQServer):
     ## Constructor
     # @param qta  The main QTA instance this will be linked to
     # @param ip   IP address to listen on
     # @param port TCP port to listen on
-    def __init__(self, qta, ip='*', port=50002):
+    def __init__(self, qtaInstance):
         ## QTA instance we will be linked to
-        self.qta = qta
-
-        #  Address to listen on
-        address = str.format('tcp://{}:{}',ip, port)
-
+        self.qta = qtaInstance
         # Init the superclass
-        super(QtaJsonHelper, self).__init__(address=address)
+        super(QtaGpbListener, self).__init__(address=self.qta.gpbServiceAddress)
+
+    ## Called by base class when a request is received from a client.
+    #
+    # @param request ThalesZMQMessage containing received request
+    # @return        ThalesZMQMessage response to send back to the client
+    def handleRequest(self, request):
+        # Just hand off to the QTA request handler and return its response
+        return self.qta.handleRequest(request)
+
+
+# Class to set up a listener for JSON messages and hand them off to the main QTA class
+class QtaJsonListener(JsonZMQServer):
+    ## Constructor
+    # @param qta  The main QTA instance this will be linked to
+    # @param ip   IP address to listen on
+    # @param port TCP port to listen on
+    def __init__(self, qtaInstance):
+        ## QTA instance we will be linked to
+        self.qta = qtaInstance
+        # Init the superclass
+        super(QtaJsonListener, self).__init__(address=self.qta.jsonServiceAddress)
 
     ## Called by base class when a request is received from a client.
     #
@@ -141,13 +163,14 @@ class QtaJsonHelper(JsonZMQServer):
 
 
 if __name__ == "__main__":
-    # Create a QTA instance and the JSON helper
+    # Create a QTA instance and the GPB and JSON listeners
     qta = QualTestApp()
-    jsonHelper = QtaJsonHelper(qta)
+    gpbListener = QtaGpbListener(qta)
+    jsonListener = QtaJsonListener(qta)
 
-    # Create a thread for the JSON helper (handles JSON messages)
-    thread = Thread(target=jsonHelper.run, name="QtaJsonHelper")
+    # Create a thread for the JSON listener
+    thread = Thread(target=jsonListener.run, name="QtaJsonListener")
     thread.start()
 
-    # Start the QTA running (handles GPB messages) - function won't return
-    qta.run()
+    # Start the GPB listener running - function won't return
+    gpbListener.run()
