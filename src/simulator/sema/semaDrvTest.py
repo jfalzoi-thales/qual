@@ -1,7 +1,7 @@
 
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.SEMA_pb2 import RequestStatusMessage, ResponseMessage
+from common.gpb.python.SEMA_pb2 import RequestStatusMessage, ResponseStatusMessage
 
 # @cond doxygen_unittest
 
@@ -24,10 +24,10 @@ class SEMADriverClient(ThalesZMQClient):
         response = self.sendRequest(ThalesZMQMessage(requestMsg))
 
         # Parse the response
-        if response.name == "ResponseMessage":
-            responseMsg = ResponseMessage()
+        if response.name == "ResponseStatusMessage":
+            responseMsg = ResponseStatusMessage()
             responseMsg.ParseFromString(response.serializedBody)
-            if responseMsg.error == ResponseMessage.OK:
+            if responseMsg.error == ResponseStatusMessage.STATUS_OK:
                 print "Get", responseMsg.name, ":", responseMsg.value
             else:
                 print "Failed to get", responseMsg.name
