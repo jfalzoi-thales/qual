@@ -2,6 +2,7 @@ import inspect
 import logging
 import logging.handlers
 import socket
+import sys
 from common.configurableObject.configurableObject import ConfigurableObject
 
 CRITICAL = logging.CRITICAL
@@ -47,7 +48,12 @@ class Logger(logging.getLoggerClass(), ConfigurableObject):
         self.logLevel = INFO
         self.syslogAddress = 'localhost'
         self.syslogPort = 514
-        self.syslogProtocol = 'udp'
+
+        # Default to local syslog on Linux because rsyslogd doesn't enable TCP/UDP logging by default
+        if sys.platform.startswith('linux'):
+            self.syslogProtocol = 'local'
+        else:
+            self.syslogProtocol = 'udp'
 
         if name is None:
             name = self._getCallerModule().__name__
@@ -77,16 +83,21 @@ class Logger(logging.getLoggerClass(), ConfigurableObject):
     # Formats a syslog channel
     def _formatSyslogChannel(self):
 
-        if self.syslogProtocol.lower() == 'tcp':
+        if self.syslogProtocol.lower() == 'local':
+            address = "/dev/log"
+            socktype = socket.SOCK_DGRAM
+        elif self.syslogProtocol.lower() == 'tcp':
+            address = (self.syslogAddress, self.syslogPort)
             socktype = socket.SOCK_STREAM
-        if self.syslogProtocol.lower() == 'udp':
+        elif self.syslogProtocol.lower() == 'udp':
+            address = (self.syslogAddress, self.syslogPort)
             socktype = socket.SOCK_DGRAM
         else:
             raise Exception('Unknown syslog protocol %s' %  (self.syslogProtocol))
 
-        ch = logging.handlers.SysLogHandler(address=(self.syslogAddress, self.syslogPort),socktype=socktype)
+        ch = logging.handlers.SysLogHandler(address=address, socktype=socktype)
 
         ch.setLevel(DEBUG)
-        formatter = logging.Formatter('%(name)s - %(message)s')
+        formatter = logging.Formatter('mps-qual: %(name)s - %(message)s')
         ch.setFormatter(formatter)
         self.addHandler(ch)
