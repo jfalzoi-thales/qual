@@ -47,7 +47,7 @@ class Logger(logging.getLoggerClass(), ConfigurableObject):
         self.logLevel = INFO
         self.syslogAddress = 'localhost'
         self.syslogPort = 514
-        self.syslogTCP = False
+        self.syslogProtocol = 'udp'
 
         if name is None:
             name = self._getCallerModule().__name__
@@ -55,7 +55,7 @@ class Logger(logging.getLoggerClass(), ConfigurableObject):
         logging.getLoggerClass().__init__(self, name, level=self.logLevel)
         ConfigurableObject.__init__(self, name)
 
-        self.loadConfig(attributes=('logLevel','syslogAddress','syslogPort','syslogTCP',))
+        self.loadConfig(attributes=('logLevel','syslogAddress','syslogPort','syslogProtocol',))
         self._formatConsoleChannel()
         self._formatSyslogChannel()
         self.setLevel(self.logLevel)
@@ -77,10 +77,12 @@ class Logger(logging.getLoggerClass(), ConfigurableObject):
     # Formats a syslog channel
     def _formatSyslogChannel(self):
 
-        if self.syslogTCP:
+        if self.syslogProtocol.lower() == 'tcp':
             socktype = socket.SOCK_STREAM
-        else :
+        if self.syslogProtocol.lower() == 'udp':
             socktype = socket.SOCK_DGRAM
+        else:
+            raise Exception('Unknown syslog protocol %s' %  (self.syslogProtocol))
 
         ch = logging.handlers.SysLogHandler(address=(self.syslogAddress, self.syslogPort),socktype=socktype)
 
