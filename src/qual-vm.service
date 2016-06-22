@@ -1,0 +1,11 @@
+[Unit]
+Description=Start QUAL simulators and QTA
+
+[Service]
+Type=idle
+ExecStart=/bin/sh /thales/qual/src/qual-vm.sh
+Restart=always
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target
