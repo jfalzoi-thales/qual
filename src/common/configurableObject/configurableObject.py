@@ -1,9 +1,8 @@
 import inspect
 import os
 import sys
-from ConfigParser import SafeConfigParser, NoOptionError
+from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
 from common.configurableObject.exception import ConfigurableObjectException
-from common.logger.logger import Logger
 
 
 ## A class loads configuration files from INI.
@@ -14,8 +13,6 @@ class ConfigurableObject(object):
     # @param configSection INI File section to read configuration from (default to class name)
     def __init__(self, configSection=None):
 
-        ## Logger implementation, based on standard python logger
-        self.log = Logger(type(self).__name__)
         self._iniFile = None
         self._iniPath = self._findConfig()
         self._iniParser = SafeConfigParser()
@@ -56,7 +53,11 @@ class ConfigurableObject(object):
     def loadConfig(self, attributes):
 
         for attribute in attributes:
-            if self._iniParser.has_option(self._iniSection, attribute):
+            #
+            # So there is a "behavior" in the configParser that in order for the "DEFAULT" section to be read,
+            # The target section has to exist.  This causes a problem since the DEFAULT should be in effect even
+            # If the target section is totally missing (IMO), so lets explicitly check both.
+            if self._iniParser.has_option(self._iniSection, attribute) or self._iniParser.has_option('DEFAULT', attribute):
                 try:
                     current = getattr(self, attribute)
                 except AttributeError:
@@ -75,12 +76,20 @@ class ConfigurableObject(object):
                         'Could not configure Field %s, unsupported Type' % (attribute,))
 
                 try:
-                    setattr(self, attribute, handler(self._iniSection, attribute))
-                except NoOptionError:
+                    try:
+                        setattr(self, attribute, handler(self._iniSection, attribute))
+                    except NoSectionError:
+                        setattr(self, attribute, handler('DEFAULT', attribute))
+                except (NoOptionError,NoSectionError):
                     pass
 
             else:
-                self.log.debug('Config %s not in INI %s:%s ' % (attribute,self._iniFile,self._iniSection))
+                try:
+                    self.log.debug('Config %s not in INI %s:%s ' % (attribute,self._iniFile,self._iniSection))
+                except AttributeError:
+                    #The object may not have a log setup yet, and configurableObject
+                    #can't have a log itself because logger is a configurableObject.
+                    pass
 
 
         return
