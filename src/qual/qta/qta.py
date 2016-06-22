@@ -3,6 +3,7 @@ from threading import Thread, Lock
 from common.configurableObject.configurableObject import ConfigurableObject
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 from common.tzmq.JsonZMQServer import JsonZMQServer
+from common.logger.logger import Logger
 from common.classFinder.classFinder import ClassFinder
 from common.module.module import Module
 from common.module.exception import ModuleException
@@ -25,6 +26,9 @@ class QualTestApp(ConfigurableObject):
     def __init__(self):
         # Init the superclass
         super(QualTestApp, self).__init__(None)
+
+        ## Logger implementation, based on standard python logger
+        self.log = Logger(type(self).__name__)
 
         ## Address to use for GPB listener
         self.gpbServiceAddress = "tcp://*:50001"
