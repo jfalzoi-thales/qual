@@ -18,41 +18,45 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='SEMA.proto',
   package='mpsqual',
-  serialized_pb=_b('\n\nSEMA.proto\x12\x07mpsqual\"$\n\x14RequestStatusMessage\x12\x0c\n\x04name\x18\x01 \x02(\t\"\xba\x01\n\x0fResponseMessage\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\x35\n\x05\x65rror\x18\x02 \x02(\x0e\x32&.mpsqual.ResponseMessage.ErrStatusCode\x12\r\n\x05value\x18\x03 \x01(\t\"S\n\rErrStatusCode\x12\x06\n\x02OK\x10\x00\x12\x10\n\x0cINVALID_NAME\x10\x01\x12\x15\n\x11SEMA_ACCESS_ERROR\x10\x02\x12\x11\n\rUNKNOWN_ERROR\x10\x03')
+  serialized_pb=_b('\n\nSEMA.proto\x12\x07mpsqual\"$\n\x14RequestStatusMessage\x12\x0c\n\x04name\x18\x01 \x02(\t\"\xfe\x01\n\x15ResponseStatusMessage\x12\x0c\n\x04name\x18\x01 \x02(\t\x12;\n\x05\x65rror\x18\x02 \x02(\x0e\x32,.mpsqual.ResponseStatusMessage.ErrStatusCode\x12\r\n\x05value\x18\x03 \x01(\t\"\x8a\x01\n\rErrStatusCode\x12\r\n\tSTATUS_OK\x10\x00\x12\x17\n\x13STATUS_INVALID_NAME\x10\x01\x12\x1c\n\x18STATUS_SEMA_ACCESS_ERROR\x10\x02\x12\x1b\n\x17STATUS_IMPROPER_MESSAGE\x10\x04\x12\x16\n\x12STATUS_UNKNOWN_ERR\x10\x06')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 
 
-_RESPONSEMESSAGE_ERRSTATUSCODE = _descriptor.EnumDescriptor(
+_RESPONSESTATUSMESSAGE_ERRSTATUSCODE = _descriptor.EnumDescriptor(
   name='ErrStatusCode',
-  full_name='mpsqual.ResponseMessage.ErrStatusCode',
+  full_name='mpsqual.ResponseStatusMessage.ErrStatusCode',
   filename=None,
   file=DESCRIPTOR,
   values=[
     _descriptor.EnumValueDescriptor(
-      name='OK', index=0, number=0,
+      name='STATUS_OK', index=0, number=0,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='INVALID_NAME', index=1, number=1,
+      name='STATUS_INVALID_NAME', index=1, number=1,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='SEMA_ACCESS_ERROR', index=2, number=2,
+      name='STATUS_SEMA_ACCESS_ERROR', index=2, number=2,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='UNKNOWN_ERROR', index=3, number=3,
+      name='STATUS_IMPROPER_MESSAGE', index=3, number=4,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='STATUS_UNKNOWN_ERR', index=4, number=6,
       options=None,
       type=None),
   ],
   containing_type=None,
   options=None,
-  serialized_start=165,
-  serialized_end=248,
+  serialized_start=178,
+  serialized_end=316,
 )
-_sym_db.RegisterEnumDescriptor(_RESPONSEMESSAGE_ERRSTATUSCODE)
+_sym_db.RegisterEnumDescriptor(_RESPONSESTATUSMESSAGE_ERRSTATUSCODE)
 
 
 _REQUESTSTATUSMESSAGE = _descriptor.Descriptor(
@@ -85,29 +89,29 @@ _REQUESTSTATUSMESSAGE = _descriptor.Descriptor(
 )
 
 
-_RESPONSEMESSAGE = _descriptor.Descriptor(
-  name='ResponseMessage',
-  full_name='mpsqual.ResponseMessage',
+_RESPONSESTATUSMESSAGE = _descriptor.Descriptor(
+  name='ResponseStatusMessage',
+  full_name='mpsqual.ResponseStatusMessage',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='mpsqual.ResponseMessage.name', index=0,
+      name='name', full_name='mpsqual.ResponseStatusMessage.name', index=0,
       number=1, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='error', full_name='mpsqual.ResponseMessage.error', index=1,
+      name='error', full_name='mpsqual.ResponseStatusMessage.error', index=1,
       number=2, type=14, cpp_type=8, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='value', full_name='mpsqual.ResponseMessage.value', index=2,
+      name='value', full_name='mpsqual.ResponseStatusMessage.value', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -118,7 +122,7 @@ _RESPONSEMESSAGE = _descriptor.Descriptor(
   ],
   nested_types=[],
   enum_types=[
-    _RESPONSEMESSAGE_ERRSTATUSCODE,
+    _RESPONSESTATUSMESSAGE_ERRSTATUSCODE,
   ],
   options=None,
   is_extendable=False,
@@ -126,13 +130,13 @@ _RESPONSEMESSAGE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=62,
-  serialized_end=248,
+  serialized_end=316,
 )
 
-_RESPONSEMESSAGE.fields_by_name['error'].enum_type = _RESPONSEMESSAGE_ERRSTATUSCODE
-_RESPONSEMESSAGE_ERRSTATUSCODE.containing_type = _RESPONSEMESSAGE
+_RESPONSESTATUSMESSAGE.fields_by_name['error'].enum_type = _RESPONSESTATUSMESSAGE_ERRSTATUSCODE
+_RESPONSESTATUSMESSAGE_ERRSTATUSCODE.containing_type = _RESPONSESTATUSMESSAGE
 DESCRIPTOR.message_types_by_name['RequestStatusMessage'] = _REQUESTSTATUSMESSAGE
-DESCRIPTOR.message_types_by_name['ResponseMessage'] = _RESPONSEMESSAGE
+DESCRIPTOR.message_types_by_name['ResponseStatusMessage'] = _RESPONSESTATUSMESSAGE
 
 RequestStatusMessage = _reflection.GeneratedProtocolMessageType('RequestStatusMessage', (_message.Message,), dict(
   DESCRIPTOR = _REQUESTSTATUSMESSAGE,
@@ -141,12 +145,12 @@ RequestStatusMessage = _reflection.GeneratedProtocolMessageType('RequestStatusMe
   ))
 _sym_db.RegisterMessage(RequestStatusMessage)
 
-ResponseMessage = _reflection.GeneratedProtocolMessageType('ResponseMessage', (_message.Message,), dict(
-  DESCRIPTOR = _RESPONSEMESSAGE,
+ResponseStatusMessage = _reflection.GeneratedProtocolMessageType('ResponseStatusMessage', (_message.Message,), dict(
+  DESCRIPTOR = _RESPONSESTATUSMESSAGE,
   __module__ = 'SEMA_pb2'
-  # @@protoc_insertion_point(class_scope:mpsqual.ResponseMessage)
+  # @@protoc_insertion_point(class_scope:mpsqual.ResponseStatusMessage)
   ))
-_sym_db.RegisterMessage(ResponseMessage)
+_sym_db.RegisterMessage(ResponseStatusMessage)
 
 
 # @@protoc_insertion_point(module_scope)

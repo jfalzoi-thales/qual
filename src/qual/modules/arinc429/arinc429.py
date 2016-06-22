@@ -29,21 +29,51 @@ class ARINC429(module.Module):
     def __init__(self, config = None):
         super(ARINC429, self).__init__(config)
 
+        ## TX1 driver channel name (can be overridden by config)
+        self.tx1Channel = "tx00"
+        ## TX2 driver channel name (can be overridden by config)
+        self.tx2Channel = "tx10"
+        ## TX3 driver channel name (can be overridden by config)
+        self.tx3Channel = "tx20"
+        ## TX4 driver channel name (can be overridden by config)
+        self.tx4Channel = "tx30"
+        ## RX1 driver channel name (can be overridden by config)
+        self.rx1Channel = "rx00"
+        ## RX2 driver channel name (can be overridden by config)
+        self.rx2Channel = "rx01"
+        ## RX3 driver channel name (can be overridden by config)
+        self.rx3Channel = "rx10"
+        ## RX4 driver channel name (can be overridden by config)
+        self.rx4Channel = "rx11"
+        ## RX5 driver channel name (can be overridden by config)
+        self.rx5Channel = "rx20"
+        ## RX6 driver channel name (can be overridden by config)
+        self.rx6Channel = "rx21"
+        ## RX7 driver channel name (can be overridden by config)
+        self.rx7Channel = "rx30"
+        ## RX8 driver channel name (can be overridden by config)
+        self.rx8Channel = "rx31"
+        # Read config file and update specified instance variables
+        self.loadConfig(attributes=('tx1Channel', 'tx2Channel', 'tx3Channel', 'tx4Channel',
+                                    'rx1Channel', 'rx2Channel', 'rx3Channel', 'rx4Channel',
+                                    'rx5Channel', 'rx6Channel', 'rx7Channel', 'rx8Channel'))
+
         ## Named tuple type to store channel info
         self.ChanInfo = collections.namedtuple("ChanInfo", "name chan")
-        ## Dict mapping output channels to handler and handler channel name
-        self.outputChans = {"ARINC_429_TX1": self.ChanInfo("ARINC_429_TX1", 0),
-                           "ARINC_429_TX2": self.ChanInfo("ARINC_429_TX2", 1),
-                           "ARINC_429_TX3": self.ChanInfo("ARINC_429_TX3", 2),
-                           "ARINC_429_TX4": self.ChanInfo("ARINC_429_TX4", 3)}
-        ## Dict mapping input channels to handler and handler channel name
-        self.inputChans = {"ARINC_429_RX1":  self.ChanInfo("ARINC_429_RX1", 0),
-                          "ARINC_429_RX2":  self.ChanInfo("ARINC_429_RX2", 1),
-                          "ARINC_429_RX3":  self.ChanInfo("ARINC_429_RX3", 2),
-                          "ARINC_429_RX4":  self.ChanInfo("ARINC_429_RX4", 3),
-                          "ARINC_429_RX5":  self.ChanInfo("ARINC_429_RX5", 4),
-                          "ARINC_429_RX6":  self.ChanInfo("ARINC_429_RX6", 5),
-                          "ARINC_429_RX7":  self.ChanInfo("ARINC_429_RX7", 6)}
+        ## Dict mapping output channels to driver channel name and code
+        self.outputChans = {"ARINC_429_TX1": self.ChanInfo(self.tx1Channel, 0),
+                            "ARINC_429_TX2": self.ChanInfo(self.tx2Channel, 1),
+                            "ARINC_429_TX3": self.ChanInfo(self.tx3Channel, 2),
+                            "ARINC_429_TX4": self.ChanInfo(self.tx4Channel, 3)}
+        ## Dict mapping input channels to driver channel name and code
+        self.inputChans = {"ARINC_429_RX1":  self.ChanInfo(self.rx1Channel, 0),
+                           "ARINC_429_RX2":  self.ChanInfo(self.rx2Channel, 1),
+                           "ARINC_429_RX3":  self.ChanInfo(self.rx3Channel, 2),
+                           "ARINC_429_RX4":  self.ChanInfo(self.rx4Channel, 3),
+                           "ARINC_429_RX5":  self.ChanInfo(self.rx5Channel, 4),
+                           "ARINC_429_RX6":  self.ChanInfo(self.rx6Channel, 5),
+                           "ARINC_429_RX7":  self.ChanInfo(self.rx7Channel, 6),
+                           "ARINC_429_RX8":  self.ChanInfo(self.rx8Channel, 7)}
         ## Counter for data incrementing
         self.increment = 0
         ## Dict of connections; key is input channel, value is a ConnectionInfo object
@@ -105,7 +135,7 @@ class ARINC429(module.Module):
             for inputChan in self.inputChans.keys():
                 self.connections[inputChan] = ConnectionInfo(str(request.source))
                 #  Clear out any old driver responses
-                self.receive(inputChan)
+                self.receive(self.inputChans[inputChan].name)
 
             self.connectionsLock.release()
         elif str(request.sink) not in self.connections:
@@ -113,7 +143,7 @@ class ARINC429(module.Module):
             self.connectionsLock.acquire()
             self.connections[str(request.sink)] = ConnectionInfo(str(request.source))
             #  Clear out any old driver responses
-            self.receive(request.sink)
+            self.receive(self.inputChans[request.sink].name)
             self.connectionsLock.release()
 
         #  If thread is not running, start it
@@ -251,7 +281,7 @@ class ARINC429(module.Module):
         txReq.channelName = chanName
         txReq.type = Request.TRANSMIT_DATA
         data = txReq.outputData.data.add()
-        data.data = output
+        data.word = output
         data.timestamp = int(time() * 1000)
         #  Send a request and get the response
         response = self.driverClient.sendRequest(ThalesZMQMessage(txReq))
@@ -284,11 +314,11 @@ class ARINC429(module.Module):
             rxResp.ParseFromString(response.serializedBody)
             if rxResp.errorCode == Response.NONE:
                 if rxResp.inputData.data:
-                    return rxResp.inputData.data[0].data
+                    return rxResp.inputData.data[0].word
                 else:
                     return -1
 
-        self.log.error("Error return from GPIO Manager for channel %s" % chanName)
+        self.log.error("Error return from ARINC 429 driver for channel %s" % chanName)
 
         return -1
 

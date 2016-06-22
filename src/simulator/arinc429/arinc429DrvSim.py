@@ -64,19 +64,20 @@ class ARINC429DriverSimulator(ThalesZMQServer):
             self.log.info("Error mode enabled: errors will be introduced every 10 words")
 
         # Dict of input channels with info for each one
-        self.inputChannels = {"ARINC_429_RX1": InputInfo(),
-                              "ARINC_429_RX2": InputInfo(),
-                              "ARINC_429_RX3": InputInfo(),
-                              "ARINC_429_RX4": InputInfo(),
-                              "ARINC_429_RX5": InputInfo(),
-                              "ARINC_429_RX6": InputInfo(),
-                              "ARINC_429_RX7": InputInfo()}
+        self.inputChannels = {"rx00": InputInfo(),
+                              "rx01": InputInfo(),
+                              "rx10": InputInfo(),
+                              "rx11": InputInfo(),
+                              "rx20": InputInfo(),
+                              "rx21": InputInfo(),
+                              "rx30": InputInfo(),
+                              "rx31": InputInfo()}
 
         # Simulate ARINC 429 loopback by linking outputs to inputs
-        self.loopbackMap = {"ARINC_429_TX1": ("ARINC_429_RX1", "ARINC_429_RX2"),
-                            "ARINC_429_TX2": ("ARINC_429_RX3", "ARINC_429_RX4"),
-                            "ARINC_429_TX3": ("ARINC_429_RX5", "ARINC_429_RX6"),
-                            "ARINC_429_TX4": ("ARINC_429_RX7",)}
+        self.loopbackMap = {"tx00": ("rx00", "rx01"),
+                            "tx10": ("rx10", "rx11"),
+                            "tx20": ("rx20", "rx21"),
+                            "tx30": ("rx30", "rx31")}
 
     ## Called by base class when a request is received from a client.
     #
@@ -115,7 +116,7 @@ class ARINC429DriverSimulator(ThalesZMQServer):
                 inputInfo = self.inputChannels[str(arincReq.channelName)]
                 if inputInfo.dataAvailable:
                     word = arincResp.inputData.data.add()
-                    word.data = inputInfo.data
+                    word.word = inputInfo.data
                     word.timestamp = inputInfo.timestamp
                     # Data has been read, so set dataAvailable to False
                     inputInfo.dataAvailable = False
@@ -126,17 +127,17 @@ class ARINC429DriverSimulator(ThalesZMQServer):
                 print "TX Request with unknown output channel:", arincReq.channelName
                 arincResp.errorCode = Response.INVALID_CHANNEL
             else:
-                # print "TX request:", arincReq.channelName, ":", arincReq.outputData.data[0].data
+                # print "TX request:", arincReq.channelName, ":", arincReq.outputData.data[0].word
                 arincResp.errorCode = Response.NONE
                 # "Write" to each of the linked RX channels
                 for inputName in self.loopbackMap[str(arincReq.channelName)]:
                     inputInfo = self.inputChannels[inputName]
                     inputInfo.wordCount += 1
                     if self.introduceErrors and inputInfo.wordCount % 10 == 0:
-                        #print "Introducing error on channel %s data 0x%x" % (inputName, arincReq.outputData.data[0].data)
-                        inputInfo.data = arincReq.outputData.data[0].data | 0x1FFFFB00
+                        #print "Introducing error on channel %s data 0x%x" % (inputName, arincReq.outputData.data[0].word)
+                        inputInfo.data = arincReq.outputData.data[0].word | 0x1FFFFB00
                     else:
-                        inputInfo.data = arincReq.outputData.data[0].data
+                        inputInfo.data = arincReq.outputData.data[0].word
                     inputInfo.timestamp = arincReq.outputData.data[0].timestamp
                     inputInfo.dataAvailable = True
 

@@ -113,8 +113,8 @@ message InputData {
 }
 
 message Word {
-    required uint32 data = 1;
-    required uint64 timestamp = 2;
+    optional uint64 timestamp = 1;
+    required uint32 word = 2;
 }
 
 message OutputData {

@@ -3,7 +3,6 @@ import re
 import os
 
 from common.module.module import Module, ModuleException
-from common.logger.logger import Logger
 from common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
@@ -25,8 +24,6 @@ class MemoryBandwidth(Module):
         super(MemoryBandwidth, self).__init__(config)
         ## field to save the current Popen object
         self.subProcess = None
-        ## Logger
-        self.log = Logger("Test Memory Bandwith")
         ## field to save the application state
         self.appState = MemoryBandwidthResponse.STOPPED
         ## field to save the last bandwidth read

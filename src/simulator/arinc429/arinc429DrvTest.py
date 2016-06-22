@@ -34,7 +34,7 @@ class ARINC429DriverClient(ThalesZMQClient):
                 elif len(rxResp.inputData.data) == 1:
                     print "Response: Rx %s : data 0x%x  timestamp %d" % \
                           (rxResp.channelName,
-                           rxResp.inputData.data[0].data,
+                           rxResp.inputData.data[0].word,
                            rxResp.inputData.data[0].timestamp)
                 else:
                     print "Response: Rx", rxResp.channelName, ":", rxResp.inputData
@@ -54,9 +54,9 @@ class ARINC429DriverClient(ThalesZMQClient):
         txReq.channelName = channel
         txReq.type = Request.TRANSMIT_DATA
         word = txReq.outputData.data.add()
-        word.data = data
+        word.word = data
         word.timestamp = int(time.time() * 1000)
-        print "Request:  Tx %s : data 0x%x  timestamp %d" % (channel, word.data, word.timestamp)
+        print "Request:  Tx %s : data 0x%x  timestamp %d" % (channel, word.word, word.timestamp)
 
         # Send a request and get the response
         response = self.sendRequest(ThalesZMQMessage(txReq))
@@ -83,22 +83,22 @@ if __name__ == "__main__":
 
     # Send some Tx/Rx requests.
     print "\nTx request with invalid name:"
-    client.sendTxRequest("ARINC_429_BOGUS", 0)
+    client.sendTxRequest("txBOGUS", 0)
 
     print "\nRx request with invalid name:"
-    client.sendRxRequest("ARINC_429_BOGUS")
+    client.sendRxRequest("rxBOGUS")
 
     print "\nInitial read to get stale data on the channel, if any:"
-    client.sendRxRequest("ARINC_429_RX1")
+    client.sendRxRequest("rx00")
 
     print "\nSend some valid Tx/Rx requests:"
     for i in range(11):
         print
         time.sleep(0.1)
-        client.sendTxRequest("ARINC_429_TX1", (i + 1) << 10)
-        client.sendRxRequest("ARINC_429_RX1")
+        client.sendTxRequest("tx00", (i + 1) << 10)
+        client.sendRxRequest("rx00")
 
     print "\nRx without a Tx - should get no data:"
-    client.sendRxRequest("ARINC_429_RX1")
+    client.sendRxRequest("rx00")
 
 ## @endcond

@@ -2,7 +2,7 @@
 from common.logger import logger
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.SEMA_pb2 import RequestStatusMessage, ResponseMessage
+from common.gpb.python.SEMA_pb2 import RequestStatusMessage, ResponseStatusMessage
 
 
 ## SEMA Driver Simulator class
@@ -65,16 +65,16 @@ class SEMADriverSimulator(ThalesZMQServer):
             requestMsg.ParseFromString(request.serializedBody)
 
             # Create a SEMA response message for the results
-            responseMsg = ResponseMessage()
+            responseMsg = ResponseStatusMessage()
             responseMsg.name = requestMsg.name
 
             # Look up the name
             if requestMsg.name in self.properties:
-                responseMsg.error = ResponseMessage.OK
+                responseMsg.error = ResponseStatusMessage.STATUS_OK
                 responseMsg.value = self.properties[requestMsg.name]
             else:
                 print "Request for unknown item:", requestMsg.name
-                responseMsg.error = ResponseMessage.INVALID_NAME
+                responseMsg.error = ResponseStatusMessage.STATUS_INVALID_NAME
 
             # Send response back to client
             return ThalesZMQMessage(responseMsg)

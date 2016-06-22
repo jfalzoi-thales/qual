@@ -4,13 +4,14 @@ message RequestStatusMessage {
 	required string name = 1;
 }
 
-message ResponseMessage {
+message ResponseStatusMessage {
 	enum ErrStatusCode {
-		OK = 0;
-		INVALID_NAME = 1;
-		SEMA_ACCESS_ERROR = 2;
-		UNKNOWN_ERROR = 3;
-	}
+		STATUS_OK = 0;
+		STATUS_INVALID_NAME = 1;
+		STATUS_SEMA_ACCESS_ERROR = 2;
+		STATUS_IMPROPER_MESSAGE = 4;
+		STATUS_UNKNOWN_ERR = 6;
+    }
 	
 	required string name = 1;
 	required ErrStatusCode error = 2;
