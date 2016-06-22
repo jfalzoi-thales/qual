@@ -1,7 +1,7 @@
 import inspect
 import logging
 import logging.handlers
-
+import socket
 from common.configurableObject.configurableObject import ConfigurableObject
 
 CRITICAL = logging.CRITICAL
@@ -42,17 +42,15 @@ class Logger(logging.getLoggerClass(), ConfigurableObject):
 
     ## Constructor
     #  @param     name  The name of the debug channel, if not set will be the caller's module name
-    #  @param     level The minimum debug level that will be added to the log
-    def __init__(self, name=None, level=NOTSET):
+    def __init__(self, name=None):
 
-        self.logLevel = level
+        self.logLevel = INFO
         self.syslogAddress = 'localhost'
         self.syslogPort = 514
         self.syslogTCP = False
 
         if name is None:
             name = self._getCallerModule().__name__
-
 
         logging.getLoggerClass().__init__(self, name, level=self.logLevel)
         ConfigurableObject.__init__(self, name)
@@ -68,7 +66,7 @@ class Logger(logging.getLoggerClass(), ConfigurableObject):
         module = inspect.getmodule(frm[0])
         return module
 
-    # Formats a basic channel for everything debug and above
+    # Formats a console channel
     def _formatConsoleChannel(self):
         ch = logging.StreamHandler()
         ch.setLevel(DEBUG)
@@ -76,16 +74,17 @@ class Logger(logging.getLoggerClass(), ConfigurableObject):
         ch.setFormatter(formatter)
         self.addHandler(ch)
 
-    # Formats a basic channel for everything debug and above
+    # Formats a syslog channel
     def _formatSyslogChannel(self):
 
-        # if platform.system() == 'Linux' :
-        #     ch =  logging.handlers.SysLogHandler(address = '/dev/log')
-        # else:
-        #     ch =  logging.handlers.SysLogHandler(address = '/dev/log')
-        ch = logging.handlers.SysLogHandler(address=(self.syslogAddress, self.syslogPort))
+        if self.syslogTCP:
+            socktype = socket.SOCK_STREAM
+        else :
+            socktype = socket.SOCK_DGRAM
+
+        ch = logging.handlers.SysLogHandler(address=(self.syslogAddress, self.syslogPort),socktype=socktype)
 
         ch.setLevel(DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(name)s - %(message)s')
         ch.setFormatter(formatter)
         self.addHandler(ch)
