@@ -1,5 +1,9 @@
 import inspect
 import logging
+import logging.handlers
+import socket
+import sys
+from common.configurableObject.configurableObject import ConfigurableObject
 
 CRITICAL = logging.CRITICAL
 FATAL = logging.FATAL
@@ -35,19 +39,32 @@ NOTSET = logging.NOTSET
 # log.warn('warn message')
 # log.error('error message')
 # log.critical('critical message')
-class Logger(logging.getLoggerClass()):
+class Logger(logging.getLoggerClass(), ConfigurableObject):
 
     ## Constructor
     #  @param     name  The name of the debug channel, if not set will be the caller's module name
-    #  @param     level The minimum debug level that will be added to the log
-    def __init__(self, name=None, level=NOTSET):
+    def __init__(self, name=None):
+
+        self.logLevel = INFO
+        self.syslogAddress = 'localhost'
+        self.syslogPort = 514
+
+        # Default to local syslog on Linux because rsyslogd doesn't enable TCP/UDP logging by default
+        if sys.platform.startswith('linux'):
+            self.syslogProtocol = 'local'
+        else:
+            self.syslogProtocol = 'udp'
 
         if name is None:
             name = self._getCallerModule().__name__
 
-        super(Logger, self).__init__(name, level=level)
-        self._formatDebugChannel()
-        self.setLevel(level)
+        logging.getLoggerClass().__init__(self, name, level=self.logLevel)
+        ConfigurableObject.__init__(self, name)
+
+        self.loadConfig(attributes=('logLevel','syslogAddress','syslogPort','syslogProtocol',))
+        self._formatConsoleChannel()
+        self._formatSyslogChannel()
+        self.setLevel(self.logLevel)
 
     # Gets the caller's module name as a default logger name
     def _getCallerModule(self):
@@ -55,10 +72,32 @@ class Logger(logging.getLoggerClass()):
         module = inspect.getmodule(frm[0])
         return module
 
-    # Formats a basic channel for everything debug and above
-    def _formatDebugChannel(self):
+    # Formats a console channel
+    def _formatConsoleChannel(self):
         ch = logging.StreamHandler()
         ch.setLevel(DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        ch.setFormatter(formatter)
+        self.addHandler(ch)
+
+    # Formats a syslog channel
+    def _formatSyslogChannel(self):
+
+        if self.syslogProtocol.lower() == 'local':
+            address = "/dev/log"
+            socktype = socket.SOCK_DGRAM
+        elif self.syslogProtocol.lower() == 'tcp':
+            address = (self.syslogAddress, self.syslogPort)
+            socktype = socket.SOCK_STREAM
+        elif self.syslogProtocol.lower() == 'udp':
+            address = (self.syslogAddress, self.syslogPort)
+            socktype = socket.SOCK_DGRAM
+        else:
+            raise Exception('Unknown syslog protocol %s' %  (self.syslogProtocol))
+
+        ch = logging.handlers.SysLogHandler(address=address, socktype=socktype)
+
+        ch.setLevel(DEBUG)
+        formatter = logging.Formatter('mps-qual: %(name)s - %(message)s')
         ch.setFormatter(formatter)
         self.addHandler(ch)

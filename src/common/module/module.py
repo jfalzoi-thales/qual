@@ -3,6 +3,7 @@ from time import sleep
 import datetime
 import sys
 from common.configurableObject.configurableObject import ConfigurableObject
+from common.logger.logger import Logger
 from common.module.exception import ModuleException
 
 ## Module Base class
@@ -28,7 +29,8 @@ class Module(ConfigurableObject):
         self.threadArgs = []
         ## Record if we are executing in the unittest environment
         self.unitTestExecution = 'unittest' in sys.modules
-
+        ## Logger implementation, based on standard python logger
+        self.log = Logger(type(self).__name__)
 
         return
 
