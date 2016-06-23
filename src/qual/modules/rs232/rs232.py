@@ -141,3 +141,9 @@ class Rs232(Module):
                 self.mismatch += 1
             else:
                 self.match += 1
+
+    ## Stops background thread
+    #  @param     self
+    def terminate(self):
+        if self._running:
+            self.stopThread()
