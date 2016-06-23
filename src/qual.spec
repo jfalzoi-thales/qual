@@ -3,7 +3,7 @@
 #
 Name: qual
 Summary: An application used drive MPS hardware
-Version: 1.0
+Version: 1.1
 Release: 1
 License: Proprietary
 Group: Applications/Engineering
@@ -36,6 +36,10 @@ ln -s /lib/systemd/system/qual.service /etc/systemd/system/multi-user.target.wan
 ln /thales/qual/src/qual/config/mps.ini /thales/qual/src/qual/config/platform.ini
 
 %changelog
+* Thu Jun 23 2016 Jenkins <jenkins@tklabs.com> 1.1-1
+- QUAL-175 : Made service script paths absolute (jenkins@tklabs.com)
+- Automatic commit of package [qual-vm] release [1.0-1]. (jenkins@tklabs.com)
+
 * Thu Jun 23 2016 Jenkins <jenkins@tklabs.com> 1.0-1
 - initial tito tag 
 
