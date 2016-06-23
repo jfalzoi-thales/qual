@@ -3,7 +3,7 @@ Description=Start QUAL service which starts the QTA
 
 [Service]
 Type=idle
-ExecStart=qual.sh
+ExecStart=/bin/qual.sh
 Restart=always
 RestartSec=3s
 

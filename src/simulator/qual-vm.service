@@ -3,7 +3,7 @@ Description=Start QUAL simulators
 
 [Service]
 Type=idle
-ExecStart=qual-vm.sh
+ExecStart=/bin/qual-vm.sh
 Restart=always
 RestartSec=3s
 
