@@ -9,7 +9,7 @@ Requires: qual
 License: Proprietary
 Group: Applications/Engineering
 URL: https://repo-tav.tklabs.com:8102/
-Source: https://repo-tav.tklabs.com:8102/scm/qual/%{name}.git
+Source: https://repo-tav.tklabs.com:8102/scm/qual/%{name}-%{version}.tar.gz
 
 %description
 Implements simulators to act as MPS pripheral devices in order to test QUAL software.
