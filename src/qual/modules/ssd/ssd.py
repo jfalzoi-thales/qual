@@ -106,13 +106,13 @@ class SSD(Module):
         if os.path.exists("/sbin/%s" % makeraid):
             self.log.info("Using system mpsinst-makeraid tool")
         elif os.path.exists(makeraidUSB):
-            self.log.warning("Using debug USB mpsinst-makeraid tool")
+            self.log.info("Using debug USB mpsinst-makeraid tool")
             makeraid = makeraidUSB
         else:
            raise SSDModuleException("Unable to locate mpsinst-makeraid script")
 
         # Create the RAID volume using script
-        self.log.info("Creating RAID volume")
+        self.log.info("Creating RAID volume (see /tmp/makeraid.log for detail)")
         self.runCommand('%s 10 \"YES,CLEAR_MY_DISKS\" > /tmp/makeraid.log 2>&1' % makeraid,
                         failText='Unable to create RAID volume')
 
@@ -186,6 +186,7 @@ class SSD(Module):
                              shell=True)
         self.log.debug("Command return code: %d" % rc)
         if rc != 0 and failText != '':
+            self.log.error(failText)
             raise SSDModuleException(msg=failText)
 
     ## Check to see if a filesystem is mounted or not, and raise exception
@@ -204,6 +205,7 @@ class SSD(Module):
         #self.log.debug("Command returned: %s" % output)
         isMounted = output != ''
         if isMounted != mounted and failText != '':
+            self.log.error(failText)
             raise SSDModuleException(msg=failText)
         return isMounted
 
