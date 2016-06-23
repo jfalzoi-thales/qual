@@ -72,9 +72,6 @@ class MemoryBandwidth(Module):
     #  @param     msg  tzmq format message
     #  @return    self.report() a MemoryBandwidth Response object
     def start(self):
-        self.M = self.config['maxallocmem']
-        self.P = self.config['numthreads']
-        self.s = self.config['mSize']
         super(MemoryBandwidth, self).startThread()
         self.appState = MemoryBandwidthResponse.RUNNING
         status = MemoryBandwidthResponse()
@@ -111,7 +108,7 @@ class MemoryBandwidth(Module):
     ## Runs the PMBW tool
     #  @return    None
     def runPmbw(self):
-        self.subProcess = subprocess.Popen(["stdbuf", "-o", "L", "pmbw", self.M, self.s, self.P],
+        self.subProcess = subprocess.Popen(["stdbuf", "-o", "L", "pmbw", self.maxallocmem, self.numthreads, self.mSize],
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE,
                                            bufsize=1)
@@ -125,3 +122,10 @@ class MemoryBandwidth(Module):
             if line:
                 num = re.search('(?<=bandwidth=).+\t', line)
                 self.bandwidth = float(num.group(0))
+
+
+    ## Stops background thread
+    #  @param     self
+    def terminate(self):
+        if self._running:
+            self.stopThread()
