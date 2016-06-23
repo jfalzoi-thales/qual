@@ -3,7 +3,7 @@
 #
 Name: qual-vm
 Summary: An application used to simulate MPS hardware on a Virtual Machine
-Version: 1.0
+Version: 1.1
 Release: 1
 Requires: qual
 License: Proprietary
@@ -47,6 +47,9 @@ rm /etc/udev/rules.d/80*
 rm /etc/udev/rules.d/95*
 
 %changelog
+* Thu Jun 23 2016 Jenkins <jenkins@tklabs.com> 1.1-1
+- QUAL-175 : Made service script paths absolute (jenkins@tklabs.com)
+
 * Thu Jun 23 2016 Jenkins <jenkins@tklabs.com> 1.0-1
 - inital tito tag 
 
