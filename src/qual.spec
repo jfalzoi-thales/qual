@@ -36,5 +36,8 @@ ln -s /lib/systemd/system/qual.service /etc/systemd/system/multi-user.target.wan
 ln /thales/qual/src/qual/config/mps.ini /thales/qual/src/qual/config/platform.ini
 
 %changelog
+* Thu Jun 23 2016 Jenkins <jenkins@tklabs.com> 1.0-1
+- initial tito tag 
+
 * Thu Jun 23 2016 Christopher Wallace <cwallace@tklabs.com> 1.0-1
 - Initial qual RPM
