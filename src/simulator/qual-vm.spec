@@ -47,5 +47,8 @@ rm /etc/udev/rules.d/80*
 rm /etc/udev/rules.d/95*
 
 %changelog
+* Thu Jun 23 2016 Jenkins <jenkins@tklabs.com> 1.0-1
+- inital tito tag 
+
 * Thu Jun 23 2016 Christopher Wallace <cwallace@tklabs.com> 1.0-1
 - Initial qual-vm RPM
