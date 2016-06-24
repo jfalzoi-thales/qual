@@ -28,6 +28,7 @@ cp -r * %{buildroot}/thales/qual/src/
 %files
 /bin/qual.sh
 /%{_unitdir}/qual.service
+/%{_libdir}/systemd/system-preset/50-qual-service.preset
 /thales/qual/src/*
 %exclude /thales/qual/src/simulator
 %exclude /thales/qual/src/qual.*

@@ -29,6 +29,7 @@ cp -r * %{buildroot}/thales/qual/src/simulator/
 %files
 /bin/qual-vm.sh
 /%{_unitdir}/qual-vm.service
+/%{_libdir}/systemd/system-preset/50-qual-vm-service.preset
 /thales/qual/src/simulator/*
 %exclude /thales/qual/src/simulator/qual-vm.*
 %exclude /thales/qual/src/simulator/50-qual-vm-service.preset
