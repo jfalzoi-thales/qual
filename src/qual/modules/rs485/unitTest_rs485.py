@@ -7,6 +7,8 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.logger.logger import Logger
 from common.module.modulemsgs import ModuleMessages
 
+# @cond doxygen_unittest
+
 ## RS-485 Messages
 class RS485Messages(ModuleMessages):
     @staticmethod
