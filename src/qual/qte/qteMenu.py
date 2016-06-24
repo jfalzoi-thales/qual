@@ -6,10 +6,7 @@ from common.classFinder.classFinder import ClassFinder
 from common.module.modulemsgs import ModuleMessages
 from google.protobuf.message import Message
 
-# @cond doxygen_unittest
-
 ## Class that provides a menu-driven QTE simulator
-#  Manage different type request to QTA Application
 class QTEMenu(object):
     ## Constructor
     # @param server  Host name or IP address of QTA
@@ -73,7 +70,7 @@ class QTEMenu(object):
                 print respMsg
                 print "---------------------------------------------------------\n"
 
-    # Print a list of modules and allow the user to select one
+    ## Print a list of modules and allow the user to select one
     def run(self):
         while True:
             index = 0
@@ -116,5 +113,3 @@ if __name__ == "__main__":
     # Initialize and run the QTE
     qte = QTEMenu(args.server, args.useJson)
     qte.run()
-
-## @endcond
