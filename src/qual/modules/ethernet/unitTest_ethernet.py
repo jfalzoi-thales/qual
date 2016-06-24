@@ -1,9 +1,9 @@
 import unittest
 from time import sleep
 import ethernet
-from common.gpb.python.Ethernet_pb2 import EthernetRequest
+from common.gpb.python.Ethernet_pb2 import EthernetRequest, EthernetResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
+from common.logger import logger
 from common.module.modulemsgs import ModuleMessages
 
 # @cond doxygen_unittest
@@ -52,63 +52,209 @@ class EthernetMessages(ModuleMessages):
 
 ## Ethernet Unit Test
 class Test_Ethernet(unittest.TestCase):
-    ## Basic functionality test for Ethernet module
-    #  @param     self
-    def test_basic(self):
-        log = Logger(name='Ethernet Module Test')
-        self.module = ethernet.Ethernet()
+    ## Static logger instance
+    log = None
 
-        log.info("REPORT before iperf3:")
-        self.module.msgHandler(ThalesZMQMessage(EthernetMessages.report()))
-        sleep(3)
+    ## Static module instance
+    module = None
 
-        log.info("RUN iperf3:")
-        self.module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
-        sleep(3)
+    ## Setup for the Ethernet test cases
+    # This is run only once before running any test cases
+    @classmethod
+    def setUpClass(cls):
+        # Create a logger so we can add details to a multi-step test case
+        cls.log = logger.Logger(name='Test Ethernet')
+        cls.log.info('++++ Setup before Ethernet module unit tests ++++')
+        # Create the module
+        cls.module = ethernet.Ethernet()
+        # Uncomment this if you don't want to see module debug messages
+        #cls.module.log.setLevel(logger.INFO)
 
-        log.info("REPORT after iperf3:")
-        self.module.msgHandler(ThalesZMQMessage(EthernetMessages.report()))
-        sleep(3)
+    ## Teardown when done with Ethernet test cases
+    # This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.log.info("++++ Teardown after Ethernet module unit tests ++++")
+        cls.module.terminate()
 
-        log.info("RUN while RUNNING:")
-        self.module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
-        sleep(3)
+    ## Test setup
+    # This is run before each test case; we use it to make sure we
+    # start each test case with the module in a known state
+    def setUp(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("==== Reset module state ====")
+        module.msgHandler(ThalesZMQMessage(EthernetMessages.stop()))
 
-        log.info("REPORT after re-running iperf3:")
-        self.module.msgHandler(ThalesZMQMessage(EthernetMessages.report()))
-        sleep(3)
+    ## Valid Test case: Send a RUN msg
+    # Asserts:
+    #       appState == RUNNING
+    #       local == "ENET_1"
+    #       bandwidth == 0
+    def test_Run(self):
+        log = self.__class__.log
+        module = self.__class__.module
 
-        log.info("STOP iperf3:")
-        self.module.msgHandler(ThalesZMQMessage(EthernetMessages.stop()))
-        sleep(3)
+        log.info("**** Test case: RUN message ****")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.RUNNING)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertEqual(response.body.bandwidth, 0)
+        log.info("==== Test complete ====")
 
-        log.info("REPORT after stopping iperf3:")
-        self.module.msgHandler(ThalesZMQMessage(EthernetMessages.report()))
-        sleep(3)
+    ## Valid Test case: Send a REPORT msg
+    # Asserts:
+    #       appState == STOPPED
+    #       local == "ENET_1"
+    #       bandwidth == 0
+    def test_Report(self):
+        log = self.__class__.log
+        module = self.__class__.module
 
-        log.info("STOP while not RUNNING:")
-        self.module.msgHandler(ThalesZMQMessage(EthernetMessages.stop()))
-        sleep(3)
+        log.info("**** Test case: REPORT message ****")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.report()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.STOPPED)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertEqual(response.body.bandwidth, 0)
+        log.info("==== Test complete ====")
 
-        log.info("REPORT after stopping while not running:")
-        self.module.msgHandler(ThalesZMQMessage(EthernetMessages.report()))
-        sleep(3)
+    ## Valid Test case: Send a STOP msg
+    # Asserts:
+    #       appState == STOPPED
+    #       local == "ENET_1"
+    #       bandwidth == 0
+    def test_Stop(self):
+        log = self.__class__.log
+        module = self.__class__.module
 
-        log.info("RUN iperf3:")
-        self.module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
-        sleep(3)
+        log.info("**** Test case: STOP message ****")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.stop()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.STOPPED)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertEqual(response.body.bandwidth, 0)
+        log.info("==== Test complete ====")
 
-        log.info("REPORT after iperf3:")
-        self.module.msgHandler(ThalesZMQMessage(EthernetMessages.report()))
-        sleep(3)
+    ## Valid Test case: Send a RUN, REPORT and STOP msgs
+    # Asserts:
+    #       appState == RUNNING
+    #       local == "ENET_1"
+    #       bandwidth == 0
+    #       ---------------------
+    #       appState == RUNNING
+    #       local  == "ENET_1"
+    #       bandwidth > 0
+    #       ---------------------
+    #       appState == STOPPED
+    #       local == "ENET_1"
+    #       bandwidth > 0
+    #       ---------------------
+    def test_RunReportStop(self):
+        log = self.__class__.log
+        module = self.__class__.module
 
-        log.info("RUN iperf3 when server is empty")
-        self.module.msgHandler(ThalesZMQMessage(EthernetMessages.runNoRemote()))
-        sleep(3)
+        log.info("**** Test case: RUN, REPORT and STOP messages ****")
 
-        self.module.terminate()
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.RUNNING)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertEqual(response.body.bandwidth, 0)
 
-        pass
+        log.info("==== Wait 2 seconds to accumulate statistics ====")
+        sleep(2)
+
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.report()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.RUNNING)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertGreater(response.body.bandwidth, 0)
+
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.stop()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.STOPPED)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertGreater(response.body.bandwidth, 0)
+        log.info("==== Test complete ====")
+
+    ## Valid Test case: Send a RUN, RUN and REPORT msgs
+    # Asserts:
+    #       appState == RUNNING
+    #       local == "ENET_1"
+    #       bandwidth == 0
+    #       ---------------------
+    #       appState == RUNNING
+    #       local == "ENET_1"
+    #       bandwidth == 0
+    #       ---------------------
+    #       appState == RUNNING
+    #       local > 0
+    #       bandwidth > 0
+    def test_RunRunReport(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: RUN, RUN and REPORT messages ****")
+
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.RUNNING)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertEqual(response.body.bandwidth, 0)
+
+        log.info("==== Wait 2 seconds to accumulate statistics ====")
+        sleep(2)
+
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.RUNNING)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertEqual(response.body.bandwidth, 0)
+
+        log.info("==== Wait 2 seconds to accumulate statistics ====")
+        sleep(2)
+
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.report()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.RUNNING)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertGreater(response.body.bandwidth, 0)
+        log.info("==== Test complete ====")
+
+    ## Valid Test case: Send a RUN, followed by RUN with no remote specified
+    # Asserts:
+    #       appState == RUNNING
+    #       local == "ENET_1"
+    #       bandwidth == 0
+    #       ---------------------
+    #       appState == RUNNING
+    #       local  == "ENET_1"
+    #       bandwidth > 0
+    #       ---------------------
+    def test_RunRunNoRemote(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: RUN, RUN (no remote) ****")
+
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.RUNNING)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertEqual(response.body.bandwidth, 0)
+
+        log.info("==== Wait 2 seconds to accumulate statistics ====")
+        sleep(2)
+
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.runNoRemote()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.RUNNING)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertGreater(response.body.bandwidth, 0)
+        log.info("==== Test complete ====")
+
 
 if __name__ == '__main__':
     unittest.main()
