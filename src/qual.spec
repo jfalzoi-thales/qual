@@ -3,7 +3,7 @@
 #
 Name: qual
 Summary: An application used drive MPS hardware
-Version: 1.1
+Version: 1.3
 Release: 1
 License: Proprietary
 Group: Applications/Engineering
@@ -23,6 +23,7 @@ mkdir -p %{buildroot}/bin/ %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src
 install -m755 qual.sh %{buildroot}/bin/
 install -m644 qual.service %{buildroot}/%{_unitdir}/
 cp -r * %{buildroot}/thales/qual/src/
+ln -f /thales/qual/src/qual/config/mps.ini /thales/qual/src/qual/config/platform.ini
 rm -r %{buildroot}/thales/qual/src/simulator
 rm %{buildroot}/thales/qual/src/qual.*
 
@@ -33,9 +34,14 @@ rm %{buildroot}/thales/qual/src/qual.*
 
 %post
 %systemd_post qual.service
-ln -f /thales/qual/src/qual/config/mps.ini /thales/qual/src/qual/config/platform.ini
 
 %changelog
+* Fri Jun 24 2016 Christopher Wallace <cwallace@tklabs.com> 1.3-1
+- 
+
+* Fri Jun 24 2016 Christopher Wallace <cwallace@tklabs.com>
+- 
+
 * Fri Jun 24 2016 Christopher Wallace <cwallace@tklabs.com> 1.1-1
 - 
 
