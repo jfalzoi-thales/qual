@@ -19,26 +19,34 @@ class ThalesZMQMessage(object):
     #    request.serializedBody = requestData[2]
     #
     def __init__(self, body = None, name = ""):
+        ## Message name that identifies the type of this message
         self.__name = name
+        ## Message header in GPB object form
         self.__header = MessageHeader()
+        ## Message body in GPB object form
         self.__body = None
+        ## Message body in serialized form
         self.__serializedBody = None
 
         # Use setter to set the body to get auto-naming functionality
         self.body = body
 
+    ## Get the message name that identifies the type of this message
     @property
     def name(self):
         return self.__name
 
+    ## Get the message header in GPB object form
     @property
     def header(self):
         return self.__header
 
+    ## Get the message header in serialized form
     @property
     def serializedHeader(self):
         return self.__header.SerializeToString()
 
+    ## Get the message body in GPB object form
     @property
     def body(self):
         # Only one of body or serializedBody can be set, but unlike the serializedBody
@@ -46,6 +54,7 @@ class ThalesZMQMessage(object):
         # So just return body, meaning we could return None.
         return self.__body
 
+    ## Set the message body in GPB object form
     @body.setter
     def body(self, body):
         # Only one of body or serializedBody can be set, so if we set one, we clear the other
@@ -57,6 +66,7 @@ class ThalesZMQMessage(object):
             self.__name = body.__class__.__name__
             self.__header.msg_name = self.__name
 
+    ## Get the message body in serialized form
     @property
     def serializedBody(self):
         # Only one of body or serializedBody can be set.  If the (un-serialized) body is
@@ -68,6 +78,7 @@ class ThalesZMQMessage(object):
         else:
             return ""
 
+    ## Set the message body in serialized form
     @serializedBody.setter
     def serializedBody(self, serializedBody):
         # Only one of body or serializedBody can be set, so if we set one, we clear the other

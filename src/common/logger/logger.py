@@ -45,14 +45,19 @@ class Logger(logging.getLoggerClass(), ConfigurableObject):
     #  @param     name  The name of the debug channel, if not set will be the caller's module name
     def __init__(self, name=None):
 
+        ## Log level
         self.logLevel = INFO
+        ## Syslog address
         self.syslogAddress = 'localhost'
+        ## Syslog port
         self.syslogPort = 514
 
         # Default to local syslog on Linux because rsyslogd doesn't enable TCP/UDP logging by default
         if sys.platform.startswith('linux'):
+            ## Syslog protocol
             self.syslogProtocol = 'local'
         else:
+            ## Syslog protocol
             self.syslogProtocol = 'udp'
 
         if name is None:

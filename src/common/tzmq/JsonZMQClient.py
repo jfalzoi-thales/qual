@@ -22,7 +22,9 @@ class JsonZMQClient(object):
     #
     # @param address ZMQ address string of server to connect to
     def __init__(self, address):
+        ## ZMQ context
         self.zcontext = zmq.Context.instance()
+        ## ZMQ socket
         self.zsocket = self.zcontext.socket(zmq.REQ)
         self.zsocket.connect(address)
 

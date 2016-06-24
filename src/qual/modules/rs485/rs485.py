@@ -13,19 +13,26 @@ class Rs485(Module):
     #  @param       self
     #  @param       config      Configuration for the instance is going to be created
     def __init__(self, config=None):
-        ## constructor of the parent class
+        # constructor of the parent class
         super(Rs485, self).__init__(config)
 
+        ## port
         self.port= '/dev/ttyUSB4'
+        ## baud rate
         self.baudrate= 115200
+        ## parity
         self.parity= serial.PARITY_NONE
+        ## stop bits
         self.stopbits= serial.STOPBITS_ONE
+        ## byte size
         self.bytesize= serial.EIGHTBITS
+        ## timeout
         self.timeout= 3
         self.loadConfig(attributes=('port','baudrate','parity','stopbits','bytesize', 'timeout'))
 
 
         try:
+            ## Serial connection
             self.serial = serial.Serial(port=self.port,
                                         baudrate=self.baudrate,
                                         parity=self.parity,
@@ -35,9 +42,9 @@ class Rs485(Module):
         except (serial.SerialException, OSError):
             raise RS485ModuleSerialException(self.port)
         else:
-            ## adding the message handler
+            # adding the message handler
             self.addMsgHandler(RS485Request, self.handlerMessage)
-            ## thread that writes through RS-485
+            # thread that writes through RS-485
             self.addThread(self.sendData)
             ## written characters
             self.written = 0

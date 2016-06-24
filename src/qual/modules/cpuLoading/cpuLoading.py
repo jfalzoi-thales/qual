@@ -7,8 +7,12 @@ from cpuLoader import CPULoader
 
 ## CPU Loading Module Exception Class
 class CPULoadingModuleException(ModuleException):
+    ## Constructor
+    #  @param     self
+    #  @param     msg  Message text associated with this exception
     def __init__(self, msg):
         super(CPULoadingModuleException, self).__init__()
+        ## Message text associated with this exception
         self.msg = msg
 
 ## CPU Loading Module Class

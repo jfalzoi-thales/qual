@@ -10,6 +10,9 @@ from common.module import module
 
 ## Connection info container class
 class ConnectionInfo(object):
+    ## Constructor
+    #  @param     self
+    #  @param     outputChan  Output channel name
     def __init__(self, outputChan):
         super(ConnectionInfo, self).__init__()
         ## Name of output channel that input channel will be connected to

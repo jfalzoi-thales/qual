@@ -1,6 +1,7 @@
 import unittest
 from common.configurableObject.configurableObject import ConfigurableObject
 
+#  @cond doxygen_unittest
 
 class TestObject1(ConfigurableObject):
 
@@ -54,3 +55,5 @@ class Test_ConfigurableObject(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+## @endcond
