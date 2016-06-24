@@ -3,7 +3,7 @@
 #
 Name: qual
 Summary: An application used drive MPS hardware
-Version: 1.4
+Version: 1.0
 Release: 1
 License: Proprietary
 Group: Applications/Engineering
@@ -36,15 +36,3 @@ rm %{buildroot}/thales/qual/src/qual.*
 ln -f /thales/qual/src/qual/config/mps.ini /thales/qual/src/qual/config/platform.ini
 
 %changelog
-* Fri Jun 24 2016 Christopher Wallace <cwallace@tklabs.com> 1.4-1
-- 
-
-* Fri Jun 24 2016 Christopher Wallace <cwallace@tklabs.com> 1.3-1
-- 
-
-* Fri Jun 24 2016 Christopher Wallace <cwallace@tklabs.com>
-- 
-
-* Fri Jun 24 2016 Christopher Wallace <cwallace@tklabs.com> 1.1-1
-- 
-
