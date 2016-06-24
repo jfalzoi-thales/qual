@@ -126,13 +126,6 @@ class Test_SSD(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # Save the current working directory
-    path = os.getcwd()
-    # Move to src in order to run the file system scripts
-    os.chdir('../../..')
-    # Run the tests
     unittest.main()
-    # Move back to the original directory
-    os.chdir(path)
 
 ## @endcond
