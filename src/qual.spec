@@ -18,11 +18,11 @@ The MPS Qualification Software is the MPS resident component of an automated tes
 
 %install
 mkdir -p $RPM_BUILD_ROOT/bin/
-cp qual.sh $RPM_BUILD_ROOT/bin/
+install -m755 qual.sh $RPM_BUILD_ROOT/bin/
 mkdir -p $RPM_BUILD_ROOT/lib/systemd/system/
-cp qual.service $RPM_BUILD_ROOT/lib/systemd/system/
+install -m644 qual.service $RPM_BUILD_ROOT/lib/systemd/system/
 mkdir -p $RPM_BUILD_ROOT/thales/qual/src/
-cp -r * $RPM_BUILD_ROOT/thales/qual/src/
+cp * $RPM_BUILD_ROOT/thales/qual/src/
 rm -r $RPM_BUILD_ROOT/thales/qual/src/simulator
 rm $RPM_BUILD_ROOT/thales/qual/src/qual.*
 
