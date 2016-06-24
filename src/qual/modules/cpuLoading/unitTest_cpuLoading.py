@@ -271,6 +271,7 @@ class Test_CPULoading(unittest.TestCase):
 
         response = module.msgHandler(ThalesZMQMessage(message))
         self.assertEqual(response.body.state, CPULoadingResponse.STOPPED)
+        log.info("==== Test complete ====")
 
     ## Invalid Test case: Send a RUN(<0%) msgs
     # Asserts:
@@ -289,6 +290,7 @@ class Test_CPULoading(unittest.TestCase):
 
         response = module.msgHandler(ThalesZMQMessage(message))
         self.assertEqual(response.body.state, CPULoadingResponse.STOPPED)
+        log.info("==== Test complete ====")
 
 if __name__ == '__main__':
     unittest.main()
