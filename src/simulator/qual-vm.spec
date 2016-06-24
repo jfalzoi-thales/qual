@@ -20,16 +20,18 @@ Implements simulators to act as MPS pripheral devices in order to test QUAL soft
 %setup -q -n %{name}-%{version}
 
 %install
-mkdir -p %{buildroot}/bin/ %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src/simulator
+mkdir -p %{buildroot}/bin/ %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src/simulator %{buildroot}/%{_libdir}/systemd/system-preset
 install -m755 qual-vm.sh %{buildroot}/bin/
 install -m644 qual-vm.service %{buildroot}/%{_unitdir}/
+install -m644 50-qual-vm-service.preset %{buildroot}/%{_libdir}/systemd/system-preset/
 cp -r * %{buildroot}/thales/qual/src/simulator/
-rm %{buildroot}/thales/qual/src/simulator/qual-vm.*
 
 %files
 /bin/qual-vm.sh
 /%{_unitdir}/qual-vm.service
 /thales/qual/src/simulator/*
+%exclude /thales/qual/src/simulator/qual-vm.*
+%exclude /thales/qual/src/simulator/50-qual-vm-service.preset
 
 %post
 %systemd_post qual-vm.service

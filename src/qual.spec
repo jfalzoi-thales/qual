@@ -19,17 +19,19 @@ The MPS Qualification Software is the MPS resident component of an automated tes
 %setup -q -n %{name}-%{version}
 
 %install
-mkdir -p %{buildroot}/bin/ %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src
+mkdir -p %{buildroot}/bin/ %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src %{buildroot}/%{_libdir}/systemd/system-preset
 install -m755 qual.sh %{buildroot}/bin/
 install -m644 qual.service %{buildroot}/%{_unitdir}/
+install -m644 50-qual-service.preset %{buildroot}/%{_libdir}/systemd/system-preset/
 cp -r * %{buildroot}/thales/qual/src/
-rm -r %{buildroot}/thales/qual/src/simulator
-rm %{buildroot}/thales/qual/src/qual.*
 
 %files
 /bin/qual.sh
 /%{_unitdir}/qual.service
 /thales/qual/src/*
+%exclude /thales/qual/src/simulator
+%exclude /thales/qual/src/qual.*
+%exclude /thales/qual/src/50-qual-service.preset
 
 %post
 %systemd_post qual.service
