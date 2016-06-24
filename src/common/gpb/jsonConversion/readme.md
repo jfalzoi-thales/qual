@@ -1,4 +1,4 @@
-# GPB JsonConversion {#GPBJson}
+# GPB-JSON Conversion {#GPBJson}
 
 GPB-JSON Serialization
 ======================
@@ -20,7 +20,7 @@ the following encoding rules are applied:
 * Byte types shall be represented by escaped unicode strings
 
 # Usage
-Given the protocol prototype below and the [GPB-Python Tool](@ref GPBBufferReadme)
+Given the protocol prototype below and the corresponding generated Python code:
 
 ~~~
 message CPULoadingRequest { 
@@ -52,7 +52,7 @@ Which will convert the CPULoadingRequest into
         message = JsonConversion.json2gpb(messageName, json)
 ~~~~~~~~~~~~~
 
-The deserialization process is simular, where the messages name and json 
+The deserialization process is similar, where the messages name and JSON 
 data are provided and the message class is returned.
 
 
