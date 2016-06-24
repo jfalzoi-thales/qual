@@ -99,7 +99,7 @@ class Test_CPULoading(unittest.TestCase):
         # Asserts
         self.assertEqual(response.name, "CPULoadingResponse")
         self.assertEqual(response.body.state, CPULoadingResponse.STOPPED)
-        self.assertEqual(response.body.totalUtilization, 0)
+        self.assertGreaterEqual(response.body.totalUtilization, 0)
         log.info("==== Test complete ====")
 
     ## Valid Test case: Send a STOP msg
@@ -182,7 +182,7 @@ class Test_CPULoading(unittest.TestCase):
         # Asserts
         self.assertEqual(response.name, "CPULoadingResponse")
         self.assertEqual(response.body.state, CPULoadingResponse.RUNNING)
-        self.assertEqual(response.body.totalUtilization, 0)
+        self.assertGreaterEqual(response.body.totalUtilization, 0)
 
         # Allow lookbusy run for a while
         time.sleep(1)
