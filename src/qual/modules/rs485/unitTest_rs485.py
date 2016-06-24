@@ -2,7 +2,7 @@ import unittest
 import time
 
 from qual.modules.rs485.rs485 import Rs485
-from common.gpb.python.RS485_pb2 import RS485Request
+from common.gpb.python.RS485_pb2 import RS485Request, RS485Response
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.logger.logger import Logger
 from common.module.modulemsgs import ModuleMessages
@@ -37,55 +37,208 @@ class RS485Messages(ModuleMessages):
         message.requestType = RS485Request.STOP
         return message
 
-## RS-485 Unit Test
+## RS485 Unit Test
 class Test_RS485(unittest.TestCase):
-    def test_basic(self):
-        # Initialize logging
-        log = Logger(name='Test RS485')
-        log.info('Running test...')
+    ## Static logger instance
+    log = None
 
-        # RS485 Module Object
-        self.module = Rs485()
+    ## Static module instance
+    module = None
 
-        log.info("Send REPORT message before start running.")
-        self.module.msgHandler(ThalesZMQMessage(RS485Messages.report()))
-        time.sleep(3)
+    ## Setup for the RS-485 test cases
+    # This is run only once before running any test cases
+    @classmethod
+    def setUpClass(cls):
+        # Create a logger so we can add details to a multi-step test case
+        cls.log = Logger(name='Test RS-485')
+        cls.log.info('++++ Setup before RS-485 module unit tests ++++')
+        # Create the module
+        cls.module = Rs485()
+        # Uncomment this if you don't want to see module debug messages
+        # cls.module.log.setLevel(logger.INFO)
 
-        log.info("Send RUN message.")
-        self.module.msgHandler(ThalesZMQMessage(RS485Messages.run()))
-        time.sleep(3)
+    ## Teardown when done with RS-485 test cases
+    # This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.log.info("++++ Teardown after RS-485 module unit tests ++++")
+        cls.module.terminate()
 
-        log.info("Send REPORT messages for 20 seconds.")
-        for i in range(10):
-            log.info("Sending REPORT message.")
-            self.module.msgHandler(ThalesZMQMessage(RS485Messages.report()))
-            time.sleep(2)
+    ## Test setup
+    # This is run before each test case; we use it to make sure we
+    # start each test case with the module in a known state
+    def setUp(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("==== Reset module state ====")
+        module.msgHandler(ThalesZMQMessage(RS485Messages.stop()))
 
-        log.info("Send STOP message.")
-        self.module.msgHandler(ThalesZMQMessage(RS485Messages.stop()))
-        time.sleep(3)
+    ## Valid Test case: Send a RUN msg
+    # Asserts:
+    #       appState == RUNNING
+    #       xmtCount == 0
+    #       matches == 0
+    #       mismatches == 0
+    def test_Run(self):
+        log = self.__class__.log
+        module = self.__class__.module
 
-        log.info("Send REPORT message after stop.")
-        self.module.msgHandler(ThalesZMQMessage(RS485Messages.report()))
-        time.sleep(3)
+        log.info("**** Test case: RUN message ****")
+        response = module.msgHandler(ThalesZMQMessage(RS485Messages.run()))
+        # Asserts
+        self.assertEqual(response.name, "RS485Response")
+        self.assertEqual(response.body.state, RS485Response.RUNNING)
+        self.assertEqual(response.body.xmtCount, 0)
+        self.assertEqual(response.body.matches, 0)
+        self.assertEqual(response.body.mismatches, 0)
+        log.info("==== Test complete ====")
 
-        log.info("Send RUN message after stop.")
-        self.module.msgHandler(ThalesZMQMessage(RS485Messages.run()))
-        time.sleep(3)
+    ## Valid Test case: Send a REPORT msg
+    # Asserts:
+    #       appState == STOPPED
+    #       xmtCount == 0
+    #       matches == 0
+    #       mismatches == 0
+    def test_Report(self):
+        log = self.__class__.log
+        module = self.__class__.module
 
-        log.info("Send REPORT messages for 20 seconds.")
-        for i in range(10):
-            log.info("Sending REPORT message.")
-            self.module.msgHandler(ThalesZMQMessage(RS485Messages.report()))
-            time.sleep(2)
+        log.info("**** Test case: REPORT message ****")
+        response = module.msgHandler(ThalesZMQMessage(RS485Messages.report()))
+        # Asserts
+        self.assertEqual(response.name, "RS485Response")
+        self.assertEqual(response.body.state, RS485Response.STOPPED)
+        self.assertEqual(response.body.xmtCount, 0)
+        self.assertEqual(response.body.matches, 0)
+        self.assertEqual(response.body.mismatches, 0)
+        log.info("==== Test complete ====")
 
-        log.info("Send STOP message.")
-        self.module.msgHandler(ThalesZMQMessage(RS485Messages.stop()))
-        time.sleep(3)
+    ## Valid Test case: Send a STOP msg
+    # Asserts:
+    #       appState == STOPPED
+    #       xmtCount == 0
+    #       matches == 0
+    #       mismatches == 0
+    def test_Stop(self):
+        log = self.__class__.log
+        module = self.__class__.module
 
-        self.module.terminate()
+        log.info("**** Test case: STOP message ****")
+        response = module.msgHandler(ThalesZMQMessage(RS485Messages.stop()))
+        # Asserts
+        self.assertEqual(response.name, "RS485Response")
+        self.assertEqual(response.body.state, RS485Response.STOPPED)
+        self.assertEqual(response.body.xmtCount, 0)
+        self.assertEqual(response.body.matches, 0)
+        self.assertEqual(response.body.mismatches, 0)
+        log.info("==== Test complete ====")
 
-        pass
+    ## Valid Test case: Send a RUN, REPORT and STOP msgs
+    # Asserts:
+    #       appState == RUNNING
+    #       xmtCount == 0
+    #       matches == 0
+    #       mismatches == 0
+    #       ---------------------
+    #       appState == RUNNING
+    #       xmtCount > 0
+    #       matches > 0
+    #       mismatches >= 0
+    #       ---------------------
+    #       appState == STOPPED
+    #       xmtCount > 0
+    #       matches > 0
+    #       mismatches >= 0
+    #       ---------------------
+    def test_RunReportStop(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: RUN, REPORT and STOP messages ****")
+
+        response = module.msgHandler(ThalesZMQMessage(RS485Messages.run()))
+        # Asserts
+        self.assertEqual(response.name, "RS485Response")
+        self.assertEqual(response.body.state, RS485Response.RUNNING)
+        self.assertEqual(response.body.xmtCount, 0)
+        self.assertEqual(response.body.matches, 0)
+        self.assertEqual(response.body.mismatches, 0)
+
+        # Allow RS-485 send some data
+        time.sleep(2)
+
+        response = module.msgHandler(ThalesZMQMessage(RS485Messages.report()))
+        # Asserts
+        self.assertEqual(response.name, "RS485Response")
+        self.assertEqual(response.body.state, RS485Response.RUNNING)
+        self.assertGreater(response.body.xmtCount, 0)
+        self.assertGreater(response.body.matches, 0)
+        self.assertGreaterEqual(response.body.mismatches, 0)
+
+        response = module.msgHandler(ThalesZMQMessage(RS485Messages.stop()))
+        # Asserts
+        self.assertEqual(response.name, "RS485Response")
+        self.assertEqual(response.body.state, RS485Response.STOPPED)
+        self.assertGreater(response.body.xmtCount, 0)
+        self.assertGreater(response.body.matches, 0)
+        self.assertGreaterEqual(response.body.mismatches, 0)
+        log.info("==== Test complete ====")
+
+    ## Valid Test case: Send a START, START and REPORT msgs
+    # Asserts:
+    #       appState == RUNNING
+    #       xmtCount == 0
+    #       matches == 0
+    #       mismatches == 0
+    #       ---------------------
+    #       appState == RUNNING
+    #       xmtCount == 0
+    #       matches == 0
+    #       mismatches == 0
+    #       ---------------------
+    #       appState == RUNNING
+    #       xmtCount > 0
+    #       matches > 0
+    #       mismatches >= 0
+    def test_StartStartReport(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: START, START and REPORT messages ****")
+
+        response = module.msgHandler(ThalesZMQMessage(RS485Messages.run()))
+        # Asserts
+        self.assertEqual(response.name, "RS485Response")
+        self.assertEqual(response.body.state, RS485Response.RUNNING)
+        self.assertEqual(response.body.xmtCount, 0)
+        self.assertEqual(response.body.matches, 0)
+        self.assertEqual(response.body.mismatches, 0)
+
+        # Allow RS-485 send some data
+        time.sleep(2)
+
+        response = module.msgHandler(ThalesZMQMessage(RS485Messages.run()))
+        # Asserts
+        self.assertEqual(response.name, "RS485Response")
+        self.assertEqual(response.body.state, RS485Response.RUNNING)
+        self.assertEqual(response.body.xmtCount, 0)
+        self.assertEqual(response.body.matches, 0)
+        self.assertEqual(response.body.mismatches, 0)
+
+        # Allow RS-485 send some data
+        time.sleep(2)
+
+        response = module.msgHandler(ThalesZMQMessage(RS485Messages.report()))
+        # Asserts
+        self.assertEqual(response.name, "RS485Response")
+        self.assertEqual(response.body.state, RS485Response.RUNNING)
+        self.assertGreater(response.body.xmtCount, 0)
+        self.assertGreater(response.body.matches, 0)
+        self.assertGreaterEqual(response.body.mismatches, 0)
+
+        log.info("==== Test complete ====")
 
 if __name__ == '__main__':
     unittest.main()
+
+## @endcond
