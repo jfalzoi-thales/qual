@@ -33,6 +33,7 @@ cp -r * %{buildroot}/thales/qual/src/
 %exclude /thales/qual/src/simulator
 %exclude /thales/qual/src/qual.*
 %exclude /thales/qual/src/50-qual-service.preset
+%exclude /thales/qual/src/pkgs-psi.inc.ks
 
 %post
 %systemd_post qual.service
