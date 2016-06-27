@@ -63,7 +63,7 @@ class GPIO(module.Module):
         self.outputState = False
 
         ## Connection to GPIO Manager
-        self.gpioMgrClient = ThalesZMQClient("ipc:///tmp/gpio-mgr.sock")
+        self.gpioMgrClient = ThalesZMQClient("ipc:///tmp/gpio-mgr.sock", log=self.log)
 
         # Set up thread to toggle outputs
         self.addThread(self.toggleOutputs)
@@ -271,7 +271,8 @@ class GPIO(module.Module):
                 return getResp.state
 
         self.log.error("Error return from GPIO Manager for pin %s" % pinName)
-        return False
+        # Return the opposite of the current output state to force match to fail
+        return not self.outputState
 
     ## Stops background thread
     #  @param     self

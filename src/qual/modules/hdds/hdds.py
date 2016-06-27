@@ -1,6 +1,7 @@
 
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.gpb.python.HDDS_pb2 import GetReq, GetResp, SetReq, SetResp
+from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from common.gpb.python.HDDS_pb2 import GetReq, GetResp, SetReq, SetResp, FAILURE_GET_FAILED
 from common.gpb.python.ErrorMessage_pb2 import ErrorMessage
 from common.module.module import Module
 
@@ -14,7 +15,7 @@ class HDDS(Module):
         super(HDDS, self).__init__(config)
 
         ## Client connection to the Host Domain Device Service
-        self.hddsClient = ThalesZMQClient("tcp://localhost:40001")
+        self.hddsClient = ThalesZMQClient("tcp://localhost:40001", log=self.log)
 
         #  Add handlers to available message handlers
         self.addMsgHandler(GetReq, self.getHandler)
@@ -39,6 +40,14 @@ class HDDS(Module):
             err.ParseFromString(response.serializedBody)
             response.body = err
             self.log.warning("Got error message from HDDS: %s" % err.error_description)
+        elif response.name == "":
+            # Construct new response to report failure
+            getResp = GetResp()
+            valueResp = getResp.HDDSValue.add()
+            valueResp.success = False
+            valueResp.error.error_code = FAILURE_GET_FAILED
+            valueResp.error.description = "Get failed: No response from HDDS"
+            response = ThalesZMQMessage(getResp)
         else:
             self.log.warning("Unexpected response from HDDS: %s" % response.name)
             # Since this module is a pass-through, return it anyway
@@ -64,6 +73,14 @@ class HDDS(Module):
             err.ParseFromString(response.serializedBody)
             response.body = err
             self.log.warning("Got error message from HDDS: %s" % err.error_description)
+        elif response.name == "":
+            # Construct new response to report failure
+            setResp = SetResp()
+            valueResp = setResp.HDDSValue.add()
+            valueResp.success = False
+            valueResp.error.error_code = FAILURE_GET_FAILED
+            valueResp.error.description = "Set failed: No response from HDDS"
+            response = ThalesZMQMessage(setResp)
         else:
             self.log.warning("Unexpected response from HDDS: %s" % response.name)
             # Since this module is a pass-through, return it anyway
