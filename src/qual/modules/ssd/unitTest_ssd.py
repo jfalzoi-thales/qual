@@ -1,4 +1,5 @@
 import unittest
+import os
 
 from time import sleep
 from common.gpb.python.SSD_pb2 import SSDRequest, SSDResponse
@@ -36,35 +37,93 @@ class SSDMessages(ModuleMessages):
 
 ## SSD Unit Test
 class Test_SSD(unittest.TestCase):
-    ## Basic functionality test for SSD module
-    #  @param     self
-    def test_basic(self):
-        log = Logger(name='SSD Module Test')
-        try:
-            self.module = SSD(config=SSD.getConfigurations()[0])
-        except SSDModuleException as e:
-            log.error("Unable to create instance of SSD: %s" % e.msg)
-            return
+    ## Static logger instance
+    log = None
 
-        log.info("RUN FIO tool")
-        self.module.msgHandler(ThalesZMQMessage(SSDMessages.run()))
-        sleep(10)
+    ## Static module instance
+    module = None
 
-        log.info("STOP FIO tool")
-        self.module.msgHandler(ThalesZMQMessage(SSDMessages.stop()))
-        sleep(3)
+    ## Setup for the SSD test cases
+    # This is run only once before running any test cases
+    @classmethod
+    def setUpClass(cls):
+        # Create a logger so we can add details to a multi-step test case
+        cls.log = Logger(name='Test SSD')
+        cls.log.info('++++ Setup before SSD module unit tests ++++')
+        # Create the module
+        cls.module = SSD()
+        # Uncomment this if you don't want to see module debug messages
+        # cls.module.log.setLevel(logger.INFO)
 
-        log.info("RUN again FIO tool")
-        self.module.msgHandler(ThalesZMQMessage(SSDMessages.run()))
-        sleep(10)
+    ## Teardown when done with SSD test cases
+    # This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.log.info("++++ Teardown after SSD module unit tests ++++")
+        cls.module.terminate()
 
-        log.info("STOP again FIO tool")
-        self.module.msgHandler(ThalesZMQMessage(SSDMessages.stop()))
-        sleep(3)
+    ## Test setup
+    # This is run before each test case; we use it to make sure we
+    # start each test case with the module in a known state
+    def setUp(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("==== Reset module state ====")
+        module.msgHandler(ThalesZMQMessage(SSDMessages.stop()))
 
-        self.module.terminate()
+    ## Valid Test case: Send a RUN and STOP msgs
+    # Asserts:
+    #       appState == RUNNING
+    #       --------------------
+    #       appState == STOPPED
+    #       --------------------
+    def test_RunStop(self):
+        log = self.__class__.log
+        module = self.__class__.module
 
-        pass
+        log.info("**** Test case: RUN and Stop messages ****")
+
+        response = module.msgHandler(ThalesZMQMessage(SSDMessages.run()))
+        # Asserts
+        self.assertEqual(response.name, "SSDResponse")
+
+        self.assertEqual(response.body.state, SSDResponse.RUNNING)
+
+        response = module.msgHandler(ThalesZMQMessage(SSDMessages.stop()))
+        # Asserts
+        self.assertEqual(response.name, "SSDResponse")
+        self.assertEqual(response.body.state, SSDResponse.STOPPED)
+        log.info("==== Test complete ====")
+
+    ## Valid Test case: Send a RUN msg
+    # Asserts:
+    #       appState == RUNNING
+    #       --------------------
+    def test_Run(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("**** Test case: RUN message ****")
+        response = module.msgHandler(ThalesZMQMessage(SSDMessages.run()))
+        # Asserts
+        self.assertEqual(response.name, "SSDResponse")
+        self.assertEqual(response.body.state, SSDResponse.RUNNING)
+        log.info("==== Test complete ====")
+
+
+    ## Valid Test case: Send a STOP msg
+    # Asserts:
+    #       appState == STOPPED
+    #       --------------------
+    def test_Stop(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("**** Test case: STOP messages ****")
+        response = module.msgHandler(ThalesZMQMessage(SSDMessages.stop()))
+        # Asserts
+        self.assertEqual(response.name, "SSDResponse")
+        self.assertEqual(response.body.state, SSDResponse.STOPPED)
+        log.info("==== Test complete ====")
+
 
 if __name__ == '__main__':
     unittest.main()
