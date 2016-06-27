@@ -1,9 +1,10 @@
 [Unit]
-Description=Start QUAL simulators and QTA
+Description=Start QUAL simulators
 
 [Service]
 Type=idle
-ExecStart=/bin/sh /thales/qual/src/qual-vm.sh
+ExecStart=/bin/qual-vm.sh
+RemainAfterExit=yes
 Restart=always
 RestartSec=3s
 
