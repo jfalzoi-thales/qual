@@ -101,13 +101,17 @@ class SSD(Module):
                                 failText="Unable to unmount existing RAID volume")
 
         # Determine which RAID setup script to use
+        cwd = os.getcwd()
         makeraid = "mpsinst-makeraid"
-        makeraidUSB = "qual/modules/ssd/mpsinst-makeraid-usb.sh"
+        makeraidUSB = "mpsinst-makeraid-usb.sh"
         if os.path.exists("/sbin/%s" % makeraid):
             self.log.info("Using system mpsinst-makeraid tool")
-        elif os.path.exists(makeraidUSB):
+        elif os.path.exists("%s/%s" % ("qual/modules/ssd", makeraidUSB,)):
             self.log.info("Using debug USB mpsinst-makeraid tool")
-            makeraid = makeraidUSB
+            makeraid = "%s/%s" % ("qual/modules/ssd", makeraidUSB,)
+        elif os.path.exists("%s/%s" % (cwd, makeraidUSB)):
+            self.log.info("Using debug USB mpsinst-makeraid tool")
+            makeraid = "%s/%s" % (cwd, makeraidUSB,)
         else:
            raise SSDModuleException("Unable to locate mpsinst-makeraid script")
 
