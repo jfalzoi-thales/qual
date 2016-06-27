@@ -7,8 +7,12 @@ from common.module.module import Module, ModuleException
 
 ## Ethernet Module Exception Class
 class EthernetModuleException(ModuleException):
+    ## Constructor
+    #  @param     self
+    #  @param     msg  Message text associated with this exception
     def __init__(self, msg):
         super(EthernetModuleException, self).__init__()
+        ## Message text associated with this exception
         self.msg = msg
 
 
@@ -23,7 +27,7 @@ class Ethernet(Module):
         self.iperf = None
         ## IP address of remote iperf3 server to communicate with
         self.server = ""
-        ## Ethernet bandwidth reading from iperf3
+        ## Network bandwidth reading from iperf3
         self.bandwidth = 0.0
         ## Cumulative number of retries over iperf3 run
         self.retries = 0

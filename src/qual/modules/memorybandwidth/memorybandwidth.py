@@ -9,8 +9,12 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 ## Memory Bandwidth Module Exception Class
 class MemoryBandwidthModuleException(ModuleException):
+    ## Constructor
+    #  @param     self
+    #  @param     msg  Message text associated with this exception
     def __init__(self, msg):
         super(MemoryBandwidthModuleException, self).__init__()
+        ## Message text associated with this exception
         self.msg = msg
 
 
@@ -29,8 +33,11 @@ class MemoryBandwidth(Module):
         ## field to save the last bandwidth read
         self.bandwidth = 0
 
+        ## max memory alloc parameter for pmbw
         self.maxallocmem='-M 10000000'
+        ## number of threads parameter for pmbw
         self.numthreads='-P 1'
+        ## test array size parameter for pmbw
         self.mSize='-s 10000000'
         self.loadConfig(attributes=('maxallocmem','numthreads','mSize'))
 
@@ -66,11 +73,10 @@ class MemoryBandwidth(Module):
         return ThalesZMQMessage(response)
 
 
-    ## Starts runnung PMBW tool and reading the output
+    ## Starts running PMBW tool and reading the output
     #
     #  @param     self
-    #  @param     msg  tzmq format message
-    #  @return    self.report() a MemoryBandwidth Response object
+    #  @return    a MemoryBandwidth Response object
     def start(self):
         super(MemoryBandwidth, self).startThread()
         self.appState = MemoryBandwidthResponse.RUNNING
@@ -79,10 +85,10 @@ class MemoryBandwidth(Module):
         status.memoryBandWidth = self.bandwidth
         return status
 
-    ## Stops runnung PMBW tool and reading the output
+    ## Stops running PMBW tool and reading the output
     #
     #  @param     self
-    #  @return    self.report() a MemoryBandwidth Response object
+    #  @return    a MemoryBandwidth Response object
     def stop(self):
         self._running = False
         subprocess.Popen(["pkill", "-9", "pmbw"])
@@ -98,7 +104,7 @@ class MemoryBandwidth(Module):
     ## Reports the last output of PMBW tool
     #
     #  @param     self
-    #  @return    self.report() a MemoryBandwidth Response object
+    #  @return    a MemoryBandwidth Response object
     def report(self):
         status = MemoryBandwidthResponse()
         status.state = self.appState

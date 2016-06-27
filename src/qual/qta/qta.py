@@ -21,8 +21,7 @@ from google.protobuf.message import Message
 #
 class QualTestApp(ConfigurableObject):
     ## Constructor
-    # @param ip   IP address to listen on
-    # @param port TCP port to listen on
+    # @param self
     def __init__(self):
         # Init the superclass
         super(QualTestApp, self).__init__(None)
@@ -124,12 +123,10 @@ class QualTestApp(ConfigurableObject):
         return response
 
 
-# Class to set up a listener for GPB messages and hand them off to the main QTA class
+## Class to set up a listener for GPB messages and hand them off to the main QTA class
 class QtaGpbListener(ThalesZMQServer):
     ## Constructor
-    # @param qta  The main QTA instance this will be linked to
-    # @param ip   IP address to listen on
-    # @param port TCP port to listen on
+    # @param qtaInstance  The main QTA instance this will be linked to
     def __init__(self, qtaInstance):
         ## QTA instance we will be linked to
         self.qta = qtaInstance
@@ -145,12 +142,10 @@ class QtaGpbListener(ThalesZMQServer):
         return self.qta.handleRequest(request)
 
 
-# Class to set up a listener for JSON messages and hand them off to the main QTA class
+## Class to set up a listener for JSON messages and hand them off to the main QTA class
 class QtaJsonListener(JsonZMQServer):
     ## Constructor
-    # @param qta  The main QTA instance this will be linked to
-    # @param ip   IP address to listen on
-    # @param port TCP port to listen on
+    # @param qtaInstance  The main QTA instance this will be linked to
     def __init__(self, qtaInstance):
         ## QTA instance we will be linked to
         self.qta = qtaInstance

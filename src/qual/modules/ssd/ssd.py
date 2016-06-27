@@ -11,7 +11,7 @@ from qual.modules.ssd.ssd_Exception import SSDModuleException
 ## Discard the output
 DEVNULL = open(os.devnull, 'wb')
 
-## RS-232 Class Module
+## SSD Module Class
 #
 class SSD(Module):
     ## Constructor
@@ -44,8 +44,8 @@ class SSD(Module):
     #  Receives tzmq request and runs requested process
     #
     #  @param     self
-    #  @param     rs232Request      tzmq format message
-    #  @return    response          an SSD Response object
+    #  @param     request      TZMQ format message
+    #  @return    response     an SSD Response object
     def handlerMessage(self, request):
         response = SSDResponse()
         if request.body.requestType == SSDRequest.STOP:

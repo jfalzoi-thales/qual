@@ -9,7 +9,7 @@ from common.configurableObject.exception import ConfigurableObjectException
 class ConfigurableObject(object):
 
     ##Constructor
-    # @param cls Class, passed to classMethod
+    # @param self
     # @param configSection INI File section to read configuration from (default to class name)
     def __init__(self, configSection=None):
 
