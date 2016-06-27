@@ -3,6 +3,7 @@ import zmq
 import json
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.jsonConversion.jsonConversion import JsonConversion
+from common.logger.logger import Logger
 
 
 ## JSON ZMQ Client class
@@ -21,12 +22,38 @@ class JsonZMQClient(object):
     ## Constructor
     #
     # @param address ZMQ address string of server to connect to
-    def __init__(self, address):
+    # @param timeout How long to wait for responses from the server
+    # @param log     Logger to use to log communication errors
+    def __init__(self, address, timeout=200, log=None):
+        ## Address to connect to
+        self.address = address
+        ## How long to wait for responses
+        self.timeout = timeout
+        ## Logger
+        self.log = log
+
+        # If no logger was provided, go ahead and create one
+        if self.log is None:
+            self.log = Logger()
+
         ## ZMQ context
         self.zcontext = zmq.Context.instance()
         ## ZMQ socket
+        self.zsocket = None
+        self.openSocket()
+
+    ## Opens the ZMQ socket
+    def openSocket(self):
+        self.log.debug("Opening socket connection to %s" % self.address)
         self.zsocket = self.zcontext.socket(zmq.REQ)
-        self.zsocket.connect(address)
+        self.zsocket.set(zmq.RCVTIMEO, self.timeout)
+        self.zsocket.connect(self.address)
+
+    ## Closes the ZMQ socket
+    def closeSocket(self):
+        self.log.debug("Closing socket connection to %s" % self.address)
+        self.zsocket.close(linger=1)
+        self.zsocket = None
 
     ## Sends a request to the connected server and waits for the server's response
     #
@@ -38,21 +65,27 @@ class JsonZMQClient(object):
         try:
             reqName, reqJson = JsonConversion.gpb2json(request.body)
         except Exception as e:
-            print "Failed to convert GPB to JSON:", e.message
+            self.log.error("Failed to convert GPB to JSON: %s" % e.message)
             # Return an empty response object
             return ThalesZMQMessage()
 
         # JSON ZMQ message is a multipart message made up of string name and JSON body
         self.zsocket.send_multipart((reqName, json.dumps(reqJson)))
 
-        # This will block waiting for the response
-        responseData = self.zsocket.recv_multipart()
+        # Try to receive the response
+        try:
+            responseData = self.zsocket.recv_multipart()
+        except zmq.error.Again:
+            responseData = None
+            # Close and reopen the socket
+            self.closeSocket()
+            self.openSocket()
 
         # We expect JSON messages to have 2 parts
-        if len(responseData) >= 2:
+        if responseData is not None and len(responseData) >= 2:
             # If message has more than 2 parts, log a warning, but proceed anyway
             if len(responseData) > 2:
-                print "Warning: received response message with", len(responseData), "parts"
+                self.log.warning("Received response message with %d parts" % len(responseData))
 
             # Response class name is in first part
             respName = str(responseData[0])
@@ -61,13 +94,16 @@ class JsonZMQClient(object):
             try:
                 respBody = JsonConversion.json2gpb(respName, json.loads(responseData[1]))
             except Exception as e:
-                print "Failed to convert JSON to GPB:", e.message
+                self.log.error("Failed to convert JSON to GPB: %s" % e.message)
             else:
                 # Package response data into a message object
                 response = ThalesZMQMessage(name=respName)
                 response.body = respBody
                 return response
 
-        print "Malformed message received"
+        if responseData is None:
+            self.log.error("Timeout waiting for response from %s" % self.address)
+        else:
+            self.log.warning("Malformed message received")
         # Return an empty response object
         return ThalesZMQMessage()
