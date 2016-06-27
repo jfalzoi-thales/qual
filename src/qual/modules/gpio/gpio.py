@@ -11,6 +11,9 @@ from common.module import module
 
 ## Connection info container class
 class ConnectionInfo(object):
+    ## Constructor
+    #  @param     self
+    #  @param     outputPin  Output pin name
     def __init__(self, outputPin):
         super(ConnectionInfo, self).__init__()
         ## Name of output pin that input pin will be connected to

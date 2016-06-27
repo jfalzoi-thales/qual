@@ -13,18 +13,23 @@ class Rs232(Module):
     #  @param       self
     #  @param       config      Configuration for the instance is going to be created
     def __init__(self, config=None):
-        ## constructor of the parent class
+        # constructor of the parent class
         super(Rs232, self).__init__(config)
 
+        ## port
         self.port = '/dev/ttyUSB1'
+        ## baud rate
         self.baudrate = 115200
+        ## parity
         self.parity = serial.PARITY_NONE
+        ## stop bits
         self.stopbits = serial.STOPBITS_ONE
+        ## byte size
         self.bytesize = serial.EIGHTBITS
         self.loadConfig(attributes=('port','baudrate','parity','stopbits','bytesize'))
 
         try:
-            ## open a writer serial port
+            ## Serial connection
             self.serial = serial.Serial(port=self.port,
                                         baudrate=self.baudrate,
                                         parity=self.parity,

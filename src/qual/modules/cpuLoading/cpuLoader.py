@@ -7,7 +7,7 @@ class CPULoader(threading.Thread):
     #  @param   self
     #  @param   sleeptime   Number of seconds to sleep DEFAULT = [1]
     def __init__(self, sleeptime = 1):
-        ## Initializes threading
+        # Initializes threading
         threading.Thread.__init__(self)
         ## Lock for preventing threading issues
         self.lock = threading.Lock()

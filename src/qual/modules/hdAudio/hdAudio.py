@@ -57,30 +57,30 @@ class HDAudio(Module):
     # @param  msg       TZMQ format message
     # @return reply     a ThalesZMQMessage object containing the response message
     def handler(self, msg):
-        ## Get the HD Audio request
+        # Get the HD Audio request
         request = msg.body
 
-        ## Response Object
+        # Response Object
         response = HDAudioResponse()
 
-        ## Handle the Request
+        # Handle the Request
         if request.requestType == HDAudioRequest.CONNECT:
             if self.state == HDAudioResponse.CONNECTED:
                 self.stop()
-            ## Check if the audio file in source exists
+            # Check if the audio file in source exists
             if not os.path.exists('%s/%s' % (self.audioFilePath, request.source)):
                 self.log.error('Missing audio File %s' % (request.source,))
                 response = self.report()
             else:
                 try:
-                    ## Check if the volume is in a correct range
+                    # Check if the volume is in a correct range
                     if request.volume < 0 or request.volume > 100:
                         self.log.warning('Invalid volume range. Changed to 100.')
                         request.volume = 100
                 except ValueError:
                     self.log.warning('Wrong message value. Changed to 100.')
                     request.volume = 100
-                ## Start the module
+                # Start the module
                 response = self.start(request.source, request.volume)
         elif request.requestType == HDAudioRequest.DISCONNECT:
             response = self.stop()
@@ -88,24 +88,28 @@ class HDAudio(Module):
             response = self.report()
         return ThalesZMQMessage(response)
 
-    ## Starts the module
+    ## Starts playing audio
     #
     #  @param   self
+    #  @param   file    Name of audio file to play
+    #  @param   volume  Volume level to set
+    #  @return  HDAudioResponse object
     def start(self, file, volume):
         self.file = file
         self.volume = volume
         self.startThread()
         self.state = HDAudioResponse.CONNECTED
-        ## Create the response
+        # Create the response
         response = HDAudioResponse()
         response.appState = self.state
         response.source = self.file
         response.volume = self.volume
         return response
 
-    ## Stops the module
+    ## Stops playing audio
     #
     #  @param   self
+    #  @return  HDAudioResponse object
     def stop(self):
         self._running = False
         proc = subprocess.Popen(['pkill', 'aplay'])
@@ -113,18 +117,19 @@ class HDAudio(Module):
         self.stopThread()
         self.state = HDAudioResponse.DISCONNECTED
         self.file = ''
-        ## Create the response
+        # Create the response
         response = HDAudioResponse()
         response.appState = self.state
         response.source = self.file
         response.volume = self.volume
         return response
 
-    ## Reports the module
+    ## Reports status of audio playback
     #
     #  @param   self
+    #  @return  HDAudioResponse object
     def report(self):
-        ## Create the response
+        # Create the response
         response = HDAudioResponse()
         response.appState = self.state
         response.source = self.file
@@ -132,7 +137,7 @@ class HDAudio(Module):
         return response
 
 
-    ## Plays the audio file
+    ## Plays the audio file - run in thread
     #
     # @param  self
     def play(self):
