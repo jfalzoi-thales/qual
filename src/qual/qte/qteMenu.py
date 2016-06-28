@@ -26,11 +26,11 @@ class QTEMenu(object):
 
         if useJson:
             ## Client connection to QTA
-            self.client = JsonZMQClient(address)
+            self.client = JsonZMQClient(address, timeout=2000)
             print "Opened connection to", address, "for JSON messaging"
         else:
             ## Client connection to QTA
-            self.client = ThalesZMQClient(address)
+            self.client = ThalesZMQClient(address, timeout=2000)
             print "Opened connection to", address, "for GPB messaging"
 
     ## Print a menu of actions for a particular module
@@ -60,15 +60,18 @@ class QTEMenu(object):
             print "---------------------------------------------------------\n"
             print "Sending ", msg.__class__.__name__
             response = self.client.sendRequest(ThalesZMQMessage(msg))
-            respClass = self.__qualMessage.getClassByName(response.name)
-            if respClass is None:
-                print "Unexpected Value response"
+            if (response.name == ""):
+                print "No response\n"
             else:
-                respMsg = respClass()
-                respMsg.ParseFromString(response.serializedBody)
-                print "Received", respMsg.__class__.__name__
-                print respMsg
-                print "---------------------------------------------------------\n"
+                respClass = self.__qualMessage.getClassByName(response.name)
+                if respClass is None:
+                    print "Unexpected Value response\n"
+                else:
+                    respMsg = respClass()
+                    respMsg.ParseFromString(response.serializedBody)
+                    print "Received", respMsg.__class__.__name__
+                    print respMsg
+            print "---------------------------------------------------------\n"
 
     ## Print a list of modules and allow the user to select one
     def run(self):

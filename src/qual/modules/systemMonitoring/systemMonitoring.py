@@ -13,9 +13,9 @@ class SystemMonitoring(module.Module):
     def __init__(self, config = None):
         super(SystemMonitoring, self).__init__(config)
         ## Connection to PowerInfo driver
-        self.pwrClient = ThalesZMQClient("ipc:///tmp/pwr-supp-mon.sock")
+        self.pwrClient = ThalesZMQClient("ipc:///tmp/pwr-supp-mon.sock", log=self.log)
         ## Connection to SEMA driver
-        self.semaClient = ThalesZMQClient("ipc:///tmp/sema-drv.sock")
+        self.semaClient = ThalesZMQClient("ipc:///tmp/sema-drv.sock", log=self.log)
         ## Peripheral statistics to retrieve from SEMA driver
         self.semaProperties = ["BIOSIndex", "BIOSVersion", "BoardHWRevision", "BoardManufacturer", "BoardMaxTemp",
                                "BoardMinTemp", "BoardName", "BoardTemp", "BootCount", "BootVersion", "ChipsetID",
@@ -34,13 +34,13 @@ class SystemMonitoring(module.Module):
         pwrInfo = PowerInfo()
         #  Sends a GetPowerInfo() request to driver which returns a tzmq message that is deserialized into pwrInfo
         reply = self.pwrClient.sendRequest(ThalesZMQMessage(GetPowerInfo()))
-        pwrInfo.ParseFromString(reply.serializedBody)
-
-        for value in pwrInfo.values:
-            sensor = response.powerSupplyStatistics.add()
-            sensor.deviceName = value.name
-            sensor.sensorName = value.key
-            sensor.value = value.value
+        if reply.name == "PowerInfo":
+            pwrInfo.ParseFromString(reply.serializedBody)
+            for value in pwrInfo.values:
+                sensor = response.powerSupplyStatistics.add()
+                sensor.deviceName = value.name
+                sensor.sensorName = value.key
+                sensor.value = value.value
 
     ## Sends RequestStatusMessage request message to the SEMA driver
     #  @param   self
@@ -48,19 +48,26 @@ class SystemMonitoring(module.Module):
     def makeSEMARequest(self, response):
         semaInfo = ResponseStatusMessage()
 
+        failCount = 0
         for prop in self.semaProperties:
             request = RequestStatusMessage()
             request.name = prop
             #  Sends a RequestStatusMessage() request to driver which returns a tzmq message that is deserialized into semaInfo
             reply = self.semaClient.sendRequest(ThalesZMQMessage(request))
-            semaInfo.ParseFromString(reply.serializedBody)
-
-            if semaInfo.error == ResponseStatusMessage.STATUS_OK:
-                sema = response.semaStatistics.add()
-                sema.itemName = semaInfo.name
-                sema.value = semaInfo.value
-            else:
-                self.log.error("Property ERROR CODE: %d" % (semaInfo.error))
+            if reply.name == "ResponseStatusMessage":
+                semaInfo.ParseFromString(reply.serializedBody)
+                if semaInfo.error == ResponseStatusMessage.STATUS_OK:
+                    sema = response.semaStatistics.add()
+                    sema.itemName = semaInfo.name
+                    sema.value = semaInfo.value
+                else:
+                    self.log.error("Property ERROR CODE: %d" % (semaInfo.error))
+            elif reply.name == "":
+                # Communication error; break out of loop after a few failures
+                failCount += 1
+                if failCount >= 3:
+                    self.log.error("Failed to contact SEMA driver %d times; giving up" % failCount)
+                    break
 
     ## Sends request message to the Network Management Service
     #  @todo    Update once Network Management Service is available

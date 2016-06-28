@@ -74,6 +74,14 @@ class QualTestApp(ConfigurableObject):
 
         self.log.info("Initialization complete")
 
+    ## Terminate all modules so we can exit cleanly
+    #
+    def terminate(self):
+        for _module in self.__instances.itervalues():
+            for modObject in _module:
+                self.log.info("Terminating %s" % modObject.__class__.__name__)
+                modObject.terminate()
+
     ## Called by ZMQ handlers when a request is received from a client.
     #
     # @param request ThalesZMQMessage containing received request
@@ -169,7 +177,12 @@ if __name__ == "__main__":
 
     # Create a thread for the JSON listener
     thread = Thread(target=jsonListener.run, name="QtaJsonListener")
+    # Mark thread as a daemon so it won't block us from exiting
+    thread.daemon = True
     thread.start()
 
-    # Start the GPB listener running - function won't return
+    # Start the GPB listener running - function will only return on KeyboardInterrupt
     gpbListener.run()
+
+    # Terminate QTA so we can exit cleanly
+    qta.terminate()

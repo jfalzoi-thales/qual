@@ -90,7 +90,7 @@ class ARINC429(module.Module):
             os.makedirs(ipcdir)
 
         ## Connection to ARINC429 driver
-        self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/429/device")
+        self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/429/device", log=self.log)
         #  Set up thread to toggle outputs
         self.addThread(self.sendData)
         #  Add handler to available message handlers
@@ -249,11 +249,10 @@ class ARINC429(module.Module):
             pbit = (((pbit >> 28) & 1) + 1) & 1
             word = (pbit << 31) + word
             words[outputChan] = word
-            self.transmit(chanInfo.name, word)
-
-            for connection in self.connections.values():
-                if connection.outputChan == outputChan:
-                    connection.xmtCount += 1
+            if self.transmit(chanInfo.name, word):
+                for connection in self.connections.values():
+                    if connection.outputChan == outputChan:
+                        connection.xmtCount += 1
 
         #  Sleep a bit before attempting to receive, to allow time for messages to arrive
         sleep(.05)
@@ -278,6 +277,7 @@ class ARINC429(module.Module):
     #  @param  self
     #  @param  chanName  Channel name to be sent to the ARINC429 Driver
     #  @param  output    Output to be sent from chanName through ARINC429 Driver
+    #  @return           True if data transmitted successfully, False if not
     def transmit(self, chanName, output):
         #  Create a ARINC429 Driver request of type TRANSMIT_DATA
         txReq = Request()
@@ -295,9 +295,10 @@ class ARINC429(module.Module):
             txResp.ParseFromString(response.serializedBody)
 
             if txResp.errorCode == Response.NONE:
-                return
+                return True
 
         self.log.error("Error return from ARINC429 driver for channel %s" % chanName)
+        return False
 
     ## Sends a recieve request to the ARINC429 Driver
     #  @param  self

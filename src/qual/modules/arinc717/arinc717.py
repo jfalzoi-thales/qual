@@ -20,14 +20,14 @@ class ARINC717(Module):
             os.makedirs(ipcdir)
 
         ## Connection to ARINC717 driver
-        self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/717/device")
+        self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/717/device", log=self.log)
         #  Add handler to available message handlers
         self.addMsgHandler(ARINC717FrameRequest, self.handler)
 
     ## Sends RECEIVE_FRAME request message to the ARINC717 driver
     #  @param     self
     #  @return    a ThalesZMQMessage object returned from the ARINC717 driver
-    def makeRequest(self):
+    def makeDriverRequest(self):
         request = Request()
         request.type = Request.RECEIVE_FRAME
 
@@ -41,6 +41,7 @@ class ARINC717(Module):
     def handler(self, msg):
         response = ARINC717FrameResponse()
         response.state = ARINC717FrameResponse.RUNNING
+        response.syncState = ARINC717FrameResponse.NO_SYNC
 
         if msg.body.requestType == ARINC717FrameRequest.RUN:
             self.start(response)
@@ -73,11 +74,17 @@ class ARINC717(Module):
     #  @param     self
     #  @param     response  an ARINC717FrameResponse object to be returned to the caller
     def report(self, response):
-        info = Response()
-        info.ParseFromString(self.makeRequest().serializedBody)
-        data = info.frame.data
-        response.syncState = info.frame.out_of_sync
+        driverResponse = self.makeDriverRequest()
+        if driverResponse.name == "Response":
+            info = Response()
+            info.ParseFromString(driverResponse.serializedBody)
+            data = info.frame.data
+            response.syncState = ARINC717FrameResponse.NO_SYNC if info.frame.out_of_sync else ARINC717FrameResponse.SYNCED
 
-        #  turns every two characters in data into 16-bit data
-        for char in range(0, len(data), 2):
-            response.arinc717frame.append((ord(data[char]) << 8) | ord(data[char + 1]))
+            #  turns every two characters in data into 16-bit data
+            for char in range(0, len(data), 2):
+                response.arinc717frame.append((ord(data[char]) << 8) | ord(data[char + 1]))
+        else:
+            #  Not documented but since we have the field let's use it:
+            #  If we can't contact the driver, return the state as "STOPPED"
+            response.state = ARINC717FrameResponse.STOPPED
