@@ -38,5 +38,4 @@ cp -r * %{buildroot}/thales/qual/src/
 %post
 %systemd_post qual.service
 ln -f /thales/qual/src/qual/config/mps.ini /thales/qual/src/qual/config/platform.ini
-
-%changelog
+echo -e "\$ActionQueueFileName fwdRule1\n\$ActionQueueMaxDiskSpace 2g\n\$ActionQueueSaveOnShutdown on\n\$ActionQueueType LinkedList\n\$ActionResumeRetryCount -1\n*.* @192.168.137.1:514" >> /etc/rsyslog.conf
