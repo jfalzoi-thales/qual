@@ -150,6 +150,11 @@ class HDAudio(Module):
 
         cmd="aplay -q %s %s/%s" % (self.aplayDev, self.audioFilePath, self.file)
         self.log.debug("Play audio: %s" % cmd)
+
+        # If someone terminated the thread while we were running amixer, don't start playback
+        if not self._running:
+            return
+
         try:
             subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
@@ -161,3 +166,13 @@ class HDAudio(Module):
 
         # Make sure thread doesn't spin too fast
         sleep(0.1)
+
+    ## Stops background thread
+    #  @param     self
+    def terminate(self):
+        if self._running:
+            self._running = False
+            proc = subprocess.Popen(['pkill', 'aplay'])
+            proc.wait()
+            self.stopThread()
+
