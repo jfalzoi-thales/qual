@@ -49,5 +49,3 @@ rm -f /etc/systemd/system/multi-user.target.wants/RS485Driver.service
 rm /sbin/mpsinst-makeraid
 rm /etc/udev/rules.d/80*
 rm /etc/udev/rules.d/95*
-
-%changelog
