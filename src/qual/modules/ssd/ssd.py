@@ -104,8 +104,9 @@ class SSD(Module):
         cwd = os.getcwd()
         makeraid = "mpsinst-makeraid"
         makeraidUSB = "mpsinst-makeraid-usb.sh"
-        if os.path.exists("/sbin/%s" % makeraid):
+        if os.path.exists("/thales/host/appliances/%s" % makeraid):
             self.log.info("Using system mpsinst-makeraid tool")
+            makeraid = "/thales/host/appliances/%s" % makeraid
         elif os.path.exists("%s/%s" % ("qual/modules/ssd", makeraidUSB,)):
             self.log.info("Using debug USB mpsinst-makeraid tool")
             makeraid = "%s/%s" % ("qual/modules/ssd", makeraidUSB,)
