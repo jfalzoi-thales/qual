@@ -234,3 +234,12 @@ class SSD(Module):
                                stdout=DEVNULL,
                                stderr=DEVNULL)
         sub.wait()
+
+    ## Stops background thread
+    #  @param     self
+    def terminate(self):
+        if self._running:
+            self._running = False
+            stop = subprocess.Popen(['pkill', '-9', 'fio'], stdout=DEVNULL, stderr=DEVNULL)
+            stop.wait()
+            self.stopThread()
