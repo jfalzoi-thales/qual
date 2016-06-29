@@ -12,5 +12,5 @@ python simulator/arinc717/arinc717DrvSim.py &
 python simulator/gpio/gpioMgrSim.py &
 python simulator/pwrsupp/pwrSuppMonSim.py &
 python simulator/sema/semaDrvSim.py &
-python simulator/Extern_Rs485/Extern_Rs485.py -m &
 python simulator/hdds/hddsSim.py &
+(sleep 10; python simulator/Extern_Rs485/Extern_Rs485.py -m) &
