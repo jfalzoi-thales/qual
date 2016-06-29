@@ -134,4 +134,7 @@ class MemoryBandwidth(Module):
     #  @param     self
     def terminate(self):
         if self._running:
+            self._running = False
+            stop = subprocess.Popen(["pkill", "-9", "pmbw"])
+            stop.wait()
             self.stopThread()

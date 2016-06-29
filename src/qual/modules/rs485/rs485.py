@@ -137,3 +137,10 @@ class Rs485(Module):
         status.matches = self.matches
         status.mismatches = self.mismatches
         return status
+
+    ## Stops background thread
+    #  @param     self
+    def terminate(self):
+        if self._running:
+            self._running = False
+            self.stopThread()
