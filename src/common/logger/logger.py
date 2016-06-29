@@ -41,12 +41,13 @@ NOTSET = logging.NOTSET
 # log.critical('critical message')
 class Logger(logging.getLoggerClass(), ConfigurableObject):
 
+
     ## Constructor
     #  @param     name  The name of the debug channel, if not set will be the caller's module name
     def __init__(self, name=None):
 
         ## Log level
-        self.logLevel = INFO
+        self.logLevel = 'INFO'
         ## Syslog address
         self.syslogAddress = 'localhost'
         ## Syslog port
@@ -70,6 +71,36 @@ class Logger(logging.getLoggerClass(), ConfigurableObject):
         self._formatConsoleChannel()
         self._formatSyslogChannel()
         self.setLevel(self.logLevel)
+
+    def setLevel(self, level):
+        logLevels = {
+            'NOTSET': logging.NOTSET,
+            'DEBUG': logging.DEBUG,
+            'INFO': logging.INFO,
+            'WARN': logging.WARN,
+            'WARNING': logging.WARNING,
+            'ERROR': logging.ERROR,
+            'FATAL': logging.FATAL,
+            'CRITICAL': logging.CRITICAL,
+
+        }
+
+        value = None
+        if isinstance(level, int) :
+            value = level
+        elif isinstance(level, str):
+            if level.isdigit():
+                value = int(level)
+            elif level.upper() in logLevels.keys():
+                value = logLevels[level.upper()]
+        if value is None:
+            self.error('Unknown Log Level %s not in %s ' % (str(level), logLevels.keys()))
+            value = 0
+
+        return logging.getLoggerClass().setLevel(self, level=value)
+
+
+
 
     # Gets the caller's module name as a default logger name
     def _getCallerModule(self):
