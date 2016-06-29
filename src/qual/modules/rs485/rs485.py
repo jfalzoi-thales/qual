@@ -17,7 +17,7 @@ class Rs485(Module):
         super(Rs485, self).__init__(config)
 
         ## port
-        self.port= '/dev/ttyUSB4'
+        self.port= '/dev/ttyUSB1'
         ## baud rate
         self.baudrate= 115200
         ## parity
