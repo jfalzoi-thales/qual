@@ -1,5 +1,7 @@
 import subprocess
 import os
+import time
+
 from common.gpb.python.CPULoading_pb2 import CPULoadingRequest, CPULoadingResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.module.module import Module, ModuleException
@@ -29,6 +31,7 @@ class CPULoading(Module):
         self.loader = CPULoader()
         # Starts CPULoader thread
         self.loader.start()
+        time.sleep(2)
         # Adds handler to available message handlers
         self.addMsgHandler(CPULoadingRequest, self.handler)
 

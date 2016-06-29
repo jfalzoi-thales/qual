@@ -38,7 +38,7 @@ class MemoryBandwidth(Module):
         ## number of threads parameter for pmbw
         self.numthreads='-P 1'
         ## test array size parameter for pmbw
-        self.mSize='-s 10000000'
+        self.mSize='-s 1000000'
         self.loadConfig(attributes=('maxallocmem','numthreads','mSize'))
 
         # adding the message handler
