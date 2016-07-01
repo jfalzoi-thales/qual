@@ -9,6 +9,7 @@ License: Proprietary
 Group: Applications/Engineering
 URL: https://repo-tav.tklabs.com:8102/
 Source: %{name}-%{version}.tar.gz
+Requires: rsyslog
 %{?systemd_requires}
 BuildRequires: systemd
 

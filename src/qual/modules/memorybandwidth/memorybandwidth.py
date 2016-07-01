@@ -38,7 +38,7 @@ class MemoryBandwidth(Module):
         ## number of threads parameter for pmbw
         self.numthreads='-P 1'
         ## test array size parameter for pmbw
-        self.mSize='-s 10000000'
+        self.mSize='-s 1000000'
         self.loadConfig(attributes=('maxallocmem','numthreads','mSize'))
 
         # adding the message handler
@@ -134,4 +134,7 @@ class MemoryBandwidth(Module):
     #  @param     self
     def terminate(self):
         if self._running:
+            self._running = False
+            stop = subprocess.Popen(["pkill", "-9", "pmbw"])
+            stop.wait()
             self.stopThread()
