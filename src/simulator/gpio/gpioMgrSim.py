@@ -27,7 +27,8 @@ class GPIOManagerSimulator(ThalesZMQServer):
     def __init__(self):
         # TODO: On target system this needs to be on VLAN 301, IP address 192.168.1.4
         # per the "MAP Network Configuration" document.
-        super(GPIOManagerSimulator, self).__init__("ipc:///tmp/gpio-mgr.sock")
+        super(GPIOManagerSimulator, self).__init__(address="ipc:///tmp/gpio-mgr.sock",
+                                                   msgParts=1)
 
         # Turn down ThalesZMQServer debug level
         self.log.setLevel(logger.INFO)
@@ -60,13 +61,13 @@ class GPIOManagerSimulator(ThalesZMQServer):
     #
     def handleRequest(self, request):
         # Route messages based on type
-        if request.name == "RequestMessage":
+        if request.name == self.defaultRequestName:
             return self.handleGpioReq(request)
         else:
             print "Error! Unsupported request type"
             return self.getUnsupportedMessageErrorResponse()
 
-    ## Handle request of type "RequestMessage"
+    ## Handle GPIO requests
     #
     # @param request ThalesZMQMessage object containing received request
     #

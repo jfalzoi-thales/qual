@@ -31,7 +31,8 @@ class ARINC717DriverSimulator(ThalesZMQServer):
             os.makedirs(ipcdir)
 
         # Now we can init the base class
-        super(ARINC717DriverSimulator, self).__init__("ipc:///tmp/arinc/driver/717/device")
+        super(ARINC717DriverSimulator, self).__init__(address="ipc:///tmp/arinc/driver/717/device",
+                                                      msgParts=1)
 
         # Turn down ThalesZMQServer debug level
         self.log.setLevel(logger.INFO)
@@ -49,7 +50,7 @@ class ARINC717DriverSimulator(ThalesZMQServer):
     # @param request ThalesZMQMessage object containing received request
     #
     def handleRequest(self, request):
-        if request.name == "Request":
+        if request.name == self.defaultRequestName:
             # Parse request message
             requestMsg = Request()
             requestMsg.ParseFromString(request.serializedBody)

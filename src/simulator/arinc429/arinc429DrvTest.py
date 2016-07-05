@@ -11,7 +11,8 @@ from common.gpb.python.ARINC429Driver_pb2 import Request, Response
 class ARINC429DriverClient(ThalesZMQClient):
     ## Constructor
     def __init__(self):
-        super(ARINC429DriverClient, self).__init__("ipc:///tmp/arinc/driver/429/device")
+        super(ARINC429DriverClient, self).__init__(address="ipc:///tmp/arinc/driver/429/device",
+                                                   msgParts=1)
 
     ## Sends a RECEIVE_DATA Request message to the simulator and prints the response
     def sendRxRequest(self, channel):
@@ -25,7 +26,7 @@ class ARINC429DriverClient(ThalesZMQClient):
         response = self.sendRequest(ThalesZMQMessage(rxReq))
 
         # Parse the response
-        if response.name == "Response":
+        if response.name == self.defaultResponseName:
             rxResp = Response()
             rxResp.ParseFromString(response.serializedBody)
             if rxResp.errorCode == Response.NONE:
@@ -62,7 +63,7 @@ class ARINC429DriverClient(ThalesZMQClient):
         response = self.sendRequest(ThalesZMQMessage(txReq))
 
         # Parse the response
-        if response.name == "Response":
+        if response.name == self.defaultResponseName:
             txResp = Response()
             txResp.ParseFromString(response.serializedBody)
             if txResp.errorCode == Response.NONE:
