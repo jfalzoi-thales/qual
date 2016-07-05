@@ -13,9 +13,9 @@ class SystemMonitoring(module.Module):
     def __init__(self, config = None):
         super(SystemMonitoring, self).__init__(config)
         ## Connection to PowerInfo driver
-        self.pwrClient = ThalesZMQClient("ipc:///tmp/pwr-supp-mon.sock", log=self.log)
+        self.pwrClient = ThalesZMQClient("ipc:///tmp/pwr-supp-mon.sock", log=self.log, msgParts=2)
         ## Connection to SEMA driver
-        self.semaClient = ThalesZMQClient("ipc:///tmp/sema-drv.sock", log=self.log)
+        self.semaClient = ThalesZMQClient("ipc:///tmp/sema-drv.sock", log=self.log, msgParts=2)
         ## Peripheral statistics to retrieve from SEMA driver
         self.semaProperties = ["BIOSIndex", "BIOSVersion", "BoardHWRevision", "BoardManufacturer", "BoardMaxTemp",
                                "BoardMinTemp", "BoardName", "BoardTemp", "BootCount", "BootVersion", "ChipsetID",
@@ -52,9 +52,12 @@ class SystemMonitoring(module.Module):
         for prop in self.semaProperties:
             request = RequestStatusMessage()
             request.name = prop
+            #  Override the message name, because SEMA driver doesn't use the GPB message name
+            message = ThalesZMQMessage(request)
+            message.name = "Status"
             #  Sends a RequestStatusMessage() request to driver which returns a tzmq message that is deserialized into semaInfo
-            reply = self.semaClient.sendRequest(ThalesZMQMessage(request))
-            if reply.name == "ResponseStatusMessage":
+            reply = self.semaClient.sendRequest(message)
+            if reply.name == "Status":
                 semaInfo.ParseFromString(reply.serializedBody)
                 if semaInfo.error == ResponseStatusMessage.STATUS_OK:
                     sema = response.semaStatistics.add()
