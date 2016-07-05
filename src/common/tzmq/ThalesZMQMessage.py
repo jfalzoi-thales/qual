@@ -36,6 +36,11 @@ class ThalesZMQMessage(object):
     def name(self):
         return self.__name
 
+    ## Set the message name that identifies the type of this message
+    @name.setter
+    def name(self, name):
+        self.__name = name
+
     ## Get the message header in GPB object form
     @property
     def header(self):

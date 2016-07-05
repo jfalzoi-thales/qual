@@ -18,7 +18,8 @@ from common.gpb.python.SEMA_pb2 import RequestStatusMessage, ResponseStatusMessa
 #
 class SEMADriverSimulator(ThalesZMQServer):
     def __init__(self):
-        super(SEMADriverSimulator, self).__init__("ipc:///tmp/sema-drv.sock")
+        super(SEMADriverSimulator, self).__init__(address="ipc:///tmp/sema-drv.sock",
+                                                  msgParts=2)
 
         # Turn down ThalesZMQServer debug level
         self.log.setLevel(logger.INFO)
@@ -59,7 +60,7 @@ class SEMADriverSimulator(ThalesZMQServer):
     # @param request ThalesZMQMessage object containing received request
     #
     def handleRequest(self, request):
-        if request.name == "RequestStatusMessage":
+        if request.name == "Status":
             # Parse request message
             requestMsg = RequestStatusMessage()
             requestMsg.ParseFromString(request.serializedBody)
@@ -76,8 +77,12 @@ class SEMADriverSimulator(ThalesZMQServer):
                 print "Request for unknown item:", requestMsg.name
                 responseMsg.error = ResponseStatusMessage.STATUS_INVALID_NAME
 
+            # Override the message name, because SEMA driver doesn't use the GPB message name
+            message = ThalesZMQMessage(responseMsg)
+            message.name = "Status"
+
             # Send response back to client
-            return ThalesZMQMessage(responseMsg)
+            return message
 
         else:
             print "Error! Unknown request type"

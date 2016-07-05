@@ -20,7 +20,7 @@ class ARINC717(Module):
             os.makedirs(ipcdir)
 
         ## Connection to ARINC717 driver
-        self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/717/device", log=self.log)
+        self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/717/device", log=self.log, msgParts=1)
         #  Add handler to available message handlers
         self.addMsgHandler(ARINC717FrameRequest, self.handler)
 
@@ -75,7 +75,7 @@ class ARINC717(Module):
     #  @param     response  an ARINC717FrameResponse object to be returned to the caller
     def report(self, response):
         driverResponse = self.makeDriverRequest()
-        if driverResponse.name == "Response":
+        if driverResponse.name == self.driverClient.defaultResponseName:
             info = Response()
             info.ParseFromString(driverResponse.serializedBody)
             data = info.frame.data

@@ -11,7 +11,8 @@ class GPIOManagerClient(ThalesZMQClient):
     ## Constructor
     #
     def __init__(self):
-        super(GPIOManagerClient, self).__init__("ipc:///tmp/gpio-mgr.sock")
+        super(GPIOManagerClient, self).__init__(address="ipc:///tmp/gpio-mgr.sock",
+                                                msgParts=1)
 
     ## Sends a Get Request message to the simulator and prints the response
     #
@@ -26,7 +27,7 @@ class GPIOManagerClient(ThalesZMQClient):
         response = self.sendRequest(ThalesZMQMessage(getReq))
 
         # Parse the response
-        if response.name == "ResponseMessage":
+        if response.name == self.defaultResponseName:
             getResp = ResponseMessage()
             getResp.ParseFromString(response.serializedBody)
             if getResp.error == ResponseMessage.OK:
@@ -52,7 +53,7 @@ class GPIOManagerClient(ThalesZMQClient):
         response = self.sendRequest(ThalesZMQMessage(setReq))
 
         # Parse the response
-        if response.name == "ResponseMessage":
+        if response.name == self.defaultResponseName:
             setResp = ResponseMessage()
             setResp.ParseFromString(response.serializedBody)
             if setResp.error == ResponseMessage.OK:

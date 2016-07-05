@@ -20,7 +20,8 @@ from common.gpb.python.PowerInfo_pb2 import GetPowerInfo, PowerInfo
 #
 class PowerSupplyMonSimulator(ThalesZMQServer):
     def __init__(self):
-        super(PowerSupplyMonSimulator, self).__init__("ipc:///tmp/pwr-supp-mon.sock")
+        super(PowerSupplyMonSimulator, self).__init__(address="ipc:///tmp/pwr-supp-mon.sock",
+                                                      msgParts=2)
 
         # Turn down ThalesZMQServer debug level
         self.log.setLevel(logger.INFO)

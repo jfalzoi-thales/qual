@@ -16,16 +16,21 @@ from common.logger.logger import Logger
 class ThalesZMQClient(object):
     ## Constructor
     #
-    # @param address ZMQ address string of server to connect to
-    # @param timeout How long to wait for responses from the server
-    # @param log     Logger to use to log communication errors
-    def __init__(self, address, timeout=200, log=None):
+    # @param address  ZMQ address string of server to connect to
+    # @param timeout  How long to wait for responses from the server
+    # @param log      Logger to use to log communication errors
+    # @param msgParts Number of message parts to send/receive
+    def __init__(self, address, timeout=200, log=None, msgParts=3):
         ## Address to connect to
         self.address = address
+        ## Number of message parts to send/receive
+        self.msgParts = msgParts
         ## How long to wait for responses
         self.timeout = timeout
         ## Logger
         self.log = log
+        ## Default response name, used for single-part messages
+        self.defaultResponseName = "Response"
 
         # If no logger was provided, go ahead and create one
         if self.log is None:
@@ -56,9 +61,15 @@ class ThalesZMQClient(object):
     # @return ThalesZMQMessage object containing received response
     #
     def sendRequest(self, request):
-        # Thales ZMQ message is a multipart message made up of string name,
-        # serialized header, and serialized body
-        self.zsocket.send_multipart((request.name, request.serializedHeader, request.serializedBody))
+        if self.msgParts == 3:
+            # "Thales Common Network Messaging" format has 3 parts: name, header, body
+            self.zsocket.send_multipart((request.name, request.serializedHeader, request.serializedBody))
+        elif self.msgParts == 2:
+            # Two-part messages have a name and a body
+            self.zsocket.send_multipart((request.name, request.serializedBody))
+        else:
+            # Single-part messages have just a body
+            self.zsocket.send(request.serializedBody)
 
         # Try to receive the response
         try:
@@ -69,21 +80,28 @@ class ThalesZMQClient(object):
             self.closeSocket()
             self.openSocket()
 
-        # We expect Thales messages to have 3 parts
-        if responseData is not None and len(responseData) >= 3:
-            # If message has more than 3 parts, log a warning, but proceed anyway
-            if len(responseData) > 3:
-                self.log.warning("Received response message with %d parts" % len(responseData))
-
-            # Package response data into a message object
-            response = ThalesZMQMessage(name=str(responseData[0]))
-            response.header.ParseFromString(responseData[1])
-            response.serializedBody = responseData[2]
+        # Check the message has the expected number of parts
+        if responseData is not None and len(responseData) == self.msgParts:
+            # Package response into a message object, handling the different message formats
+            if self.msgParts == 3:
+                # "Thales Common Network Messaging" format has 3 parts: name, header, body
+                response = ThalesZMQMessage(name=str(responseData[0]))
+                response.header.ParseFromString(responseData[1])
+                response.serializedBody = responseData[2]
+            elif self.msgParts == 2:
+                # Two-part messages have a name and a body
+                response = ThalesZMQMessage(name=str(responseData[0]))
+                response.serializedBody = responseData[1]
+            else:
+                # Single-part messages have just a body; give message object a default name
+                response = ThalesZMQMessage(name=self.defaultResponseName)
+                response.serializedBody = responseData[0]
             return response
 
         if responseData is None:
             self.log.error("Timeout waiting for response from %s" % self.address)
         else:
-            self.log.warning("Malformed message received")
+            self.log.error("Malformed message received (%d parts, expected %d)" % (len(requestData), self.msgParts))
+
         # Return an empty response object
         return ThalesZMQMessage()

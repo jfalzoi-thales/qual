@@ -13,7 +13,8 @@ class ARINC717DriverClient(ThalesZMQClient):
     ## Constructor
     #
     def __init__(self):
-        super(ARINC717DriverClient, self).__init__("ipc:///tmp/arinc/driver/717/device")
+        super(ARINC717DriverClient, self).__init__(address="ipc:///tmp/arinc/driver/717/device",
+                                                   msgParts=1)
 
     ## Sends a "Request" message to the simulator and prints the response
     #
@@ -26,7 +27,7 @@ class ARINC717DriverClient(ThalesZMQClient):
         response = self.sendRequest(ThalesZMQMessage(requestMsg))
 
         # Parse the response
-        if response.name == "Response":
+        if response.name == self.defaultResponseName:
             responseMsg = Response()
             responseMsg.ParseFromString(response.serializedBody)
             print responseMsg

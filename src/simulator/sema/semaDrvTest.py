@@ -11,7 +11,8 @@ class SEMADriverClient(ThalesZMQClient):
     ## Constructor
     #
     def __init__(self):
-        super(SEMADriverClient, self).__init__("ipc:///tmp/sema-drv.sock")
+        super(SEMADriverClient, self).__init__(address="ipc:///tmp/sema-drv.sock",
+                                               msgParts=2)
 
     ## Sends a "RequestStatusMessage" message to the simulator and prints the response
     #
@@ -20,11 +21,15 @@ class SEMADriverClient(ThalesZMQClient):
         requestMsg = RequestStatusMessage()
         requestMsg.name = name
 
+        # Override the message name, because SEMA driver doesn't use the GPB message name
+        message = ThalesZMQMessage(requestMsg)
+        message.name = "Status"
+
         # Send a request and get the response
-        response = self.sendRequest(ThalesZMQMessage(requestMsg))
+        response = self.sendRequest(message)
 
         # Parse the response
-        if response.name == "ResponseStatusMessage":
+        if response.name == "Status":
             responseMsg = ResponseStatusMessage()
             responseMsg.ParseFromString(response.serializedBody)
             if responseMsg.error == ResponseStatusMessage.STATUS_OK:

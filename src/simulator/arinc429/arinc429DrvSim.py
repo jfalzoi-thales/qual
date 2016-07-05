@@ -53,7 +53,8 @@ class ARINC429DriverSimulator(ThalesZMQServer):
             os.makedirs(ipcdir)
 
         # Now we can init the base class
-        super(ARINC429DriverSimulator, self).__init__("ipc:///tmp/arinc/driver/429/device")
+        super(ARINC429DriverSimulator, self).__init__(address="ipc:///tmp/arinc/driver/429/device",
+                                                      msgParts=1)
 
         # Turn down ThalesZMQServer debug level
         self.log.setLevel(logger.INFO)
@@ -85,7 +86,7 @@ class ARINC429DriverSimulator(ThalesZMQServer):
     #
     def handleRequest(self, request):
         # Route messages based on type
-        if request.name == "Request":
+        if request.name == self.defaultRequestName:
             return self.handleARINC429Req(request)
         else:
             print "Error! Unsupported request type"
