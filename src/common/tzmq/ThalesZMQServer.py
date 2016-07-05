@@ -13,13 +13,17 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 class ThalesZMQServer(object):
     ## Constructor
     #
-    # @param address ZMQ address string for socket to bind to
-    #
-    def __init__(self, address):
+    # @param address  ZMQ address string for socket to bind to
+    # @param msgParts Number of message parts to send/receive
+    def __init__(self, address, msgParts=3):
         ## Logger implementation, based on standard python logger
         self.log = Logger(type(self).__name__)
         ## ZMQ address for socket to bind to
         self.address = address
+        ## Number of message parts to send/receive
+        self.msgParts = msgParts
+        ## Default request name, used for single-part messages
+        self.defaultRequestName = "Request"
         ## ZMQ context
         self.zcontext = zmq.Context.instance()
         ## ZMQ socket
@@ -41,32 +45,41 @@ class ThalesZMQServer(object):
 
             response = None
 
-            # We expect Thales messages to have 3 parts
-            if len(requestData) >= 3:
-                # If message has more than 3 parts, log a warning, but proceed anyway
-                if len(requestData) > 3:
-                    self.log.warning("Received GPB message with %d parts" % len(requestData))
-
-                # Request class name is in first part
-                reqName = str(requestData[0])
-                self.log.debug("Received GPB %s" % reqName)
-
-                # Package request data into a message object
-                request = ThalesZMQMessage(name=reqName)
-                request.header.ParseFromString(requestData[1])
-                request.serializedBody = requestData[2]
+            # Check the message has the expected number of parts
+            if len(requestData) == self.msgParts:
+                # Package request data into a message object, handling the different message formats
+                if self.msgParts == 3:
+                    # "Thales Common Network Messaging" format has 3 parts: name, header, body
+                    request = ThalesZMQMessage(name=str(requestData[0]))
+                    request.header.ParseFromString(requestData[1])
+                    request.serializedBody = requestData[2]
+                elif self.msgParts == 2:
+                    # Two-part messages have a name and a body
+                    request = ThalesZMQMessage(name=str(requestData[0]))
+                    request.serializedBody = requestData[1]
+                else:
+                    # Single-part messages have just a body; give message object a default name
+                    request = ThalesZMQMessage(name=self.defaultRequestName)
+                    request.serializedBody = requestData[0]
+                self.log.debug("Received GPB %s (%d parts)" % (request.name, len(requestData)))
 
                 # Hand the request off to to HandleRequest(), which will return the response
                 response = self.handleRequest(request)
             else:
-                self.log.error("Malformed GPB message received; ignoring")
+                self.log.error("Malformed message received (%d parts, expected %d)" % (len(requestData), self.msgParts))
                 response = self.getMalformedMessageErrorResponse()
 
             # Send the response message back to the client.
-            # Thales message is a multipart message made up of string name,
-            # serialized header, and serialized body
-            self.log.debug("Sending GPB %s" % response.name)
-            self.zsocket.send_multipart((response.name, response.serializedHeader, response.serializedBody))
+            self.log.debug("Sending GPB %s (%d parts)" % (response.name, self.msgParts))
+            if self.msgParts == 3:
+                # "Thales Common Network Messaging" format has 3 parts: name, header, body
+                self.zsocket.send_multipart((response.name, response.serializedHeader, response.serializedBody))
+            elif self.msgParts == 2:
+                # Two-part messages have a name and a body
+                self.zsocket.send_multipart((response.name, response.serializedBody))
+            else:
+                # Single-part messages have just a body
+                self.zsocket.send(response.serializedBody)
 
     ## Called when a request is received from a client.
     #
