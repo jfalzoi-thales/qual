@@ -11,7 +11,8 @@ class PwrSuppMonClient(ThalesZMQClient):
     ## Constructor
     #
     def __init__(self):
-        super(PwrSuppMonClient, self).__init__("ipc:///tmp/pwr-supp-mon.sock")
+        super(PwrSuppMonClient, self).__init__(address="ipc:///tmp/pwr-supp-mon.sock",
+                                               msgParts=2)
 
     ## Sends a "GetPowerInfo" message to the simulator and prints the response
     #
