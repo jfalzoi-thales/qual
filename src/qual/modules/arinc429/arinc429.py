@@ -90,7 +90,7 @@ class ARINC429(module.Module):
             os.makedirs(ipcdir)
 
         ## Connection to ARINC429 driver
-        self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/429/device", log=self.log)
+        self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/429/device", log=self.log, msgParts=1)
         #  Set up thread to toggle outputs
         self.addThread(self.sendData)
         #  Add handler to available message handlers
@@ -290,7 +290,7 @@ class ARINC429(module.Module):
         response = self.driverClient.sendRequest(ThalesZMQMessage(txReq))
 
         #  Parse the response
-        if response.name == "Response":
+        if response.name == self.driverClient.defaultResponseName:
             txResp = Response()
             txResp.ParseFromString(response.serializedBody)
 
@@ -313,7 +313,7 @@ class ARINC429(module.Module):
         response = self.driverClient.sendRequest(ThalesZMQMessage(rxReq))
 
         #  Parse the response
-        if response.name == "Response":
+        if response.name == self.driverClient.defaultResponseName:
             rxResp = Response()
             rxResp.ParseFromString(response.serializedBody)
             if rxResp.errorCode == Response.NONE:

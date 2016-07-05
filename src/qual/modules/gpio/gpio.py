@@ -63,7 +63,7 @@ class GPIO(module.Module):
         self.outputState = False
 
         ## Connection to GPIO Manager
-        self.gpioMgrClient = ThalesZMQClient("ipc:///tmp/gpio-mgr.sock", log=self.log)
+        self.gpioMgrClient = ThalesZMQClient("ipc:///tmp/gpio-mgr.sock", log=self.log, msgParts=1)
 
         # Set up thread to toggle outputs
         self.addThread(self.toggleOutputs)
@@ -241,7 +241,7 @@ class GPIO(module.Module):
         response = self.gpioMgrClient.sendRequest(ThalesZMQMessage(setReq))
 
         # Parse the response
-        if response.name == "ResponseMessage":
+        if response.name == self.gpioMgrClient.defaultResponseName:
             setResp = ResponseMessage()
             setResp.ParseFromString(response.serializedBody)
             if setResp.error == ResponseMessage.OK:
@@ -264,7 +264,7 @@ class GPIO(module.Module):
         response = self.gpioMgrClient.sendRequest(ThalesZMQMessage(getReq))
 
         # Parse the response
-        if response.name == "ResponseMessage":
+        if response.name == self.gpioMgrClient.defaultResponseName:
             getResp = ResponseMessage()
             getResp.ParseFromString(response.serializedBody)
             if getResp.error == ResponseMessage.OK:
