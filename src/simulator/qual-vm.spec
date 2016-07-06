@@ -10,6 +10,7 @@ Group: Applications/Engineering
 URL: https://repo-tav.tklabs.com:8102/
 Source: %{name}-%{version}.tar.gz
 Requires: qual
+Requires: mps-config
 %{?systemd_requires}
 BuildRequires: systemd
 
@@ -46,6 +47,5 @@ rm -f /etc/systemd/system/multi-user.target.wants/SEMAWatchdog.service
 rm -f /etc/systemd/system/multi-user.target.wants/RS485-driver.service
 rm -f /etc/systemd/system/multi-user.target.wants/RS485Enable.service
 rm -f /etc/systemd/system/multi-user.target.wants/RS485Driver.service
-rm /sbin/mpsinst-makeraid
 rm /etc/udev/rules.d/80*
 rm /etc/udev/rules.d/95*
