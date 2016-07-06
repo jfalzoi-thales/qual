@@ -1,0 +1,39 @@
+package mpsqual;
+
+message CarrierCardDataRequest {
+	enum RequestTypeT {
+		READ          = 0;
+		WRITE	      = 1;
+		ERASE         = 2;
+		WRITE_PROTECT = 3;
+	}
+
+	required RequestTypeT requestType = 1;
+	repeated Property values = 2;
+}
+
+message CarrierCardDataResponse {
+	required bool success = 1;
+	optional ErrorMsg error = 2;
+    optional bool writeProtected = 3;
+	repeated Property values = 4;
+}
+
+message Property {
+	required string key = 1;
+	required string value = 2;
+}
+
+message ErrorMsg {
+	enum ErrCode {
+		FAILURE_INVALID_MESSAGE = 1000;
+		FAILURE_INVALID_KEY     = 1001;
+		FAILURE_INVALID_VALUE   = 1002;
+        FAILURE_WRITE_PROTECT_DISABLED = 1003;
+		FAILURE_READ_FAILED     = 1004;
+		FAILURE_WRITE_FAILED    = 1005;
+	}
+
+	required uint32 error_code = 1;
+	optional string description = 2;
+}
