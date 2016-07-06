@@ -1,15 +1,80 @@
 import subprocess
 import os
-import time
+import threading
+from time import sleep
 
 from common.module.module import Module
 from common.gpb.python.SSD_pb2 import SSDRequest, SSDResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger, DEBUG, INFO
 from qual.modules.ssd.ssd_Exception import SSDModuleException
 
 ## Discard the output
 DEVNULL = open(os.devnull, 'wb')
+
+## Collects IO information
+#
+class collectIO(threading.Thread):
+    ## Constructor
+    #  @param   self
+    #  @param   sleeptime   Number of seconds to sleep DEFAULT = [1]
+    def __init__(self, sleeptime = 1):
+        # Initializes threading
+        threading.Thread.__init__(self)
+        ## Lock for preventing thread issues
+        self.lock = threading.Lock()
+        ## Stores sleeptime in seconds
+        self.sleeptime = sleeptime
+        ## Initializies write count in Megabytes
+        self.write = 0.0
+        ## Initializes read count in Megabytes
+        self.read = 0.0
+        ## Thread exits when self.quit = True
+        self.quit = False
+
+    ## Grabs IO statistics from Linux
+    #  Retreives IO information from '/proc/diskstats' and parses necessary information
+    #  @param   self
+    #  @return  io_infos   Array containing data read from diskstats
+    def getioData(self):
+        with open('/proc/diskstats', 'r') as io_stats:
+            #  Parses Linux IO data from diskstats file
+            for content in io_stats.readlines():
+                for line in content.split('\n'):
+                    info = line.split(' ')
+                    info[:] = [x for x in info if x != '']
+
+                    if len(info) > 2:
+                        if info[2] == 'md126':
+                            return info
+
+    ## Returns read and write values
+    #  Retreives IO information from '/proc/diskstats' and parses necessary information
+    #  @param   self
+    #  @return  io      Array containing read and write data
+    def getioInfo(self):
+        self.lock.acquire()
+        io = [self.read, self.write]
+        self.lock.release()
+
+        return io
+
+    ## Calculates read and write values in Megabytes
+    #  Overrides run() method in Thread
+    #  Uses the raw values obtained from self.getioData() function and calculates read and write values
+    #  @param     self
+    def run(self):
+        start = self.getioData()
+
+        while not self.quit:
+            sleep(self.sleeptime)
+            stop = self.getioData()
+            self.lock.acquire()
+
+            self.read = (float(stop[5]) - float(start[5])) / 2048
+            self.write = (float(stop[9]) - float(start[9])) / 2048
+
+            self.lock.release()
+            start = stop
 
 ## SSD Module Class
 #
@@ -17,24 +82,25 @@ class SSD(Module):
     ## Constructor
     #  @param       self
     #  @param       config      Configuration for the instance is going to be created
-    def __init__(self, config=None):
+    def __init__(self, config = None):
         # constructor of the parent class
         super(SSD, self).__init__(config)
-
         ## RAID device
         self.__raidDev = "/dev/md/raid_unprotected_0"
         ## RAID filesystem mount point
         self.__raidFS = "/mnt/qual"
         ## Location of FIO config file
         self.__fioConf = "/tmp/fio-qual.fio"
-        ## Application state
-        self.state = SSDResponse.STOPPED
-
+        ## SSD Data collection thread
+        self.collect = collectIO()
         # Init the RAID filesystem
         self.initFS()
+        # Start data collection thread
+        self.collect.start()
+        sleep(2)
         # Create the FIO config file
         self.createFioConfig()
-        # adding the thread
+        # adding the fio tool thread
         self.addThread(self.runTool)
         # adding the message handler
         self.addMsgHandler(SSDRequest, self.handlerMessage)
@@ -44,46 +110,58 @@ class SSD(Module):
     #  Receives tzmq request and runs requested process
     #
     #  @param     self
-    #  @param     request      TZMQ format message
-    #  @return    response     an SSD Response object
-    def handlerMessage(self, request):
+    #  @param     msg      TZMQ format message
+    #  @return    response     A ThalesZMQMessage object
+    def handlerMessage(self, msg):
         response = SSDResponse()
-        if request.body.requestType == SSDRequest.STOP:
-            response = self.stop()
-        elif request.body.requestType == SSDRequest.RUN:
-            if self.state == SSDResponse.RUNNING:
-                self.stop()
-            response = self.start()
+
+        if msg.body.requestType == SSDRequest.STOP:
+            self.stop(response)
+        elif msg.body.requestType == SSDRequest.RUN:
+            self.start(response)
+        elif msg.body.requestType == SSDRequest.REPORT:
+            self.report(response)
         else:
             self.log.info("Unexpected request")
+
         return ThalesZMQMessage(response)
 
     ## Starts running FIO tool
     #
     #  @param     self
-    #  @return    self.report() a SSD Response object
-    def start(self):
-        super(SSD, self).startThread()
-        self.state = SSDResponse.RUNNING
-        status = SSDResponse()
-        status.state = self.state
-        return status
+    #  @param     response  An SSDResponse object
+    def start(self, response):
+        subprocess.Popen(['pkill', '-9', 'fio']).communicate()
+
+        if not self._running:
+            self.startThread()
+
+        self.report(response)
 
     ## Stops running FIO tool
     #
     #  @param     self
-    #  @return    self.report() a SSD Response object
-    def stop(self):
+    #  @param     response  An SSDResponse object
+    def stop(self, response):
         self._running = False
-        stop = subprocess.Popen(['pkill', '-9', 'fio'],
-                                stdout=DEVNULL,
-                                stderr=DEVNULL)
-        stop.wait()
-        self.state = SSDResponse.STOPPED
-        status = SSDResponse()
+        subprocess.Popen(['pkill', '-9', 'fio']).communicate()
         self.stopThread()
-        status.state = self.state
-        return status
+        self.report(response)
+
+    ## Reports data from fio tool
+    #
+    #  @param     self
+    #  @param     response  An SSDResponse object
+    def report(self, response):
+        info = self.collect.getioInfo()
+
+        if self._running:
+            response.state = SSDResponse.RUNNING
+        else:
+            response.state = SSDResponse.STOPPED
+
+        response.readBandwidth = info[0]
+        response.writeBandwidth = info[1]
 
     ## Creates the RAID-0
     #
@@ -153,11 +231,11 @@ class SSD(Module):
         raidPart = "%sp1" % realDev
 
         # Check that partition was successfully created - need a bit of a delay before device shows up
-        time.sleep(0.5)
+        sleep(0.5)
         if not os.path.exists(raidPart):
             # Sleep a bit longer and try again
             self.log.debug("Waiting for device %s to appear..." % raidPart)
-            time.sleep(2)
+            sleep(2)
             if not os.path.exists(raidPart):
                 raise SSDModuleException(msg="Unable to create RAID partition")
 
@@ -230,16 +308,14 @@ class SSD(Module):
     #
     #  @param   self
     def runTool(self):
-        sub = subprocess.Popen(['fio', self.__fioConf],
-                               stdout=DEVNULL,
-                               stderr=DEVNULL)
-        sub.wait()
+        subprocess.Popen(['fio', self.__fioConf], stdout=DEVNULL,
+                               stderr=DEVNULL).communicate()
 
     ## Stops background thread
+    #
     #  @param     self
     def terminate(self):
-        if self._running:
-            self._running = False
-            stop = subprocess.Popen(['pkill', '-9', 'fio'], stdout=DEVNULL, stderr=DEVNULL)
-            stop.wait()
-            self.stopThread()
+        self._running = False
+        subprocess.Popen(['pkill', '-9', 'fio']).communicate()
+        self.collect.quit = True
+        self.stopThread()

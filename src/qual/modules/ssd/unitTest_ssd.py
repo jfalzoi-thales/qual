@@ -20,7 +20,8 @@ class SSDMessages(ModuleMessages):
     @staticmethod
     def getMenuItems():
         return [("Run",     SSDMessages.run),
-                ("Stop",    SSDMessages.stop)]
+                ("Stop",    SSDMessages.stop),
+                ("Report",  SSDMessages.report)]
 
     @staticmethod
     def run():
@@ -32,6 +33,12 @@ class SSDMessages(ModuleMessages):
     def stop():
         message = SSDRequest()
         message.requestType = SSDRequest.STOP
+        return message
+
+    @staticmethod
+    def report():
+        message = SSDRequest()
+        message.requestType = SSDRequest.REPORT
         return message
 
 
