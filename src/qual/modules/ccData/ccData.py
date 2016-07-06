@@ -32,7 +32,6 @@ class CarrierCardData(Module):
 
         ## Ethernet device for i350
         self.ethDevice = "TEST_FILE"
-        #self.ethDevice = "enp2s0f0"
         ## Enable WRITE_PROTECT function
         self.enableWriteProtect = False
         # Load configuration from config file
