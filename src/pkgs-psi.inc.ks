@@ -41,7 +41,6 @@ kmod-i2c-mcp2221
 
 # mps config, tools and libs
 mps-config
-mps-config-psi
 mps-tools
 mpsinst-tools
 libmps-utils
@@ -62,8 +61,11 @@ gpio-manager
 # Power Supply Monitor
 power-supply-monitor
 
+# ARINC drivers
+arinc429-driver
+arinc717-driver
+
 # Higher level services
-machine-manager
 host-domain-device-service
 
 
@@ -78,13 +80,15 @@ czmq
 python-zmq
 protobuf-python
 
-# QUAL packages
+# Qual
 qual
+#qual-vm
 iperf3
 lookbusy
 alsa-utils
 pyserial
 fio
 pmbw
+ethtool
 
 %end
