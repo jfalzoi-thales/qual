@@ -71,6 +71,21 @@ class CarrierCardDataMessages(ModuleMessages):
         return message
 
     @staticmethod
+    def writeIncomplete():
+        message = CarrierCardDataRequest()
+        message.requestType = CarrierCardDataRequest.WRITE
+        kv = message.values.add()
+        kv.key   = "part_number"
+        kv.value = "ABC-22222"
+        kv = message.values.add()
+        kv.key   = "manufacturer_pn"
+        kv.value = "TKL-9876543"
+        kv = message.values.add()
+        kv.key   = "manufacturing_date"
+        kv.value = "20160630"
+        return message
+
+    @staticmethod
     def writeBadKey():
         message = CarrierCardDataRequest()
         message.requestType = CarrierCardDataRequest.WRITE
@@ -130,7 +145,26 @@ class Test_CarrierCardData(unittest.TestCase):
         # Uncomment this if you want to see module debug messages
         #cls.module.log.setLevel("DEBUG")
 
+    ## Teardown when done with CarrierCardData test cases
+    # This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.log.info("++++ Teardown after CarrierCardData module unit tests ++++")
+        cls.module.terminate()
+
+    ## Test setup
+    # This is run before each test case; we use it to make sure we
+    # start each test case with the module in a known state
+    def setUp(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("==== Reset module state ====")
+        # Clear write protection in simulated mode
+        if module.ethDevice == "TEST_FILE":
+            module.resetProtectionTestFile()
+
     ## Test case: Send a WRITE message with invalid key
+    # Expect failure with FAILURE_INVALID_KEY
     def test_WriteBadKey(self):
         log = self.__class__.log
         module = self.__class__.module
@@ -143,6 +177,7 @@ class Test_CarrierCardData(unittest.TestCase):
         log.info("==== Test complete ====")
 
     ## Test case: Send a WRITE message with an empty value
+    # Expect failure with FAILURE_INVALID_VALUE
     def test_WriteEmptyValue(self):
         log = self.__class__.log
         module = self.__class__.module
@@ -155,6 +190,7 @@ class Test_CarrierCardData(unittest.TestCase):
         log.info("==== Test complete ====")
 
     ## Test case: Send a WRITE message with a value that exceeds the length limit
+    # Expect failure with FAILURE_INVALID_VALUE
     def test_WriteLongValue(self):
         log = self.__class__.log
         module = self.__class__.module
@@ -166,39 +202,152 @@ class Test_CarrierCardData(unittest.TestCase):
         self.assertEqual(response.body.error.error_code, ErrorMsg.FAILURE_INVALID_VALUE)
         log.info("==== Test complete ====")
 
-    ## Test case: Send a READ message
-    def ztest_Read(self):
+    ## Test case: Send sequence: ERASE, READ, WRITE, READ
+    # Expect empty value list after erase, populated value list after write
+    def test_EraseWriteRead(self):
         log = self.__class__.log
         module = self.__class__.module
 
-        log.info("**** Test case: READ message ****")
+        log.info("**** Test case: ERASE,READ,WRITE,READ sequence ****")
+        log.info("==== Erase data ====")
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.eraseData()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, True)
+        self.assertEqual(len(response.body.values), 0)
+
+        log.info("==== Read data ====")
         response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.readData()))
         self.assertEqual(response.name, "CarrierCardDataResponse")
         self.assertEqual(response.body.success, True)
-        log.info("==== Test complete ====")
+        self.assertEqual(len(response.body.values), 0)
 
-    ## Test case: Send a WRITE message
-    def test_Write(self):
-        log = self.__class__.log
-        module = self.__class__.module
-
-        log.info("**** Test case: WRITE message ****")
+        log.info("==== Write data ====")
         response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writeFull()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, True)
+        self.assertEqual(len(response.body.values), 7)
+
+        log.info("==== Read data ====")
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.readData()))
         self.assertEqual(response.name, "CarrierCardDataResponse")
         self.assertEqual(response.body.success, True)
         self.assertEqual(len(response.body.values), 7)
         log.info("==== Test complete ====")
 
-    ## Test case: Send an ERASE message
-    def test_Erase(self):
+    ## Test case: Send two WRITE sequences, second augmenting the first
+    # Expect 2 values after first write, 4 values after second write
+    def test_WritePartials(self):
         log = self.__class__.log
         module = self.__class__.module
 
-        log.info("**** Test case: ERASE message ****")
+        log.info("**** Test case: Augmenting WRITE messages ****")
+        log.info("==== Erase data ====")
         response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.eraseData()))
         self.assertEqual(response.name, "CarrierCardDataResponse")
         self.assertEqual(response.body.success, True)
         self.assertEqual(len(response.body.values), 0)
+
+        log.info("==== Write data ====")
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writePartial()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, True)
+        self.assertEqual(len(response.body.values), 3)
+
+        log.info("==== Write more data ====")
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writeIncomplete()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, True)
+        self.assertEqual(len(response.body.values), 5)
+
+        log.info("==== Read data ====")
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.readData()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, True)
+        self.assertEqual(len(response.body.values), 5)
+        log.info("==== Test complete ====")
+
+    ## Test case: Test various scenarios related to the WRITE_PROTECT message
+    # Only executed in TEST_FILE mode, not on real hardware
+    # WARNING: Manipulates module instance variable "enableWriteProtect" directly
+    # Expect:
+    #   When enableWriteProtect is False, write protect fails with FAILURE_WRITE_PROTECT_DISABLED
+    #   When required data has not been programmed, write protect fails with FAILURE_INVALID_VALUE
+    #   When required data has been programmed, write protect succeeds
+    #   When write protect is enabled, read reports writeProtected = True
+    #   When write protect is enabled, second write protect succeeds
+    #   When write protect is enabled, write and erase fail with FAILURE_WRITE_FAILED
+    def test_WriteProtect(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: WRITE_PROTECT message ****")
+        if module.ethDevice != "TEST_FILE":
+            log.info("==== Not executing because module is not configured for test file mode ===")
+            return
+
+        log.info("==== Protect when enableWriteProtect is False ====")
+        module.enableWriteProtect = False
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writeProtect()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, False)
+        self.assertEqual(response.body.error.error_code, ErrorMsg.FAILURE_WRITE_PROTECT_DISABLED)
+
+        # Enable write protect function for remaining tests
+        module.enableWriteProtect = True
+
+        log.info("==== Erase data ====")
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.eraseData()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, True)
+        self.assertEqual(len(response.body.values), 0)
+
+        log.info("==== Write incomplete data ====")
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writeIncomplete()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, True)
+
+        log.info("==== Protect when required data is missing ====")
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writeProtect()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, False)
+        self.assertEqual(response.body.error.error_code, ErrorMsg.FAILURE_INVALID_VALUE)
+
+        log.info("==== Write additional data ====")
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writeFull()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, True)
+
+        log.info("==== Protect when required data is present ====")
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writeProtect()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, True)
+        self.assertEqual(response.body.writeProtected, True)
+
+        log.info("==== Read data ====")
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.readData()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, True)
+        self.assertEqual(response.body.writeProtected, True)
+
+        log.info("==== Protect when already protected ====")
+        module.enableWriteProtect = True
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writeProtect()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, True)
+        self.assertEqual(response.body.writeProtected, True)
+
+        log.info("==== Write data when protected ====")
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writePartial()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, False)
+        self.assertEqual(response.body.error.error_code, ErrorMsg.FAILURE_WRITE_FAILED)
+
+        log.info("==== Erase data when protected ====")
+        response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.eraseData()))
+        self.assertEqual(response.name, "CarrierCardDataResponse")
+        self.assertEqual(response.body.success, False)
+        self.assertEqual(response.body.error.error_code, ErrorMsg.FAILURE_WRITE_FAILED)
+
         log.info("==== Test complete ====")
 
 
