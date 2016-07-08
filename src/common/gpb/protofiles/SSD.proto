@@ -4,6 +4,7 @@ message SSDRequest {
 	enum RequestTypeT {
 		STOP = 0;
 		RUN = 1;
+		REPORT = 2;
 	}
 	
 	required RequestTypeT requestType = 1 [default = STOP];
@@ -16,4 +17,6 @@ message SSDResponse {
 	}
 	
 	required AppStateT state = 1;
+	required float readBandwidth = 2;
+	required float writeBandwidth = 3;
 }

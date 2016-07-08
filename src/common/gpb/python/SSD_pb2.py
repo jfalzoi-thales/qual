@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='SSD.proto',
   package='mpsqual',
-  serialized_pb=_b('\n\tSSD.proto\x12\x07mpsqual\"l\n\nSSDRequest\x12;\n\x0brequestType\x18\x01 \x02(\x0e\x32 .mpsqual.SSDRequest.RequestTypeT:\x04STOP\"!\n\x0cRequestTypeT\x12\x08\n\x04STOP\x10\x00\x12\x07\n\x03RUN\x10\x01\"c\n\x0bSSDResponse\x12-\n\x05state\x18\x01 \x02(\x0e\x32\x1e.mpsqual.SSDResponse.AppStateT\"%\n\tAppStateT\x12\x0b\n\x07STOPPED\x10\x00\x12\x0b\n\x07RUNNING\x10\x01')
+  serialized_pb=_b('\n\tSSD.proto\x12\x07mpsqual\"x\n\nSSDRequest\x12;\n\x0brequestType\x18\x01 \x02(\x0e\x32 .mpsqual.SSDRequest.RequestTypeT:\x04STOP\"-\n\x0cRequestTypeT\x12\x08\n\x04STOP\x10\x00\x12\x07\n\x03RUN\x10\x01\x12\n\n\x06REPORT\x10\x02\"\x92\x01\n\x0bSSDResponse\x12-\n\x05state\x18\x01 \x02(\x0e\x32\x1e.mpsqual.SSDResponse.AppStateT\x12\x15\n\rreadBandwidth\x18\x02 \x02(\x02\x12\x16\n\x0ewriteBandwidth\x18\x03 \x02(\x02\"%\n\tAppStateT\x12\x0b\n\x07STOPPED\x10\x00\x12\x0b\n\x07RUNNING\x10\x01')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -38,11 +38,15 @@ _SSDREQUEST_REQUESTTYPET = _descriptor.EnumDescriptor(
       name='RUN', index=1, number=1,
       options=None,
       type=None),
+    _descriptor.EnumValueDescriptor(
+      name='REPORT', index=2, number=2,
+      options=None,
+      type=None),
   ],
   containing_type=None,
   options=None,
   serialized_start=97,
-  serialized_end=130,
+  serialized_end=142,
 )
 _sym_db.RegisterEnumDescriptor(_SSDREQUEST_REQUESTTYPET)
 
@@ -63,8 +67,8 @@ _SSDRESPONSE_APPSTATET = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=194,
-  serialized_end=231,
+  serialized_start=254,
+  serialized_end=291,
 )
 _sym_db.RegisterEnumDescriptor(_SSDRESPONSE_APPSTATET)
 
@@ -96,7 +100,7 @@ _SSDREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=22,
-  serialized_end=130,
+  serialized_end=142,
 )
 
 
@@ -114,6 +118,20 @@ _SSDRESPONSE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='readBandwidth', full_name='mpsqual.SSDResponse.readBandwidth', index=1,
+      number=2, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='writeBandwidth', full_name='mpsqual.SSDResponse.writeBandwidth', index=2,
+      number=3, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -126,8 +144,8 @@ _SSDRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=132,
-  serialized_end=231,
+  serialized_start=145,
+  serialized_end=291,
 )
 
 _SSDREQUEST.fields_by_name['requestType'].enum_type = _SSDREQUEST_REQUESTTYPET
