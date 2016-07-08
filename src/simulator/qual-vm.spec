@@ -38,7 +38,7 @@ cp -r * %{buildroot}/thales/qual/src/simulator/
 %post
 %systemd_post qual-vm.service
 rm -f /thales/qual/src/qual/config/platform.ini
+rm -f /usr/lib/systemd/system-preset/50-mps-drivers.preset
 rm -f /etc/systemd/system/mps-drivers.target.wants/*
-rm -f /etc/systemd/system/mps-services.target.wants/*
 rm /etc/udev/rules.d/80*
 rm /etc/udev/rules.d/95*
