@@ -112,9 +112,12 @@ can be configured to disable the write protect function, so that it is not
 accidentally triggered during testing (see Configuration, below).
 
 If the write protect function is disabled, the response will have the success
-field set to false, and error.error_code will be set to FAILURE_WRITE_PROTECT_DISABLED.
+field set to False, and error.error_code will be set to FAILURE_WRITE_PROTECT_DISABLED.
+If no data has been programmed (determined by checking thatpart_number and serial_number
+values are programmed), the write protect request will not proceed, and the response will have
+the success field set to False, and error.error_code will be set to FAILURE_INVALID_VALUE.
 If the write protect operation fails for some other reason, the response will have
-the success field set to false, and error.error_code will be set to FAILURE_WRITE_FAILED.
+the success field set to False, and error.error_code will be set to FAILURE_WRITE_FAILED.
 If the write protect operation succeeds, the response will have the success field
 set to True.
 
