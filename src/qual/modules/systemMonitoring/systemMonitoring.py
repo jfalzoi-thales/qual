@@ -13,7 +13,7 @@ class SystemMonitoring(module.Module):
     def __init__(self, config = None):
         super(SystemMonitoring, self).__init__(config)
         ## Connection to PowerInfo driver
-        self.pwrClient = ThalesZMQClient("ipc:///tmp/pwr-supp-mon.sock", log=self.log, msgParts=2)
+        self.pwrClient = ThalesZMQClient("ipc:///tmp/pwr-supp-mon.sock", log=self.log, msgParts=2, timeout=1000)
         ## Connection to SEMA driver
         self.semaClient = ThalesZMQClient("ipc:///tmp/sema-drv.sock", log=self.log, msgParts=2)
         ## Peripheral statistics to retrieve from SEMA driver

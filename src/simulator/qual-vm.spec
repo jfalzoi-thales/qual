@@ -38,14 +38,7 @@ cp -r * %{buildroot}/thales/qual/src/simulator/
 %post
 %systemd_post qual-vm.service
 rm -f /thales/qual/src/qual/config/platform.ini
-rm -f /etc/systemd/system/multi-user.target.wants/GPIOMgr.service
-rm -f /etc/systemd/system/multi-user.target.wants/HDDS.service
-rm -f /etc/systemd/system/multi-user.target.wants/I2CDeviceMgr.service
-rm -f /etc/systemd/system/multi-user.target.wants/PowerSupplyMonitor.service
-rm -f /etc/systemd/system/multi-user.target.wants/SEMADrv.service
-rm -f /etc/systemd/system/multi-user.target.wants/SEMAWatchdog.service
-rm -f /etc/systemd/system/multi-user.target.wants/RS485-driver.service
-rm -f /etc/systemd/system/multi-user.target.wants/RS485Enable.service
-rm -f /etc/systemd/system/multi-user.target.wants/RS485Driver.service
+rm -f /etc/systemd/system/mps-drivers.target.wants/*
+rm -f /etc/systemd/system/mps-services.target.wants/*
 rm /etc/udev/rules.d/80*
 rm /etc/udev/rules.d/95*

@@ -6,4 +6,4 @@ if [ ! -d qual/modules ]; then
 fi
 
 export PYTHONPATH=`pwd`
-python -m unittest discover -s qual/modules -p "unitTest_*.py"
+python -m unittest discover -s qual/modules -p "unitTest_*.py" 2>&1 | tee /tmp/unittests.txt
