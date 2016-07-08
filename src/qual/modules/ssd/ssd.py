@@ -17,16 +17,18 @@ class collectIO(threading.Thread):
     ## Constructor
     #  @param   self
     #  @param   sleeptime   Number of seconds to sleep DEFAULT = [1]
-    def __init__(self, sleeptime = 1):
+    def __init__(self, device, sleeptime=1):
         # Initializes threading
         threading.Thread.__init__(self)
         ## Lock for preventing thread issues
         self.lock = threading.Lock()
-        ## Stores sleeptime in seconds
+        ## Device name
+        self.device = device
+        ## Sleeptime in seconds
         self.sleeptime = sleeptime
-        ## Initializies write count in Megabytes
+        ## Write count in Megabytes
         self.write = 0.0
-        ## Initializes read count in Megabytes
+        ## Read count in Megabytes
         self.read = 0.0
         ## Thread exits when self.quit = True
         self.quit = False
@@ -44,7 +46,7 @@ class collectIO(threading.Thread):
                     info[:] = [x for x in info if x != '']
 
                     if len(info) > 2:
-                        if info[2] == 'md126':
+                        if info[2] == self.device:
                             return info
 
     ## Returns read and write values
@@ -69,10 +71,9 @@ class collectIO(threading.Thread):
             sleep(self.sleeptime)
             stop = self.getioData()
             self.lock.acquire()
-
+            # The data is in 512-byte sectors; We divide by 2048 in order to change this into Megabytes
             self.read = (float(stop[5]) - float(start[5])) / 2048
             self.write = (float(stop[9]) - float(start[9])) / 2048
-
             self.lock.release()
             start = stop
 
@@ -82,7 +83,7 @@ class SSD(Module):
     ## Constructor
     #  @param       self
     #  @param       config      Configuration for the instance is going to be created
-    def __init__(self, config = None):
+    def __init__(self, config=None):
         # constructor of the parent class
         super(SSD, self).__init__(config)
         ## RAID device
@@ -91,10 +92,10 @@ class SSD(Module):
         self.__raidFS = "/mnt/qual"
         ## Location of FIO config file
         self.__fioConf = "/tmp/fio-qual.fio"
+        # Init the RAID filesystem and store in device for use in collectIO
+        device = self.initFS()
         ## SSD Data collection thread
-        self.collect = collectIO()
-        # Init the RAID filesystem
-        self.initFS()
+        self.collect = collectIO(device)
         # Start data collection thread
         self.collect.start()
         sleep(2)
@@ -154,12 +155,7 @@ class SSD(Module):
     #  @param     response  An SSDResponse object
     def report(self, response):
         info = self.collect.getioInfo()
-
-        if self._running:
-            response.state = SSDResponse.RUNNING
-        else:
-            response.state = SSDResponse.STOPPED
-
+        response.state = SSDResponse.RUNNING if self._running else SSDResponse.STOPPED
         response.readBandwidth = info[0]
         response.writeBandwidth = info[1]
 
@@ -227,6 +223,8 @@ class SSD(Module):
         # If it's a relative link, convert it to absolute
         if realDev[0] == '.':
             realDev = os.path.join(os.path.dirname(self.__raidDev), realDev)
+        # Save device name so we can return it
+        device = os.path.basename(realDev)
         # RAID partition is linked RAID device with "p1" appended
         raidPart = "%sp1" % realDev
 
@@ -257,6 +255,8 @@ class SSD(Module):
                             failText='Unable to mount the RAID partition.')
 
         self.log.info('RAID filesystem initialized.')
+
+        return device
 
     ## Runs a command, and can raise an exception if the command fails
     #
@@ -315,7 +315,9 @@ class SSD(Module):
     #
     #  @param     self
     def terminate(self):
-        self._running = False
-        subprocess.Popen(['pkill', '-9', 'fio']).communicate()
+        if self._running:
+            self._running = False
+            subprocess.Popen(['pkill', '-9', 'fio']).communicate()
+            self.stopThread()
+
         self.collect.quit = True
-        self.stopThread()

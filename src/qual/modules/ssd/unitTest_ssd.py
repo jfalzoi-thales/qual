@@ -1,5 +1,4 @@
 import unittest
-import os
 
 from time import sleep
 from common.gpb.python.SSD_pb2 import SSDRequest, SSDResponse
@@ -7,7 +6,6 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.logger.logger import Logger
 from common.module.modulemsgs import ModuleMessages
 from qual.modules.ssd.ssd import SSD
-from qual.modules.ssd.ssd_Exception import SSDModuleException
 
 # @cond doxygen_unittest
 
@@ -78,59 +76,101 @@ class Test_SSD(unittest.TestCase):
         log.info("==== Reset module state ====")
         module.msgHandler(ThalesZMQMessage(SSDMessages.stop()))
 
-    ## Valid Test case: Send a RUN and STOP msgs
+    ## Valid Test case: Send a series of messages to confirm Start, Stop, and Report functionality
     # Asserts:
     #       appState == RUNNING
     #       --------------------
+    #       appState == RUNNING
+    #       readBandwidth > 0.0
+    #       --------------------
     #       appState == STOPPED
     #       --------------------
-    def test_RunStop(self):
+    #       appState == STOPPED
+    #       readBandwidth == 0.0
+    #       --------------------
+    #       appState == RUNNING
+    #       readBandwidth == 0.0
+    #       --------------------
+    #       appState == RUNNING
+    #       readBandwidth > 0.0
+    #       --------------------
+    #       appState == STOPPED
+    #       --------------------
+    #       appState == STOPPED
+    #       readBandwidth == 0.0
+    #       --------------------
+
+    def test_RunReportStopReport(self):
         log = self.__class__.log
         module = self.__class__.module
+        readBandTotal = 0
 
-        log.info("**** Test case: RUN and Stop messages ****")
+        log.info("**** Test case: Send a series of messages to confirm Start, Stop, and Report functionality ****")
 
         response = module.msgHandler(ThalesZMQMessage(SSDMessages.run()))
         # Asserts
         self.assertEqual(response.name, "SSDResponse")
-
         self.assertEqual(response.body.state, SSDResponse.RUNNING)
+        # Sleep to allow 1GB fio file to be written to drive on first run
+        sleep(40)
+
+        # readBandwidth is 0.0 occasionally, so we collect a few times to make sure fio is active
+        for x in xrange(3):
+            response = module.msgHandler(ThalesZMQMessage(SSDMessages.report()))
+            # Asserts
+            self.assertEqual(response.name, "SSDResponse")
+            self.assertEqual(response.body.state, SSDResponse.RUNNING)
+            readBandTotal += response.body.readBandwidth
+            sleep(1)
+
+        self.assertGreater(readBandTotal, 0.0)
 
         response = module.msgHandler(ThalesZMQMessage(SSDMessages.stop()))
         # Asserts
         self.assertEqual(response.name, "SSDResponse")
         self.assertEqual(response.body.state, SSDResponse.STOPPED)
-        log.info("==== Test complete ====")
+        # Sleep to allow fio time to stop running
+        sleep(3)
 
-    ## Valid Test case: Send a RUN msg
-    # Asserts:
-    #       appState == RUNNING
-    #       --------------------
-    def test_Run(self):
-        log = self.__class__.log
-        module = self.__class__.module
-        log.info("**** Test case: RUN message ****")
+        response = module.msgHandler(ThalesZMQMessage(SSDMessages.report()))
+        # Asserts
+        self.assertEqual(response.name, "SSDResponse")
+        self.assertEqual(response.body.state, SSDResponse.STOPPED)
+        self.assertEqual(response.body.readBandwidth, 0.0)
+
         response = module.msgHandler(ThalesZMQMessage(SSDMessages.run()))
         # Asserts
         self.assertEqual(response.name, "SSDResponse")
         self.assertEqual(response.body.state, SSDResponse.RUNNING)
-        log.info("==== Test complete ====")
+        self.assertEqual(response.body.readBandwidth, 0.0)
+        # Sleep to allow fio time start running
+        sleep(10)
 
+        # readBandwidth is 0.0 occasionally, so we collect a few times to make sure fio is active
+        for x in xrange(3):
+            response = module.msgHandler(ThalesZMQMessage(SSDMessages.report()))
+            # Asserts
+            self.assertEqual(response.name, "SSDResponse")
+            self.assertEqual(response.body.state, SSDResponse.RUNNING)
+            readBandTotal += response.body.readBandwidth
+            sleep(1)
 
-    ## Valid Test case: Send a STOP msg
-    # Asserts:
-    #       appState == STOPPED
-    #       --------------------
-    def test_Stop(self):
-        log = self.__class__.log
-        module = self.__class__.module
-        log.info("**** Test case: STOP messages ****")
+        self.assertGreater(readBandTotal, 0.0)
+
         response = module.msgHandler(ThalesZMQMessage(SSDMessages.stop()))
         # Asserts
         self.assertEqual(response.name, "SSDResponse")
         self.assertEqual(response.body.state, SSDResponse.STOPPED)
-        log.info("==== Test complete ====")
+        # Sleep to allow fio time to stop running
+        sleep(3)
 
+        response = module.msgHandler(ThalesZMQMessage(SSDMessages.stop()))
+        # Asserts
+        self.assertEqual(response.name, "SSDResponse")
+        self.assertEqual(response.body.state, SSDResponse.STOPPED)
+        self.assertEqual(response.body.readBandwidth, 0.0)
+
+        log.info("==== Test complete ====")
 
 if __name__ == '__main__':
     unittest.main()
