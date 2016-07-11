@@ -103,7 +103,6 @@ class PowerSupplyMonSimulator(ThalesZMQServer):
                     self.AddAllToResponse(name, powerInfo)
             elif getPowerInfo.name in self.properties:
                 # For now, don't allow retrieving specific values, only all values for a device
-                # since that's how we'll be using it for the System Monitoring module
                 powerInfo.errorCode = PowerInfo.SUCCESS
                 self.AddAllToResponse(getPowerInfo.name, powerInfo)
             else:
