@@ -99,6 +99,9 @@ class SSD(Module):
         # Start data collection thread
         self.collect.start()
         sleep(2)
+        ## Default size partition (GBytes)
+        self.partitonsize = 100
+        self.loadConfig(attributes=('partitonsize'))
         # Create the FIO config file
         self.createFioConfig()
         # adding the fio tool thread
@@ -213,7 +216,7 @@ class SSD(Module):
         partition.stdin.write('\n')
         partition.stdin.write('\n')
         partition.stdin.write('\n')
-        partition.stdin.write('\n')
+        partition.stdin.write('+%sGB\n' % (self.partitonsize,))
         partition.stdin.write('w\n')
         rc = partition.wait()
         self.log.debug("Command return code: %d" % rc)
