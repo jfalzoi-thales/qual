@@ -10,7 +10,6 @@ Group: Applications/Engineering
 URL: https://repo-tav.tklabs.com:8102/
 Source: %{name}-%{version}.tar.gz
 Requires: rsyslog
-Requires: power-supply-monitor
 %{?systemd_requires}
 BuildRequires: systemd
 
@@ -41,4 +40,3 @@ cp -r * %{buildroot}/thales/qual/src/
 %systemd_post qual.service
 ln -f /thales/qual/src/qual/config/mps.ini /thales/qual/src/qual/config/platform.ini
 echo -e "\$ActionQueueFileName fwdRule1\n\$ActionQueueMaxDiskSpace 2g\n\$ActionQueueSaveOnShutdown on\n\$ActionQueueType LinkedList\n\$ActionResumeRetryCount -1\n*.* @192.168.137.1:514" >> /etc/rsyslog.conf
-sed -i -e 's| -f| -dvf|g' /usr/lib/systemd/system/PowerSupplyMonitor.service
