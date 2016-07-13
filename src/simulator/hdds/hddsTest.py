@@ -1,26 +1,21 @@
-
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.HDDS_pb2 import GetReq, GetResp, SetReq, SetResp
+from common.gpb.python.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp
 
 # @cond doxygen_unittest
 
 ## HDDS Simulator Tester class
-#
 class HDDSClient(ThalesZMQClient):
     ## Constructor
-    #
     def __init__(self):
         super(HDDSClient, self).__init__("tcp://localhost:40001")
 
     ## Sends a "GetReq" message to the simulator and prints the response
-    #
     def sendGetReq(self, key):
         # Create a simple (one key) GetReq
         getReq = GetReq()
         getReq.key.append(key)
         print "Request:  Get", key
-
         # Send a request and get the response
         response = self.sendRequest(ThalesZMQMessage(getReq))
 
@@ -28,26 +23,26 @@ class HDDSClient(ThalesZMQClient):
         if response.name == "GetResp":
             getResp = GetResp()
             getResp.ParseFromString(response.serializedBody)
-            for valueResp in getResp.HDDSValue:
+
+            for valueResp in getResp.values:
                 if valueResp.success:
-                    print "Response: Get", valueResp.value.key, ":", valueResp.value.value
+                    print "Response: Get", valueResp.keyValue.key, ":", valueResp.keyValue.value
                 else:
-                    print "Response: Failed to get", valueResp.value.key
+                    print "Response: Failed to get", valueResp.keyValue.key
+
         elif response.name == "ErrorMessage":
             print "Got error message from server"
         else:
             print "Error! Unknown response type"
 
     ## Sends a "SetReq" message to the simulator and prints the response
-    #
     def sendSetReq(self, key, value):
         # Create a simple (one property) SetReq
         setReq = SetReq()
-        prop = setReq.HDDSValue.add()
+        prop = setReq.values.add()
         prop.key = key
         prop.value = value
         print "Request:  Set", key, ":", value
-
         # Send a request and get the response
         response = self.sendRequest(ThalesZMQMessage(setReq))
 
@@ -55,21 +50,21 @@ class HDDSClient(ThalesZMQClient):
         if response.name == "SetResp":
             setResp = SetResp()
             setResp.ParseFromString(response.serializedBody)
-            for valueResp in setResp.HDDSValue:
+
+            for valueResp in setResp.values:
                 if valueResp.success:
-                    print "Response: Set", valueResp.value.key, ":", valueResp.value.value
+                    print "Response: Set", valueResp.keyValue.key, ":", valueResp.keyValue.value
                 else:
-                    print "Response: Failed to set", valueResp.value.key
+                    print "Response: Failed to set", valueResp.keyValue.key
+
         elif response.name == "ErrorMessage":
             print "Got error message from server"
         else:
             print "Error! Unknown response type"
 
-
 if __name__ == "__main__":
     # Create a HDDSClient instance; this will open a connection to the simulator
     client = HDDSClient()
-
     # Send some get/set requests.  Note these only test requests with a single key.
     client.sendGetReq("carrier_card.switch.temperature")
     client.sendGetReq("external_pins.output.pin_e6")
