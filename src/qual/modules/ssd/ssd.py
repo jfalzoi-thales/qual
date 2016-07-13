@@ -92,6 +92,9 @@ class SSD(Module):
         self.__raidFS = "/mnt/qual"
         ## Location of FIO config file
         self.__fioConf = "/tmp/fio-qual.fio"
+        ## Default size partition (GBytes)
+        self.partitonsize = 100
+        self.loadConfig(attributes=('partitonsize',))
         # Init the RAID filesystem and store in device for use in collectIO
         device = self.initFS()
         ## SSD Data collection thread
@@ -99,9 +102,6 @@ class SSD(Module):
         # Start data collection thread
         self.collect.start()
         sleep(2)
-        ## Default size partition (GBytes)
-        self.partitonsize = 100
-        self.loadConfig(attributes=('partitonsize'))
         # Create the FIO config file
         self.createFioConfig()
         # adding the fio tool thread
