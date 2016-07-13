@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Check for parameters, 
+# if none, build only qual image 
+# if vm,   build only vm image 
+# if all,  build both
 if   [ $# -eq 0 ];  then BUILD="QUAL"
 elif [ $1 == vm ];  then BUILD="VM"
 elif [ $1 == all ]; then BUILD="ALL"
@@ -13,18 +17,21 @@ fi
 QUALSRCDIR=/home/thales/qual/src
 MPSBUILDDIR=/home/thales/mps-builder
 
+# Handle tito tag and build for qual
 titoqual () {
     cd ${QUALSRCDIR}/
     tito tag
     tito build --rpm --offline
 }
 
+# Handle tito tag and build for qual-vm
 titovm () {
     cd ${QUALSRCDIR}/simulator/
     tito tag
     tito build --rpm --offline
 }
 
+# Build qual pxe image
 buildqual () {
     sudo cp ${QUALSRCDIR}/../build/qual-pkgs-psi.inc.ks ${MPSBUILDDIR}/config/pkgs-psi.inc.ks
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/build.script"
@@ -34,6 +41,7 @@ buildqual () {
     sudo mv ${MPSBUILDDIR}/bin/${OLDQUAL} ${MPSBUILDDIR}/bin/${NEWQUAL}
 }
 
+# Build qual-vm pxe image
 buildvm () {
     sudo cp ${QUALSRCDIR}/../build/qual-vm-pkgs-psi.inc.ks ${MPSBUILDDIR}/config/pkgs-psi.inc.ks
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/build.script"
