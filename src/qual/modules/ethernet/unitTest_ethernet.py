@@ -32,7 +32,7 @@ class EthernetMessages(ModuleMessages):
         message = EthernetRequest()
         message.requestType = EthernetRequest.RUN
         message.local = "ENET_1"
-        message.remote = "10.10.42.228"
+        message.remote = "10.10.42.231"
         return message
 
     @staticmethod
