@@ -7,6 +7,10 @@ if [ ! -d qual/modules ]; then
     exit 1
 fi
 
+if [ -f ${ETHPATH}/unitTest_ethernet.py.bak ]; then
+    mv -f ${ETHPATH}/unitTest_ethernet.py.bak ${ETHPATH}/unitTest_ethernet.py
+fi
+
 TEMP=`getopt -o i: --long iperf: -n 'unittests.sh' -- "$@"`
 eval set -- "$TEMP"
 
@@ -14,13 +18,12 @@ while true ; do
     case "$1" in
         -i|--iperf) 
             IPADDR="$2"
-            if [ -f ${ETHPATH}/unitTest_ethernet.py.bak ]; then
-                mv ${ETHPATH}/unitTest_ethernet.py.bak ${ETHPATH}/unitTest_ethernet.py
-            fi
-	    sed -i.bak 's/10.10.42.231/'"$IPADDR"'/g' ${ETHPATH}/unitTest_ethernet.py
-	    shift 2;;
-        --) shift; break;;             
-         *) echo "Incorrect parameter!"; exit 1;;
+            sed -i.bak 's/10.10.42.231/'"$IPADDR"'/g' ${ETHPATH}/unitTest_ethernet.py
+            shift 2;;
+        --)
+            shift; break;;
+        *)
+            echo "Incorrect parameter!"; exit 1;;
     esac
 done
 
