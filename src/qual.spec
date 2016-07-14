@@ -10,6 +10,8 @@ Group: Applications/Engineering
 URL: https://repo-tav.tklabs.com:8102/
 Source: %{name}-%{version}.tar.gz
 Requires: rsyslog
+Requires: arinc429-driver
+Requires: arinc717-driver
 %{?systemd_requires}
 BuildRequires: systemd
 
