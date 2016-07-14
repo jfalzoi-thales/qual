@@ -288,7 +288,7 @@ class ARINC429(module.Module):
             pbit ^= pbit >> 2
             pbit = (pbit & 0x11111111) * 0x11111111
             pbit = (((pbit >> 28) & 1) + 1) & 1
-            word = (pbit << 31) + word
+            word += (pbit << 31)
             words[outputChan] = word
 
             if self.transmit(chanInfo.name, word):
