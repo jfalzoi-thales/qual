@@ -32,14 +32,14 @@ class GPIOMessages(ModuleMessages):
     def reportIn1():
         message = GPIORequest()
         message.requestType = GPIORequest.REPORT
-        message.gpIn = "PA_KYLN_IN1"
+        message.gpIn = "GP_KYLN_IN1"
         return message
 
     @staticmethod
     def reportIn2():
         message = GPIORequest()
         message.requestType = GPIORequest.REPORT
-        message.gpIn = "PA_KYLN_IN2"
+        message.gpIn = "GP_KYLN_IN2"
         return message
 
     @staticmethod
@@ -53,24 +53,24 @@ class GPIOMessages(ModuleMessages):
     def connectIn1Out1():
         message = GPIORequest()
         message.requestType = GPIORequest.CONNECT
-        message.gpIn = "PA_KYLN_IN1"
-        message.gpOut = "VA_KYLN_OUT1"
+        message.gpIn = "GP_KYLN_IN1"
+        message.gpOut = "GP_KYLN_OUT1"
         return message
 
     @staticmethod
     def connectIn2Out1():
         message = GPIORequest()
         message.requestType = GPIORequest.CONNECT
-        message.gpIn = "PA_KYLN_IN2"
-        message.gpOut = "VA_KYLN_OUT1"
+        message.gpIn = "GP_KYLN_IN2"
+        message.gpOut = "GP_KYLN_OUT1"
         return message
 
     @staticmethod
     def connectIn2Out2():
         message = GPIORequest()
         message.requestType = GPIORequest.CONNECT
-        message.gpIn = "PA_KYLN_IN2"
-        message.gpOut = "VA_KYLN_OUT2"
+        message.gpIn = "GP_KYLN_IN2"
+        message.gpOut = "GP_KYLN_OUT2"
         return message
 
     @staticmethod
@@ -78,21 +78,21 @@ class GPIOMessages(ModuleMessages):
         message = GPIORequest()
         message.requestType = GPIORequest.CONNECT
         message.gpIn = "ALL"
-        message.gpOut = "VA_KYLN_OUT3"
+        message.gpOut = "GP_KYLN_OUT3"
         return message
 
     @staticmethod
     def disconnectIn1():
         message = GPIORequest()
         message.requestType = GPIORequest.DISCONNECT
-        message.gpIn = "PA_KYLN_IN1"
+        message.gpIn = "GP_KYLN_IN1"
         return message
 
     @staticmethod
     def disconnectIn2():
         message = GPIORequest()
         message.requestType = GPIORequest.DISCONNECT
-        message.gpIn = "PA_KYLN_IN2"
+        message.gpIn = "GP_KYLN_IN2"
         return message
 
     @staticmethod
@@ -106,16 +106,16 @@ class GPIOMessages(ModuleMessages):
     def connectInBogus():
         message = GPIORequest()
         message.requestType = GPIORequest.CONNECT
-        message.gpIn = "PA_BOGUS_IN2"
-        message.gpOut = "VA_KYLN_OUT2"
+        message.gpIn = "GP_BOGUS_IN2"
+        message.gpOut = "GP_KYLN_OUT2"
         return message
 
     @staticmethod
     def connectOutBogus():
         message = GPIORequest()
         message.requestType = GPIORequest.CONNECT
-        message.gpIn = "PA_KYLN_IN2"
-        message.gpOut = "VA_BOGUS_OUT2"
+        message.gpIn = "GP_KYLN_IN2"
+        message.gpOut = "GP_BOGUS_OUT2"
         return message
 
     ## Constructor (not used)
@@ -200,7 +200,7 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
         self.assertEqual(response.body.status[0].matchCount, 0)
         self.assertEqual(response.body.status[0].mismatchCount, 0)
-        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN2")
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN2")
         self.assertEqual(response.body.status[0].gpOut, "")
 
         log.info("==== Connect input ====")
@@ -210,8 +210,8 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
         self.assertEqual(response.body.status[0].matchCount, 0)
         self.assertEqual(response.body.status[0].mismatchCount, 0)
-        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN2")
-        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN2")
+        self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT1")
 
         log.info("==== Try to connect input to different output ====")
         response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn2Out2()))
@@ -220,8 +220,8 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
         self.assertEqual(response.body.status[0].matchCount, 0)
         self.assertEqual(response.body.status[0].mismatchCount, 0)
-        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN2")
-        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN2")
+        self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT1")
         log.info("==== Test complete ====")
 
     ## Test case: Connect a linked input/output pair
@@ -241,7 +241,7 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
         self.assertEqual(response.body.status[0].matchCount, 0)
         self.assertEqual(response.body.status[0].mismatchCount, 0)
-        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN1")
         self.assertEqual(response.body.status[0].gpOut, "")
 
         log.info("==== Connect linked pair ====")
@@ -251,8 +251,8 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
         self.assertEqual(response.body.status[0].matchCount, 0)
         self.assertEqual(response.body.status[0].mismatchCount, 0)
-        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
-        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT1")
 
         log.info("==== Wait 4 seconds to accumulate statistics ====")
         sleep(4.1)
@@ -265,8 +265,8 @@ class Test_GPIO(unittest.TestCase):
         self.assertGreaterEqual(response.body.status[0].matchCount, 4)
         self.assertLessEqual(response.body.status[0].matchCount, 5)
         self.assertEqual(response.body.status[0].mismatchCount, 0)
-        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
-        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT1")
 
         log.info("==== Disconnect connected pair ====")
         response = module.msgHandler(ThalesZMQMessage(GPIOMessages.disconnectIn1()))
@@ -276,8 +276,8 @@ class Test_GPIO(unittest.TestCase):
         self.assertGreaterEqual(response.body.status[0].matchCount, 4)
         self.assertLessEqual(response.body.status[0].matchCount, 5)
         self.assertEqual(response.body.status[0].mismatchCount, 0)
-        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
-        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT1")
 
         log.info("==== Report after disconnect ====")
         response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn1()))
@@ -286,7 +286,7 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
         self.assertEqual(response.body.status[0].matchCount, 0)
         self.assertEqual(response.body.status[0].mismatchCount, 0)
-        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN1")
         self.assertEqual(response.body.status[0].gpOut, "")
         log.info("==== Test complete ====")
 
@@ -305,7 +305,7 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
         self.assertEqual(response.body.status[0].matchCount, 0)
         self.assertEqual(response.body.status[0].mismatchCount, 0)
-        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN1")
         self.assertEqual(response.body.status[0].gpOut, "")
 
         log.info("==== Connect unlinked pair ====")
@@ -315,8 +315,8 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
         self.assertEqual(response.body.status[0].matchCount, 0)
         self.assertEqual(response.body.status[0].mismatchCount, 0)
-        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN2")
-        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN2")
+        self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT1")
 
         log.info("==== Wait 4 seconds to accumulate statistics ====")
         sleep(4.1)
@@ -330,8 +330,8 @@ class Test_GPIO(unittest.TestCase):
         self.assertLessEqual(response.body.status[0].matchCount, 3)
         self.assertGreaterEqual(response.body.status[0].mismatchCount, 2)
         self.assertLessEqual(response.body.status[0].mismatchCount, 3)
-        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN2")
-        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN2")
+        self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT1")
         log.info("==== Test complete ====")
 
     ## Test case: Use of the "ALL" parameter
@@ -360,7 +360,7 @@ class Test_GPIO(unittest.TestCase):
         for gpioStat in response.body.status:
             # All pins should be connected to output 3
             self.assertEqual(gpioStat.conState, GPIOResponse.CONNECTED)
-            self.assertEqual(gpioStat.gpOut, "VA_KYLN_OUT3")
+            self.assertEqual(gpioStat.gpOut, "GP_KYLN_OUT3")
 
         log.info("==== Report on all inputs after connect ====")
         response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportAll()))
@@ -369,7 +369,7 @@ class Test_GPIO(unittest.TestCase):
         for gpioStat in response.body.status:
             # All pins should still be connected to output 3
             self.assertEqual(gpioStat.conState, GPIOResponse.CONNECTED)
-            self.assertEqual(gpioStat.gpOut, "VA_KYLN_OUT3")
+            self.assertEqual(gpioStat.gpOut, "GP_KYLN_OUT3")
 
         log.info("==== Wait 4 seconds to accumulate statistics ====")
         sleep(4.1)
@@ -381,8 +381,8 @@ class Test_GPIO(unittest.TestCase):
         for gpioStat in response.body.status:
             # All pins just got disconnected from output 3
             self.assertEqual(gpioStat.conState, GPIOResponse.DISCONNECTED)
-            self.assertEqual(gpioStat.gpOut, "VA_KYLN_OUT3")
-            if (gpioStat.gpIn == "PA_KYLN_IN3"):
+            self.assertEqual(gpioStat.gpOut, "GP_KYLN_OUT3")
+            if (gpioStat.gpIn == "GP_KYLN_IN3"):
                 self.assertGreaterEqual(gpioStat.matchCount, 4)
                 self.assertLessEqual(gpioStat.matchCount, 5)
                 self.assertEqual(gpioStat.mismatchCount, 0)

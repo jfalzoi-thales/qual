@@ -38,19 +38,19 @@ class GPIO(module.Module):
         self.PinInfo = collections.namedtuple("PinInfo", "func name")
 
         ## Dict mapping GPIO output pins to handler and handler pin name
-        self.outputPins = {"VA_KYLN_OUT1": self.PinInfo(self.gpioManagerSet, "OUTPUT_1_PIN_A6"),
-                           "VA_KYLN_OUT2": self.PinInfo(self.gpioManagerSet, "OUTPUT_2_PIN_B6"),
-                           "VA_KYLN_OUT3": self.PinInfo(self.gpioManagerSet, "OUTPUT_3_PIN_C6"),
-                           "VA_KYLN_OUT4": self.PinInfo(self.gpioManagerSet, "OUTPUT_4_PIN_D6"),
-                           "VA_KYLN_OUT5": self.PinInfo(self.gpioManagerSet, "OUTPUT_5_PIN_E6"),
-                           "VA_KYLN_OUT6": self.PinInfo(self.gpioManagerSet, "OUTPUT_6_PIN_E8")}
+        self.outputPins = {"GP_KYLN_OUT1": self.PinInfo(self.gpioManagerSet, "OUTPUT_1_PIN_A6"),
+                           "GP_KYLN_OUT2": self.PinInfo(self.gpioManagerSet, "OUTPUT_2_PIN_B6"),
+                           "GP_KYLN_OUT3": self.PinInfo(self.gpioManagerSet, "OUTPUT_3_PIN_C6"),
+                           "GP_KYLN_OUT4": self.PinInfo(self.gpioManagerSet, "OUTPUT_4_PIN_D6"),
+                           "GP_KYLN_OUT5": self.PinInfo(self.gpioManagerSet, "OUTPUT_5_PIN_E6"),
+                           "GP_KYLN_OUT6": self.PinInfo(self.gpioManagerSet, "OUTPUT_6_PIN_E8")}
 
         ## Dict mapping GPIO input pins to handler and handler pin name
-        self.inputPins = {"PA_KYLN_IN1":     self.PinInfo(self.gpioManagerGet, "INPUT_1_PIN_A7"),
-                          "PA_KYLN_IN2":     self.PinInfo(self.gpioManagerGet, "INPUT_2_PIN_B7"),
-                          "PA_KYLN_IN3":     self.PinInfo(self.gpioManagerGet, "INPUT_3_PIN_C7"),
-                          "PA_KYLN_IN4":     self.PinInfo(self.gpioManagerGet, "INPUT_4_PIN_D7"),
-                          "PA_KYLN_IN5":     self.PinInfo(self.gpioManagerGet, "INPUT_5_PIN_E7"),
+        self.inputPins = {"GP_KYLN_IN1":     self.PinInfo(self.gpioManagerGet, "INPUT_1_PIN_A7"),
+                          "GP_KYLN_IN2":     self.PinInfo(self.gpioManagerGet, "INPUT_2_PIN_B7"),
+                          "GP_KYLN_IN3":     self.PinInfo(self.gpioManagerGet, "INPUT_3_PIN_C7"),
+                          "GP_KYLN_IN4":     self.PinInfo(self.gpioManagerGet, "INPUT_4_PIN_D7"),
+                          "GP_KYLN_IN5":     self.PinInfo(self.gpioManagerGet, "INPUT_5_PIN_E7"),
                           "PA_ALL_KYLN_IN":  self.PinInfo(self.gpioManagerGet, "PA_All_PIN_C8")}
 
         ## Dict of connections; key is input pin, value is a ConnectionInfo object
