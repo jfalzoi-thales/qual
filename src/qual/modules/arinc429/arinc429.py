@@ -5,7 +5,7 @@ import os
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.ARINC429_pb2 import ARINC429Request, ARINC429Response
-from common.gpb.python.ARINC429Driver_pb2 import Request, Response
+from common.gpb.python.ARINC429Driver_pb2 import Request, Response, ChannelConfig
 from common.module import module
 
 ## Connection info container class
@@ -60,7 +60,6 @@ class ARINC429(module.Module):
         self.loadConfig(attributes=('tx1Channel', 'tx2Channel', 'tx3Channel', 'tx4Channel',
                                     'rx1Channel', 'rx2Channel', 'rx3Channel', 'rx4Channel',
                                     'rx5Channel', 'rx6Channel', 'rx7Channel', 'rx8Channel'))
-
         ## Named tuple type to store channel info
         self.ChanInfo = collections.namedtuple("ChanInfo", "name chan")
         ## Dict mapping output channels to driver channel name and code
@@ -91,6 +90,48 @@ class ARINC429(module.Module):
 
         ## Connection to ARINC429 driver
         self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/429/device", log=self.log, msgParts=1)
+
+        # Configuring driver for all channels
+        for outputChan in self.outputChans.values():
+            confReq = Request()
+            confReq.channelName = outputChan.name
+            confReq.type = Request.SET_CONFIG
+            conf = confReq.config.add()
+            conf.rate = ChannelConfig.HIGH
+            conf.labelOrder = ChannelConfig.NORMAL
+            conf.parityEnable = False
+            response = self.driverClient.sendRequest(ThalesZMQMessage(confReq))
+
+            #  Parse the response
+            if response.name == self.driverClient.defaultResponseName:
+                confResp = Response()
+                confResp.ParseFromString(response.serializedBody)
+                self.log.info('\n%s' % confResp)
+
+                if confResp.errorCode != Response.NONE:
+                    self.log.error("Error configuring ARINC429 driver for channel %s" % outputChan.name)
+                    self.log.error("ERROR CODE: %s" % confResp.errorCode)
+
+        for inputChan in self.inputChans.values():
+            confReq = Request()
+            confReq.channelName = inputChan.name
+            confReq.type = Request.SET_CONFIG
+            conf = confReq.config.add()
+            conf.rate = ChannelConfig.HIGH
+            conf.labelOrder = ChannelConfig.NORMAL
+            conf.parityEnable = False
+            response = self.driverClient.sendRequest(ThalesZMQMessage(confReq))
+
+            #  Parse the response
+            if response.name == self.driverClient.defaultResponseName:
+                confResp = Response()
+                confResp.ParseFromString(response.serializedBody)
+                self.log.info('\n%s' % confResp)
+
+                if confResp.errorCode != Response.NONE:
+                    self.log.error("Error configuring ARINC429 driver for channel %s" % inputChan.name)
+                    self.log.error("ERROR CODE: %s" % confResp.errorCode)
+
         #  Set up thread to toggle outputs
         self.addThread(self.sendData)
         #  Add handler to available message handlers
@@ -247,7 +288,7 @@ class ARINC429(module.Module):
             pbit ^= pbit >> 2
             pbit = (pbit & 0x11111111) * 0x11111111
             pbit = (((pbit >> 28) & 1) + 1) & 1
-            word = (pbit << 31) + word
+            word += (pbit << 31)
             words[outputChan] = word
 
             if self.transmit(chanInfo.name, word):
