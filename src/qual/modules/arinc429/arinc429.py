@@ -294,7 +294,7 @@ class ARINC429(module.Module):
         if response.name == self.driverClient.defaultResponseName:
             txResp = Response()
             txResp.ParseFromString(response.serializedBody)
-            self.log.info(txResp)
+            self.log.info('\n%s' % txResp)
 
             if txResp.errorCode == Response.NONE:
                 return True
@@ -318,7 +318,7 @@ class ARINC429(module.Module):
         if response.name == self.driverClient.defaultResponseName:
             rxResp = Response()
             rxResp.ParseFromString(response.serializedBody)
-            self.log.info(rxResp)
+            self.log.info('\n%s' % rxResp)
 
             if rxResp.errorCode == Response.NONE:
                 if rxResp.inputData.data:
