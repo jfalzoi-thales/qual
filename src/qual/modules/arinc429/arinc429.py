@@ -249,13 +249,14 @@ class ARINC429(module.Module):
             pbit = (((pbit >> 28) & 1) + 1) & 1
             word = (pbit << 31) + word
             words[outputChan] = word
+
             if self.transmit(chanInfo.name, word):
                 for connection in self.connections.values():
                     if connection.outputChan == outputChan:
                         connection.xmtCount += 1
 
         #  Sleep a bit before attempting to receive, to allow time for messages to arrive
-        sleep(.05)
+        sleep(.1)
 
         #  For each input channel in the connection list, get its value and increment matches/mismatches
         for inputChan, connection in self.connections.items():
@@ -293,6 +294,7 @@ class ARINC429(module.Module):
         if response.name == self.driverClient.defaultResponseName:
             txResp = Response()
             txResp.ParseFromString(response.serializedBody)
+            self.log.info('\n%s' % txResp)
 
             if txResp.errorCode == Response.NONE:
                 return True
@@ -316,6 +318,8 @@ class ARINC429(module.Module):
         if response.name == self.driverClient.defaultResponseName:
             rxResp = Response()
             rxResp.ParseFromString(response.serializedBody)
+            self.log.info('\n%s' % rxResp)
+
             if rxResp.errorCode == Response.NONE:
                 if rxResp.inputData.data:
                     return rxResp.inputData.data[0].word

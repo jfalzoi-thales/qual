@@ -78,6 +78,7 @@ class ARINC717(Module):
         if driverResponse.name == self.driverClient.defaultResponseName:
             info = Response()
             info.ParseFromString(driverResponse.serializedBody)
+            self.log.info('\n%s' % info)
             data = info.frame.data
             response.syncState = ARINC717FrameResponse.NO_SYNC if info.frame.out_of_sync else ARINC717FrameResponse.SYNCED
 
