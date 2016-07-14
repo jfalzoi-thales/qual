@@ -1,6 +1,6 @@
 import unittest
 import hdds
-from common.gpb.python.HDDS_pb2 import GetReq, SetReq, FAILURE_INVALID_KEY
+from common.gpb.python.HDDS_API_pb2 import GetReq, SetReq, FAILURE_INVALID_KEY
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.logger.logger import Logger
 from common.module.modulemsgs import ModuleMessages
@@ -36,7 +36,7 @@ class HDDSMessages(ModuleMessages):
     @staticmethod
     def setSingle():
         message = SetReq()
-        prop = message.HDDSValue.add()
+        prop = message.values.add()
         prop.key = "external_pins.output.pin_a6"
         prop.value = "HIGH"
         return message
@@ -50,7 +50,7 @@ class HDDSMessages(ModuleMessages):
     @staticmethod
     def setBogus():
         message = SetReq()
-        prop = message.HDDSValue.add()
+        prop = message.values.add()
         prop.key = "bogus_key"
         prop.value = "x"
         return message
@@ -85,9 +85,9 @@ class Test_HDDS(unittest.TestCase):
         log.info("**** Test case: Get invalid key ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getBogus()))
         self.assertEqual(response.name, "GetResp")
-        self.assertEqual(len(response.body.HDDSValue), 1)
-        self.assertEqual(response.body.HDDSValue[0].success, False)
-        self.assertEqual(response.body.HDDSValue[0].error.error_code, FAILURE_INVALID_KEY)
+        self.assertEqual(len(response.body.values), 1)
+        self.assertEqual(response.body.values[0].success, False)
+        self.assertEqual(response.body.values[0].error.error_code, FAILURE_INVALID_KEY)
         log.info("==== Test complete ====")
 
     ## Test case: Try to set an invalid key
@@ -99,9 +99,9 @@ class Test_HDDS(unittest.TestCase):
         log.info("**** Test case: Set invalid key ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setBogus()))
         self.assertEqual(response.name, "SetResp")
-        self.assertEqual(len(response.body.HDDSValue), 1)
-        self.assertEqual(response.body.HDDSValue[0].success, False)
-        self.assertEqual(response.body.HDDSValue[0].error.error_code, FAILURE_INVALID_KEY)
+        self.assertEqual(len(response.body.values), 1)
+        self.assertEqual(response.body.values[0].success, False)
+        self.assertEqual(response.body.values[0].error.error_code, FAILURE_INVALID_KEY)
         log.info("==== Test complete ====")
 
     ## Test case: Try to get a single value
@@ -113,10 +113,10 @@ class Test_HDDS(unittest.TestCase):
         log.info("**** Test case: Get single ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getSingle()))
         self.assertEqual(response.name, "GetResp")
-        self.assertEqual(len(response.body.HDDSValue), 1)
-        self.assertEqual(response.body.HDDSValue[0].success, True)
-        self.assertEqual(response.body.HDDSValue[0].value.key, "external_pins.output.pin_a6")
-        self.assertNotEqual(response.body.HDDSValue[0].value.value, "")
+        self.assertEqual(len(response.body.values), 1)
+        self.assertEqual(response.body.values[0].success, True)
+        self.assertEqual(response.body.values[0].keyValue.key, "external_pins.output.pin_a6")
+        self.assertNotEqual(response.body.values[0].keyValue.value, "")
         log.info("==== Test complete ====")
 
     ## Test case: Try to set a single value
@@ -128,10 +128,10 @@ class Test_HDDS(unittest.TestCase):
         log.info("**** Test case: Set value ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setSingle()))
         self.assertEqual(response.name, "SetResp")
-        self.assertEqual(len(response.body.HDDSValue), 1)
-        self.assertEqual(response.body.HDDSValue[0].success, True)
-        self.assertEqual(response.body.HDDSValue[0].value.key, "external_pins.output.pin_a6")
-        self.assertEqual(response.body.HDDSValue[0].value.value, "HIGH")
+        self.assertEqual(len(response.body.values), 1)
+        self.assertEqual(response.body.values[0].success, True)
+        self.assertEqual(response.body.values[0].keyValue.key, "external_pins.output.pin_a6")
+        self.assertEqual(response.body.values[0].keyValue.value, "HIGH")
 
     ## Test case: Try to get multiple values
     # Should return a GetResp with success=true for each value
@@ -142,10 +142,10 @@ class Test_HDDS(unittest.TestCase):
         log.info("**** Test case: Get multiple ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getMultiple()))
         self.assertEqual(response.name, "GetResp")
-        self.assertEqual(len(response.body.HDDSValue), 3)
-        self.assertEqual(response.body.HDDSValue[0].success, True)
-        self.assertEqual(response.body.HDDSValue[1].success, True)
-        self.assertEqual(response.body.HDDSValue[2].success, True)
+        self.assertEqual(len(response.body.values), 3)
+        self.assertEqual(response.body.values[0].success, True)
+        self.assertEqual(response.body.values[1].success, True)
+        self.assertEqual(response.body.values[2].success, True)
         log.info("==== Test complete ====")
 
 

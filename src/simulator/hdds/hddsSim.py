@@ -1,12 +1,9 @@
-
 from common.logger import logger
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.HDDS_pb2 import GetReq, GetResp, SetReq, SetResp, FAILURE_INVALID_KEY
-
+from common.gpb.python.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp, FAILURE_INVALID_KEY
 
 ## HDDS Simulator class
-#
 # Implements a subset of the Host Domain Device Service, as specified
 # in the "MPS Host Domain Device Service ICD".  Specifically, it
 # implements the GetReq and SetReq messages, with the following limitations:
@@ -21,10 +18,8 @@ from common.gpb.python.HDDS_pb2 import GetReq, GetResp, SetReq, SetResp, FAILURE
 # In addition, GPIO loopback is simulated by having a static table that
 # defines output to input connections, and whenever an output pin in that
 # table is changed by SetReq, the linked input pin's value is changed.
-#
 class HDDSSimulator(ThalesZMQServer):
     ## Constructor
-    #
     def __init__(self):
         # TODO: On target system this needs to be on VLAN 301, IP address 192.168.1.4
         # per the "MAP Network Configuration" document.
@@ -32,7 +27,6 @@ class HDDSSimulator(ThalesZMQServer):
 
         # Turn down ThalesZMQServer debug level
         self.log.setLevel(logger.INFO)
-
         # List of properties that can be get/set
         self.properties = {"carrier_card.switch.temperature": "50.4",
                            "external_pins.input.pin_e7":      "LOW",
@@ -47,7 +41,6 @@ class HDDSSimulator(ThalesZMQServer):
                            "external_pins.output.pin_c6":     "LOW",
                            "external_pins.output.pin_b6":     "LOW",
                            "external_pins.output.pin_a6":     "LOW"}
-
         # Simulate GPIO loopback by linking outputs to inputs
         self.gpioMap = {"external_pins.output.pin_e8": "external_pins.input.pin_c8",
                         "external_pins.output.pin_e6": "external_pins.input.pin_e7",
@@ -57,9 +50,7 @@ class HDDSSimulator(ThalesZMQServer):
                         "external_pins.output.pin_a6": "external_pins.input.pin_a7"}
 
     ## Called by base class when a request is received from a client.
-    #
     # @param request ThalesZMQMessage object containing received request
-    #
     def handleRequest(self, request):
         # Route messages based on type
         if request.name == "GetReq":
@@ -68,60 +59,67 @@ class HDDSSimulator(ThalesZMQServer):
             return self.handleSetReq(request)
         else:
             print "Error! Unsupported request type"
+
             return self.getUnsupportedMessageErrorResponse()
 
     ## Handle request of type "GetReq"
-    #
     # @param request ThalesZMQMessage object containing received request
-    #
     def handleGetReq(self, request):
         # Parse request
         getReq = GetReq()
         getReq.ParseFromString(request.serializedBody)
-
         # Create a GetResp message for the results
         getResp = GetResp()
+        getResp.success = False
 
         # Loop through the key requests
         for key in getReq.key:
             # Currently we do not support wildcards, only exact matches
-            valueResp = getResp.HDDSValue.add()
-            valueResp.value.key = key
+            valueResp = getResp.values.add()
+            valueResp.keyValue.key = key
+
             if key in self.properties:
                 # print "Get request:", key
                 valueResp.success = True
-                valueResp.value.value = self.properties[key]
+                valueResp.keyValue.value = self.properties[key]
             else:
                 print "Get request for unknown key:", key
                 valueResp.success = False
-                valueResp.value.value = ""
+                valueResp.keyValue.value = ""
                 valueResp.error.error_code = FAILURE_INVALID_KEY
-                valueResp.error.description = "Invalid/unsupported key in HDDS_GET message"
+                valueResp.error.error_description = "Invalid/unsupported key in HDDS_GET message"
+
+        # If any value in values is successful, consider getResp successful
+        for value in getResp.values:
+            if value.success == True:
+                getResp.success = True
+
+                return ThalesZMQMessage(getResp)
 
         # Send response back to client
         return ThalesZMQMessage(getResp)
 
     ## Handle request of type "SetReq"
-    #
     # @param request ThalesZMQMessage object containing received request
-    #
     def handleSetReq(self, request):
         # Parse request
         setReq = SetReq()
         setReq.ParseFromString(request.serializedBody)
-
         # Create a HDDSSetResp message for the results
         setResp = SetResp()
+        setResp.success = False
 
         # Loop through value requests
-        for prop in setReq.HDDSValue:
-            valueResp = setResp.HDDSValue.add()
-            valueResp.value.key = prop.key
+        for prop in setReq.values:
+            valueResp = setResp.values.add()
+            valueResp.keyValue.key = prop.key
+
             if prop.key in self.properties:
                 # print "Set request:", prop.key, ":", prop.value
                 self.properties[prop.key] = prop.value
                 valueResp.success = True
-                valueResp.value.value = prop.value
+                valueResp.keyValue.value = prop.value
+
                 # If this is a GPIO output, simulate loopback by setting linked input value
                 if prop.key in self.gpioMap:
                     print "Setting linked GPIO", self.gpioMap[prop.key], ":", prop.value
@@ -129,13 +127,19 @@ class HDDSSimulator(ThalesZMQServer):
             else:
                 print "Set request for unknown key:", prop.key
                 valueResp.success = False
-                valueResp.value.value = prop.value
+                valueResp.keyValue.value = prop.value
                 valueResp.error.error_code = FAILURE_INVALID_KEY
-                valueResp.error.description = "Invalid/unsupported key in HDDS_SET message"
+                valueResp.error.error_description = "Invalid/unsupported key in HDDS_SET message"
+
+        # If any value in values is successful, consider setResp successful
+        for value in setResp.values:
+            if value.success == True:
+                setResp.success = True
+
+                return ThalesZMQMessage(setResp)
 
         # Send response back to client
         return ThalesZMQMessage(setResp)
-
 
 if __name__ == "__main__":
     simulator = HDDSSimulator()

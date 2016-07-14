@@ -1,7 +1,6 @@
-
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.HDDS_pb2 import GetReq, GetResp, SetReq, SetResp, FAILURE_GET_FAILED
+from common.gpb.python.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp, FAILURE_GET_FAILED, FAILURE_SET_FAILED
 from common.gpb.python.ErrorMessage_pb2 import ErrorMessage
 from common.module.module import Module
 
@@ -43,10 +42,9 @@ class HDDS(Module):
         elif response.name == "":
             # Construct new response to report failure
             getResp = GetResp()
-            valueResp = getResp.HDDSValue.add()
-            valueResp.success = False
-            valueResp.error.error_code = FAILURE_GET_FAILED
-            valueResp.error.description = "Get failed: No response from HDDS"
+            getResp.success = False
+            getResp.error.error_code = FAILURE_GET_FAILED
+            getResp.error.error_description = "Get failed: No response from HDDS"
             response = ThalesZMQMessage(getResp)
         else:
             self.log.warning("Unexpected response from HDDS: %s" % response.name)
@@ -76,10 +74,9 @@ class HDDS(Module):
         elif response.name == "":
             # Construct new response to report failure
             setResp = SetResp()
-            valueResp = setResp.HDDSValue.add()
-            valueResp.success = False
-            valueResp.error.error_code = FAILURE_GET_FAILED
-            valueResp.error.description = "Set failed: No response from HDDS"
+            setResp.success = False
+            setResp.error.error_code = FAILURE_SET_FAILED
+            setResp.error.error_description = "Set failed: No response from HDDS"
             response = ThalesZMQMessage(setResp)
         else:
             self.log.warning("Unexpected response from HDDS: %s" % response.name)
