@@ -35,8 +35,7 @@ class Rs232(Module):
                                         parity=self.parity,
                                         stopbits=self.stopbits,
                                         bytesize=self.bytesize,
-                                        timeout=0.1,
-                                        rtscts=True)
+                                        timeout=0.1)
         except (serial.SerialException, OSError):
             raise RS232ModuleSerialException(self.port)
         else:
