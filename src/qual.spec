@@ -35,10 +35,10 @@ cp -r * %{buildroot}/thales/qual/src/
 /%{_unitdir}/qual.service
 /usr/lib/systemd/system-preset/50-qual-service.preset
 /thales/qual/src/*
+/thales/host/appliances/qtemenu
 %exclude /thales/qual/src/simulator
 %exclude /thales/qual/src/qual.*
 %exclude /thales/qual/src/50-qual-service.preset
-%exclude /thales/qual/src/pkgs-psi.inc.ks
 %exclude /thales/qual/src/qte/qtemenu.sh
 
 %post
