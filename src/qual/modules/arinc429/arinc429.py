@@ -96,10 +96,9 @@ class ARINC429(module.Module):
             confReq = Request()
             confReq.channelName = outputChan.name
             confReq.type = Request.SET_CONFIG
-            conf = confReq.config.add()
-            conf.rate = ChannelConfig.HIGH
-            conf.labelOrder = ChannelConfig.NORMAL
-            conf.parityEnable = False
+            confReq.config.rate = ChannelConfig.HIGH
+            confReq.config.labelOrder = ChannelConfig.NORMAL
+            confReq.config.parityEnable = False
             response = self.driverClient.sendRequest(ThalesZMQMessage(confReq))
 
             #  Parse the response
@@ -116,10 +115,9 @@ class ARINC429(module.Module):
             confReq = Request()
             confReq.channelName = inputChan.name
             confReq.type = Request.SET_CONFIG
-            conf = confReq.config.add()
-            conf.rate = ChannelConfig.HIGH
-            conf.labelOrder = ChannelConfig.NORMAL
-            conf.parityEnable = False
+            confReq.config.rate = ChannelConfig.HIGH
+            confReq.config.labelOrder = ChannelConfig.NORMAL
+            confReq.config.parityEnable = False
             response = self.driverClient.sendRequest(ThalesZMQMessage(confReq))
 
             #  Parse the response
