@@ -29,3 +29,8 @@ done
 
 export PYTHONPATH=`pwd`
 python -m unittest discover -s qual/modules -p "unitTest_*.py" 2>&1 | tee /tmp/unittests.txt
+
+# Temporary - also get PCI device information
+echo "" >> /tmp/unittests.txt
+echo "PCI information:" >> /tmp/unittests.txt
+lspci -nn >> /tmp/unittests.txt
