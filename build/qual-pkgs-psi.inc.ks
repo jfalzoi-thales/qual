@@ -90,5 +90,6 @@ pyserial
 fio
 pmbw
 ethtool
+pciutils
 
 %end

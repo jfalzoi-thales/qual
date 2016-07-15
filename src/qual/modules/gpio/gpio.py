@@ -18,6 +18,10 @@ class ConnectionInfo(object):
         super(ConnectionInfo, self).__init__()
         ## Name of output pin that input pin will be connected to
         self.outputPin = outputPin
+        ## This connection is newly set up
+        self.firstCycle = True
+        ## Pin state on previous half-cycle
+        self.lastState = True
         ## Number of matches
         self.matches = 0
         ## Number of mismatches
@@ -213,10 +217,24 @@ class GPIO(module.Module):
         for inputPin, connection in self.connections.items():
             pinInfo = self.inputPins[inputPin]
             inputState = pinInfo.func(pinInfo.name)
-            if inputState == self.outputState:
-                connection.matches += 1
+            # We calculate statistics every full cycle (high-low)
+            if self.outputState:
+                # On "high" half-cycle, just store the state
+                #self.log.debug("Pin %s expect 1 got %d" % (inputPin, inputState))
+                connection.lastState = inputState
+                if connection.firstCycle:
+                    # First full cycle for this connection has been reached, so we can clear this flag
+                    connection.firstCycle = False
             else:
-                connection.mismatches += 1
+                # On "low" half-cycle, update the statistics
+                #self.log.debug("Pin %s expect 0 got %d" % (inputPin, inputState))
+                if connection.firstCycle:
+                    # Connection was added mid-cycle; wait until next cycle to update stats
+                    self.log.debug("Pin %s just added; waiting to update stats" % inputPin)
+                elif inputState == False and connection.lastState == True:
+                    connection.matches += 1
+                else:
+                    connection.mismatches += 1
 
         # And release the lock
         self.connectionsLock.release()
