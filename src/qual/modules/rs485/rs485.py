@@ -79,14 +79,13 @@ class Rs485(Module):
             else:
                 self.mismatches += 1
         else:
-            if rx1 == self.tx:
-                if self.localecho:
-                    if rx2 == self.tx:
-                        self.matches += 1
-                    else:
-                        self.mismatches += 1
-                else:
+            if self.localecho:
+                if rx2 == self.tx:
                     self.matches += 1
+                else:
+                    self.mismatches += 1
+            else:
+                self.matches += 1
         ## Update the current character
         ch = ord(self.tx)+1
         if ch > 255:
