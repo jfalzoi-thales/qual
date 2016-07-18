@@ -58,6 +58,9 @@ i2c-device-manager
 # GPIO Manager
 gpio-manager
 
+# SPI Manager
+spi-manager
+
 # Power Supply Monitor
 power-supply-monitor
 
