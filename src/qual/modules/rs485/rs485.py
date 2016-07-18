@@ -26,9 +26,11 @@ class Rs485(Module):
         self.stopbits= serial.STOPBITS_ONE
         ## byte size
         self.bytesize= serial.EIGHTBITS
+        ## local echo
+        self.localecho = False
         ## timeout
         self.timeout= 3
-        self.loadConfig(attributes=('port','baudrate','parity','stopbits','bytesize', 'timeout'))
+        self.loadConfig(attributes=('port','baudrate','parity','stopbits','bytesize', 'timeout', 'localecho'))
 
 
         try:
@@ -64,13 +66,27 @@ class Rs485(Module):
         self.serial.write(self.tx)
         self.written += 1
         # time.sleep(0.5)
-        rx = self.serial.read()
-        if len(rx) == 0:
+        rx1 = self.serial.read()
+        # If local echo is true, attempt to read the byte twice.
+        if self.localecho:
+            rx2 = self.serial.read()
+        if len(rx1) == 0:
             self.mismatches += 1
-        elif rx != self.tx:
-            self.mismatches += 1
+        elif rx1 != self.tx:
+            if self.localecho:
+                if rx2 != self.tx:
+                    self.mismatches += 1
+            else:
+                self.mismatches += 1
         else:
-            self.matches += 1
+            if rx1 == self.tx:
+                if self.localecho:
+                    if rx2 == self.tx:
+                        self.matches += 1
+                    else:
+                        self.mismatches += 1
+                else:
+                    self.matches += 1
         ## Update the current character
         ch = ord(self.tx)+1
         if ch > 255:
