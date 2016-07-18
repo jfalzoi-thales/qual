@@ -4,7 +4,6 @@ from common.gpb.python.Ethernet_pb2 import EthernetRequest, EthernetResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.module.module import Module, ModuleException
 
-
 ## Ethernet Module Exception Class
 class EthernetModuleException(ModuleException):
     ## Constructor
@@ -14,7 +13,6 @@ class EthernetModuleException(ModuleException):
         super(EthernetModuleException, self).__init__()
         ## Message text associated with this exception
         self.msg = msg
-
 
 ## Ethernet Module
 class Ethernet(Module):
@@ -27,6 +25,9 @@ class Ethernet(Module):
         self.iperf = None
         ## IP address of remote iperf3 server to communicate with
         self.server = ""
+        ## Speed at which to send traffic in Mbits per second (0 for unlimited)
+        self.bandwidthSpeed = 0
+        self.loadConfig(attributes=('bandwidthSpeed',))
         ## Network bandwidth reading from iperf3
         self.bandwidth = 0.0
         ## Cumulative number of retries over iperf3 run
@@ -69,7 +70,7 @@ class Ethernet(Module):
     def startiperf(self):
         #  'stdbuf -o L' modifies iperf3 to allow easily accessed line buffered output
         self.iperf = subprocess.Popen(
-            ["stdbuf", "-o", "L", "iperf3", "-c", self.server, "-f", "m", "-t", "86400"],
+            ["stdbuf", "-o", "L", "iperf3", "-c", self.server, "-b", "%sM" % str(self.bandwidthSpeed), "-f", "m", "-t", "86400"],
             stdout=subprocess.PIPE, bufsize=1)
 
     ## Runs in thread to continually gather iperf3 data line by line and restarts iperf3 if process ends
