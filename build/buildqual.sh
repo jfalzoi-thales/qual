@@ -36,9 +36,9 @@ buildqual () {
     sudo cp ${QUALSRCDIR}/../build/qual-pkgs-psi.inc.ks ${MPSBUILDDIR}/config/pkgs-psi.inc.ks
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/build.script"
     cd ${MPSBUILDDIR}/bin/
-    OLDQUAL=`ls -t1 livecd-mps-psi-*.gz | head -1`
-    NEWQUAL=${OLDQUAL/livecd-mps-psi/livecd-mps-qual}
-    sudo mv ${MPSBUILDDIR}/bin/${OLDQUAL} ${MPSBUILDDIR}/bin/${NEWQUAL}
+    QUALPXE=`ls -t1 livecd-mps-qual-*.tftpboot.tar.gz | head -1`
+    QUALUSBDISK=`ls -t1 livecd-mps-qual-*.usbdisk.img.gz | head -1`
+    QUALUSBPART=`ls -t1 livecd-mps-qual-*.usbpart.img.gz | head -1`
 }
 
 # Build qual-vm pxe image
@@ -46,9 +46,15 @@ buildvm () {
     sudo cp ${QUALSRCDIR}/../build/qual-vm-pkgs-psi.inc.ks ${MPSBUILDDIR}/config/pkgs-psi.inc.ks
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/build.script"
     cd ${MPSBUILDDIR}/bin/
-    OLDVM=`ls -t1 livecd-mps-psi-*.gz | head -1`
-    NEWVM=${OLDVM/livecd-mps-psi/livecd-mps-qual-vm}
-    sudo mv ${MPSBUILDDIR}/bin/${OLDVM} ${MPSBUILDDIR}/bin/${NEWVM}
+    OLDVMPXE=`ls -t1 livecd-mps-qual-*.tftpboot.tar.gz | head -1`
+    OLDVMUSBDISK=`ls -t1 livecd-mps-qual-*.usbdisk.img.gz | head -1`
+    OLDVMUSBPART=`ls -t1 livecd-mps-qual-*.usbpart.img.gz | head -1`
+    NEWVMPXE=${OLDVMPXE/livecd-mps-qual/livecd-mps-qual-vm}
+    NEWVMUSBDISK=${OLDVMUSBDISK/livecd-mps-qual/livecd-mps-qual-vm}
+    NEWVMUSBPART=${OLDVMUSBPART/livecd-mps-qual/livecd-mps-qual-vm}
+    sudo mv ${MPSBUILDDIR}/bin/${OLDVMPXE} ${MPSBUILDDIR}/bin/${NEWVMPXE}
+    sudo mv ${MPSBUILDDIR}/bin/${OLDVMUSBDISK} ${MPSBUILDDIR}/bin/${NEWVMUSBDISK}
+    sudo mv ${MPSBUILDDIR}/bin/${OLDVMUSBPART} ${MPSBUILDDIR}/bin/${NEWVMUSBPART}
 }
 
 set -e
@@ -75,11 +81,15 @@ esac
 git push origin dev/QUAL
 
 if [ $BUILD != "VM" ]; then 
-    echo "Built QUAL image: $NEWQUAL"
+    echo "Built QUAL PXE image: $QUALPXE"
+    echo "Built QUAL USBDISK image: $QUALUSBDISK"
+    echo "Built QUAL USBPART image: $QUALUSBPART"
 fi
 
 if [ $BUILD != "QUAL" ]; then 
-    echo "Built QUAL-VM image: $NEWVM"
+    echo "Built QUAL-VM PXE image: $NEWVMPXE"
+    echo "Built QUAL-VM USBDISK image: $NEWVMUSBDISK"
+    echo "Built QUAL-VM USBPART image: $NEWVMUSBPART"
 fi
 
 exit
