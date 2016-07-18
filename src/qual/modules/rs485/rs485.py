@@ -73,11 +73,7 @@ class Rs485(Module):
         if len(rx1) == 0:
             self.mismatches += 1
         elif rx1 != self.tx:
-            if self.localecho:
-                if rx2 != self.tx:
-                    self.mismatches += 1
-            else:
-                self.mismatches += 1
+            self.mismatches += 1
         else:
             if self.localecho:
                 if rx2 == self.tx:
