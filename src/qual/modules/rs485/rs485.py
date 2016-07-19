@@ -28,9 +28,12 @@ class Rs485(Module):
         self.bytesize= serial.EIGHTBITS
         ## local echo
         self.localecho = False
+        ## message delay
+        #  delay between each message
+        self.messagedelay = 1
         ## timeout
         self.timeout= 3
-        self.loadConfig(attributes=('port','baudrate','parity','stopbits','bytesize', 'timeout', 'localecho'))
+        self.loadConfig(attributes=('port','baudrate','parity','stopbits','bytesize', 'timeout', 'localecho','messagedelay'))
 
 
         try:
@@ -63,6 +66,10 @@ class Rs485(Module):
     ## Sends the data and expects the same response
     #
     def sendData(self):
+        # Wait for the specified delay before
+        # sending the message
+        time.sleep(self.messagedelay)
+        # Send the message
         self.serial.write(self.tx)
         self.written += 1
         # time.sleep(0.5)
