@@ -30,9 +30,9 @@ class Rs485(Module):
         self.localecho = False
         ## message delay
         #  delay between each message
-        self.messagedelay = 1
+        self.messagedelay = 0.01
         ## timeout
-        self.timeout= 3
+        self.timeout= 1
         self.loadConfig(attributes=('port','baudrate','parity','stopbits','bytesize', 'timeout', 'localecho','messagedelay'))
 
 
