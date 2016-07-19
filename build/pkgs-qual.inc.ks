@@ -5,7 +5,7 @@ kernel
 syslinux
 vi
 
-#from @base
+# from @base
 basesystem
 bash
 bzip2
@@ -36,42 +36,46 @@ wget
 xz
 zip
 
-# kernel modules
+# Kernel Modules
 kmod-i2c-mcp2221
 
-# mps config, tools and libs
+# MPS Config, Tools and Libs
 mps-config
-#mps-tools
+#mps-config-qual
+mps-config-map
+mps-tools
 mpsinst-tools
-#libmps-utils
+libmps-utils
 
 # SEMA Driver
-#libsema
-#sema-driver
+libsema
+sema-driver
 
-# FTDI driver
+# FTDI Driver
 libftdi
 
-# I2C Manager
-#i2c-device-manager
+# I2C manager
+i2c-device-manager
 
 # GPIO Manager
-#gpio-manager
+gpio-manager
+
+# SPI Manager
+spi-manager
 
 # Power Supply Monitor
-#power-supply-monitor
+power-supply-monitor
 
-# ARINC drivers
-#arinc429-driver
-#arinc717-driver
+# ARINC Drivers
+arinc429-driver
+arinc717-driver
 
-# Higher level services
-#host-domain-device-service
+# Higher Level Services
+host-domain-device-service
 
-
-# TPM packages
-#trousers
-#tpm-tools
+# TPM Packages
+trousers
+tpm-tools
 
 # ZeroMQ
 libsodium
@@ -80,9 +84,18 @@ czmq
 python-zmq
 protobuf-python
 
+# Development Tools
+i2c-tools
+less
+minicom
+nfs-utils
+pciutils
+strace
+usbutils
+
 # Qual
 qual
-qual-vm
+#qual-vm
 iperf3
 lookbusy
 alsa-utils

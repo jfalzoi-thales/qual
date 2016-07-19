@@ -33,7 +33,7 @@ titovm () {
 
 # Build qual pxe image
 buildqual () {
-    sudo cp ${QUALSRCDIR}/../build/qual-pkgs-psi.inc.ks ${MPSBUILDDIR}/config/pkgs-psi.inc.ks
+    sudo cp ${QUALSRCDIR}/../build/pkgs-qual.inc.ks ${MPSBUILDDIR}/config/
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/build.script"
     cd ${MPSBUILDDIR}/bin/
     QUALPXE=`ls -t1 livecd-mps-qual-*.tftpboot.tar.gz | head -1`
@@ -43,7 +43,7 @@ buildqual () {
 
 # Build qual-vm pxe image
 buildvm () {
-    sudo cp ${QUALSRCDIR}/../build/qual-vm-pkgs-psi.inc.ks ${MPSBUILDDIR}/config/pkgs-psi.inc.ks
+    sudo cp ${QUALSRCDIR}/../build/pkgs-qual-vm.inc.ks ${MPSBUILDDIR}/config/pkgs-qual.inc.ks
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/build.script"
     cd ${MPSBUILDDIR}/bin/
     OLDVMPXE=`ls -t1 livecd-mps-qual-*.tftpboot.tar.gz | head -1`
@@ -59,6 +59,7 @@ buildvm () {
 
 set -e
 cd ${QUALSRCDIR}/
+echo "Please use your own Git credentials to log in. \(^^\) \(^^)/ (/^^)/"
 git fetch origin dev/QUAL
 git reset --hard FETCH_HEAD
 git clean -df
@@ -78,6 +79,7 @@ case $BUILD in
      "ALL") buildqual; buildvm;;
 esac
 
+cd ${QUALSRCDIR}/
 git push origin dev/QUAL
 
 if [ $BUILD != "VM" ]; then 
