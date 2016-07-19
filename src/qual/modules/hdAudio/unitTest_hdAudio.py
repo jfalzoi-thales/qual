@@ -20,6 +20,8 @@ class HDAudioMessages(ModuleMessages):
         return [("Report",  HDAudioMessages.report),
                 ('Connect Test 1', HDAudioMessages.connectTest1),
                 ('Connect Test 2', HDAudioMessages.connectTest2),
+                ('Connect Test 3 (1kHz 30sec)', HDAudioMessages.connectTest1),
+                ('Connect Test 4 (1kHz 60sec)', HDAudioMessages.connectTest2),
                 ('Disconnect', HDAudioMessages.disconnect)]
 
     @staticmethod
@@ -36,6 +38,22 @@ class HDAudioMessages(ModuleMessages):
         message.requestType = HDAudioRequest.CONNECT
         message.source='comfortablynumb.wav'
         message.volume=50
+        return message
+
+    @staticmethod
+    def connectTest3():
+        message = HDAudioRequest()
+        message.requestType = HDAudioRequest.CONNECT
+        message.source = '1kHz_30sec.wav'
+        message.volume = 100
+        return message
+
+    @staticmethod
+    def connectTest4():
+        message = HDAudioRequest()
+        message.requestType = HDAudioRequest.CONNECT
+        message.source = '1kHz_60sec.wav'
+        message.volume = 100
         return message
 
     @staticmethod
@@ -244,6 +262,47 @@ class Test_HDAudio(unittest.TestCase):
         self.assertEqual(response.body.appState, HDAudioResponse.DISCONNECTED)
         self.assertEqual(response.body.source, '')
         self.assertEqual(response.body.volume, 50)
+
+    ## Valid Test case: Send a CONNECT, REPORT and DISCONNECT msgs
+    # Asserts:
+    #       appState == CONNECTED
+    #       source == "1kHz_60sec.wav"
+    #       volume == 100
+    #       ---------------------
+    #       appState == CONNECTED
+    #       source == "1kHz_60sec.wav"
+    #       volume == 100
+    #       ---------------------
+    #       appState == DISCONNECTED
+    #       source == "1kHz_60sec.wav"
+    #       volume == 100
+    #       ---------------------
+    def test_ConnectReportDisconnect_Vol100_1kHz(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: 1kHz file, CONNECT, REPORT and DISCONNECT message ****")
+        # Connect
+        response = module.msgHandler(ThalesZMQMessage(HDAudioMessages.connectTest1()))
+        # asserts
+        self.assertEqual(response.name, "HDAudioResponse")
+        self.assertEqual(response.body.appState, HDAudioResponse.CONNECTED)
+        self.assertEqual(response.body.source, '1kHz_60sec.wav')
+        self.assertEqual(response.body.volume, 100)
+        # Report
+        response = module.msgHandler(ThalesZMQMessage(HDAudioMessages.report()))
+        self.assertEqual(response.name, "HDAudioResponse")
+        self.assertEqual(response.body.appState, HDAudioResponse.CONNECTED)
+        self.assertEqual(response.body.source, '1kHz_60sec.wav')
+        self.assertEqual(response.body.volume, 100)
+        # Allow the audio for a while
+        time.sleep(5)
+        # Disconnect
+        response = module.msgHandler(ThalesZMQMessage(HDAudioMessages.disconnect()))
+        self.assertEqual(response.name, "HDAudioResponse")
+        self.assertEqual(response.body.appState, HDAudioResponse.DISCONNECTED)
+        self.assertEqual(response.body.source, '')
+        self.assertEqual(response.body.volume, 100)
 
     ## Invalid Test case: Send a wrong volume
     # Asserts:
