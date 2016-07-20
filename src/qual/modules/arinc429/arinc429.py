@@ -100,10 +100,6 @@ class ARINC429(module.Module):
             confReq.config.labelOrder = ChannelConfig.NORMAL
             confReq.config.parityEnable = False
             confReq.config.paritySense = ChannelConfig.ODD
-            confReq.config.sdiFilter.enable = False
-            confReq.config.sdiFilter.value = 0xFFFFFFFF
-            confReq.config.labelFilter.enable = False
-            confReq.config.labelFilter.labelMap = "\xFF\xFF\xFF\xFF"
             response = self.driverClient.sendRequest(ThalesZMQMessage(confReq))
 
             #  Parse the response
@@ -127,7 +123,7 @@ class ARINC429(module.Module):
             confReq.config.sdiFilter.enable = False
             confReq.config.sdiFilter.value = 0xFFFFFFFF
             confReq.config.labelFilter.enable = False
-            confReq.config.labelFilter.labelMap = "\xFF\xFF\xFF\xFF"
+            confReq.config.labelFilter.labelMap = "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
             response = self.driverClient.sendRequest(ThalesZMQMessage(confReq))
 
             #  Parse the response
