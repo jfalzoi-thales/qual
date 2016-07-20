@@ -43,6 +43,7 @@ kmod-i2c-mcp2221
 mps-config
 #mps-config-qual
 mps-config-map
+mps-keys
 mps-tools
 mpsinst-tools
 libmps-utils
@@ -85,10 +86,8 @@ python-zmq
 protobuf-python
 
 # Development Tools
-i2c-tools
 less
 minicom
-nfs-utils
 pciutils
 strace
 usbutils
