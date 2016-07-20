@@ -12,6 +12,7 @@ Source: %{name}-%{version}.tar.gz
 Requires: rsyslog
 Requires: arinc429-driver
 Requires: arinc717-driver
+Requires: host-domain-device-service
 %{?systemd_requires}
 BuildRequires: systemd
 
@@ -47,3 +48,4 @@ ln -f /thales/qual/src/qual/config/mps.ini /thales/qual/src/qual/config/platform
 echo -e "\$ActionQueueFileName fwdRule1\n\$ActionQueueMaxDiskSpace 2g\n\$ActionQueueSaveOnShutdown on\n\$ActionQueueType LinkedList\n\$ActionResumeRetryCount -1\n*.* @192.168.137.1:514" >> /etc/rsyslog.conf
 sed -i 's|arinc429drv|arinc429drv -l VERBOSE|g' /usr/lib/systemd/system/arinc429drv.service
 sed -i 's|arinc717drv|arinc717drv -d -v|g' /usr/lib/systemd/system/arinc717drv.service
+sed -i 's|service_prvkey_file|#service_prvkey_file|g' /thales/host/config/HDDS.conf
