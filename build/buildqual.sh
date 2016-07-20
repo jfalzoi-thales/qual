@@ -5,7 +5,7 @@ RPM="YES"
 
 # Check for parameters, 
 # if none, 	build only qual image 
-# if norpm, 	build images without re-building RPMs
+# if norpm, build images without re-building RPMs
 # if vm,   	build only vm image 
 # if all,  	build both
 TEMP=`getopt -o nva --long norpm,vm,all -n 'buildqual.sh' -- "$@"`
@@ -13,23 +13,23 @@ eval set -- "$TEMP"
 
 while true ; do
     case "$1" in
-	-n|--norpm)
-	    RPM="NO"
-	    shift;;
-	-v|--vm)
-	    BUILD="VM"
-	    shift;;
-	-a|--all)
-	    BUILD="ALL"
-	    shift;;
-	--)
-	    shift; break;;
-	*)
-    	    echo "Unrecognized parameter specified.  Accepted parameters are:
-    		-n|--norpm 	- builds images without re-building RPMs
-     		-v|--vm 	- builds only qual-vm image
-		-a|--all 	- builds both qual and qual-vm images"
-    	    exit 1;;
+        -n|--norpm)
+            RPM="NO"
+            shift;;
+        -v|--vm)
+            BUILD="VM"
+            shift;;
+        -a|--all)
+            BUILD="ALL"
+            shift;;
+        --)
+            shift; break;;
+        *)
+            echo "Unrecognized parameter specified.  Accepted parameters are:
+                -n|--norpm 	- builds images without re-building RPMs
+                -v|--vm 	- builds only qual-vm image
+                -a|--all 	- builds both qual and qual-vm images"
+            exit 1;;
     esac
 done
 
@@ -54,7 +54,7 @@ titovm () {
 
 # Build qual pxe image
 buildqual () {
-    echo "(/*-*)/ Building qual images! \(*-*\)
+    echo "(/*-*)/ Building qual images! \(*-*\)"
     sudo cp ${QUALSRCDIR}/../build/pkgs-qual.inc.ks ${MPSBUILDDIR}/config/
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/build.script"
     cd ${MPSBUILDDIR}/bin/
@@ -65,7 +65,7 @@ buildqual () {
 
 # Build qual-vm pxe image
 buildvm () {
-    echo "(/~-~)/ Building qual-vm images! \(~-~\)
+    echo "(/~-~)/ Building qual-vm images! \(~-~\)"
     sudo cp ${QUALSRCDIR}/../build/pkgs-qual-vm.inc.ks ${MPSBUILDDIR}/config/pkgs-qual.inc.ks
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/build.script"
     cd ${MPSBUILDDIR}/bin/
