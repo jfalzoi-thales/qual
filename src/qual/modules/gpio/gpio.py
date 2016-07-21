@@ -2,6 +2,8 @@
 import collections
 from time import sleep
 import threading
+import subprocess
+
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.GPIO_pb2 import GPIORequest, GPIOResponse
@@ -47,7 +49,10 @@ class GPIO(module.Module):
                            "GP_KYLN_OUT3": self.PinInfo(self.gpioManagerSet, "OUTPUT_3_PIN_C6"),
                            "GP_KYLN_OUT4": self.PinInfo(self.gpioManagerSet, "OUTPUT_4_PIN_D6"),
                            "GP_KYLN_OUT5": self.PinInfo(self.gpioManagerSet, "OUTPUT_5_PIN_E6"),
-                           "GP_KYLN_OUT6": self.PinInfo(self.gpioManagerSet, "OUTPUT_6_PIN_E8")}
+                           "GP_KYLN_OUT6": self.PinInfo(self.gpioManagerSet, "OUTPUT_6_PIN_E8"),
+                           "GP_KYLN_OUT7": self.PinInfo(self.binaryioSet, "LLS_OUT_GP_KL_01"),
+                           "GP_KYLN_OUT8": self.PinInfo(self.binaryioSet, "LLS_OUT_GP_KL_02"),
+                           "GP_KYLN_OUT9": self.PinInfo(self.binaryioSet, "LLS_OUT_GP_KL_03")}
 
         ## Dict mapping GPIO input pins to handler and handler pin name
         self.inputPins = {"GP_KYLN_IN1":     self.PinInfo(self.gpioManagerGet, "INPUT_1_PIN_A7"),
@@ -55,7 +60,11 @@ class GPIO(module.Module):
                           "GP_KYLN_IN3":     self.PinInfo(self.gpioManagerGet, "INPUT_3_PIN_C7"),
                           "GP_KYLN_IN4":     self.PinInfo(self.gpioManagerGet, "INPUT_4_PIN_D7"),
                           "GP_KYLN_IN5":     self.PinInfo(self.gpioManagerGet, "INPUT_5_PIN_E7"),
-                          "PA_ALL_KYLN_IN":  self.PinInfo(self.gpioManagerGet, "PA_All_PIN_C8")}
+                          "PA_ALL_KYLN_IN":  self.PinInfo(self.gpioManagerGet, "PA_All_PIN_C8"),
+                          "GP_KYLN_IN6":     self.PinInfo(self.binaryioGet, "LLS_IN_GP_KL_01"),
+                          "GP_KYLN_IN7":     self.PinInfo(self.binaryioGet, "LLS_IN_GP_KL_02"),
+                          "GP_KYLN_IN8":     self.PinInfo(self.binaryioGet, "LLS_IN_GP_KL_03"),
+                          "GP_KYLN_IN9":     self.PinInfo(self.binaryioGet, "LLS_IN_GP_KL_04")}
 
         ## Dict of connections; key is input pin, value is a ConnectionInfo object
         self.connections = {}
@@ -289,6 +298,45 @@ class GPIO(module.Module):
                 return getResp.state
 
         self.log.error("Error return from GPIO Manager for pin %s" % pinName)
+        # Return the opposite of the current output state to force match to fail
+        return not self.outputState
+
+    ## Sets an IFE card pin state using demo_binaryio
+    #
+    # @param  self
+    # @param  pinName Pin name to be sent to demo_binaryio
+    # @param  state   New state to be sent to demo_binaryio
+    def binaryioSet(self, pinName, state):
+        cmd = 'demo_binaryio setDiscreteOutput %s %d' % (pinName, 1 if state else 0)
+        self.log.debug(cmd)
+        rc = subprocess.call(cmd, shell=True)
+        if rc != 0:
+            self.log.error("Error return from demo_binaryio for pin %s" % pinName)
+
+    ## Gets an IFE card pin state using demo_binaryio
+    #
+    # @param  self
+    # @param  pinName Pin name to be sent to demo_binaryio
+    # @return Current state of the pin
+    def binaryioGet(self, pinName):
+        cmd = 'demo_binaryio getDiscreteInput %s' % pinName
+        self.log.debug(cmd)
+        try:
+            output = subprocess.check_output(cmd, shell=True)
+        except subprocess.CalledProcessError as e:
+            self.log.error("Error return from demo_binaryio for pin %s" % pinName)
+            # Return the opposite of the current output state to force match to fail
+            return not self.outputState
+
+        self.log.debug("Command returned: %s" % output)
+        idx = str.find("Discrete value =")
+        if idx > -1:
+            if output[idx+17] == "0":
+                return False
+            elif output[idx+17] == "1":
+                return True
+
+        self.log.error("Unexpected output from demo_binaryio for pin %s" % pinName)
         # Return the opposite of the current output state to force match to fail
         return not self.outputState
 
