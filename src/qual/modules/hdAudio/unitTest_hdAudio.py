@@ -283,7 +283,7 @@ class Test_HDAudio(unittest.TestCase):
 
         log.info("**** Test case: 1kHz file, CONNECT, REPORT and DISCONNECT message ****")
         # Connect
-        response = module.msgHandler(ThalesZMQMessage(HDAudioMessages.connectTest1()))
+        response = module.msgHandler(ThalesZMQMessage(HDAudioMessages.connectTest3()))
         # asserts
         self.assertEqual(response.name, "HDAudioResponse")
         self.assertEqual(response.body.appState, HDAudioResponse.CONNECTED)
@@ -325,7 +325,7 @@ class Test_HDAudio(unittest.TestCase):
 
         log.info("**** Test case: 4kHz file, CONNECT, REPORT and DISCONNECT message ****")
         # Connect
-        response = module.msgHandler(ThalesZMQMessage(HDAudioMessages.connectTest1()))
+        response = module.msgHandler(ThalesZMQMessage(HDAudioMessages.connectTest4()))
         # asserts
         self.assertEqual(response.name, "HDAudioResponse")
         self.assertEqual(response.body.appState, HDAudioResponse.CONNECTED)
