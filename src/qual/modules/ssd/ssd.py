@@ -95,21 +95,23 @@ class SSD(Module):
         ## Default size partition (GBytes)
         self.partitonsize = 100
         self.loadConfig(attributes=('partitonsize',))
-        # Init the RAID filesystem and store in device for use in collectIO
+        #  Init the RAID filesystem and store in device for use in collectIO
         device = self.initFS()
         ## Read and Write bandwidth reported by fio tool
         self.readBandwidth = 0.0
         self.writeBandwidth = 0.0
         ## SSD Data collection thread
         #self.collect = collectIO(device)
-        # Start data collection thread
+        #  Start data collection thread
         #self.collect.start()
         #sleep(2)
-        # Create the FIO config file
+        #  Create the FIO config file
         self.createFioConfig()
-        # adding the fio tool thread
+        #  Run FIO to create 100M file
+        subprocess.Popen(['fio', self.__fioConf, '--runtime=0']).communicate()
+        #  Adding the fio tool thread
         self.addThread(self.runTool)
-        # adding the message handler
+        #  Adding the message handler
         self.addMsgHandler(SSDRequest, self.handlerMessage)
 
     ## Handles incoming messages
@@ -152,7 +154,11 @@ class SSD(Module):
     def stop(self, response):
         self._running = False
         subprocess.Popen(['pkill', '-9', 'fio']).communicate()
+        #  Sleep to allow process to die
+        sleep(2)
         self.stopThread()
+        self.readBandwidth = 0.0
+        self.writeBandwidth = 0.0
         self.report(response)
 
     ## Reports data from fio tool
@@ -304,35 +310,24 @@ class SSD(Module):
     def createFioConfig(self):
         f = open(self.__fioConf, mode='w')
         f.write('[global]\n')
-        f.write('rw=sequential\n')
-        f.write('size=1g\n')
+        f.write('rw=rw\n')
+        f.write('size=100M\n')
         f.write('\n')
         f.write('[QUAL-SSD]\n')
         f.write('directory=%s\n' % self.__raidFS)
-        f.write('runtime=2')
 
     ## Runs FIO tool
     #
     #  @param   self
     def runTool(self):
-        fio = subprocess.Popen(["stdbuf", "-o", "L", 'fio', self.__fioConf, "|", "fgrep", "bw="],
-                               stdout=subprocess.PIPE, bufsize=1)
-        lines = fio.stdout.readlines()
-
-        #  Parse the read and write bandwidth values from FIO tool output
-        for line in lines:
-            fields = line.split(':', 'bw=', 'B/s')
-            if fields[1].isdigit():
-                if line.startswith("read"):
-                    self.readBandwidth = float(fields[1]) / 1024 / 1024
-                    print("Read bandwidth: %s" % self.readBandwidth)
-                elif line.startswith("write"):
-                    self.writeBandwidth = float(fields[1]) / 1024 / 1024
-                    print("Write bandwidth: %s" % self.writeBandwidth)
-                else:
-                    self.log.error("Incorrect Field %s" % fields[1])
-            else:
-                self.log.error("Incorrect Line %s" % line)
+        try:
+            fio = subprocess.check_output(['fio', self.__fioConf, '--minimal', '--runtime=2'])
+            fields = fio.split(';')
+            self.readBandwidth = float(fields[6]) / 1024
+            self.writeBandwidth = float(fields[47]) / 1024
+        except:
+            self.log.info("FIO Exited Early")
+            pass
 
     ## Stops background thread
     #
