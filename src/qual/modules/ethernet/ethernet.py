@@ -1,5 +1,7 @@
+
 import subprocess
-import os
+import threading
+from time import sleep
 from common.gpb.python.Ethernet_pb2 import EthernetRequest, EthernetResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.module.module import Module, ModuleException
@@ -13,6 +15,7 @@ class EthernetModuleException(ModuleException):
         super(EthernetModuleException, self).__init__()
         ## Message text associated with this exception
         self.msg = msg
+
 
 ## Connection info container class
 class ConnectionInfo(object):
@@ -45,6 +48,10 @@ class Ethernet(Module):
         self.loadConfig(attributes=('bandwidthSpeed',))
         ## Dict of connections; key is local port, value is a ConnectionInfo object
         self.connections = {}
+        ## Lock for access to connections dict
+        self.connectionsLock = threading.Lock()
+        ## Default server to connect to if not specified in request
+        self.defaultServer = ""
         #  Enables the use of iperfTraker() as a thread
         self.addThread(self.iperfTracker)
         #  Adds handler to available message handlers
@@ -56,13 +63,8 @@ class Ethernet(Module):
     #  @return    ThalesZMQMessage object
     def handler(self, msg):
         response = EthernetResponse()
+        # TODO: Validate local port
         response.local = msg.body.local
-
-        #  Resets bandwidth and retries values if not running and before a new run;
-        #  this mainly handles the case where a re-RUN command is issued without a STOP
-        if not self._running or (msg.body.requestType == EthernetRequest.RUN and msg.body.remote != ""):
-            #  We don't want to overwrite the server if an empty server address is sent
-            self.server = msg.body.remote
 
         if msg.body.requestType == EthernetRequest.RUN:
             self.start(msg.body, response)
@@ -71,79 +73,146 @@ class Ethernet(Module):
         elif msg.body.requestType == EthernetRequest.REPORT:
             self.report(msg.body, response)
         else:
-            self.log.error("Unexpected Request Type %d" % (msg.body.requestType))
+            self.log.error("Unexpected Request Type %d" % msg.body.requestType)
 
         return ThalesZMQMessage(response)
 
     ## Starts iperf3 over a specific channel in order to simulate network traffic
     #  @param   self
+    #  @param   connection ConnectionInfo object for this connection
     def startiperf(self, connection):
         #  'stdbuf -o L' modifies iperf3 to allow easily accessed line buffered output
         connection.iperf = subprocess.Popen(
             ["stdbuf", "-o", "L", "iperf3", "-c", connection.server, "-b", "%sM" % str(self.bandwidthSpeed), "-f", "m", "-t", "86400"],
             stdout=subprocess.PIPE, bufsize=1)
 
+    ## Terminates a running iperf on a connection
+    #  @param   self
+    #  @param   connection ConnectionInfo object for this connection
+    def stopiperf(self, connection):
+        connection.iperf.terminate()
+        connection.iperf.wait()
+        connection.iperf = None
+
     ## Runs in thread to continually gather iperf3 data line by line and restarts iperf3 if process ends
     #  @param   self
     def iperfTracker(self):
-        # TODO: add locking
+        #self.log.info("top of iperfTracker")
+        self.connectionsLock.acquire()
         for connection in self.connections.values():
-            #  If iperf3 is already running, skip this.  This ensures that iperf3 restarts after its 86400 second runtime
-            if connection.iperf.poll() is not None:
-                self.startiperf(connection)
+            #  Poor man's locking
+            iperf = connection.iperf
+            if iperf is not None:
+                #  If iperf3 has exited, restart it (iperf3 has a maximum runtime before it exits)
+                if connection.iperf.poll() is not None:
+                    self.log.debug("iperf on port %s ended; restarting" % connection.localPort)
+                    self.startiperf(connection)
 
-            line = connection.iperf.stdout.readline()
-            stuff = line.split()
+                line = connection.iperf.stdout.readline()
+                self.log.debug("Port %s: %s" % (connection.localPort, line))
+                stuff = line.split()
 
-            #  If the 8th field of data is "Mbits/sec" and the number of fields is 11(signifying non-total results),
-            #  then this is the information we want
-            #  EXAMPLE OUTPUT: [  5]   0.00-1.00   sec  23.0 MBytes   193 Mbits/sec    0    211 KBytes
-            if len(stuff) == 11 and stuff[7] == "Mbits/sec":
-                connection.bandwidth = float(stuff[6])
-                connection.retries += int(stuff[8])
+                #  If the 8th field of data is "Mbits/sec" and the number of fields is 11(signifying non-total results),
+                #  then this is the information we want
+                #  EXAMPLE OUTPUT: [  5]   0.00-1.00   sec  23.0 MBytes   193 Mbits/sec    0    211 KBytes
+                if len(stuff) == 11 and stuff[7] == "Mbits/sec":
+                    connection.bandwidth = float(stuff[6])
+                    connection.retries += int(stuff[8])
+        self.connectionsLock.release()
 
-    ## Creates a new connection, calls startiperf(), and reports
+        #  Without this delay, iperfTracker is capable of re-acquiring lock before other blocked functions
+        sleep(.001)
+
+    ## Starts or restarts iperf3 on the specified channel
     #  @param   self
     #  @param   response    EthernetResponse object
     def start(self, request, response):
-        if str(request.local) not in self.connections:
-            connection = ConnectionInfo(str(request.local))
-            connection.remote = request.remote
-            self.connections[str(request.local)] = connection
-            self.startiperf(connection)
-            if not self._running:
-                self.startThread()
+        # If a remote server was provided, update our default server
+        if request.remote != "":
+            self.defaultServer = request.remote
+
+        # If no remote server was provided and we don't have a default, respond without doing anything
+        if request.remote == "" and self.defaultServer == "":
+            self.log.warning("Attempt to start streaming with no server specified")
+            self.report(request, response)
+            return
+
+        localPort = str(request.local)
+        remoteServer = request.remote if request.remote != "" else self.defaultServer
+
+        # If this connection is not active, add it to our connection list, else get the connection object
+        if localPort not in self.connections:
+            self.log.info("Starting streaming on port %s to %s" % (localPort, remoteServer))
+            connection = ConnectionInfo(localPort)
+            self.connections[localPort] = connection
         else:
-            connection = self.connections[str(request.local)]
-            if request.server != connection.server:
-                # Remote connection has changed; stop, then restart to new 
+            self.log.info("Restarting streaming on port %s to %s" % (localPort, remoteServer))
+            connection = self.connections[localPort]
+            # Stop streaming and reset stats
+            self.stopiperf(connection)
+            connection.bandwidth = 0.0
+            connection.retries = 0
+
+        # TODO: set up switch port routing
+
+        # Start streaming to the specified remote server
+        connection.server = remoteServer
+        self.startiperf(connection)
+
+        if not self._running:
+            self.log.debug("Starting iperfTracker")
+            self.startThread()
 
         self.report(request, response)
 
-    ## Stops iperf3 over a specific channel
+    ## Stops iperf3 on the specified channel
     #  @param   self
     #  @param   response    EthernetResponse object
     def stop(self, request, response):
-        #self._running = False
-        #subprocess.Popen(["pkill", "-9", "iperf3"]).communicate()
-        #self.stopThread()
-        self.report(request, response)
+        localPort = str(request.local)
 
-    ## Reports current iperf3 status
+        # Run the report before actually stopping to get the final bandwidth and retries values
+        self.report(request, response)
+        response.state = EthernetResponse.STOPPED
+
+        # Now stop the iperf and remove from our connections list
+        self.connectionsLock.acquire()
+        if localPort in self.connections:
+            connection = self.connections.pop(localPort)
+            self.log.info("Stopping streaming on port %s to %s" % (localPort, connection.server))
+            self.stopiperf(connection)
+
+        # If no connections active, shut down the iperfTracker thread
+        if len(self.connections) == 0 and self._running:
+            self.log.debug("Stopping iperfTracker")
+            self._running = False
+            self.connectionsLock.release()
+            self.stopThread()
+        else:
+            self.connectionsLock.release()
+
+    ## Reports current iperf3 status on the specified channel
     #  @param   self
     #  @param   response    EthernetResponse object
     def report(self, request, response):
-        if self._running:
+        localPort = str(request.local)
+        if localPort in self.connections:
             response.state = EthernetResponse.RUNNING
+            response.bandwidth = self.connections[localPort].bandwidth
+            response.retries = self.connections[localPort].retries
         else:
             response.state = EthernetResponse.STOPPED
-
-        response.bandwidth = self.bandwidth
-        response.retries = self.retries
+            response.bandwidth = 0.0
+            response.retries = 0
 
     ## Attempts to stop instance gracefully
     #  @param   self
     def terminate(self):
-        self._running = False
-        subprocess.Popen(["pkill", "-9", "iperf3"]).communicate()
-        self.stopThread()
+        if self._running:
+            self._running = False
+            self.connectionsLock.acquire()
+            for connection in self.connections.values():
+                self.log.info("Stopping streaming on port %s to %s" % (connection.localPort, connection.server))
+                self.stopiperf(connection)
+            self.connectionsLock.release()
+            self.stopThread()
