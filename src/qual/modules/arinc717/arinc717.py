@@ -2,7 +2,7 @@ import os
 from common.gpb.python.ARINC717Frame_pb2 import ARINC717FrameRequest, ARINC717FrameResponse
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.ARINC717Driver_pb2 import Request, Response
+from common.gpb.python.ARINC717Driver_pb2 import Request, Response, ChannelConfig
 from common.module.module import Module
 
 ## ARINC717 Module
@@ -21,6 +21,13 @@ class ARINC717(Module):
 
         ## Connection to ARINC717 driver
         self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/717/device", log=self.log, msgParts=1)
+        #  Configure ARINC717 driver
+        configRequest = Request()
+        configRequest.type = Request.SET_CONFIG
+        configRequest.config.decoder = ChannelConfig.HBP
+        configRequest.config.rate = ChannelConfig.WPS_8192
+        self.driverClient.sendRequest(ThalesZMQMessage(configRequest))
+
         #  Add handler to available message handlers
         self.addMsgHandler(ARINC717FrameRequest, self.handler)
 
