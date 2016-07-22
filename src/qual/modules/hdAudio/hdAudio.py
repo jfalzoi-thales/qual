@@ -38,7 +38,7 @@ class HDAudio(Module):
                 dev = dev.rstrip(" \n\r")
                 self.log.info("Using audio device %s" % dev)
                 self.amixerDev = "-c \'%s\'" % dev
-                self.aplayDev = "-D \'sysdefault:CARD=%s\'" % dev
+                self.aplayDev = "-D \"plug:\'hw:0,0\'\""
             else:
                 self.log.warning("Unable to determine audio device to use; audio may not play")
 
