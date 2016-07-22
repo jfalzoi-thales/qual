@@ -155,11 +155,11 @@ class SSD(Module):
         self._running = False
         subprocess.Popen(['pkill', '-9', 'fio']).communicate()
         #  Sleep to allow process to die
-        sleep(2)
+        sleep(.5)
         self.stopThread()
+        self.report(response)
         self.readBandwidth = 0.0
         self.writeBandwidth = 0.0
-        self.report(response)
 
     ## Reports data from fio tool
     #

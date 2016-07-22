@@ -127,8 +127,8 @@ class Test_SSD(unittest.TestCase):
         # Asserts
         self.assertEqual(response.name, "SSDResponse")
         self.assertEqual(response.body.state, SSDResponse.STOPPED)
-        self.assertEqual(response.body.readBandwidth, 0.0)
-        self.assertEqual(response.body.writeBandwidth, 0.0)
+        self.assertGreater(response.body.readBandwidth, 0.0)
+        self.assertGreater(response.body.writeBandwidth, 0.0)
 
         log.info("==== Have module Report to verify readBandwidth is 0.0 ====")
         response = module.msgHandler(ThalesZMQMessage(SSDMessages.report()))
@@ -160,8 +160,8 @@ class Test_SSD(unittest.TestCase):
         # Asserts
         self.assertEqual(response.name, "SSDResponse")
         self.assertEqual(response.body.state, SSDResponse.STOPPED)
-        self.assertEqual(response.body.readBandwidth, 0.0)
-        self.assertEqual(response.body.writeBandwidth, 0.0)
+        self.assertGreater(response.body.readBandwidth, 0.0)
+        self.assertGreater(response.body.writeBandwidth, 0.0)
 
         log.info("==== Stop SSD while already STOPPED ====")
         response = module.msgHandler(ThalesZMQMessage(SSDMessages.stop()))
