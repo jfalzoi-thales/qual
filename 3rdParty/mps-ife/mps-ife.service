@@ -1,0 +1,12 @@
+[Unit]
+Description=Initialize IFE card on MPS hardware
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/mps-ife-setup.sh
+TimeoutSec=0
+
+[Install]
+WantedBy=multi-user.target

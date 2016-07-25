@@ -71,6 +71,9 @@ power-supply-monitor
 arinc429-driver
 arinc717-driver
 
+# IFE card Drivers and Tools
+mps-ife
+
 # Higher Level Services
 host-domain-device-service
 
