@@ -42,7 +42,7 @@ kmod-i2c-mcp2221
 # MPS Config, Tools and Libs
 mps-config
 #mps-config-qual
-mps-config-map
+#mps-config-map
 #mps-tools
 mpsinst-tools
 #libmps-utils

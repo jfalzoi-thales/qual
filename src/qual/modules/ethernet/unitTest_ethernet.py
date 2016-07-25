@@ -32,7 +32,7 @@ class EthernetMessages(ModuleMessages):
         message = EthernetRequest()
         message.requestType = EthernetRequest.RUN
         message.local = "ENET_1"
-        message.remote = "10.10.42.231"
+        message.remote = "10.10.42.21"
         return message
 
     @staticmethod
@@ -47,6 +47,28 @@ class EthernetMessages(ModuleMessages):
         message = EthernetRequest()
         message.requestType = EthernetRequest.STOP
         message.local = "ENET_1"
+        return message
+
+    @staticmethod
+    def reportPort2():
+        message = EthernetRequest()
+        message.requestType = EthernetRequest.REPORT
+        message.local = "ENET_2"
+        return message
+
+    @staticmethod
+    def runPort2():
+        message = EthernetRequest()
+        message.requestType = EthernetRequest.RUN
+        message.local = "ENET_2"
+        message.remote = "10.10.42.240"
+        return message
+
+    @staticmethod
+    def stopPort2():
+        message = EthernetRequest()
+        message.requestType = EthernetRequest.STOP
+        message.local = "ENET_2"
         return message
 
 
@@ -179,6 +201,71 @@ class Test_Ethernet(unittest.TestCase):
         self.assertGreater(response.body.bandwidth, 0)
         log.info("==== Test complete ====")
 
+    ## Valid Test case: Multiple ports
+    # Asserts:
+    def test_RunMultiple(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: RUN, REPORT and STOP on multiple ports ****")
+
+        log.info("==== RUN port ENET_1 ====")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.RUNNING)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertEqual(response.body.bandwidth, 0)
+
+        log.info("==== RUN port ENET_2 ====")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.runPort2()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.RUNNING)
+        self.assertEqual(response.body.local, "ENET_2")
+        self.assertEqual(response.body.bandwidth, 0)
+
+        log.info("==== Wait 4 seconds to accumulate statistics ====")
+        sleep(4)
+
+        log.info("==== REPORT port ENET_1 ====")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.report()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.RUNNING)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertGreater(response.body.bandwidth, 0)
+
+        log.info("==== REPORT port ENET_2 ====")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.reportPort2()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.RUNNING)
+        self.assertEqual(response.body.local, "ENET_2")
+        self.assertGreater(response.body.bandwidth, 0)
+
+        log.info("==== Stop port ENET_1 ====")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.stop()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.STOPPED)
+        self.assertEqual(response.body.local, "ENET_1")
+        self.assertGreater(response.body.bandwidth, 0)
+
+        log.info("==== REPORT port ENET_1 ====")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.report()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.STOPPED)
+        self.assertEqual(response.body.local, "ENET_1")
+
+        log.info("==== REPORT port ENET_2 ====")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.reportPort2()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.RUNNING)
+        self.assertEqual(response.body.local, "ENET_2")
+
+        log.info("==== Stop port ENET_2 ====")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.stopPort2()))
+        self.assertEqual(response.name, "EthernetResponse")
+        self.assertEqual(response.body.state, EthernetResponse.STOPPED)
+        self.assertEqual(response.body.local, "ENET_2")
+        log.info("==== Test complete ====")
+
     ## Valid Test case: Send a RUN, RUN and REPORT msgs
     # Asserts:
     #       appState == RUNNING
@@ -252,7 +339,7 @@ class Test_Ethernet(unittest.TestCase):
         self.assertEqual(response.name, "EthernetResponse")
         self.assertEqual(response.body.state, EthernetResponse.RUNNING)
         self.assertEqual(response.body.local, "ENET_1")
-        self.assertGreater(response.body.bandwidth, 0)
+        self.assertEqual(response.body.bandwidth, 0)
         log.info("==== Test complete ====")
 
 

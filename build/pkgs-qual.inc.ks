@@ -42,7 +42,7 @@ kmod-i2c-mcp2221
 # MPS Config, Tools and Libs
 mps-config
 #mps-config-qual
-mps-config-map
+#mps-config-map
 mps-keys
 mps-tools
 mpsinst-tools
@@ -70,6 +70,9 @@ power-supply-monitor
 # ARINC Drivers
 arinc429-driver
 arinc717-driver
+
+# IFE card Drivers and Tools
+mps-ife
 
 # Higher Level Services
 host-domain-device-service

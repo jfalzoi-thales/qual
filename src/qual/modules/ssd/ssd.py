@@ -95,18 +95,23 @@ class SSD(Module):
         ## Default size partition (GBytes)
         self.partitonsize = 100
         self.loadConfig(attributes=('partitonsize',))
-        # Init the RAID filesystem and store in device for use in collectIO
+        #  Init the RAID filesystem and store in device for use in collectIO
         device = self.initFS()
+        ## Read and Write bandwidth reported by fio tool
+        self.readBandwidth = 0.0
+        self.writeBandwidth = 0.0
         ## SSD Data collection thread
-        self.collect = collectIO(device)
-        # Start data collection thread
-        self.collect.start()
-        sleep(2)
-        # Create the FIO config file
+        #self.collect = collectIO(device)
+        #  Start data collection thread
+        #self.collect.start()
+        #sleep(2)
+        #  Create the FIO config file
         self.createFioConfig()
-        # adding the fio tool thread
+        #  Run FIO to create 100M file
+        subprocess.Popen(['fio', self.__fioConf, '--runtime=0']).communicate()
+        #  Adding the fio tool thread
         self.addThread(self.runTool)
-        # adding the message handler
+        #  Adding the message handler
         self.addMsgHandler(SSDRequest, self.handlerMessage)
 
     ## Handles incoming messages
@@ -149,18 +154,22 @@ class SSD(Module):
     def stop(self, response):
         self._running = False
         subprocess.Popen(['pkill', '-9', 'fio']).communicate()
+        #  Sleep to allow process to die
+        sleep(.5)
         self.stopThread()
         self.report(response)
+        self.readBandwidth = 0.0
+        self.writeBandwidth = 0.0
 
     ## Reports data from fio tool
     #
     #  @param     self
     #  @param     response  An SSDResponse object
     def report(self, response):
-        info = self.collect.getioInfo()
+        #info = self.collect.getioInfo()
         response.state = SSDResponse.RUNNING if self._running else SSDResponse.STOPPED
-        response.readBandwidth = info[0]
-        response.writeBandwidth = info[1]
+        response.readBandwidth = self.readBandwidth #info[0]
+        response.writeBandwidth = self.writeBandwidth #info[1]
 
     ## Creates the RAID-0
     #
@@ -301,8 +310,8 @@ class SSD(Module):
     def createFioConfig(self):
         f = open(self.__fioConf, mode='w')
         f.write('[global]\n')
-        f.write('rw=randrw\n')
-        f.write('size=1024m\n')
+        f.write('rw=rw\n')
+        f.write('size=100M\n')
         f.write('\n')
         f.write('[QUAL-SSD]\n')
         f.write('directory=%s\n' % self.__raidFS)
@@ -311,8 +320,14 @@ class SSD(Module):
     #
     #  @param   self
     def runTool(self):
-        subprocess.Popen(['fio', self.__fioConf], stdout=DEVNULL,
-                               stderr=DEVNULL).communicate()
+        try:
+            fio = subprocess.check_output(['fio', self.__fioConf, '--minimal', '--runtime=2'])
+            fields = fio.split(';')
+            self.readBandwidth = float(fields[6]) / 1024
+            self.writeBandwidth = float(fields[47]) / 1024
+        except:
+            self.log.info("FIO Exited Early")
+            pass
 
     ## Stops background thread
     #
@@ -323,4 +338,4 @@ class SSD(Module):
             subprocess.Popen(['pkill', '-9', 'fio']).communicate()
             self.stopThread()
 
-        self.collect.quit = True
+        #self.collect.quit = True
