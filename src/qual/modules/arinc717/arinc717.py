@@ -20,7 +20,7 @@ class ARINC717(Module):
             os.makedirs(ipcdir)
 
         ## Connection to ARINC717 driver
-        self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/717/device", log=self.log, msgParts=1)
+        self.driverClient = ThalesZMQClient("ipc:///tmp/arinc/driver/717/device", log=self.log, msgParts=1, timeout=4000)
         #  Configure ARINC717 driver
         confReq = Request()
         confReq.type = Request.SET_CONFIG

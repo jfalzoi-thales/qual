@@ -70,6 +70,7 @@ power-supply-monitor
 # ARINC Drivers
 arinc429-driver
 arinc717-driver
+arinc717-driver-tests
 
 # IFE card Drivers and Tools
 mps-ife

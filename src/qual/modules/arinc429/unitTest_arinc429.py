@@ -249,8 +249,8 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(response.body.status[0].sink, "ARINC_429_RX1")
         self.assertEqual(response.body.status[0].source, "ARINC_429_TX1")
 
-        log.info("==== Wait 1 second to accumulate statistics ====")
-        sleep(1)
+        log.info("==== Wait 5 seconds to accumulate statistics ====")
+        sleep(5)
 
         log.info("==== Get report after 1 second ====")
         response = module.msgHandler(ThalesZMQMessage(ARINC429Messages.reportIn1()))
@@ -316,8 +316,8 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(response.body.status[0].sink, "ARINC_429_RX3")
         self.assertEqual(response.body.status[0].source, "ARINC_429_TX1")
 
-        log.info("==== Wait 1 second to accumulate statistics ====")
-        sleep(1)
+        log.info("==== Wait 5 seconds to accumulate statistics ====")
+        sleep(5)
 
         log.info("==== Disconnect connected pair and check results ====")
         response = module.msgHandler(ThalesZMQMessage(ARINC429Messages.disconnectIn3()))
@@ -368,8 +368,8 @@ class Test_ARINC429(unittest.TestCase):
             self.assertEqual(ARINC429Stat.conState, ARINC429Response.CONNECTED)
             self.assertEqual(ARINC429Stat.source, "ARINC_429_TX3")
 
-        log.info("==== Wait 1 second to accumulate statistics ====")
-        sleep(1)
+        log.info("==== Wait 5 seconds to accumulate statistics ====")
+        sleep(5)
 
         log.info("==== Disconnect all inputs and check stats ====")
         response = module.msgHandler(ThalesZMQMessage(ARINC429Messages.disconnectAll()))
