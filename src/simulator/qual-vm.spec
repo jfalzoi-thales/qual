@@ -42,3 +42,4 @@ rm -f /usr/lib/systemd/system-preset/50-mps-drivers.preset
 rm -f /etc/systemd/system/mps-drivers.target.wants/*
 rm /etc/udev/rules.d/80*
 rm /etc/udev/rules.d/95*
+ln -s /thales/qual/src/qual/modules/gpio/demo_binaryio.sh /usr/bin/demo_binaryio
