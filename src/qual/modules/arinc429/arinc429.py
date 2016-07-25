@@ -300,7 +300,7 @@ class ARINC429(module.Module):
                         connection.xmtCount += 1
 
         #  Sleep a bit before attempting to receive, to allow time for messages to arrive
-        sleep(.1)
+        sleep(1)
 
         #  For each input channel in the connection list, get its value and increment matches/mismatches
         for inputChan, connection in self.connections.items():
