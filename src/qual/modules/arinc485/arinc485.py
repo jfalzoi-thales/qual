@@ -23,10 +23,11 @@ class ARINC485(Module):
         self.loadConfig(attributes=('baudrate', 'parity', 'stopbits', 'bytesize'))
         ## Keys for iterating over dictionaries
         self.ports = ["Slave1", "Slave2", "Slave3", "Slave4", "Slave5"]
-        ## Dictionaries containing port statistics
+        ## Dictionary of missed counters, by port
         self.missed = {port:0 for port in self.ports}
+        ## Dictionary of received counters, by port
         self.received = {port:0 for port in self.ports}
-        ## Current instance of demo_serial485
+        ## Output from most recent run of demo_serial485
         self.demo = None
         #  Add thread to run demo_serial485
         self.addThread(self.demoSerialTracker)
@@ -52,7 +53,7 @@ class ARINC485(Module):
 
         return ThalesZMQMessage(response)
 
-    ## Runs demo_serial485 to
+    ## Runs demo_serial485 to exercise the ARINC485 peripheral
     #  @param   self
     def startDemoSerial(self):
         try:
@@ -64,6 +65,8 @@ class ARINC485(Module):
                 self.log.debug("demo_serial485 stopped")
             else:
                 self.log.error("Error running demo_serial485: %s" % e.output)
+
+            self.demo = ""
 
 
     ## Runs in thread to continually run and gather demo_serial485 data
@@ -120,7 +123,7 @@ class ARINC485(Module):
     def report(self, response):
         response.state = ARINC485Response.RUNNING if self._running else ARINC485Response.STOPPED
 
-        for port in sorted(self.ports):
+        for port in self.ports:
             stats = response.statistics.add()
             stats.channel = port
             stats.missed = self.missed[port]

@@ -1,10 +1,5 @@
 #!/bin/sh
 
-if [ ! -d qual/modules ]; then
-    echo "Please run this from the src directory"
-    exit 1
-fi
-
 sleep 1
 
 echo "	        Req  Resp Result
