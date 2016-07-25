@@ -43,6 +43,13 @@ class GPIOMessages(ModuleMessages):
         return message
 
     @staticmethod
+    def reportIn7():
+        message = GPIORequest()
+        message.requestType = GPIORequest.REPORT
+        message.gpIn = "GP_KYLN_IN7"
+        return message
+
+    @staticmethod
     def reportAll():
         message = GPIORequest()
         message.requestType = GPIORequest.REPORT
@@ -74,6 +81,14 @@ class GPIOMessages(ModuleMessages):
         return message
 
     @staticmethod
+    def connectIn7Out7():
+        message = GPIORequest()
+        message.requestType = GPIORequest.CONNECT
+        message.gpIn = "GP_KYLN_IN7"
+        message.gpOut = "GP_KYLN_OUT7"
+        return message
+
+    @staticmethod
     def connectInAllOut3():
         message = GPIORequest()
         message.requestType = GPIORequest.CONNECT
@@ -93,6 +108,13 @@ class GPIOMessages(ModuleMessages):
         message = GPIORequest()
         message.requestType = GPIORequest.DISCONNECT
         message.gpIn = "GP_KYLN_IN2"
+        return message
+
+    @staticmethod
+    def disconnectIn7():
+        message = GPIORequest()
+        message.requestType = GPIORequest.DISCONNECT
+        message.gpIn = "GP_KYLN_IN7"
         return message
 
     @staticmethod
@@ -225,8 +247,8 @@ class Test_GPIO(unittest.TestCase):
         log.info("==== Test complete ====")
 
     ## Test case: Connect a linked input/output pair
-    # This test case will connect a "linked" pair, wait 4 seconds, then
-    # verify that the report indicates 4-5 matches and 0 mismatches.
+    # This test case will connect a "linked" pair, wait 5 seconds, then
+    # verify that the report indicates 2-3 matches and 0 mismatches.
     # It also verifies that the report is cleared when read back
     # after a disconnect.
     def test_linkedPair(self):
@@ -290,9 +312,63 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].gpOut, "")
         log.info("==== Test complete ====")
 
+    ## Test case: Connect an IFE card input/output pair
+    # This test case will connect two IFE card pins, wait 5 seconds, then
+    # verify that the report indicates 2-3 matches and 0 mismatches.
+    def test_ifeCardPair(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: Connect a linked input/output pair ****")
+        log.info("==== Report before connecting ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn7()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
+        self.assertEqual(response.body.status[0].matchCount, 0)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN7")
+        self.assertEqual(response.body.status[0].gpOut, "")
+
+        log.info("==== Connect linked pair ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn7Out7()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
+        self.assertEqual(response.body.status[0].matchCount, 0)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN7")
+        self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT7")
+
+        log.info("==== Wait 5 seconds to accumulate statistics ====")
+        sleep(5)
+
+        log.info("==== Get report after 5 seconds ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn7()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
+        self.assertGreaterEqual(response.body.status[0].matchCount, 2)
+        self.assertLessEqual(response.body.status[0].matchCount, 3)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN7")
+        self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT7")
+
+        log.info("==== Disconnect connected pair ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.disconnectIn7()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
+        self.assertGreaterEqual(response.body.status[0].matchCount, 2)
+        self.assertLessEqual(response.body.status[0].matchCount, 3)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN7")
+        self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT7")
+        log.info("==== Test complete ====")
+
     ## Test case: Connect an unlinked input/output pair
-    # This test case will connect an "unlinked" pair, wait 4 seconds, then
-    # verify that the report indicates 2-3 matches and 2-3 mismatches.
+    # This test case will connect an "unlinked" pair, wait 5 seconds, then
+    # verify that the report indicates 0 matches and 2-3 mismatches.
     def test_unlinkedPair(self):
         log = self.__class__.log
         module = self.__class__.module

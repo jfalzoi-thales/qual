@@ -38,7 +38,7 @@ class HDAudio(Module):
                 dev = dev.rstrip(" \n\r")
                 self.log.info("Using audio device %s" % dev)
                 self.amixerDev = "-c \'%s\'" % dev
-                self.aplayDev = "-D \'sysdefault:CARD=%s\'" % dev
+                self.aplayDev = "-D \"plug:\'hw:0,0\'\""
             else:
                 self.log.warning("Unable to determine audio device to use; audio may not play")
 
@@ -142,10 +142,17 @@ class HDAudio(Module):
     # @param  self
     def play(self):
         cmd="amixer -q %s sset Master %d%%" % (self.amixerDev, self.volume)
-        self.log.debug("Set volume: %s" % cmd)
+        self.log.debug("Set Master volume: %s" % cmd)
         rc = subprocess.call(cmd, shell=True)
         if rc != 0:
-            self.log.error("Error setting volume")
+            self.log.error("Error setting Master volume")
+            sleep(0.5)
+
+        cmd="amixer -q %s sset Speaker %d%%" % (self.amixerDev, self.volume)
+        self.log.debug("Set Speaker volume: %s" % cmd)
+        rc = subprocess.call(cmd, shell=True)
+        if rc != 0:
+            self.log.error("Error setting Speaker volume")
             sleep(0.5)
 
         cmd="aplay -q %s %s/%s" % (self.aplayDev, self.audioFilePath, self.file)

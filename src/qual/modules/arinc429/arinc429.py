@@ -119,7 +119,6 @@ class ARINC429(module.Module):
             confReq.config.rate = ChannelConfig.HIGH
             confReq.config.labelOrder = ChannelConfig.NORMAL
             confReq.config.parityEnable = False
-            confReq.config.paritySense = ChannelConfig.ODD
             confReq.config.sdiFilter.enable = False
             confReq.config.sdiFilter.value = 0xFFFFFFFF
             confReq.config.labelFilter.enable = False
@@ -301,7 +300,7 @@ class ARINC429(module.Module):
                         connection.xmtCount += 1
 
         #  Sleep a bit before attempting to receive, to allow time for messages to arrive
-        sleep(.1)
+        sleep(1)
 
         #  For each input channel in the connection list, get its value and increment matches/mismatches
         for inputChan, connection in self.connections.items():
