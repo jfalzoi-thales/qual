@@ -3,6 +3,7 @@ import collections
 from time import sleep
 import threading
 import subprocess
+import os
 
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -10,6 +11,9 @@ from common.gpb.python.GPIO_pb2 import GPIORequest, GPIOResponse
 from common.gpb.python.GPIOManager_pb2 import RequestMessage, ResponseMessage
 from common.module import module
 
+
+## Discard the output
+DEVNULL = open(os.devnull, 'wb')
 
 ## Connection info container class
 class ConnectionInfo(object):
@@ -308,8 +312,8 @@ class GPIO(module.Module):
     # @param  state   New state to be sent to demo_binaryio
     def binaryioSet(self, pinName, state):
         cmd = 'demo_binaryio setDiscreteOutput %s %d' % (pinName, 1 if state else 0)
-        self.log.debug(cmd)
-        rc = subprocess.call(cmd, shell=True)
+        self.log.info(cmd)
+        rc = subprocess.call(cmd, shell=True, stdout=DEVNULL)
         if rc != 0:
             self.log.error("Error return from demo_binaryio for pin %s" % pinName)
 
@@ -320,7 +324,7 @@ class GPIO(module.Module):
     # @return Current state of the pin
     def binaryioGet(self, pinName):
         cmd = 'demo_binaryio getDiscreteInput %s' % pinName
-        self.log.debug(cmd)
+        self.log.info(cmd)
         try:
             output = subprocess.check_output(cmd, shell=True)
         except subprocess.CalledProcessError as e:
@@ -328,8 +332,8 @@ class GPIO(module.Module):
             # Return the opposite of the current output state to force match to fail
             return not self.outputState
 
-        self.log.debug("Command returned: %s" % output)
-        idx = str.find("Discrete value =")
+        self.log.info("Command returned: %s" % output)
+        idx = output.find("Discrete value =")
         if idx > -1:
             if output[idx+17] == "0":
                 return False
