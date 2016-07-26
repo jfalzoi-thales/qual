@@ -3,6 +3,7 @@ from common.gpb.python.ARINC717Frame_pb2 import ARINC717FrameRequest, ARINC717Fr
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.ARINC717Driver_pb2 import Request, Response, ChannelConfig
+from common.gpb.python.GPIOManager_pb2 import RequestMessage, ResponseMessage
 from common.module.module import Module
 
 ## ARINC717 Module
@@ -28,7 +29,7 @@ class ARINC717(Module):
         confReq.config.rate = ChannelConfig.WPS_8192
         response = self.driverClient.sendRequest(ThalesZMQMessage(confReq))
 
-        #  Parse the response
+        #  Parse the response from the config request
         if response.name == self.driverClient.defaultResponseName:
             confResp = Response()
             confResp.ParseFromString(response.serializedBody)
@@ -37,6 +38,24 @@ class ARINC717(Module):
             if confResp.errorCode != Response.NONE:
                 self.log.error("Error configuring ARINC717 driver")
                 self.log.error("ERROR CODE: %s" % confResp.errorCode)
+
+        # Additional configuration: Set GPIO pin low to enable HBP mode.
+        # The ARINC-717 driver really should do this, but it does not do it currently.
+        # If the driver is updated to do this, we can remove it from here.
+        gpioMgrClient = ThalesZMQClient("ipc:///tmp/gpio-mgr.sock", log=self.log, msgParts=1)
+        setReq = RequestMessage()
+        setReq.pin_name = "RxLineSelect_717"
+        setReq.request_type = RequestMessage.SET
+        setReq.value = 0
+        response = gpioMgrClient.sendRequest(ThalesZMQMessage(setReq))
+
+        # Parse the response from the GPIO request
+        if response.name == gpioMgrClient.defaultResponseName:
+            setResp = ResponseMessage()
+            setResp.ParseFromString(response.serializedBody)
+            if setResp.error != ResponseMessage.OK:
+                self.log.error("Error return from GPIO Manager")
+                self.log.error("ERROR CODE: %s" % setResp.error)
 
         #  Add handler to available message handlers
         self.addMsgHandler(ARINC717FrameRequest, self.handler)
