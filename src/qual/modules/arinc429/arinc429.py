@@ -106,7 +106,6 @@ class ARINC429(module.Module):
             if response.name == self.driverClient.defaultResponseName:
                 confResp = Response()
                 confResp.ParseFromString(response.serializedBody)
-                self.log.info('\n%s' % confResp)
 
                 if confResp.errorCode != Response.NONE:
                     self.log.error("Error configuring ARINC429 driver for channel %s" % outputChan.name)
@@ -129,7 +128,6 @@ class ARINC429(module.Module):
             if response.name == self.driverClient.defaultResponseName:
                 confResp = Response()
                 confResp.ParseFromString(response.serializedBody)
-                self.log.info('\n%s' % confResp)
 
                 if confResp.errorCode != Response.NONE:
                     self.log.error("Error configuring ARINC429 driver for channel %s" % inputChan.name)
@@ -338,7 +336,6 @@ class ARINC429(module.Module):
         if response.name == self.driverClient.defaultResponseName:
             txResp = Response()
             txResp.ParseFromString(response.serializedBody)
-            self.log.info('\n%s' % txResp)
 
             if txResp.errorCode == Response.NONE:
                 return True
@@ -362,7 +359,6 @@ class ARINC429(module.Module):
         if response.name == self.driverClient.defaultResponseName:
             rxResp = Response()
             rxResp.ParseFromString(response.serializedBody)
-            self.log.info('\n%s' % rxResp)
 
             if rxResp.errorCode == Response.NONE:
                 if rxResp.inputData.data:

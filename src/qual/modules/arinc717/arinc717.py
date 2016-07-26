@@ -33,7 +33,6 @@ class ARINC717(Module):
         if response.name == self.driverClient.defaultResponseName:
             confResp = Response()
             confResp.ParseFromString(response.serializedBody)
-            self.log.info('\n%s' % confResp)
 
             if confResp.errorCode != Response.NONE:
                 self.log.error("Error configuring ARINC717 driver")
@@ -114,7 +113,6 @@ class ARINC717(Module):
         if driverResponse.name == self.driverClient.defaultResponseName:
             info = Response()
             info.ParseFromString(driverResponse.serializedBody)
-            self.log.info('\n%s' % info)
             data = info.frame.data
             response.syncState = ARINC717FrameResponse.NO_SYNC if info.frame.out_of_sync else ARINC717FrameResponse.SYNCED
 
