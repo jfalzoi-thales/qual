@@ -12,7 +12,7 @@ from common.module.modulemsgs import ModuleMessages
 class ARINC485Messages(ModuleMessages):
     @staticmethod
     def getMenuTitle():
-        return "ARINC485"
+        return "ARINC 485"
 
     @staticmethod
     def getMenuItems():
