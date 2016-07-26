@@ -34,6 +34,36 @@ class HDDSMessages(ModuleMessages):
         return message
 
     @staticmethod
+    def getTemp():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.GET
+        message.key = "ife.temperature.U15_TINT"
+        return message
+
+    @staticmethod
+    def setTemp():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.SET
+        message.key = "ife.temperature.U15_TINT"
+        message.value = "HIGH"
+        return message
+
+    @staticmethod
+    def getVolt():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.GET
+        message.key = "ife.voltage.U130_3V3"
+        return message
+
+    @staticmethod
+    def setVolt():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.SET
+        message.key = "ife.voltage.U130_3V3"
+        message.value = "HIGH"
+        return message
+
+    @staticmethod
     def getBogus():
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.GET
@@ -128,6 +158,46 @@ class Test_HDDS(unittest.TestCase):
         self.assertEqual(response.body.success, True)
         self.assertEqual(response.body.key, "external_pins.output.pin_a6")
         self.assertEqual(response.body.value, "HIGH")
+        log.info("==== Test complete ====")
+
+    ## Test case: Test temperature key requests:
+    #       success == True
+    #       key     == "external_pins.output.pin_a6"
+    #       value   == "HIGH"
+    def test_temp(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: Set temp****")
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setTemp()))
+        self.assertEqual(response.body.success, False)
+        self.assertEqual(response.body.key, "ife.temperature.U15_TINT")
+        self.assertEqual(response.body.value, "")
+
+        log.info("**** Test case: Get temp****")
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getTemp()))
+        self.assertEqual(response.body.success, True)
+        self.assertEqual(response.body.key, "ife.temperature.U15_TINT")
+        self.assertNotEqual(response.body.value, "")
+
+        log.info("==== Test complete ====")
+
+    def test_volt(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: Set volt****")
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setVolt()))
+        self.assertEqual(response.body.success, False)
+        self.assertEqual(response.body.key, "ife.voltage.U130_3V3")
+        self.assertEqual(response.body.value, "")
+
+        log.info("**** Test case: Get volt****")
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getVolt()))
+        self.assertEqual(response.body.success, True)
+        self.assertEqual(response.body.key, "ife.voltage.U130_3V3")
+        self.assertNotEqual(response.body.value, "")
+
         log.info("==== Test complete ====")
 
 if __name__ == '__main__':
