@@ -84,10 +84,10 @@ class HDDS(Module):
     def getHandler(self, response, request):
         getReq = GetReq()
         getReq.key.append(request.key)
-        # Just pass through to the actual HDDS service
+        #  Just pass through to the actual HDDS service
         HDDSResp = self.hddsClient.sendRequest(ThalesZMQMessage(getReq))
 
-        # Check that we got back the expected response and deserialize for debugging purposes
+        #  Check that we got back the expected response
         if HDDSResp.name == "GetResp":
             getResp = GetResp()
             getResp.ParseFromString(HDDSResp.serializedBody)
@@ -115,10 +115,10 @@ class HDDS(Module):
         req = setReq.values.add()
         req.key = request.key
         req.value = request.value
-        # Just pass through to the actual HDDS service
+        #  Just pass through to the actual HDDS service
         HDDSResp = self.hddsClient.sendRequest(ThalesZMQMessage(setReq))
 
-        # Check that we got back the expected response and deserialize for debugging purposes
+        #  Check that we got back the expected response
         if HDDSResp.name == "SetResp":
             setResp = SetResp()
             setResp.ParseFromString(HDDSResp.serializedBody)
