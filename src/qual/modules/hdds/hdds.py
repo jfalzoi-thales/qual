@@ -47,6 +47,8 @@ class HDDS(Module):
         response = HostDomainDeviceServiceResponse()
         response.key = msg.body.key
 
+        #  For get and set messages, check if the key requests is ife.voltage or ife.temperature, if it is, handle it,
+        #  otherwise, pass the message through to the HDDS
         if msg.body.requestType == HostDomainDeviceServiceRequest.GET:
             if msg.body.key.startswith("ife.voltage"):
                 try:
