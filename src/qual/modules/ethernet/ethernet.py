@@ -103,25 +103,25 @@ class Ethernet(Module):
         connectionsCopy = dict.copy(self.connections)
         self.connectionsLock.release()
 
-        for key in connectionsCopy:
-            iperf = connectionsCopy[key].iperf
+        for connection in connectionsCopy.values():
+            iperf = connection.iperf
 
             if iperf is not None:
                 #  If iperf3 has exited, restart it (iperf3 has a maximum runtime before it exits)
-                if connectionsCopy[key].iperf.poll() is not None:
-                    self.log.debug("iperf on port %s ended; restarting" % connectionsCopy[key].localPort)
-                    self.startiperf(connectionsCopy[key])
+                if connection.iperf.poll() is not None:
+                    self.log.debug("iperf on port %s ended; restarting" % connection.localPort)
+                    self.startiperf(connection)
 
-                line = connectionsCopy[key].iperf.stdout.readline()
-                self.log.debug("Port %s: %s" % (connectionsCopy[key].localPort, line))
+                line = connection.iperf.stdout.readline()
+                self.log.debug("Port %s: %s" % (connection.localPort, line))
                 stuff = line.split()
 
                 #  If the 8th field of data is "Mbits/sec" and the number of fields is 11(signifying non-total results),
                 #  then this is the information we want
                 #  EXAMPLE OUTPUT: [  5]   0.00-1.00   sec  23.0 MBytes   193 Mbits/sec    0    211 KBytes
                 if len(stuff) == 11 and stuff[7] == "Mbits/sec":
-                    connectionsCopy[key].bandwidth = float(stuff[6])
-                    connectionsCopy[key].retries += int(stuff[8])
+                    connection.bandwidth = float(stuff[6])
+                    connection.retries += int(stuff[8])
 
         #  Without this delay, iperfTracker is capable of re-acquiring lock before other blocked functions
         sleep(.001)

@@ -176,15 +176,14 @@ class ARINC429(module.Module):
             #  Get connections lock before modifying connections
             self.connectionsLock.acquire()
             self.connections.clear()
-            self.connectionsLock.release()
 
             for inputChan in self.inputChans.keys():
                 #  Get connections lock before modifying connections
-                self.connectionsLock.acquire()
                 self.connections[inputChan] = ConnectionInfo(str(request.source))
-                self.connectionsLock.release()
                 #  Clear out any old driver responses
                 self.receive(self.inputChans[inputChan].name)
+
+            self.connectionsLock.release()
 
         elif str(request.sink) not in self.connections:
             #  Get connections lock before modifying connections

@@ -114,12 +114,11 @@ class GPIO(module.Module):
             # Get connections lock before modifying connections
             self.connectionsLock.acquire()
             self.connections.clear()
-            self.connectionsLock.release()
 
             for inputPin in self.inputPins.keys():
-                self.connectionsLock.acquire()
                 self.connections[inputPin] = ConnectionInfo(str(gpioReq.gpOut))
-                self.connectionsLock.release()
+
+            self.connectionsLock.release()
         elif str(gpioReq.gpIn) not in self.connections:
             # Get connections lock before modifying connections
             self.connectionsLock.acquire()
@@ -188,12 +187,8 @@ class GPIO(module.Module):
         gpioStatus = gpioResp.status.add()
         gpioStatus.gpIn = inputPin
 
-        self.connectionsLock.acquire()
-        connectionsCopy = dict.copy(self.connections)
-        self.connectionsLock.release()
-
-        if inputPin in connectionsCopy:
-            connection = connectionsCopy[inputPin]
+        if inputPin in self.connections:
+            connection = self.connections[inputPin]
             gpioStatus.matchCount = connection.matches
             gpioStatus.mismatchCount = connection.mismatches
             gpioStatus.gpOut = connection.outputPin
