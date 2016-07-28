@@ -99,7 +99,7 @@ class Ethernet(Module):
     def iperfTracker(self):
         #self.log.info("top of iperfTracker")
         #  Make a shallow copy of connections to reduce locking in background thread
-        self.connectionsLock.aquire()
+        self.connectionsLock.acquire()
         connectionsCopy = dict.copy(self.connections)
         self.connectionsLock.release()
 
@@ -147,7 +147,7 @@ class Ethernet(Module):
         if localPort not in self.connections:
             self.log.info("Starting streaming on port %s to %s" % (localPort, remoteServer))
             connection = ConnectionInfo(localPort)
-            self.connectionsLock.aquire()
+            self.connectionsLock.acquire()
             self.connections[localPort] = connection
             self.connectionsLock.release()
         else:
