@@ -3,7 +3,7 @@
 #
 Name: qual-vm
 Summary: An application used to simulate MPS hardware on a Virtual Machine
-Version: 1.9
+Version: 1.10
 Release: 1
 License: Proprietary
 Group: Applications/Engineering
