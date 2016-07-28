@@ -1,4 +1,3 @@
-
 import collections
 from time import sleep
 import threading
@@ -43,10 +42,8 @@ class GPIO(module.Module):
         super(GPIO, self).__init__(config)
         # Add GPIO handler to available message handlers
         self.addMsgHandler(GPIORequest, self.handler)
-
         ## Named tuple type to store pin info
         self.PinInfo = collections.namedtuple("PinInfo", "func name")
-
         ## Dict mapping GPIO output pins to handler and handler pin name
         self.outputPins = {"GP_KYLN_OUT1": self.PinInfo(self.gpioManagerSet, "OUTPUT_1_PIN_A6"),
                            "GP_KYLN_OUT2": self.PinInfo(self.gpioManagerSet, "OUTPUT_2_PIN_B6"),
@@ -57,7 +54,6 @@ class GPIO(module.Module):
                            "GP_KYLN_OUT7": self.PinInfo(self.binaryioSet, "LLS_OUT_GP_KL_01"),
                            "GP_KYLN_OUT8": self.PinInfo(self.binaryioSet, "LLS_OUT_GP_KL_02"),
                            "GP_KYLN_OUT9": self.PinInfo(self.binaryioSet, "LLS_OUT_GP_KL_03")}
-
         ## Dict mapping GPIO input pins to handler and handler pin name
         self.inputPins = {"GP_KYLN_IN1":     self.PinInfo(self.gpioManagerGet, "INPUT_1_PIN_A7"),
                           "GP_KYLN_IN2":     self.PinInfo(self.gpioManagerGet, "INPUT_2_PIN_B7"),
@@ -69,24 +65,18 @@ class GPIO(module.Module):
                           "GP_KYLN_IN7":     self.PinInfo(self.binaryioGet, "LLS_IN_GP_KL_02"),
                           "GP_KYLN_IN8":     self.PinInfo(self.binaryioGet, "LLS_IN_GP_KL_03"),
                           "GP_KYLN_IN9":     self.PinInfo(self.binaryioGet, "LLS_IN_GP_KL_04")}
-
         ## Dict of connections; key is input pin, value is a ConnectionInfo object
         self.connections = {}
-
         ## Lock for access to connections dict
         self.connectionsLock = threading.Lock()
-
         ## Current output state used by toggleOutputs
         self.outputState = False
-
         ## Connection to GPIO Manager
         self.gpioMgrClient = ThalesZMQClient("ipc:///tmp/gpio-mgr.sock", log=self.log, msgParts=1)
-
         # Set up thread to toggle outputs
         self.addThread(self.toggleOutputs)
 
     ## Handles incoming request messages
-    #
     # @param  self
     # @param  msg       TZMQ format message
     # @return reply     a ThalesZMQMessage object containing the response message
@@ -111,7 +101,6 @@ class GPIO(module.Module):
         return ThalesZMQMessage(gpioResp)
 
     ## Handles GPIO requests with requestType of CONNECT
-    #
     # @param  self
     # @param  gpioReq  Message body with request details
     # @return a GPIOResponse message to be returned to the client
@@ -125,8 +114,10 @@ class GPIO(module.Module):
             # Get connections lock before modifying connections
             self.connectionsLock.acquire()
             self.connections.clear()
+
             for inputPin in self.inputPins.keys():
                 self.connections[inputPin] = ConnectionInfo(str(gpioReq.gpOut))
+
             self.connectionsLock.release()
         elif str(gpioReq.gpIn) not in self.connections:
             # Get connections lock before modifying connections
@@ -142,7 +133,6 @@ class GPIO(module.Module):
         return self.report(gpioReq)
 
     ## Handles GPIO requests with requestType of DISCONNECT
-    #
     # @param  self
     # @param  gpioReq  Message body with request details
     # @return a GPIOResponse message to be returned to the client
@@ -154,23 +144,22 @@ class GPIO(module.Module):
         if gpioReq.gpIn == "ALL" or str(gpioReq.gpIn) in self.connections:
             # Get report before processing the disconnect
             gpioResp = self.report(gpioReq)
-
             # Get connections lock before modifying connections.
             self.connectionsLock.acquire()
+
             if gpioReq.gpIn == "ALL":
                 self.connections.clear()
             else:
                 del self.connections[str(gpioReq.gpIn)]
+
             self.connectionsLock.release()
 
             # Return the report
             return gpioResp
-
         # Return the report
         return self.report(gpioReq)
 
     ## Handles GPIO requests with requestType of REPORT
-    #
     # @param  self
     # @param  gpioReq  Message body with request details
     # @return a GPIOResponse message to be returned to the client
@@ -190,7 +179,6 @@ class GPIO(module.Module):
         return gpioResp
 
     ## Adds pin status entry to a GPIOResponse
-    #
     # @param  self
     # @param  gpioResp       Response message object
     # @param  inputPin       Input pin for which to add information to the response
@@ -211,23 +199,21 @@ class GPIO(module.Module):
             gpioStatus.matchCount = 0
             gpioStatus.mismatchCount = 0
 
-
     ## Run in a thread to toggle active GPIO outputs on and off every 2 seconds
-    #
     # @param  self
     def toggleOutputs(self):
         self.outputState = not self.outputState
-
         # Get connections lock before accessing connections.
         self.connectionsLock.acquire()
+        connectionsCopy = dict.copy(self.connections)
+        self.connectionsLock.release()
 
         # For each unique output pin in the connection list, set the new state
-        for outputPin in {c.outputPin for c in self.connections.values()}:
+        for outputPin in {c.outputPin for c in connectionsCopy.values()}:
             pinInfo = self.outputPins[outputPin]
             pinInfo.func(pinInfo.name, self.outputState)
-
         # For each input pin in the connection list, get its value and increment matches/mismatches
-        for inputPin, connection in self.connections.items():
+        for inputPin, connection in connectionsCopy.items():
             pinInfo = self.inputPins[inputPin]
             inputState = pinInfo.func(pinInfo.name)
             # We calculate statistics every full cycle (high-low)
@@ -248,16 +234,11 @@ class GPIO(module.Module):
                     connection.matches += 1
                 else:
                     connection.mismatches += 1
-
-        # And release the lock
-        self.connectionsLock.release()
-
         # Requirement MPS-SRS-272 states to toggle "at 0.5 Hz with a 50% duty cycle"
         # which I interpret as 0.5 Hz for a complete on/off cycle, or 1 second at each state.
         sleep(1)
 
     ## Sets a pin state using the GPIO Manager
-    #
     # @param  self
     # @param  pinName Pin name to be sent to the GPIO manager
     # @param  state   New state to be sent to the GPIO manager
@@ -267,7 +248,6 @@ class GPIO(module.Module):
         setReq.pin_name = pinName
         setReq.request_type = RequestMessage.SET
         setReq.value = state
-
         # Send a request and get the response
         response = self.gpioMgrClient.sendRequest(ThalesZMQMessage(setReq))
 
@@ -281,7 +261,6 @@ class GPIO(module.Module):
         self.log.error("Error return from GPIO Manager for pin %s" % pinName)
 
     ## Gets a pin state using the GPIO Manager
-    #
     # @param  self
     # @param  pinName Pin name to be sent to the GPIO manager
     # @return Current state of the pin
@@ -306,7 +285,6 @@ class GPIO(module.Module):
         return not self.outputState
 
     ## Sets an IFE card pin state using demo_binaryio
-    #
     # @param  self
     # @param  pinName Pin name to be sent to demo_binaryio
     # @param  state   New state to be sent to demo_binaryio
@@ -318,7 +296,6 @@ class GPIO(module.Module):
             self.log.error("Error return from demo_binaryio for pin %s" % pinName)
 
     ## Gets an IFE card pin state using demo_binaryio
-    #
     # @param  self
     # @param  pinName Pin name to be sent to demo_binaryio
     # @return Current state of the pin
