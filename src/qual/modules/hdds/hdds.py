@@ -92,7 +92,7 @@ class HDDS(Module):
             getResp = GetResp()
             getResp.ParseFromString(HDDSResp.serializedBody)
             response.success = getResp.values[0].success
-            response.value = getResp.values[0].keyValue.value if getResp.success else ""
+            response.value = getResp.values[0].keyValue.value if getResp.values[0].success else ""
         else:
             response.value = ""
             response.success = False
@@ -123,7 +123,7 @@ class HDDS(Module):
             setResp = SetResp()
             setResp.ParseFromString(HDDSResp.serializedBody)
             response.success = setResp.values[0].success
-            response.value = setResp.values[0].keyValue.value if setResp.success else ""
+            response.value = setResp.values[0].keyValue.value if setResp.values[0].success else ""
         else:
             response.value = ""
             response.success = False
