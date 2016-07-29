@@ -12,5 +12,15 @@ python simulator/arinc717/arinc717DrvSim.py &
 python simulator/gpio/gpioMgrSim.py &
 python simulator/pwrsupp/pwrSuppMonSim.py &
 python simulator/sema/semaDrvSim.py &
-python simulator/hdds/hddsSim.py &
-(sleep 10; python simulator/Extern_Rs485/Extern_Rs485.py -m) &
+
+# Only start HDDS simulator if real HDDS is not running
+REALHDDS=`ps x | grep HDDS | grep -v grep`
+if [ -z "$REALHDDS" ]; then
+    python simulator/hdds/hddsSim.py &
+fi
+
+# Only start extern_Rs485 if there's at least one USB serial device
+USBSERIAL=`ls /dev/ttyUSB* 2>/dev/null`
+if [ -n "$USBSERIAL" ]; then
+    (sleep 10; python simulator/Extern_Rs485/Extern_Rs485.py -m) &
+fi
