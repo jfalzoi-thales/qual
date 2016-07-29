@@ -181,6 +181,8 @@ class Test_GPIO(unittest.TestCase):
         module = self.__class__.module
         log.info("==== Reset module state ====")
         module.msgHandler(ThalesZMQMessage(GPIOMessages.disconnectAll()))
+        # Sleep a bit to allow GPIO background thread to process disconnect
+        sleep(1)
 
     ## Test case: Try to connect an invalid input pin
     # Should return an empty GPIOResponse
@@ -319,7 +321,7 @@ class Test_GPIO(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
 
-        log.info("**** Test case: Connect a linked input/output pair ****")
+        log.info("**** Test case: Connect an IFE input/output pair ****")
         log.info("==== Report before connecting ====")
         response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn7()))
         self.assertEqual(response.name, "GPIOResponse")
@@ -330,7 +332,7 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN7")
         self.assertEqual(response.body.status[0].gpOut, "")
 
-        log.info("==== Connect linked pair ====")
+        log.info("==== Connect IFE pair ====")
         response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn7Out7()))
         self.assertEqual(response.name, "GPIOResponse")
         self.assertEqual(len(response.body.status), 1)
