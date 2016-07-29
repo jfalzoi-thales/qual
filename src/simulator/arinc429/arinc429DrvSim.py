@@ -142,6 +142,15 @@ class ARINC429DriverSimulator(ThalesZMQServer):
                     inputInfo.timestamp = arincReq.outputData.data[0].timestamp
                     inputInfo.dataAvailable = True
 
+
+        elif arincReq.type == Request.GET_CONFIG:
+            arincResp.type = Response.CONFIG
+            arincResp.errorCode = Response.NOT_SUPPORTED
+
+        elif arincReq.type == Request.SET_CONFIG:
+            arincResp.type = Response.STATUS
+            arincResp.errorCode = Response.NONE
+
         else:
             print "Request with unknown/unsupported request type:", arincReq.type
             arincResp.type = Response.STATUS
