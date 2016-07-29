@@ -67,6 +67,8 @@ class GPIO(module.Module):
                           "GP_KYLN_IN9":     self.PinInfo(self.binaryioGet, "LLS_IN_GP_KL_04")}
         ## Dict of connections; key is input pin, value is a ConnectionInfo object
         self.connections = {}
+        ## List of connections we're done with
+        self.deadConnections = []
         ## Lock for access to connections dict
         self.connectionsLock = threading.Lock()
         ## Current output state used by toggleOutputs
@@ -141,16 +143,21 @@ class GPIO(module.Module):
         # If input pin is specified as "ALL", disconnect all inputs.
         # If input pin is in connection list, remove it.
         # If input pin is not in connection list, just drop through to report.
-        if gpioReq.gpIn == "ALL" or str(gpioReq.gpIn) in self.connections:
+        inputPin = str(gpioReq.gpIn)
+        if inputPin == "ALL" or inputPin in self.connections:
             # Get report before processing the disconnect
             gpioResp = self.report(gpioReq)
             # Get connections lock before modifying connections.
             self.connectionsLock.acquire()
 
+            # Save the connection(s) we're done with in deadConnections so we can set them low
             if gpioReq.gpIn == "ALL":
-                self.connections.clear()
+                if len(self.connections) > 0:
+                    self.deadConnections.extend(self.connections.values())
+                    self.connections.clear()
             else:
-                del self.connections[str(gpioReq.gpIn)]
+                conn = self.connections.pop(inputPin)
+                self.deadConnections.append(conn)
 
             self.connectionsLock.release()
 
@@ -203,7 +210,7 @@ class GPIO(module.Module):
     # @param  self
     def toggleOutputs(self):
         self.outputState = not self.outputState
-        # Get connections lock before accessing connections.
+        # Make a shallow copy of connections to reduce locking in background thread
         self.connectionsLock.acquire()
         connectionsCopy = dict.copy(self.connections)
         self.connectionsLock.release()
@@ -212,6 +219,7 @@ class GPIO(module.Module):
         for outputPin in {c.outputPin for c in connectionsCopy.values()}:
             pinInfo = self.outputPins[outputPin]
             pinInfo.func(pinInfo.name, self.outputState)
+
         # For each input pin in the connection list, get its value and increment matches/mismatches
         for inputPin, connection in connectionsCopy.items():
             pinInfo = self.inputPins[inputPin]
@@ -234,9 +242,25 @@ class GPIO(module.Module):
                     connection.matches += 1
                 else:
                     connection.mismatches += 1
+
         # Requirement MPS-SRS-272 states to toggle "at 0.5 Hz with a 50% duty cycle"
         # which I interpret as 0.5 Hz for a complete on/off cycle, or 1 second at each state.
         sleep(1)
+
+        # Operate on a copy of dead connections to reduce locking in background thread
+        self.connectionsLock.acquire()
+        deadConnectionsCopy = self.deadConnections
+        self.deadConnections = []
+        self.connectionsLock.release()
+
+        # For each unique output pin on the dead connection list, set it low
+        # Note: An output pin might still be in use, but that's OK because it will
+        # be re-set to the correct value next time through toggleOutputs()
+        if len(deadConnectionsCopy) > 0:
+            for outputPin in {c.outputPin for c in deadConnectionsCopy}:
+                self.log.debug("Done with output %s; setting to low" % outputPin)
+                pinInfo = self.outputPins[outputPin]
+                pinInfo.func(pinInfo.name, False)
 
     ## Sets a pin state using the GPIO Manager
     # @param  self
@@ -290,7 +314,7 @@ class GPIO(module.Module):
     # @param  state   New state to be sent to demo_binaryio
     def binaryioSet(self, pinName, state):
         cmd = 'demo_binaryio setDiscreteOutput %s %d' % (pinName, 1 if state else 0)
-        self.log.info(cmd)
+        self.log.debug(cmd)
         rc = subprocess.call(cmd, shell=True, stdout=DEVNULL)
         if rc != 0:
             self.log.error("Error return from demo_binaryio for pin %s" % pinName)
@@ -301,7 +325,7 @@ class GPIO(module.Module):
     # @return Current state of the pin
     def binaryioGet(self, pinName):
         cmd = 'demo_binaryio getDiscreteInput %s' % pinName
-        self.log.info(cmd)
+        self.log.debug(cmd)
         try:
             output = subprocess.check_output(cmd, shell=True)
         except subprocess.CalledProcessError as e:
@@ -309,7 +333,7 @@ class GPIO(module.Module):
             # Return the opposite of the current output state to force match to fail
             return not self.outputState
 
-        self.log.info("Command returned: %s" % output)
+        self.log.debug("Command returned: %s" % output)
         idx = output.find("Discrete value =")
         if idx > -1:
             if output[idx+17] == "0":
