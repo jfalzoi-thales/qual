@@ -3,7 +3,7 @@
 #
 Name: qual
 Summary: An application used drive MPS hardware
-Version: 1.14
+Version: 1.17
 Release: 1
 License: Proprietary
 Group: Applications/Engineering
@@ -46,7 +46,6 @@ cp -r * %{buildroot}/thales/qual/src/
 %systemd_post qual.service
 ln -f /thales/qual/src/qual/config/mps.ini /thales/qual/src/qual/config/platform.ini
 echo -e "\$ActionQueueFileName fwdRule1\n\$ActionQueueMaxDiskSpace 2g\n\$ActionQueueSaveOnShutdown on\n\$ActionQueueType LinkedList\n\$ActionResumeRetryCount -1\n*.* @192.168.137.1:514" >> /etc/rsyslog.conf
-sed -i 's|arinc429drv|arinc429drv -l VERBOSE|g' /usr/lib/systemd/system/arinc429drv.service
 sed -i 's|service_prvkey_file|#service_prvkey_file|g' /thales/host/config/HDDS.conf
 ln -s /thales/qual/src/qual/modules/gpio/demo_binaryio.sh /usr/bin/demo_binaryio
 ln -s /thales/qual/src/qual/modules/arinc485/demo_serial485.sh /usr/bin/demo_serial485

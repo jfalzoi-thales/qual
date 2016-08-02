@@ -1,10 +1,10 @@
-
 import subprocess
 import threading
 from time import sleep
 from common.gpb.python.Ethernet_pb2 import EthernetRequest, EthernetResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.module.module import Module, ModuleException
+
 
 ## Ethernet Module Exception Class
 class EthernetModuleException(ModuleException):
@@ -98,10 +98,14 @@ class Ethernet(Module):
     #  @param   self
     def iperfTracker(self):
         #self.log.info("top of iperfTracker")
+        #  Make a shallow copy of connections to reduce locking in background thread
         self.connectionsLock.acquire()
-        for connection in self.connections.values():
-            #  Poor man's locking
+        connectionsCopy = dict.copy(self.connections)
+        self.connectionsLock.release()
+
+        for connection in connectionsCopy.values():
             iperf = connection.iperf
+
             if iperf is not None:
                 #  If iperf3 has exited, restart it (iperf3 has a maximum runtime before it exits)
                 if connection.iperf.poll() is not None:
@@ -118,7 +122,6 @@ class Ethernet(Module):
                 if len(stuff) == 11 and stuff[7] == "Mbits/sec":
                     connection.bandwidth = float(stuff[6])
                     connection.retries += int(stuff[8])
-        self.connectionsLock.release()
 
         #  Without this delay, iperfTracker is capable of re-acquiring lock before other blocked functions
         sleep(.001)
@@ -144,7 +147,9 @@ class Ethernet(Module):
         if localPort not in self.connections:
             self.log.info("Starting streaming on port %s to %s" % (localPort, remoteServer))
             connection = ConnectionInfo(localPort)
+            self.connectionsLock.acquire()
             self.connections[localPort] = connection
+            self.connectionsLock.release()
         else:
             self.log.info("Restarting streaming on port %s to %s" % (localPort, remoteServer))
             connection = self.connections[localPort]
@@ -170,15 +175,15 @@ class Ethernet(Module):
     #  @param   response    EthernetResponse object
     def stop(self, request, response):
         localPort = str(request.local)
-
         # Run the report before actually stopping to get the final bandwidth and retries values
         self.report(request, response)
         response.state = EthernetResponse.STOPPED
 
         # Now stop the iperf and remove from our connections list
-        self.connectionsLock.acquire()
         if localPort in self.connections:
+            self.connectionsLock.acquire()
             connection = self.connections.pop(localPort)
+            self.connectionsLock.release()
             self.log.info("Stopping streaming on port %s to %s" % (localPort, connection.server))
             self.stopiperf(connection)
 
@@ -186,16 +191,14 @@ class Ethernet(Module):
         if len(self.connections) == 0 and self._running:
             self.log.debug("Stopping iperfTracker")
             self._running = False
-            self.connectionsLock.release()
             self.stopThread()
-        else:
-            self.connectionsLock.release()
 
     ## Reports current iperf3 status on the specified channel
     #  @param   self
     #  @param   response    EthernetResponse object
     def report(self, request, response):
         localPort = str(request.local)
+
         if localPort in self.connections:
             response.state = EthernetResponse.RUNNING
             response.bandwidth = self.connections[localPort].bandwidth

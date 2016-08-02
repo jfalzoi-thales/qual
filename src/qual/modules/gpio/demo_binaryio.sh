@@ -5,7 +5,7 @@ if [ "$1" = "setDiscreteOutput" ]; then
     if [ "$3" = "1" ]; then
         touch /tmp/binaryio_$2
     else
-        rm /tmp/binaryio_$2
+        rm -f /tmp/binaryio_$2
     fi
     exit 0
 fi
