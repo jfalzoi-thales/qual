@@ -15,8 +15,10 @@ class HDDSMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Get single value", HDDSMessages.get),
-                ("Set single value", HDDSMessages.set)]
+        return [("Get HDDS value", HDDSMessages.get),
+                ("Set HDDS value", HDDSMessages.set),
+                ("Get IFE temperature", HDDSMessages.getTemp),
+                ("Get IFE voltage",     HDDSMessages.getVolt)]
 
     @staticmethod
     def get():

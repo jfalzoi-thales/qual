@@ -19,13 +19,16 @@ class GPIOMessages(ModuleMessages):
     def getMenuItems():
         return [("Report for input 1",             GPIOMessages.reportIn1),
                 ("Report for input 2",             GPIOMessages.reportIn2),
+                ("Report for input 7",             GPIOMessages.reportIn7),
                 ("Report for all inputs",          GPIOMessages.reportAll),
                 ("Connect input 1 to output 1",    GPIOMessages.connectIn1Out1),
                 ("Connect input 2 to output 1",    GPIOMessages.connectIn2Out1),
                 ("Connect input 2 to output 2",    GPIOMessages.connectIn2Out2),
+                ("Connect input 7 to output 7",    GPIOMessages.connectIn7Out7),
                 ("Connect all inputs to output 3", GPIOMessages.connectInAllOut3),
                 ("Disconnect input 1",             GPIOMessages.disconnectIn1),
                 ("Disconnect input 2",             GPIOMessages.disconnectIn2),
+                ("Disconnect input 7",             GPIOMessages.disconnectIn7),
                 ("Disconnect all inputs",          GPIOMessages.disconnectAll)]
 
     @staticmethod
