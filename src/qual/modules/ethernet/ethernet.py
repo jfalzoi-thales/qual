@@ -1,6 +1,7 @@
 import subprocess
 import threading
 from time import sleep
+import netifaces
 from common.gpb.python.Ethernet_pb2 import EthernetRequest, EthernetResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.module.module import Module, ModuleException
@@ -82,9 +83,20 @@ class Ethernet(Module):
     #  @param   connection ConnectionInfo object for this connection
     def startiperf(self, connection):
         #  'stdbuf -o L' modifies iperf3 to allow easily accessed line buffered output
-        connection.iperf = subprocess.Popen(
-            ["stdbuf", "-o", "L", "iperf3", "-c", connection.server, "-b", "%sM" % str(self.bandwidthSpeed), "-f", "m", "-t", "86400"],
-            stdout=subprocess.PIPE, bufsize=1)
+        cmd = ["stdbuf", "-o", "L", "iperf3", "-c", connection.server, "-b", "%sM" % str(self.bandwidthSpeed), "-f", "m", "-t", "86400"]
+        # Port ENET_8 is connected directly to interface eno1 on the MPS so
+        # if ENET_8 is specified, bind to the address of that port if possible.
+        if connection.localPort == "ENET_8" and "eno1" in netifaces.interfaces:
+            ifaddrs = netifaces.ifaddresses("eno1")
+            if netifaces.AF_INET in ifaddrs:
+                for ipcfg in ifaddrs[netifaces.AF_INET]:
+                    if "addr" in ipcfg:
+                        cmd += ["-B", ipcfg["addr"]]
+                        break
+            else:
+                self.log.warning("Interface eno1 does not have IP address")
+        self.log.info("Starting: %s" % " ".join(cmd))
+        connection.iperf = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=1)
 
     ## Terminates a running iperf on a connection
     #  @param   self
