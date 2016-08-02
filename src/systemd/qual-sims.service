@@ -3,7 +3,7 @@ Description=Start QUAL simulators
 
 [Service]
 Type=idle
-ExecStart=/bin/qual-vm.sh
+ExecStart=/thales/host/appliances/qual-sims
 RemainAfterExit=yes
 Restart=always
 RestartSec=3s
