@@ -75,7 +75,10 @@ class Module(ConfigurableObject):
         for item in self.msgHandlers:
             if isinstance(msg.body, item[0]):
                 retMsg = item[1](msg)
-                self.log.debug('Returning %s:\n%s' % (retMsg.body.__class__.__name__, retMsg.body.__str__()))
+                if retMsg.body is None:
+                    self.log.debug('Returning %s:\n(serialized body)' % retMsg.name)
+                else:
+                    self.log.debug('Returning %s:\n%s' % (retMsg.body.__class__.__name__, retMsg.body.__str__()))
                 return retMsg
 
         raise ModuleException('Thread %s %s msg handler not defined' %
