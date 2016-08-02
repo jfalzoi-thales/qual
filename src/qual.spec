@@ -58,7 +58,7 @@ cp -r * %{buildroot}/thales/qual/src/
 %exclude /usr/lib/systemd/system-preset/50-qual-sims-service.preset
 %exclude /thales/qual/src/simulator
 %exclude /thales/qual/src/systemd
-%exclude /thales/qual/src/qual/ifemodules
+%exclude /thales/qual/src/qual/ifeModules
 %exclude /thales/qual/src/qual/qte/qtemenu.sh
 
 %files sims
