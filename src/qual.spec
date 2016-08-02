@@ -25,6 +25,7 @@ Requires: %{name} = %{version}
 Summary: An application that uses a VM to communicate with the MPS IFE card
 Group: Applications/Engineering
 
+
 %description
 The MPS Qualification Software is the MPS resident component of an automated test suite designed to exercise the external hardware interfaces and simulate anticipated thermal loading of the LRU.  This is to support system evaluation during environmental and EMI testing scenarios including HALT and HASS.
 
@@ -34,8 +35,10 @@ This package contains a number of Python driven programs used to simulate ZMQ me
 %description ife
 This package runs an IFE virtual machine that is used to communicate with the IFE card on the MPS.
 
+
 %prep
 %setup -q -n %{name}-%{version}
+
 
 %install
 mkdir -p %{buildroot}/bin/ %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances
@@ -47,18 +50,21 @@ cp systemd/qual*.service %{buildroot}/%{_unitdir}/
 cp systemd/50-qual*-service.preset %{buildroot}/usr/lib/systemd/system-preset/
 cp -r * %{buildroot}/thales/qual/src/
 
+
 %files
 %attr(0755,root,root) /thales/host/appliances/qual*
 %attr(0755,root,root) /thales/host/appliances/qtemenu
 %attr(0644,root,root) /%{_unitdir}/qual*.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual*-service.preset
 %attr(0644,root,root) /thales/qual/src/*
+
 %exclude /thales/host/appliances/qual-sims
 %exclude /%{_unitdir}/qual-sims.service
 %exclude /usr/lib/systemd/system-preset/50-qual-sims-service.preset
 %exclude /thales/qual/src/simulator
 %exclude /thales/qual/src/systemd
 %exclude /thales/qual/src/qual/ifeModules
+%exclude /thales/qual/src/qual/config/ife.ini
 %exclude /thales/qual/src/qual/qte/qtemenu.sh
 
 %files sims
@@ -66,6 +72,7 @@ cp -r * %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /%{_unitdir}/qual-sims.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-sims-service.preset
 %attr(0644,root,root) /thales/qual/src/simulator/*
+
 %exclude /thales/host/appliances/qual
 %exclude /thales/host/appliances/qual-ife
 %exclude /thales/host/appliances/qtemenu
@@ -83,13 +90,17 @@ cp -r * %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /%{_unitdir}/qual.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-service.preset
 %attr(0644,root,root) /thales/qual/src/*
+
 %exclude /thales/host/appliances/qual-*
 %exclude /%{_unitdir}/qual-*.service
 %exclude /usr/lib/systemd/system-preset/50-qual-*-service.preset
 %exclude /thales/qual/src/simulator
 %exclude /thales/qual/src/systemd
 %exclude /thales/qual/src/qual/modules
+%exclude /thales/qual/src/qual/config/mps.ini
+%exclude /thales/qual/src/qual/config/virtualMachine.ini
 %exclude /thales/qual/src/qual/qte/qtemenu.sh
+
 
 %post
 %systemd_post qual.service
@@ -107,6 +118,5 @@ rm -f /etc/udev/rules.d/95*
 
 %post ife
 %systemd_post qual.service
-ln -f /thales/qual/src/qual/config/mps.ini /thales/qual/src/qual/config/platform.ini
-echo -e "\$ActionQueueFileName fwdRule1\n\$ActionQueueMaxDiskSpace 2g\n\$ActionQueueSaveOnShutdown on\n\$ActionQueueType LinkedList\n\$ActionResumeRetryCount -1\n*.* @192.168.137.1:514" >> /etc/rsyslog.conf
-sed -i 's|service_prvkey_file|#service_prvkey_file|g' /thales/host/config/HDDS.conf
+ln -f /thales/qual/src/qual/config/ife.ini /thales/qual/src/qual/config/platform.ini
+
