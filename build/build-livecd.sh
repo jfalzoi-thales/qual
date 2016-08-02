@@ -10,10 +10,9 @@ SRCISO=$2
 # mps-map        (MPS MAP   ISO+USB)
 # mps-psi        (MPS PSI   PXE)
 # mps-atp        (MPS ATP   ISO)
-# mps-qual       (MPS QUAL  ISO+USB+PXE)
+# mps-qual       (MPS QUAL  ISO)
 # mps-devel      (MPS devel ISO+USB)
-# mps-guest      (MPS guest ISO+qcow2)
-# mps-guest-rpm  (MPS guest ISO+qcow2+rpm)
+# mps-guest      (MPS guest ISO+qcow2+rpm)
 
 [ -z "$TARGET" ] && TARGET="mps-all"
 [ -n "$SRCISO" -a "$TARGET" = "mps-all" ] && { echo "You cannot provide srciso name for mps-all target!"; exit 1; }
@@ -38,6 +37,7 @@ make_iso() {
 	fslabel="${config%%.ks}-${BUILD_VER}"
 	export IMAGE_TYPE="livecd"
 	export IMAGE_TARGET="${config%%.ks}"
+
 	echo "Creating a bootable ISO livecd image..."
 	echo "PWD=$PWD"
 	echo "IMAGE_TYPE=$IMAGE_TYPE"
@@ -269,16 +269,13 @@ case "$TARGET" in
 		rm -f "$(iso_image_name mps-psi)"
 		;;&
 
-	mps-all|mps-guest*)
+	mps-all|mps-guest)
 		if [ -z "$SRCISO" ]; then
 			echo "Building MPS Guest VM Live-ISO Image..."
 			make_iso "MPS Guest" "mps-guest.ks"
 		fi
 		echo "Building MPS Guest VM qcow2 Image..."
 		make_vm "$(iso_image_name mps-guest)"
-		;;&
-
-	mps-guest-rpm)
 		echo "Building MPS Guest VM RPM..."
 		make_vm_rpm "$(iso_image_name mps-guest)"
 		;;&
@@ -288,8 +285,6 @@ case "$TARGET" in
 		make_iso "MPS QUAL" "mps-qual.ks"
 		echo "Building MPS QUAL PXE Image..."
 		make_pxe "$(iso_image_name mps-qual)"
-		echo "Building MPS QUAL Live-USB Image..."
-		make_usb "$(iso_image_name mps-qual)"
 		rm -f "$(iso_image_name mps-qual)"
 		;;&
 

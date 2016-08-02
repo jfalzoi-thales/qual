@@ -109,5 +109,6 @@ pyserial
 fio
 pmbw
 ethtool
+mps-guest-vm
 
 %end
