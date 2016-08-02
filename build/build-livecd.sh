@@ -10,7 +10,7 @@ SRCISO=$2
 # mps-map        (MPS MAP   ISO+USB)
 # mps-psi        (MPS PSI   PXE)
 # mps-atp        (MPS ATP   ISO)
-# mps-qual       (MPS QUAL  ISO)
+# mps-qual       (MPS QUAL  ISO+USB+PXE)
 # mps-devel      (MPS devel ISO+USB)
 # mps-guest      (MPS guest ISO+qcow2+rpm)
 
@@ -37,7 +37,6 @@ make_iso() {
 	fslabel="${config%%.ks}-${BUILD_VER}"
 	export IMAGE_TYPE="livecd"
 	export IMAGE_TARGET="${config%%.ks}"
-
 	echo "Creating a bootable ISO livecd image..."
 	echo "PWD=$PWD"
 	echo "IMAGE_TYPE=$IMAGE_TYPE"
@@ -286,6 +285,8 @@ case "$TARGET" in
 		echo "Building MPS QUAL PXE Image..."
 		make_pxe "$(iso_image_name mps-qual)"
 		rm -f "$(iso_image_name mps-qual)"
+		echo "Building MPS QUAL Live-USB Image..."
+		make_usb "$(iso_image_name mps-qual)"
 		;;&
 
 	mps-atp)
