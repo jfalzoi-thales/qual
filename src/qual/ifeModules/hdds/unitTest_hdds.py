@@ -8,15 +8,15 @@ from common.module.modulemsgs import ModuleMessages
 #  @cond doxygen_unittest
 
 ## HDDS for IFE Messages
-class HDDSMessages(ModuleMessages):
+class IFEHDDSMessages(ModuleMessages):
     @staticmethod
     def getMenuTitle():
         return "HDDS for IFE"
 
     @staticmethod
     def getMenuItems():
-        return [("Get voltage",     HDDSMessages.getVolt),
-                ("Get temperature", HDDSMessages.getTemp)]
+        return [("Get voltage",     IFEHDDSMessages.getVolt),
+                ("Get temperature", IFEHDDSMessages.getTemp)]
 
     @staticmethod
     def getTemp():
@@ -34,7 +34,7 @@ class HDDSMessages(ModuleMessages):
 
 
 ## HDDS for IFE Unit Test
-class Test_HDDS(unittest.TestCase):
+class Test_IFEHDDS(unittest.TestCase):
     ## Static logger instance
     log = None
 
@@ -49,7 +49,7 @@ class Test_HDDS(unittest.TestCase):
         cls.log = Logger(name='Test HDDS-IFE')
         cls.log.info('++++ Setup before HDDS-IFE module unit tests ++++')
         # Create the module
-        cls.module = hdds.HDDS()
+        cls.module = hdds.IFEHDDS()
         # Uncomment this if you want to see module debug messages
         #cls.module.log.setLevel("DEBUG")
 
@@ -62,7 +62,7 @@ class Test_HDDS(unittest.TestCase):
         module = self.__class__.module
 
         log.info("**** Test case: Get temp ****")
-        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getTemp()))
+        response = module.msgHandler(ThalesZMQMessage(IFEHDDSMessages.getTemp()))
         self.assertEqual(response.body.success, True)
         self.assertEqual(response.body.key, "ife.temperature.U15_TINT")
         self.assertNotEqual(response.body.value, "")
@@ -77,7 +77,7 @@ class Test_HDDS(unittest.TestCase):
         module = self.__class__.module
 
         log.info("**** Test case: Get volt ****")
-        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getVolt()))
+        response = module.msgHandler(ThalesZMQMessage(IFEHDDSMessages.getVolt()))
         self.assertEqual(response.body.success, True)
         self.assertEqual(response.body.key, "ife.voltage.U130_3V3")
         self.assertNotEqual(response.body.value, "")

@@ -4,13 +4,13 @@ from common.gpb.python.HDDS_pb2 import HostDomainDeviceServiceRequest, HostDomai
 from common.module.module import Module
 
 ## HDDS Module for IFE sensors
-class HDDS(Module):
+class IFEHDDS(Module):
     ## Constructor
     #  @param   self
     #  @param   config  Configuration for this module instance
     def __init__(self, config = None):
         #  Initialize parent class
-        super(HDDS, self).__init__(config)
+        super(IFEHDDS, self).__init__(config)
         ## Dict containing voltage specific keys and their sensor ids
         self.volts = {"ife.voltage.U130_3V3":1,
                     "ife.voltage.U14_3V3":2,
