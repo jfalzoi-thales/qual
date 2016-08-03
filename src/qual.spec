@@ -86,9 +86,9 @@ cp -r * %{buildroot}/thales/qual/src/
 %exclude /thales/host/appliances/qtemenu
 %exclude /thales/host/appliances/genvmconfig
 %exclude /etc/sysconfig/network-scripts
-%exclude /{_unitdir}/qual.service
-%exclude /{_unitdir}/qual-ife.service
-%exclude /{_unitdir}/qual-startvm.service
+%exclude /%{_unitdir}/qual.service
+%exclude /%{_unitdir}/qual-ife.service
+%exclude /%{_unitdir}/qual-startvm.service
 %exclude /usr/lib/systemd/system-preset/50-qual-service.preset
 %exclude /usr/lib/systemd/system-preset/50-qual-ife-service.preset
 %exclude /usr/lib/systemd/system-preset/50-qual-startvm-service.preset
@@ -98,7 +98,7 @@ cp -r * %{buildroot}/thales/qual/src/
 %exclude /thales/qual/src/scripts
 
 %files ife
-%attr(0755,root,root) /%{buildroot}/%{_bindir}/*
+%attr(0755,root,root) %{_bindir}/*
 %attr(0644,root,root) /etc/sysconfig/network-scripts/ifcfg-*
 %attr(0644,root,root) /%{_unitdir}/qual-ife.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-ife-service.preset
