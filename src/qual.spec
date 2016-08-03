@@ -64,7 +64,6 @@ cp -r * %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /thales/qual/src/*
 
 %exclude /thales/host/appliances/qual-sims
-%exclude /%{_bindir}
 %exclude /etc/sysconfig/network-scripts
 %exclude /%{_unitdir}/qual-sims.service
 %exclude /%{_unitdir}/qual-ife.service
@@ -86,7 +85,6 @@ cp -r * %{buildroot}/thales/qual/src/
 %exclude /thales/host/appliances/qual-startvm
 %exclude /thales/host/appliances/qtemenu
 %exclude /thales/host/appliances/genvmconfig
-%exclude /%{_bindir}
 %exclude /etc/sysconfig/network-scripts
 %exclude /{_unitdir}/qual.service
 %exclude /{_unitdir}/qual-ife.service
@@ -107,9 +105,9 @@ cp -r * %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /thales/qual/src/*
 
 %exclude /thales/host/appliances
-%exclude /{_unitdir}/qual.service
-%exclude /{_unitdir}/qual-sims.service
-%exclude /{_unitdir}/qual-startvm.service
+%exclude /%{_unitdir}/qual.service
+%exclude /%{_unitdir}/qual-sims.service
+%exclude /%{_unitdir}/qual-startvm.service
 %exclude /usr/lib/systemd/system-preset/50-qual-service.preset
 %exclude /usr/lib/systemd/system-preset/50-qual-sims-service.preset
 %exclude /usr/lib/systemd/system-preset/50-qual-startvm-service.preset
