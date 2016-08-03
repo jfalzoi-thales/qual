@@ -24,17 +24,15 @@ cd ife-lls-mps; rpm2cpio ../dist/ife-lls-mps-%{version}-1.x86_64.rpm | cpio -idm
 rm -rf ife-lls-mps
 
 %install
-mkdir -p %{buildroot}/%{_bindir} %{buildroot}/usr/lib64 %{buildroot}/lib/modules %{buildroot}/lib/firmware %{buildroot}/etc/sysconfig/network-scripts
+mkdir -p %{buildroot}/%{_bindir} %{buildroot}/usr/lib64 %{buildroot}/lib/modules %{buildroot}/lib/firmware
 install -m755 ife-lls-mps/usr/lib64/libllsapi.so %{buildroot}/usr/lib64/
 cp ife-lls-mps/usr/bin/* %{buildroot}/%{_bindir}/
 install -m755 ife-lls-mps/lib/modules/i2c-mcp2221.ko %{buildroot}/lib/modules/
 install -m755 ife-lls-mps/Sidekick.afx.S19 %{buildroot}/lib/firmware/
-install -m644 ifcfg-eno1 %{buildroot}/etc/sysconfig/network-scripts/
 
 %files
 /%{_bindir}/*
 /lib/firmware/*
 /lib/modules/*
 /usr/lib64/*
-/etc/sysconfig/network-scripts/*
 %exclude /%{_bindir}/thales
