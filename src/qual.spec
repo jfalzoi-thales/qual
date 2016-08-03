@@ -41,15 +41,15 @@ This package runs an IFE virtual machine that is used to communicate with the IF
 
 
 %install
-mkdir -p %{buildroot}/etc/sysconfig/network-scripts %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances
+mkdir -p %{buildroot}/%{_bindir} %{buildroot}/etc/sysconfig/network-scripts %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances
 cp systemd/qual.sh %{buildroot}/thales/host/appliances/qual
 cp systemd/qual-sims.sh %{buildroot}/thales/host/appliances/qual-sims
-cp systemd/qual-ife.sh %{buildroot}/thales/host/appliances/qual-ife
+cp systemd/qual-ife.sh %{buildroot}/%{_bindir}/qual-ife
 cp systemd/qual-startvm.sh %{buildroot}/thales/host/appliances/qual-startvm
 cp systemd/qual*.service %{buildroot}/%{_unitdir}/
 cp systemd/50-qual*-service.preset %{buildroot}/usr/lib/systemd/system-preset/
 cp scripts/qtemenu.sh %{buildroot}/thales/host/appliances/qtemenu
-cp scripts/installifesims.sh %{buildroot}/thales/host/appliances/installifesims
+cp scripts/installifesims.sh %{buildroot}/%{_bindir}/installifesims
 cp scripts/genvmconfig.py %{buildroot}/thales/host/appliances/genvmconfig
 cp scripts/ifcfg-* %{buildroot}/etc/sysconfig/network-scripts/
 cp -r * %{buildroot}/thales/qual/src/
@@ -64,8 +64,6 @@ cp -r * %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /thales/qual/src/*
 
 %exclude /thales/host/appliances/qual-sims
-%exclude /thales/host/appliances/qual-ife
-%exclude /thales/host/appliances/installifesims
 %exclude /etc/sysconfig/network-scripts
 %exclude /%{_unitdir}/qual-sims.service
 %exclude /%{_unitdir}/qual-ife.service
@@ -84,15 +82,13 @@ cp -r * %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /thales/qual/src/simulator/*
 
 %exclude /thales/host/appliances/qual
-%exclude /thales/host/appliances/qual-ife
 %exclude /thales/host/appliances/qual-startvm
 %exclude /thales/host/appliances/qtemenu
-%exclude /thales/host/appliances/installifesims
 %exclude /thales/host/appliances/genvmconfig
 %exclude /etc/sysconfig/network-scripts
-%exclude /{_unitdir}/qual.service
-%exclude /{_unitdir}/qual-ife.service
-%exclude /{_unitdir}/qual-startvm.service
+%exclude /%{_unitdir}/qual.service
+%exclude /%{_unitdir}/qual-ife.service
+%exclude /%{_unitdir}/qual-startvm.service
 %exclude /usr/lib/systemd/system-preset/50-qual-service.preset
 %exclude /usr/lib/systemd/system-preset/50-qual-ife-service.preset
 %exclude /usr/lib/systemd/system-preset/50-qual-startvm-service.preset
@@ -102,21 +98,16 @@ cp -r * %{buildroot}/thales/qual/src/
 %exclude /thales/qual/src/scripts
 
 %files ife
-%attr(0755,root,root) /thales/host/appliances/qual-ife
-%attr(0755,root,root) /thales/host/appliances/qtemenu
-%attr(0755,root,root) /thales/host/appliances/installifesims
+%attr(0755,root,root) %{_bindir}/*
 %attr(0644,root,root) /etc/sysconfig/network-scripts/ifcfg-*
 %attr(0644,root,root) /%{_unitdir}/qual-ife.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-ife-service.preset
 %attr(0644,root,root) /thales/qual/src/*
 
-%exclude /thales/host/appliances/qual
-%exclude /thales/host/appliances/qual-sims
-%exclude /thales/host/appliances/qual-startvm
-%exclude /thales/host/appliances/genvmconfig
-%exclude /{_unitdir}/qual.service
-%exclude /{_unitdir}/qual-sims.service
-%exclude /{_unitdir}/qual-startvm.service
+%exclude /thales/host/appliances
+%exclude /%{_unitdir}/qual.service
+%exclude /%{_unitdir}/qual-sims.service
+%exclude /%{_unitdir}/qual-startvm.service
 %exclude /usr/lib/systemd/system-preset/50-qual-service.preset
 %exclude /usr/lib/systemd/system-preset/50-qual-sims-service.preset
 %exclude /usr/lib/systemd/system-preset/50-qual-startvm-service.preset
