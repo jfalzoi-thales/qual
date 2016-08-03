@@ -75,9 +75,6 @@ arinc717-driver
 test-tools
 arinc717-driver-tests
 
-# IFE card Drivers and Tools
-#mps-ife
-
 # Higher Level Services
 host-domain-device-service
 
