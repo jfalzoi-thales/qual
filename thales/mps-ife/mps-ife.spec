@@ -24,24 +24,17 @@ cd ife-lls-mps; rpm2cpio ../dist/ife-lls-mps-%{version}-1.x86_64.rpm | cpio -idm
 rm -rf ife-lls-mps
 
 %install
-mkdir -p %{buildroot}/%{_bindir} %{buildroot}/usr/lib64 %{buildroot}/lib/modules %{buildroot}/lib/firmware %{buildroot}/%{_unitdir} %{buildroot}/usr/lib/systemd/system-preset
+mkdir -p %{buildroot}/%{_bindir} %{buildroot}/usr/lib64 %{buildroot}/lib/modules %{buildroot}/lib/firmware %{buildroot}/etc/sysconfig/network-scripts
 install -m755 ife-lls-mps/usr/lib64/libllsapi.so %{buildroot}/usr/lib64/
 cp ife-lls-mps/usr/bin/* %{buildroot}/%{_bindir}/
 install -m755 ife-lls-mps/lib/modules/i2c-mcp2221.ko %{buildroot}/lib/modules/
 install -m755 ife-lls-mps/Sidekick.afx.S19 %{buildroot}/lib/firmware/
-install -m755 mps-ife-setup.sh %{buildroot}/%{_bindir}/
-install -m644 mps-ife.service %{buildroot}/%{_unitdir}/
-install -m644 50-mps-ife-service.preset %{buildroot}/usr/lib/systemd/system-preset/
+install -m644 ifcfg-eno1 %{buildroot}/etc/sysconfig/network-scripts/
 
 %files
 /%{_bindir}/*
 /lib/firmware/*
 /lib/modules/*
 /usr/lib64/*
-/%{_unitdir}/mps-ife.service
-/usr/lib/systemd/system-preset/50-mps-ife-service.preset
-%exclude /%{_bindir}/eeprom*
+/etc/sysconfig/network-scripts/*
 %exclude /%{_bindir}/thales
-
-%post
-%systemd_post mps-ife.service
