@@ -33,14 +33,16 @@ class QualTestApp(ConfigurableObject):
         self.gpbServiceAddress = "tcp://*:50001"
         ## Address to use for JSON listener
         self.jsonServiceAddress = "tcp://*:50002"
+        ## Directory to search for modules
+        self.moduleDir = "qual.modules"
         # Read config file and update specified instance variables
-        self.loadConfig(attributes=('gpbServiceAddress','jsonServiceAddress'))
+        self.loadConfig(attributes=('gpbServiceAddress','jsonServiceAddress','moduleDir'))
 
         ## Map of {<class>:[<instances>...]}
         self.__instances = {}
 
         ## All available classes in QUAL modules for QTA
-        self.__modClasses = ClassFinder(rootPath='qual.modules',
+        self.__modClasses = ClassFinder(rootPath=self.moduleDir,
                                         baseClass=Module)
 
         ## All available classes in GPB modules for QTA

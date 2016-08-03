@@ -1,8 +1,6 @@
 import collections
 from time import sleep
 import threading
-import subprocess
-import os
 
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -10,9 +8,6 @@ from common.gpb.python.GPIO_pb2 import GPIORequest, GPIOResponse
 from common.gpb.python.GPIOManager_pb2 import RequestMessage, ResponseMessage
 from common.module import module
 
-
-## Discard the output
-DEVNULL = open(os.devnull, 'wb')
 
 ## Connection info container class
 class ConnectionInfo(object):
@@ -51,9 +46,9 @@ class GPIO(module.Module):
                            "GP_KYLN_OUT4": self.PinInfo(self.gpioManagerSet, "OUTPUT_4_PIN_D6"),
                            "GP_KYLN_OUT5": self.PinInfo(self.gpioManagerSet, "OUTPUT_5_PIN_E6"),
                            "GP_KYLN_OUT6": self.PinInfo(self.gpioManagerSet, "OUTPUT_6_PIN_E8"),
-                           "GP_KYLN_OUT7": self.PinInfo(self.binaryioSet, "LLS_OUT_GP_KL_01"),
-                           "GP_KYLN_OUT8": self.PinInfo(self.binaryioSet, "LLS_OUT_GP_KL_02"),
-                           "GP_KYLN_OUT9": self.PinInfo(self.binaryioSet, "LLS_OUT_GP_KL_03")}
+                           "GP_KYLN_OUT7": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_01"),
+                           "GP_KYLN_OUT8": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_02"),
+                           "GP_KYLN_OUT9": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_03")}
         ## Dict mapping GPIO input pins to handler and handler pin name
         self.inputPins = {"GP_KYLN_IN1":     self.PinInfo(self.gpioManagerGet, "INPUT_1_PIN_A7"),
                           "GP_KYLN_IN2":     self.PinInfo(self.gpioManagerGet, "INPUT_2_PIN_B7"),
@@ -61,10 +56,10 @@ class GPIO(module.Module):
                           "GP_KYLN_IN4":     self.PinInfo(self.gpioManagerGet, "INPUT_4_PIN_D7"),
                           "GP_KYLN_IN5":     self.PinInfo(self.gpioManagerGet, "INPUT_5_PIN_E7"),
                           "PA_ALL_KYLN_IN":  self.PinInfo(self.gpioManagerGet, "PA_All_PIN_C8"),
-                          "GP_KYLN_IN6":     self.PinInfo(self.binaryioGet, "LLS_IN_GP_KL_01"),
-                          "GP_KYLN_IN7":     self.PinInfo(self.binaryioGet, "LLS_IN_GP_KL_02"),
-                          "GP_KYLN_IN8":     self.PinInfo(self.binaryioGet, "LLS_IN_GP_KL_03"),
-                          "GP_KYLN_IN9":     self.PinInfo(self.binaryioGet, "LLS_IN_GP_KL_04")}
+                          "GP_KYLN_IN6":     self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_01"),
+                          "GP_KYLN_IN7":     self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_02"),
+                          "GP_KYLN_IN8":     self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_03"),
+                          "GP_KYLN_IN9":     self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_04")}
         ## Dict of connections; key is input pin, value is a ConnectionInfo object
         self.connections = {}
         ## List of connections we're done with
@@ -75,6 +70,8 @@ class GPIO(module.Module):
         self.outputState = False
         ## Connection to GPIO Manager
         self.gpioMgrClient = ThalesZMQClient("ipc:///tmp/gpio-mgr.sock", log=self.log, msgParts=1)
+        ## Connection to QTA running on the IFE VM
+        self.ifeVmQtaClient = ThalesZMQClient("tcp://localhost:50003", log=self.log)
         # Set up thread to toggle outputs
         self.addThread(self.toggleOutputs)
 
@@ -308,40 +305,49 @@ class GPIO(module.Module):
         # Return the opposite of the current output state to force match to fail
         return not self.outputState
 
-    ## Sets an IFE card pin state using demo_binaryio
+    ## Sets an IFE card pin state using IFE QTA in VM
     # @param  self
-    # @param  pinName Pin name to be sent to demo_binaryio
-    # @param  state   New state to be sent to demo_binaryio
-    def binaryioSet(self, pinName, state):
-        cmd = 'demo_binaryio setDiscreteOutput %s %d' % (pinName, 1 if state else 0)
-        self.log.debug(cmd)
-        rc = subprocess.call(cmd, shell=True, stdout=DEVNULL)
-        if rc != 0:
-            self.log.error("Error return from demo_binaryio for pin %s" % pinName)
+    # @param  pinName Pin name to be sent to IFE QTA
+    # @param  state   New state to be sent to IFE QTA
+    def ifeVmQtaSet(self, pinName, state):
+        # Create a GPIO Manager request of type SET
+        setReq = RequestMessage()
+        setReq.pin_name = pinName
+        setReq.request_type = RequestMessage.SET
+        setReq.value = state
+        # Send a request and get the response
+        response = self.ifeVmQtaClient.sendRequest(ThalesZMQMessage(setReq))
 
-    ## Gets an IFE card pin state using demo_binaryio
+        # Parse the response
+        if response.name == "ResponseMessage":
+            setResp = ResponseMessage()
+            setResp.ParseFromString(response.serializedBody)
+            if setResp.error == ResponseMessage.OK:
+                return
+
+        self.log.error("Error return from IFE VM GPIO for pin %s" % pinName)
+
+    ## Gets an IFE card pin state using IFE QTA in VM
     # @param  self
-    # @param  pinName Pin name to be sent to demo_binaryio
+    # @param  pinName Pin name to be sent to IFE QTA
     # @return Current state of the pin
-    def binaryioGet(self, pinName):
-        cmd = 'demo_binaryio getDiscreteInput %s' % pinName
-        self.log.debug(cmd)
-        try:
-            output = subprocess.check_output(cmd, shell=True)
-        except subprocess.CalledProcessError as e:
-            self.log.error("Error return from demo_binaryio for pin %s" % pinName)
-            # Return the opposite of the current output state to force match to fail
-            return not self.outputState
+    def ifeVmQtaGet(self, pinName):
+        # Create a GPIO Manager request of type GET
+        getReq = RequestMessage()
+        getReq.pin_name = pinName
+        getReq.request_type = RequestMessage.GET
 
-        self.log.debug("Command returned: %s" % output)
-        idx = output.find("Discrete value =")
-        if idx > -1:
-            if output[idx+17] == "0":
-                return False
-            elif output[idx+17] == "1":
-                return True
+        # Send a request and get the response
+        response = self.ifeVmQtaClient.sendRequest(ThalesZMQMessage(getReq))
 
-        self.log.error("Unexpected output from demo_binaryio for pin %s" % pinName)
+        # Parse the response
+        if response.name == "ResponseMessage":
+            getResp = ResponseMessage()
+            getResp.ParseFromString(response.serializedBody)
+            if getResp.error == ResponseMessage.OK:
+                return getResp.state
+
+        self.log.error("Error return from IFE VM GPIO for pin %s" % pinName)
         # Return the opposite of the current output state to force match to fail
         return not self.outputState
 

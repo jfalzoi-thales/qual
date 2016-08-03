@@ -1,4 +1,3 @@
-import subprocess
 from common.tzmq.ThalesZMQClient import ThalesZMQClient
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.HDDS_pb2 import HostDomainDeviceServiceRequest, HostDomainDeviceServiceResponse
@@ -16,25 +15,8 @@ class HDDS(Module):
         super(HDDS, self).__init__(config)
         ## Client connection to the Host Domain Device Service
         self.hddsClient = ThalesZMQClient("tcp://localhost:40001", log=self.log)
-        ## Dict containing voltage specific keys and their sensor ids
-        self.volts = {"ife.voltage.U130_3V3":1,
-                    "ife.voltage.U14_3V3":2,
-                    "ife.voltage.U14_5V":3,
-                    "ife.voltage.U14_5VMPS":4,
-                    "ife.voltage.U14_1V8":5,
-                    "ife.voltage.U14_1V2":6,
-                    "ife.voltage.U123_3V3":7,
-                    "ife.voltage.U123_EXT_3V3":8,
-                    "ife.voltage.U123_3V3_SSD1":9,
-                    "ife.voltage.U123_3V3_SSD2":10,
-                    "ife.voltage.U123_3V3_SSD3":11}
-        ## Dict containing temperature specific keys and their sensor ids
-        self.temps = {"ife.temperature.U15_TINT":1,
-                   "ife.temperature.U15_TR1":2,
-                   "ife.temperature.U15_TR2":3,
-                   "ife.temperature.U130_3V3":4,
-                   "ife.temperature.U14_3V3":5,
-                   "ife.temperature.U123_3V3":6}
+        ## Connection to QTA running on the IFE VM
+        self.ifeVmQtaClient = ThalesZMQClient("tcp://localhost:50003", log=self.log)
         #  Add handler to available message handlers
         self.addMsgHandler(HostDomainDeviceServiceRequest, self.handler)
 
@@ -50,19 +32,14 @@ class HDDS(Module):
         #  For get and set messages, check if the key requested is ife.voltage or ife.temperature, if it is, handle it,
         #  otherwise, pass the message through to the HDDS
         if msg.body.requestType == HostDomainDeviceServiceRequest.GET:
-            if msg.body.key.startswith("ife.voltage"):
-                try:
-                    response.value = subprocess.check_output(["voltsensor", self.volts[msg.body.key]])
-                    response.success = True
-                except:
-                    self.log.warning("Voltsensor command failed to complete.")
-                    response.success = False
-            elif msg.body.key.startswith("ife.temperature"):
-                try:
-                    response.value = subprocess.check_output(["tempsensor", self.temps[msg.body.key]])
-                    response.success = True
-                except:
-                    self.log.warning("Tempsensor command failed to complete.")
+            if msg.body.key.startswith(("ife.voltage", "ife.temperature")):
+                # IFE get messages are handled by the QTA running on the IFE VM
+                ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(msg)
+                if ifeVmQtaResponse.name == "HostDomainDeviceServiceResponse":
+                    return ifeVmQtaResponse
+                else:
+                    self.log.error("Unexpected response from IFE VM HDDS: %s" % ifeVmQtaResponse.name)
+                    response.value = ""
                     response.success = False
             else:
                 self.getHandler(response, msg.body)
@@ -74,13 +51,16 @@ class HDDS(Module):
             else:
                 self.setHandler(response, msg.body)
         else:
-            self.log.error("Unexpected Request Type %d" % (msg.body.requestType))
+            self.log.error("Unexpected Request Type %d" % msg.body.requestType)
+            response.value = ""
+            response.success = False
 
         return ThalesZMQMessage(response)
 
     ## Handles incoming GET requests
     #  @param     self
     #  @param     response  HostDomainDeviceServiceResponse object
+    #  @param     request   HostDomainDeviceServiceRequest object
     def getHandler(self, response, request):
         getReq = GetReq()
         getReq.key.append(request.key)
@@ -109,7 +89,7 @@ class HDDS(Module):
     ## Handles incoming SET requests
     #  @param     self
     #  @param     response  HostDomainDeviceServiceResponse object
-    #  @param     value     Value to set key to
+    #  @param     request   HostDomainDeviceServiceRequest object
     def setHandler(self, response, request):
         setReq = SetReq()
         req = setReq.values.add()
