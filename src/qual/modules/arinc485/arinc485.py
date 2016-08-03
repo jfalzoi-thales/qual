@@ -11,8 +11,11 @@ class ARINC485(Module):
     def __init__(self, config = None):
         #  Initializes parent class
         super(ARINC485, self).__init__(config)
+        ## Port for communicating with QTA running on the IFE VM
+        self.ifeTcpPort = '50003'
+        self.loadConfig(attributes=('ifeTcpPort'))
         ## Connection to QTA running on the IFE VM
-        self.ifeVmQtaClient = ThalesZMQClient("tcp://localhost:50003", log=self.log)
+        self.ifeVmQtaClient = ThalesZMQClient("tcp://localhost:%s" % self.ifeTcpPort, log=self.log)
         #  Add handler to available message handlers
         self.addMsgHandler(ARINC485Request, self.handler)
 
