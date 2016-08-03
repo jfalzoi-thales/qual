@@ -41,31 +41,37 @@ This package runs an IFE virtual machine that is used to communicate with the IF
 
 
 %install
-mkdir -p %{buildroot}/bin/ %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances
+mkdir -p %{buildroot}/etc/sysconfig/network-scripts %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances
 cp systemd/qual.sh %{buildroot}/thales/host/appliances/qual
 cp systemd/qual-sims.sh %{buildroot}/thales/host/appliances/qual-sims
 cp systemd/qual-ife.sh %{buildroot}/thales/host/appliances/qual-ife
-cp qual/qte/qtemenu.sh %{buildroot}/thales/host/appliances/qtemenu
 cp systemd/qual*.service %{buildroot}/%{_unitdir}/
 cp systemd/50-qual*-service.preset %{buildroot}/usr/lib/systemd/system-preset/
+cp scripts/qtemenu.sh %{buildroot}/thales/host/appliances/qtemenu
+cp scripts/installifesims.sh %{buildroot}/thales/host/appliances/installifesims
+cp scripts/genvmconfig.py %{buildroot}/thales/host/appliances/genvmconfig
+cp scripts/ifcfg-ens3 /etc/sysconfig/network-scripts/
 cp -r * %{buildroot}/thales/qual/src/
 
 
 %files
 %attr(0755,root,root) /thales/host/appliances/qual*
 %attr(0755,root,root) /thales/host/appliances/qtemenu
+%attr(0755,root,root) /thales/host/appliances/genvmconfig
 %attr(0644,root,root) /%{_unitdir}/qual*.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual*-service.preset
 %attr(0644,root,root) /thales/qual/src/*
 
 %exclude /thales/host/appliances/qual-sims
+%exclude /thales/host/appliances/installifesims
+%exclude /etc/sysconfig/network-scripts
 %exclude /%{_unitdir}/qual-sims.service
 %exclude /usr/lib/systemd/system-preset/50-qual-sims-service.preset
 %exclude /thales/qual/src/simulator
 %exclude /thales/qual/src/systemd
+%exclude /thales/qual/src/scripts
 %exclude /thales/qual/src/qual/ifeModules
 %exclude /thales/qual/src/qual/config/ife.ini
-%exclude /thales/qual/src/qual/qte/qtemenu.sh
 
 %files sims
 %attr(0755,root,root) /thales/host/appliances/qual-sims
@@ -76,6 +82,9 @@ cp -r * %{buildroot}/thales/qual/src/
 %exclude /thales/host/appliances/qual
 %exclude /thales/host/appliances/qual-ife
 %exclude /thales/host/appliances/qtemenu
+%exclude /thales/host/appliances/installifesims
+%exclude /thales/host/appliances/genvmconfig
+%exclude /etc/sysconfig/network-scripts
 %exclude /{_unitdir}/qual.service
 %exclude /{_unitdir}/qual-ife.service
 %exclude /usr/lib/systemd/system-preset/50-qual-service.preset
@@ -83,23 +92,27 @@ cp -r * %{buildroot}/thales/qual/src/
 %exclude /thales/qual/src/common
 %exclude /thales/qual/src/qual
 %exclude /thales/qual/src/systemd
+%exclude /thales/qual/src/scripts
 
 %files ife
 %attr(0755,root,root) /thales/host/appliances/qual
 %attr(0755,root,root) /thales/host/appliances/qtemenu
+%attr(0755,root,root) /thales/host/appliances/installifesims
+%attr(0755,root,root) /etc/sysconfig/network-scripts/ifcfg-ens3
 %attr(0644,root,root) /%{_unitdir}/qual.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-service.preset
 %attr(0644,root,root) /thales/qual/src/*
 
 %exclude /thales/host/appliances/qual-*
+%exclude /thales/host/appliances/genvmconfig
 %exclude /%{_unitdir}/qual-*.service
 %exclude /usr/lib/systemd/system-preset/50-qual-*-service.preset
 %exclude /thales/qual/src/simulator
 %exclude /thales/qual/src/systemd
+%exclude /thales/qual/src/scripts
 %exclude /thales/qual/src/qual/modules
 %exclude /thales/qual/src/qual/config/mps.ini
 %exclude /thales/qual/src/qual/config/virtualMachine.ini
-%exclude /thales/qual/src/qual/qte/qtemenu.sh
 
 
 %post
