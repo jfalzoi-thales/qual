@@ -15,11 +15,11 @@ class HDDS(Module):
         super(HDDS, self).__init__(config)
         ## Client connection to the Host Domain Device Service
         self.hddsClient = ThalesZMQClient("tcp://localhost:40001", log=self.log)
-        ## Port for communicating with QTA running on the IFE VM
-        self.ifeTcpPort = '50003'
-        self.loadConfig(attributes=('ifeTcpPort'))
+        ## Address for communicating with QTA running on the IFE VM
+        self.ifeVmQtaAddr = "tcp://localhost:50003"
+        self.loadConfig(attributes=('ifeVmQtaAddr',))
         ## Connection to QTA running on the IFE VM
-        self.ifeVmQtaClient = ThalesZMQClient("tcp://localhost:%s" % self.ifeTcpPort, log=self.log)
+        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log)
         #  Add handler to available message handlers
         self.addMsgHandler(HostDomainDeviceServiceRequest, self.handler)
 
