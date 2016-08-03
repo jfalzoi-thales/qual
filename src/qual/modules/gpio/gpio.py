@@ -70,8 +70,11 @@ class GPIO(module.Module):
         self.outputState = False
         ## Connection to GPIO Manager
         self.gpioMgrClient = ThalesZMQClient("ipc:///tmp/gpio-mgr.sock", log=self.log, msgParts=1)
+        ## Address for communicating with QTA running on the IFE VM
+        self.ifeVmQtaAddr = "tcp://localhost:50003"
+        self.loadConfig(attributes=('ifeVmQtaAddr',))
         ## Connection to QTA running on the IFE VM
-        self.ifeVmQtaClient = ThalesZMQClient("tcp://localhost:50003", log=self.log)
+        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log)
         # Set up thread to toggle outputs
         self.addThread(self.toggleOutputs)
 
