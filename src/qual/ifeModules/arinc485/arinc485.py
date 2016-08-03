@@ -4,13 +4,13 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.module.module import Module
 
 ## ARINC485 Module Class
-class ARINC485(Module):
+class IFEARINC485(Module):
     ## Constructor
     #  @param   self
     #  @param   config  Configuration for this module instance
     def __init__(self, config = None):
         #  Initializes parent class
-        super(ARINC485, self).__init__(config)
+        super(IFEARINC485, self).__init__(config)
         ## Baudrate for demo_serial485, which is one of 2400, 9600, or 115200
         self.baudrate = 9600
         ## Parity for demo_serial485, which is one of N, O, or E
