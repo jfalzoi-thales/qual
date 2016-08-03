@@ -1,11 +1,12 @@
 [Unit]
 Description=Starts Guest-VM for IFE communication
+After=network.target libvirtd.service
 
 [Service]
-Type=idle
-ExecStart=/thales/host/appliances/qual-ife
-Restart=always
-RestartSec=3s
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/thales/host/appliances/qual-startvm
+StandardOutput=journal+console
 
 [Install]
 WantedBy=multi-user.target
