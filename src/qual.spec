@@ -111,11 +111,14 @@ cp -r * %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /thales/qual/src/*
 
 %exclude /thales/host/appliances/qual
+%exclude /thales/host/appliances/qual-sims
 %exclude /thales/host/appliances/qual-startvm
 %exclude /thales/host/appliances/genvmconfig
 %exclude /{_unitdir}/qual.service
+%exclude /{_unitdir}/qual-sims.service
 %exclude /{_unitdir}/qual-startvm.service
 %exclude /usr/lib/systemd/system-preset/50-qual-service.preset
+%exclude /usr/lib/systemd/system-preset/50-qual-sims-service.preset
 %exclude /usr/lib/systemd/system-preset/50-qual-startvm-service.preset
 %exclude /thales/qual/src/simulator
 %exclude /thales/qual/src/systemd
