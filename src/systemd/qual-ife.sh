@@ -1,2 +1,4 @@
 #!/bin/bash
-echo "THIS IS A PLACEHOLDER"
+echo "Qual package version is: `rpm -q --queryformat='%{VERSION}' qual-ife`"
+cd /thales/qual/src/
+PYTHONPATH=`pwd` python qual/qta/qta.py

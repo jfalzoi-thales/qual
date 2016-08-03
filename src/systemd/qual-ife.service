@@ -1,5 +1,5 @@
 [Unit]
-Description=Starts Guest-VM for IFE communication
+Description=Start QUAL service which starts the QTA
 
 [Service]
 Type=idle
