@@ -3,7 +3,7 @@ Description=Start QUAL service which starts the QTA
 
 [Service]
 Type=idle
-ExecStart=/thales/host/appliances/qual-ife
+ExecStart=/usr/bin/qual-ife
 Restart=always
 RestartSec=3s
 
