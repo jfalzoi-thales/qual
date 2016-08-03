@@ -51,7 +51,7 @@ cp systemd/50-qual*-service.preset %{buildroot}/usr/lib/systemd/system-preset/
 cp scripts/qtemenu.sh %{buildroot}/thales/host/appliances/qtemenu
 cp scripts/installifesims.sh %{buildroot}/thales/host/appliances/installifesims
 cp scripts/genvmconfig.py %{buildroot}/thales/host/appliances/genvmconfig
-cp scripts/ifcfg-ens3 %{buildroot}/etc/sysconfig/network-scripts/
+cp scripts/ifcfg-* %{buildroot}/etc/sysconfig/network-scripts/
 cp -r * %{buildroot}/thales/qual/src/
 
 
@@ -105,7 +105,7 @@ cp -r * %{buildroot}/thales/qual/src/
 %attr(0755,root,root) /thales/host/appliances/qual-ife
 %attr(0755,root,root) /thales/host/appliances/qtemenu
 %attr(0755,root,root) /thales/host/appliances/installifesims
-%attr(0755,root,root) /etc/sysconfig/network-scripts/ifcfg-ens3
+%attr(0644,root,root) /etc/sysconfig/network-scripts/ifcfg-*
 %attr(0644,root,root) /%{_unitdir}/qual-ife.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-ife-service.preset
 %attr(0644,root,root) /thales/qual/src/*
