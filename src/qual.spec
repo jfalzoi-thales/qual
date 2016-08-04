@@ -11,6 +11,7 @@ URL: https://repo-tav.tklabs.com:8102/
 Source: %{name}-%{version}.tar.gz
 Requires: python-lxml
 Requires: mps-config
+Requires: selinux-policy
 Requires: rsyslog
 Requires: arinc429-driver
 Requires: arinc717-driver
@@ -132,6 +133,7 @@ sed -i 's|service_prvkey_file|#service_prvkey_file|g' /thales/host/config/HDDS.c
 %posttrans
 ln -s ../default.xml /etc/libvirt/qemu/networks/autostart/default.xml
 sed -i 's|SELINUX=enforcing|SELINUX=permissive|g' /etc/selinux/config
+cat /etc/selinux/config
 
 %post sims
 %systemd_post qual-sims.service
