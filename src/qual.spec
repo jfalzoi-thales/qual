@@ -130,8 +130,7 @@ echo -e "\$ActionQueueFileName fwdRule1\n\$ActionQueueMaxDiskSpace 2g\n\$ActionQ
 sed -i 's|service_prvkey_file|#service_prvkey_file|g' /thales/host/config/HDDS.conf
 
 %posttrans
-echo "qual post transaction script - runs after mps-config post-transaction script"
-cp /etc/libvirt/qemu/networks/default.xml /etc/libvirt/qemu/networks/autostart/
+ln -s ../default.xml /etc/libvirt/qemu/networks/autostart/default.xml
 
 %post sims
 %systemd_post qual-sims.service
