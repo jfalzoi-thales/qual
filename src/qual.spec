@@ -9,6 +9,8 @@ License: Proprietary
 Group: Applications/Engineering
 URL: https://repo-tav.tklabs.com:8102/
 Source: %{name}-%{version}.tar.gz
+Requires: python-lxml
+Requires: mps-config
 Requires: rsyslog
 Requires: arinc429-driver
 Requires: arinc717-driver
@@ -125,6 +127,7 @@ cp -r * %{buildroot}/thales/qual/src/
 ln -f /thales/qual/src/qual/config/mps.ini /thales/qual/src/qual/config/platform.ini
 echo -e "\$ActionQueueFileName fwdRule1\n\$ActionQueueMaxDiskSpace 2g\n\$ActionQueueSaveOnShutdown on\n\$ActionQueueType LinkedList\n\$ActionResumeRetryCount -1\n*.* @192.168.137.1:514" >> /etc/rsyslog.conf
 sed -i 's|service_prvkey_file|#service_prvkey_file|g' /thales/host/config/HDDS.conf
+cp /etc/libvirt/qemu/networks/default.xml /etc/libvirt/qemu/networks/autostart/
 
 %post sims
 %systemd_post qual-sims.service
