@@ -37,7 +37,7 @@ QUALSRCDIR=/home/thales/qual/src
 MPSBUILDDIR=/home/thales/mps-builder
 
 # Handle tito tag and build for qual
-titoqual () {0
+titoqual () {
     echo "Building qual RPMs! ('-' )"
     cd ${QUALSRCDIR}/
     tito init
