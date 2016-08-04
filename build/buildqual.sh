@@ -4,10 +4,10 @@ BUILD="QUAL"
 RPM="YES"
 
 # Check for parameters, 
-# if none, 	build only qual image 
-# if norpm, 	build images without re-building RPMs
-# if sims,   	build only sims image 
-# if all,  	build both
+# if none,	build only qual image 
+# if norpm,	build images without re-building RPMs
+# if sims,	build only sims image 
+# if all,	build both
 TEMP=`getopt -o nsa --long norpm,sims,all -n 'buildqual.sh' -- "$@"`
 eval set -- "$TEMP"
 
