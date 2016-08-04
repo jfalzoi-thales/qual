@@ -95,7 +95,7 @@ usbutils
 
 # Qual
 qual
-qual-vm
+qual-sims
 iperf3
 lookbusy
 alsa-utils
