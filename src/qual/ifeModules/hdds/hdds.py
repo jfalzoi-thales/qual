@@ -46,15 +46,29 @@ class IFEHDDS(Module):
         if msg.body.requestType == HostDomainDeviceServiceRequest.GET:
             if msg.body.key.startswith("ife.voltage"):
                 try:
-                    response.value = subprocess.check_output(["voltsensor", str(self.volts[msg.body.key])]).rstrip()
-                    response.success = True
+                    #  Output Example: LLS_TEMPERATURE_SENSOR_ID_4 Chip=0x4d Internal Temp = 36.50 Celcius
+                    output = subprocess.check_output(["voltsensor", str(self.volts[msg.body.key])]).rstrip()
+
+                    if output.startswith("LLS_"):
+                        elements = output.split()
+                        response.value = elements[len(elements) - 2]
+                        response.success = True
+                    else:
+                        response.success = False
                 except:
                     self.log.warning("Voltsensor command failed to complete.")
                     response.success = False
             elif msg.body.key.startswith("ife.temperature"):
                 try:
-                    response.value = subprocess.check_output(["tempsensor", str(self.temps[msg.body.key])]).rstrip()
-                    response.success = True
+                    #  Output Example: LLS_VOLTAGE_SENSOR_ID_1 Chip=0x4d VCC[3P3VDC]=3.26
+                    output = subprocess.check_output(["tempsensor", str(self.temps[msg.body.key])]).rstrip()
+
+                    if output.startswith("LLS_"):
+                        elements = output.split("=")
+                        response.value = elements[len(elements) - 1]
+                        response.success = True
+                    else:
+                        response.success = False
                 except:
                     self.log.warning("Tempsensor command failed to complete.")
                     response.success = False
