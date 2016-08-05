@@ -42,45 +42,40 @@ kmod-i2c-mcp2221
 # MPS Config, Tools and Libs
 mps-config
 #mps-config-qual
-mps-config-qual-tk
-mps-keys
-mps-tools
+#mps-config-map
+#mps-tools
 mpsinst-tools
-libmps-utils
+#libmps-utils
 
 # SEMA Driver
-libsema
-sema-driver
+#libsema
+#sema-driver
 
 # FTDI Driver
 libftdi
 
 # I2C manager
-i2c-device-manager
+#i2c-device-manager
 
 # GPIO Manager
-gpio-manager
+#gpio-manager
 
 # SPI Manager
-spi-manager
+#spi-manager
 
 # Power Supply Monitor
-power-supply-monitor
+#power-supply-monitor
 
 # ARINC Drivers
-arinc429-driver
-arinc717-driver
-
-# MAP test tools
-test-tools
-arinc717-driver-tests
+#arinc429-driver
+#arinc717-driver
 
 # Higher Level Services
-host-domain-device-service
+#host-domain-device-service
 
 # TPM Packages
-trousers
-tpm-tools
+#trousers
+#tpm-tools
 
 # ZeroMQ
 libsodium
@@ -90,15 +85,17 @@ python-zmq
 protobuf-python
 
 # Development Tools
+i2c-tools
 less
 minicom
+nfs-utils
 pciutils
 strace
 usbutils
 
 # Qual
 qual
-#qual-sims
+qual-sims
 iperf3
 lookbusy
 alsa-utils
@@ -106,6 +103,5 @@ pyserial
 fio
 pmbw
 ethtool
-mps-guest-vm
 
 %end

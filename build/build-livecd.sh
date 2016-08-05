@@ -12,8 +12,7 @@ SRCISO=$2
 # mps-atp        (MPS ATP   ISO)
 # mps-qual       (MPS QUAL  ISO+USB+PXE)
 # mps-devel      (MPS devel ISO+USB)
-# mps-guest      (MPS guest ISO+qcow2)
-# mps-guest-rpm  (MPS guest ISO+qcow2+rpm)
+# mps-guest      (MPS guest ISO+qcow2+rpm)
 
 [ -z "$TARGET" ] && TARGET="mps-all"
 [ -n "$SRCISO" -a "$TARGET" = "mps-all" ] && { echo "You cannot provide srciso name for mps-all target!"; exit 1; }
@@ -269,16 +268,13 @@ case "$TARGET" in
 		rm -f "$(iso_image_name mps-psi)"
 		;;&
 
-	mps-all|mps-guest*)
+	mps-all|mps-guest)
 		if [ -z "$SRCISO" ]; then
 			echo "Building MPS Guest VM Live-ISO Image..."
 			make_iso "MPS Guest" "mps-guest.ks"
 		fi
 		echo "Building MPS Guest VM qcow2 Image..."
 		make_vm "$(iso_image_name mps-guest)"
-		;;&
-
-	mps-guest-rpm)
 		echo "Building MPS Guest VM RPM..."
 		make_vm_rpm "$(iso_image_name mps-guest)"
 		;;&

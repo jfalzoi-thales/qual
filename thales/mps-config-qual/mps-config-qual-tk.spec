@@ -30,5 +30,5 @@ touch %{buildroot}/etc/mps-config-qual
 /etc/mps-config-qual
 
 %post
-rm /etc/sysconfig/network-scripts/ifcfg-eno1
+cd /etc/sysconfig/network-scripts/ && mv -f qual/* .
 
