@@ -51,6 +51,7 @@ buildsims () {
     sudo mv ${MPSBUILDDIR}/bin/${OLDSIMSUSBPART} ${MPSBUILDDIR}/bin/${NEWSIMSUSBPART}
 }
 
+# Builds qual-ife guest vm image
 buildife () {
     echo "(/'-')/ Building qual-ife images! \('-'\)"
     sudo cp ${QUALSRCDIR}/../build/pkgs-guest.inc.ks ${MPSBUILDDIR}/config/
