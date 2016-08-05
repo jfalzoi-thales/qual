@@ -54,10 +54,12 @@ class IFEHDDS(Module):
                         response.value = elements[len(elements) - 1]
                         response.success = True
                     else:
-                        self.log.warning("Unexpected output.")
+                        self.log.warning("Unexpected output: %s" % output)
+                        response.value = ""
                         response.success = False
                 except:
                     self.log.warning("Voltsensor command failed to complete.")
+                    response.value = ""
                     response.success = False
             elif msg.body.key.startswith("ife.temperature"):
                 try:
@@ -69,16 +71,20 @@ class IFEHDDS(Module):
                         response.value = elements[len(elements) - 2]
                         response.success = True
                     else:
-                        self.log.warning("Unexpected output.")
+                        self.log.warning("Unexpected output: %s" % output)
+                        response.value = ""
                         response.success = False
                 except:
                     self.log.warning("Tempsensor command failed to complete.")
+                    response.value = ""
                     response.success = False
             else:
                 self.log.warning("Unknown key %s" % msg.body.key)
+                response.value = ""
                 response.success = False
         else:
             self.log.error("Unexpected Request Type %d" % msg.body.requestType)
+            response.value = ""
             response.success = False
 
         return ThalesZMQMessage(response)
