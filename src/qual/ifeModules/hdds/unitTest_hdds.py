@@ -32,6 +32,21 @@ class IFEHDDSMessages(ModuleMessages):
         message.key = "ife.voltage.U130_3V3"
         return message
 
+    @staticmethod
+    def getBogusTemp():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.GET
+        message.key = "ife.temperature.bogusTemp"
+        return message
+
+    @staticmethod
+    def getBogusVolt():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.GET
+        message.key = "ife.voltage.bogusVolt"
+        return message
+
+
 
 ## HDDS for IFE Unit Test
 class Test_IFEHDDS(unittest.TestCase):
@@ -81,6 +96,32 @@ class Test_IFEHDDS(unittest.TestCase):
         self.assertEqual(response.body.success, True)
         self.assertEqual(response.body.key, "ife.voltage.U130_3V3")
         self.assertNotEqual(response.body.value, "")
+        log.info("==== Test complete ====")
+
+    ## Test case: Test bogus temperature and voltage keys:
+    #       success == False
+    #       key     == "ife.temperature.bogusTemp"
+    #       value   == ""
+    #       ---------------------
+    #       success == False
+    #       key     == "ife.voltage.bogusVolt"
+    #       value   == ""
+    #       ---------------------
+    def test_bogus(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: Get bogus temp ****")
+        response = module.msgHandler(ThalesZMQMessage(IFEHDDSMessages.getBogusTemp()))
+        self.assertEqual(response.body.success, False)
+        self.assertEqual(response.body.key, "ife.temperature.bogusTemp")
+        self.assertEqual(response.body.value, "")
+
+        log.info("**** Test case: Get bogus volt ****")
+        response = module.msgHandler(ThalesZMQMessage(IFEHDDSMessages.getBogusVolt()))
+        self.assertEqual(response.body.success, False)
+        self.assertEqual(response.body.key, "ife.voltage.bogusVolt")
+        self.assertEqual(response.body.value, "")
         log.info("==== Test complete ====")
 
 if __name__ == '__main__':
