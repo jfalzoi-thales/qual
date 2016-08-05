@@ -277,6 +277,7 @@ case "$TARGET" in
 		make_vm "$(iso_image_name mps-guest)"
 		echo "Building MPS Guest VM RPM..."
 		make_vm_rpm "$(iso_image_name mps-guest)"
+		rm -f "$(iso_image_name mps-guest)"
 		;;&
 
 	mps-qual)

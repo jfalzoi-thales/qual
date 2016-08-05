@@ -1,5 +1,10 @@
 #!/bin/bash
 
+QUALSRCDIR=/home/thales/qual/src
+MPSBUILDDIR=/home/thales/mps-builder
+BUILD="QUAL"
+RPM="YES"
+
 # Display buildqual command usage
 usage() {
     echo "Unrecognized parameter specified.  Accepted parameters are:
@@ -56,10 +61,7 @@ buildife () {
 }
 
 
-BUILD="QUAL"
-RPM="YES"
-
-# Check for parameters, 
+# Check for parameters: 
 # if none,	build only qual image 
 # if norpm,	build images without re-building RPMs
 # if sims,	build only sims image 
@@ -85,9 +87,6 @@ while true ; do
 done
 
 if [ "$@" != "" ]; then usage; fi
-QUALSRCDIR=/home/thales/qual/src
-MPSBUILDDIR=/home/thales/mps-builder
-
 
 set -e
 
@@ -100,17 +99,17 @@ if [ $RPM == "YES" ]; then
     rm -rf /tmp/tito
     titoqual
     git push origin dev/QUAL
+    sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/qual-*.rpm
+    sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/mps-guest-vm-*.rpm
+    sudo rm -f ${MPSBUILDDIR}/bin/mps-guest-vm-*.rpm
+    sudo mv /tmp/tito/x86_64/* ${MPSBUILDDIR}/repo/packages/x86_64/
+    sudo createrepo --update ${MPSBUILDDIR}/repo/packages/
+    # Build guest-vm RPM and store in repo
+    buildife
+    sudo rm -f ${MPSBUILDDIR}/bin/guest-vm*
+    sudo cp ${MPSBUILDDIR}/bin/mps-guest-vm-*.rpm ${MPSBUILDDIR}/repo/packages/x86_64/
+    sudo createrepo --update ${MPSBUILDDIR}/repo/packages/
 fi
-
-sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/qual-*.rpm
-sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/mps-guest-vm-*.rpm
-sudo rm -f ${MPSBUILDDIR}/bin/mps-guest-vm-*.rpm
-sudo mv /tmp/tito/x86_64/* ${MPSBUILDDIR}/repo/packages/x86_64/
-sudo createrepo --update ${MPSBUILDDIR}/repo/packages/
-# Build guest-vm RPM and store in repo
-buildife
-sudo cp ${MPSBUILDDIR}/bin/mps-guest-vm-*.rpm ${MPSBUILDDIR}/repo/packages/x86_64/
-sudo createrepo --update ${MPSBUILDDIR}/repo/packages/
 
 case $BUILD in
     "QUAL") buildqual;;
