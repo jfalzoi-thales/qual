@@ -9,16 +9,9 @@ RPM="YES"
 # if sims,	build only sims image 
 # if all,	build both
 TEMP=`getopt -o nsa --long norpm,sims,all -n 'buildqual.sh' -- "$@"`
-
-if [ "$?" != 0 ]; then
-    echo "Unrecognized parameter specified.  Accepted parameters are:
-                -n|--norpm 	- builds images without re-building RPMs
-                -s|--sims	- builds only qual-sims image
-                -a|--all 	- builds both qual and qual-sims images"
-    exit 1
-fi
-
 eval set -- "$TEMP"
+
+print "$@"
 
 while true ; do
     case "$1" in
@@ -35,6 +28,14 @@ while true ; do
             shift; break;;
     esac
 done
+
+if [ "$@" != "" ]; then
+    echo "Unrecognized parameter specified.  Accepted parameters are:
+                -n|--norpm 	- builds images without re-building RPMs
+                -s|--sims	- builds only qual-sims image
+                -a|--all 	- builds both qual and qual-sims images"
+    exit 1
+fi
 
 QUALSRCDIR=/home/thales/qual/src
 MPSBUILDDIR=/home/thales/mps-builder
