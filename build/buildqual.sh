@@ -1,13 +1,6 @@
 #!/bin/bash
 
-BUILD="QUAL"
-RPM="YES"
-
-# Check for parameters, 
-# if none,	build only qual image 
-# if norpm,	build images without re-building RPMs
-# if sims,	build only sims image 
-# if all,	build both
+# Display buildqual command usage
 usage() {
     echo "Unrecognized parameter specified.  Accepted parameters are:
                 -n|--norpm 	- builds images without re-building RPMs
@@ -15,30 +8,6 @@ usage() {
                 -a|--all 	- builds both qual and qual-sims images"
     exit 1
 }
-
-TEMP=`getopt -o nsa --long norpm,sims,all -n 'buildqual.sh' -- "$@"`
-eval set -- "$TEMP"
-if [ "$?" != 0 ]; then usage; fi
-
-while true ; do
-    case "$1" in
-        -n|--norpm)
-            RPM="NO"
-            shift;;
-        -s|--sims)
-            BUILD="SIMS"
-            shift;;
-        -a|--all)
-            BUILD="ALL"
-            shift;;
-        --)
-            shift; break;;
-    esac
-done
-
-if [ "$@" != "" ]; then usage; fi
-QUALSRCDIR=/home/thales/qual/src
-MPSBUILDDIR=/home/thales/mps-builder
 
 # Handle tito tag and build for qual
 titoqual () {
@@ -85,6 +54,40 @@ buildife () {
     GUESTVM=`ls -t1 livecd-mps-guest-*.vm.qcow2 | head -1`
     GUESTVMRPM=`ls -t1 mps-guest-vm-*.x86_64.rpm | head -1`
 }
+
+
+BUILD="QUAL"
+RPM="YES"
+
+# Check for parameters, 
+# if none,	build only qual image 
+# if norpm,	build images without re-building RPMs
+# if sims,	build only sims image 
+# if all,	build both
+TEMP=`getopt -o nsa --long norpm,sims,all -n 'buildqual.sh' -- "$@" 2>/dev/null`
+if [ "$?" != 0 ]; then usage; fi
+eval set -- "$TEMP"
+
+while true ; do
+    case "$1" in
+        -n|--norpm)
+            RPM="NO"
+            shift;;
+        -s|--sims)
+            BUILD="SIMS"
+            shift;;
+        -a|--all)
+            BUILD="ALL"
+            shift;;
+        --)
+            shift; break;;
+    esac
+done
+
+if [ "$@" != "" ]; then usage; fi
+QUALSRCDIR=/home/thales/qual/src
+MPSBUILDDIR=/home/thales/mps-builder
+
 
 set -e
 
