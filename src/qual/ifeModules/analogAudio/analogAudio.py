@@ -1,4 +1,4 @@
-import subprocess
+from subprocess import call
 from common.gpb.python.AnalogAudio_pb2 import AnalogAudioRequest, AnalogAudioResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.module.module import Module
@@ -11,8 +11,24 @@ class IFEAnalogAudio(Module):
     def __init__(self, config = None):
         #  Initializes parent class
         super(IFEAnalogAudio, self).__init__(config)
-        #  Dict containing
+        #  Dict containing connections, stored by output pin
         self.connections = {}
+        #  Dict containing input pins (PA_AUDIN) and ID used for pavaTest.sh
+        self.inputs = {"PA_70V_AUDIN_1": 1,
+                      "PA_AUDIN_2": 2,
+                      "PA_AUDIN_3": 3,
+                      "PA_AUDIN_4": 4,
+                      "PA_AUDIN_5": 5,
+                      "PA_AUDIN_6": 6,
+                      "PA_AUDIN_7": 7,
+                      "PA_AUDIN_8": 8}
+        #  Dict containing output pins (VA_AUDOUT) and ID used for pavaTest.sh
+        self.outputs = {"VA_AUDOUT_1": 1,
+                        "VA_AUDOUT_2": 2,
+                        "VA_AUDOUT_3": 3,
+                        "VA_AUDOUT_4": 4,
+                        "VA_AUDOUT_5": 5,
+                        "VA_AUDOUT_6": 6}
         #  Add handler to available message handlers
         self.addMsgHandler(AnalogAudioRequest, self.handler)
 
@@ -24,96 +40,85 @@ class IFEAnalogAudio(Module):
     def handler(self, msg):
         response = AnalogAudioResponse()
 
-        if msg.body.requestType == AnalogAudioRequest.RUN:
-            self.start(response)
-        elif msg.body.requestType == AnalogAudioRequest.STOP:
-            self.stop(response)
-        elif msg.body.requestType == AnalogAudioRequest.REPORT:
-            self.report(response)
-        else:
-            self.log.error("Unexpected Request Type %d" %(msg.body.requestType))
+        if msg.body.requestType == AnalogAudioRequest.CONNECT:
+            self.connect(msg.body.sink, msg.body.source)
+        elif msg.body.requestType == AnalogAudioRequest.DISCONNECT:
+            self.disconnect(msg.body.sink)
+        elif msg.body.requestType != AnalogAudioRequest.REPORT:
+            self.log.error("Unexpected Request Type %d" % (msg.body.requestType))
+
+        self.report(response, msg.body.sink)
 
         return ThalesZMQMessage(response)
 
-    ## Runs demo_serial485 to exercise the AnalogAudio peripheral
+    ## Runs pavaTest.sh with specified command and checks return code for success
     #  @param   self
-    def startDemoSerial(self):
-        try:
-            self.demo = subprocess.check_output(
-            ["demo_serial485", "ar485LoopbackTest2", str(self.baudrate), str(self.bytesize), str(self.stopbits),
-             self.parity, "1"])
-        except subprocess.CalledProcessError as e:
-            if "Interrupted system call" in e.output:
-                self.log.debug("demo_serial485 stopped")
-            else:
-                self.log.error("Error running demo_serial485: %s" % e.output)
+    #  @param   cmd         Command to run with pavaTest.sh
+    #  @return  success     True if pavaTest.sh was run successfully, else False
+    def runPavaTest(self, cmd):
+        self.log.info("Running 'pavaTest.sh %s' command." % cmd)
+        returncode = call(["pavaTest.sh", cmd])
+        success = True if returncode == 0 else False
+        if not success: self.log.warning("'pavaTest.sh %s' failed to run with Error Code: %i" % (cmd, returncode))
+        return success
 
-            self.demo = ""
-
-
-    ## Runs in thread to continually run and gather demo_serial485 data
+    ## Connects a specified input to a specified output
     #  @param   self
-    def demoSerialTracker(self):
-        self.startDemoSerial()
-        lines = self.demo.splitlines()
+    #  @param   source      Source input
+    #  @param   sink        Sink output
+    def connect(self, source, sink):
+        self.disconnect(sink)
 
-        for line in lines:
-            #  Check that current line is not header
-            if line.startswith("Master-"):
-                fields = line.split()
-                #  Port is listed after 'Master-', so split by Master and take 2nd (1st element is blank due to split) element
-                port = fields[0].split("Master-")[1]
+        if sink == "ALL":
+            for output in self.outputs.keys():
 
-                if fields[2] == "0":
-                    self.missed[port] += 1
-                elif fields[2] == "1":
-                    self.received[port] += 1
+                #  If the connect command succeeds, add a connection between source input and sink output to self.connections
+                if self.runPavaTest("-c loopback -s %i -d %i " % (self.inputs[source], self.outputs[output])):
+                    self.connections[output] = source
+        elif self.runPavaTest("-c loopback -s %i -d %i " % (self.inputs[source], self.outputs[sink])):
+            self.connections[sink] = source
+
+    ## Disconnects a specified output from its input
+    #  @param   self
+    #  @param   sink    Sink output to disconnect
+    def disconnect(self, sink):
+        if sink == "ALL":
+            for output in self.outputs.keys():
+                if output in self.connections.keys():
+                    self.runPavaTest("-c va -k %i -D" % self.outputs[output])
+                    del self.connections[output]
                 else:
-                    self.log.error("Unexpected output: %s" % line)
-
-    ## Starts demo_serial485 to test the AnalogAudio pripheral
-    #  @param   self
-    #  @param   response    A AnalogAudioResponse object generated by report() function
-    def start(self, response):
-        if not self._running:
-            #  Kills any stray demo_serial485 instances and waits for pkill to complete
-            subprocess.Popen(["pkill", "-9", "demo_serial485"]).communicate()
-            self.startThread()
+                    self.log.debug("Sink output %s not found in self.connections.  Nothing to disconnect." % output)
         else:
-            for port in self.ports:
-                self.missed[port] = 0
-                self.received[port] = 0
+            if sink in self.connections.keys():
+                self.runPavaTest("-c va -k %i -D" % self.outputs[sink])
+                del self.connections[sink]
+            else:
+                self.log.debug("Sink output %s not found in self.connections.  Nothing to disconnect." % sink)
 
-        self.report(response)
-
-    ## Stops demo_serial485 instance
+    ## Reports connection status for all sinks
     #  @param   self
-    #  @param   response  A AnalogAudioResponse object generated by report() function
-    def stop(self, response):
-        self._running = False
-        subprocess.Popen(["pkill", "-9", "demo_serial485"]).communicate()
-        self.stopThread()
-        self.report(response)
+    #  @param   response  An AnalogAudioResponse object
+    #  @param   sink      Sink output to report on
+    def report(self, response, sink):
+        if sink == "ALL":
+            for output in self.outputs.keys():
+                loopback = response.add()
+                loopback.sink = output
 
-        for port in self.ports:
-            self.missed[port] = 0
-            self.received[port] = 0
+                if output in self.connections.keys():
+                    loopback.source = self.connections[output]
+                    loopback.state = AnalogAudioResponse.CONNECTED
+                else:
+                    loopback.source = ""
+                    loopback.state = AnalogAudioResponse.DISCONNECTED
+        else:
+            loopback = response.add()
+            loopback.sink = sink
 
-    ## Reports statistics gathered from demo_serial485
-    #  @param   self
-    #  @param   response  A AnalogAudioResponse object
-    def report(self, response):
-        response.state = AnalogAudioResponse.RUNNING if self._running else AnalogAudioResponse.STOPPED
-
-        for port in self.ports:
-            stats = response.statistics.add()
-            stats.channel = port
-            stats.missed = self.missed[port]
-            stats.received = self.received[port]
-
-    ## Attempts to terminate module gracefully
-    #  @param   self
-    def terminate(self):
-        self._running = False
-        subprocess.Popen(["pkill", "-9", "demo_serial485"]).communicate()
-        self.stopThread()
+            if sink in self.connections.keys():
+                loopback.source = self.connections[sink]
+                loopback.state = AnalogAudioResponse.CONNECTED
+            else:
+                loopback.source = ""
+                loopback.state = AnalogAudioResponse.DISCONNECTED
