@@ -119,7 +119,7 @@ cp -r * %{buildroot}/thales/qual/src/
 %exclude /thales/qual/src/scripts
 %exclude /thales/qual/src/qual/modules
 %exclude /thales/qual/src/qual/config/mps.ini
-%exclude /thales/qual/src/qual/config/virtualMachine.ini
+%exclude /thales/qual/src/qual/config/sims.ini
 
 
 %post
