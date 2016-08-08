@@ -8,6 +8,9 @@ elif ! driver_load.sh; then
     echo "Failed to load Microchip driver"
 fi
 
+# Set up device node that CLI tools expect
+ln -s i2c-1 /dev/i2c-7
+
 # Make GPIO FTDI_CONN_CTRL_I2C_SEL = low
 # to set i2c mux to be controlled by x86 processor
 if ! ftdibbb 0x10 0x00 > /dev/null 2>&1; then
