@@ -48,7 +48,7 @@ class IFEEncoder(Module):
     #  @return  EncoderResponse object
     def start(self, sink):
         try:
-            proc = subprocess.Popen(['videoEncoder.sh', 'start'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc = subprocess.Popen(['videoEncoder', 'start'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             # TODO: Configure IP
 
@@ -56,7 +56,7 @@ class IFEEncoder(Module):
             self.log.error("Error starting Video Encoder.")
         else:
             #  Save the response variables
-            output = subprocess.check_output(['videoEncoder.sh', 'status'])
+            output = subprocess.check_output(['videoEncoder', 'status'])
             if output == 'Running':
                 self.state = EncoderResponse.RUNNING
                 self.inputActive = True
@@ -81,7 +81,7 @@ class IFEEncoder(Module):
     #  @return  EncoderResponse object
     def stop(self):
         try:
-            proc = subprocess.Popen(['videoEncoder.sh', 'stop'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc = subprocess.Popen(['videoEncoder', 'stop'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             proc.wait()
         except Exception:
             self.log.error("Error stopping Video Encoder.")
@@ -104,7 +104,7 @@ class IFEEncoder(Module):
     #  @param   self
     #  @return  EncoderResponse object
     def report(self):
-        output = subprocess.check_output(['videoEncoder.sh', 'status'])
+        output = subprocess.check_output(['videoEncoder', 'status'])
         if output == 'Running':
             self.state = EncoderResponse.RUNNING
         else:
