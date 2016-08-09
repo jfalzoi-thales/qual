@@ -40,12 +40,18 @@ class IFEAnalogAudio(Module):
     def handler(self, msg):
         response = AnalogAudioResponse()
 
-        if msg.body.requestType == AnalogAudioRequest.CONNECT:
-            self.connect(msg.body.sink, msg.body.source)
-        elif msg.body.requestType == AnalogAudioRequest.DISCONNECT:
-            self.disconnect(msg.body.sink)
-        elif msg.body.requestType != AnalogAudioRequest.REPORT:
-            self.log.error("Unexpected Request Type %d" % (msg.body.requestType))
+        if msg.body.sink in self.outputs.keys() or msg.body.sink == "ALL":
+            if msg.body.requestType == AnalogAudioRequest.CONNECT:
+                if msg.body.source in self.inputs.keys():
+                    self.connect(msg.body.source, msg.body.sink)
+                else:
+                    self.log.warning("Invalid Source: %s" % msg.body.source)
+            elif msg.body.requestType == AnalogAudioRequest.DISCONNECT:
+                self.disconnect(msg.body.sink)
+            elif msg.body.requestType != AnalogAudioRequest.REPORT:
+                self.log.error("Unexpected Request Type %d" % (msg.body.requestType))
+        else:
+            self.log.warning("Invalid Sink: %s" % msg.body.sink)
 
         self.report(response, msg.body.sink)
 
@@ -57,7 +63,7 @@ class IFEAnalogAudio(Module):
     #  @return  success     True if pavaTest.sh was run successfully, else False
     def runPavaTest(self, cmd):
         self.log.info("Running 'pavaTest.sh %s' command." % cmd)
-        returncode = call(["pavaTest.sh", cmd])
+        returncode = call(["pavaTest.sh"] + cmd.split())
         success = True if returncode == 0 else False
         if not success: self.log.warning("'pavaTest.sh %s' failed to run with Error Code: %i" % (cmd, returncode))
         return success
@@ -73,9 +79,9 @@ class IFEAnalogAudio(Module):
             for output in self.outputs.keys():
 
                 #  If the connect command succeeds, add a connection between source input and sink output to self.connections
-                if self.runPavaTest("-c loopback -s %i -d %i " % (self.inputs[source], self.outputs[output])):
+                if self.runPavaTest("-c loopback -s %i -d %i" % (self.inputs[source], self.outputs[output])):
                     self.connections[output] = source
-        elif self.runPavaTest("-c loopback -s %i -d %i " % (self.inputs[source], self.outputs[sink])):
+        elif self.runPavaTest("-c loopback -s %i -d %i" % (self.inputs[source], self.outputs[sink])):
             self.connections[sink] = source
 
     ## Disconnects a specified output from its input
@@ -102,8 +108,8 @@ class IFEAnalogAudio(Module):
     #  @param   sink      Sink output to report on
     def report(self, response, sink):
         if sink == "ALL":
-            for output in self.outputs.keys():
-                loopback = response.add()
+            for output in sorted(self.outputs.keys()):
+                loopback = response.loopback.add()
                 loopback.sink = output
 
                 if output in self.connections.keys():
@@ -113,7 +119,7 @@ class IFEAnalogAudio(Module):
                     loopback.source = ""
                     loopback.state = AnalogAudioResponse.DISCONNECTED
         else:
-            loopback = response.add()
+            loopback = response.loopback.add()
             loopback.sink = sink
 
             if sink in self.connections.keys():

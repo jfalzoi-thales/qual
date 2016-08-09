@@ -188,8 +188,9 @@ class Test_AnalogAudio(unittest.TestCase):
 
         log.info("==== Test complete ====")
 
-    ## Valid Test Case: Connect Out 1 and In 1, Connect Out 2 and In 1, Connect In 1 and Out 2,
-    #                   Report all after Connect, Disconnect Out 1, Disconnect Out 2, Report all after Disconnect
+    ## Valid Test Case: Connect Out 1 and In 1, Connect Out 2 and In 1, Report all after Connect,
+    #                   Connect In 1 and Out 2, Report all after Reconnect, Disconnect Out 1, Disconnect Out 2,
+    #                   Report all after Disconnect
     #  Asserts:
     #       sink    == "VA_AUDOUT_1"
     #       source  == "PA_70V_AUDIN_1"
@@ -200,11 +201,21 @@ class Test_AnalogAudio(unittest.TestCase):
     #       state   == CONNECTED
     #       ---------------------
     #       sink    == "VA_AUDOUT_1"
+    #       source  == "PA_70V_AUDIN_1"
+    #       state   == CONNECTED
+    #       sink    == "VA_AUDOUT_2"
+    #       source  == "PA_70V_AUDIN_1"
+    #       state   == CONNECTED
+    #       sink    == "VA_AUDOUT_6"
     #       source  == ""
     #       state   == DISCONNECTED
     #       ---------------------
     #       sink    == "VA_AUDOUT_1"
-    #       source  == "PA_70V_AUDIN_1"
+    #       source  == ""
+    #       state   == DISCONNECTED
+    #       ---------------------
+    #       sink    == "VA_AUDOUT_1"
+    #       source  == "PA_AUDIN_2"
     #       state   == CONNECTED
     #       sink    == "VA_AUDOUT_2"
     #       source  == "PA_70V_AUDIN_1"
@@ -244,16 +255,28 @@ class Test_AnalogAudio(unittest.TestCase):
         self.assertEqual(response.body.loopback[0].source, "PA_70V_AUDIN_1")
         self.assertEqual(response.body.loopback[0].state, AnalogAudioResponse.CONNECTED)
 
+        log.info("**** Valid Test Case: Report all after Connect ****")
+        response = module.msgHandler(ThalesZMQMessage(AnalogAudioMessages.reportAll()))
+        self.assertEqual(response.body.loopback[0].sink, "VA_AUDOUT_1")
+        self.assertEqual(response.body.loopback[0].source, "PA_70V_AUDIN_1")
+        self.assertEqual(response.body.loopback[0].state, AnalogAudioResponse.CONNECTED)
+        self.assertEqual(response.body.loopback[1].sink, "VA_AUDOUT_2")
+        self.assertEqual(response.body.loopback[1].source, "PA_70V_AUDIN_1")
+        self.assertEqual(response.body.loopback[1].state, AnalogAudioResponse.CONNECTED)
+        self.assertEqual(response.body.loopback[5].sink, "VA_AUDOUT_6")
+        self.assertEqual(response.body.loopback[5].source, "")
+        self.assertEqual(response.body.loopback[5].state, AnalogAudioResponse.DISCONNECTED)
+
         log.info("**** Valid Test Case: Connect Out 1 and In 2 ****")
         response = module.msgHandler(ThalesZMQMessage(AnalogAudioMessages.connectOut1In2()))
         self.assertEqual(response.body.loopback[0].sink, "VA_AUDOUT_1")
         self.assertEqual(response.body.loopback[0].source, "PA_AUDIN_2")
         self.assertEqual(response.body.loopback[0].state, AnalogAudioResponse.CONNECTED)
 
-        log.info("**** Valid Test Case: Report all after Connect ****")
+        log.info("**** Valid Test Case: Report all after Reconnect ****")
         response = module.msgHandler(ThalesZMQMessage(AnalogAudioMessages.reportAll()))
         self.assertEqual(response.body.loopback[0].sink, "VA_AUDOUT_1")
-        self.assertEqual(response.body.loopback[0].source, "PA_70V_AUDIN_2")
+        self.assertEqual(response.body.loopback[0].source, "PA_AUDIN_2")
         self.assertEqual(response.body.loopback[0].state, AnalogAudioResponse.CONNECTED)
         self.assertEqual(response.body.loopback[1].sink, "VA_AUDOUT_2")
         self.assertEqual(response.body.loopback[1].source, "PA_70V_AUDIN_1")
@@ -361,5 +384,8 @@ class Test_AnalogAudio(unittest.TestCase):
         self.assertEqual(response.body.loopback[5].state, AnalogAudioResponse.DISCONNECTED)
 
         log.info("==== Test complete ====")
+
+if __name__ == '__main__':
+    unittest.main()
 
 ## @endcond
