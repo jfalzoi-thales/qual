@@ -1,106 +1,127 @@
-import subprocess
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
+import unittest
+from time import sleep
+import encoder
 from common.gpb.python.Encoder_pb2 import EncoderRequest, EncoderResponse
-from common.module.module import Module
+from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from common.logger import logger
+from common.module.modulemsgs import ModuleMessages
 
-## Video Encoder Module Class
-class IFEEncoder(Module):
-    ## Constructor
-    #
-    #  @param   self
-    #  @param   config  Configuration for this module instance
-    def __init__(self, config = None):
-        #  Initializes parent class
-        super(IFEEncoder, self).__init__(config)
-        #  Add Encoder Message handler
-        self.addMsgHandler(EncoderRequest, self.handler)
-        #  State default state
-        self.state = EncoderResponse.STOPPED
-        #  InputActive default state
-        self.inputActive = False
-        #  StreamActive default state
-        self.streamActive = False
+# @cond doxygen_unittest
 
-    ## Handles incoming messages
-    #
-    #  Receives tzmq request and runs requested process
-    #  @param   self
-    #  @param   msg   tzmq format message
-    #  @return  EncoderResponse object
-    def handler(self, msg):
-        response = EncoderResponse()
-        if msg.body.requestType == EncoderRequest.RUN:
-            response = self.start(msg.body.sink)
-        elif msg.body.requestType == EncoderRequest.STOP:
-            #  According to ICD "sink" is ignored if STOP
-            response = self.stop()
-        elif msg.body.requestType == EncoderRequest.REPORT:
-            #  According to ICD "sink" is ignored if REPORT
-            response = self.report()
-        else:
-            self.log.error("Unexpected Request Type %d" % (msg.body.requestType))
+## Encoder Messages
+class EncoderMessages(ModuleMessages):
+    @staticmethod
+    def getMenuTitle():
+        return "Encoder"
 
-        return ThalesZMQMessage(response)
+    @staticmethod
+    def getMenuItems():
+        return [("Report",  EncoderMessages.report),
+                ("Run",     EncoderMessages.run),
+                ("Stop",    EncoderMessages.stop)]
 
-    ## Starts video encoder
-    #
-    #  @param   self
-    #  @return  EncoderResponse object
-    def start(self, sink):
-        try:
-            proc = subprocess.Popen(['videoEncoder.sh', 'start'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    @staticmethod
+    def report():
+        message = EncoderRequest()
+        message.requestType = EncoderRequest.REPORT
+        return message
 
-            # TODO: Configure IP
+    @staticmethod
+    def run():
+        message = EncoderRequest()
+        message.requestType = EncoderRequest.RUN
+        message.sink = '10.10.10.10:8000'
+        return message
 
-        except Exception:
-            self.log.error("Error starting Video Encoder.")
-        else:
-            #  Save the response variables
-            self.state = EncoderResponse.RUNNING
-            self.inputActive = True
-            self.streamActive = True
-            self.log.debug("Video Encoder started.")
-        #  Create the response
-        response = EncoderResponse()
-        response.AppStateT = self.state
-        response.inputActive = self.inputActive
-        response.streamActive = self.streamActive
+    @staticmethod
+    def stop():
+        message = EncoderRequest()
+        message.requestType = EncoderRequest.STOP
+        return message
 
-        return response
 
-    ## Stops video encoder
-    #
-    #  @param   self
-    #  @return  EncoderResponse object
-    def stop(self):
-        try:
-            proc = subprocess.Popen(['videoEncoder.sh', 'stop'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            proc.wait()
-        except Exception:
-            self.log.error("Error stopping Video Encoder.")
-        else:
-            #  Save the response variables
-            self.state = EncoderResponse.STOPPED
-            self.inputActive = False
-            self.streamActive = False
-            self.log.debug("Video Encoder stopped.")
-        # Create the response
-        response = EncoderResponse()
-        response.AppStateT = self.state
-        response.inputActive = self.inputActive
-        response.streamActive = self.streamActive
+## Encoder Unit Test
+class Test_Encoder(unittest.TestCase):
+    ## Static logger instance
+    log = None
 
-        return response
+    ## Static module instance
+    module = None
 
-    ## Reports status
-    #
-    #  @param   self
-    #  @return  EncoderResponse object
-    def report(self):
-        # Create the response
-        response = EncoderResponse()
-        response.AppStateT = self.state
-        response.inputActive = self.inputActive
-        response.streamActive = self.streamActive
+    ## Setup for the Encoder test cases
+    #  This is run only once before running any test cases
+    @classmethod
+    def setUpClass(cls):
+        #  Create a logger so we can add details to a multi-step test case
+        cls.log = logger.Logger(name='Test Encoder')
+        cls.log.info('++++ Setup before Encoder module unit tests ++++')
+        #  Create the module
+        cls.module = encoder.Encoder(deserialize=True)
+        #  Uncomment this if you don't want to see module debug messages
+        #cls.module.log.setLevel(logger.INFO)
 
-        return response
+    ## Teardown when done with Encoder test cases
+    #  This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.log.info("++++ Teardown after Encoder module unit tests ++++")
+        cls.module.terminate()
+
+    ## Test setup
+    #  This is run before each test case; we use it to make sure we
+    #  start each test case with the module in a known state
+    def setUp(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("==== Reset module state ====")
+        module.msgHandler(ThalesZMQMessage(EncoderMessages.stop()))
+
+    ## Valid Test case: Send a RUN, REPORT, STOP, and REPORT msgs
+    #  Asserts:
+    #       appState == RUNNING
+    #       ---------------------
+    #       appState == RUNNING
+    #       ---------------------
+    #       appState == STOPPED
+    #       ---------------------
+    #       appState == STOPPED
+    #       ---------------------
+    def test_RunReportStop(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: RUN, REPORT and STOP messages ****")
+
+        response = module.msgHandler(ThalesZMQMessage(EncoderMessages.run()))
+        self.assertEqual(response.name, "EncoderResponse")
+        self.assertEqual(response.body.state, EncoderResponse.RUNNING)
+        self.assertEqual(response.body.inputActive, True)
+        self.assertEqual(response.body.streamActive, True)
+
+        log.info("==== Wait 2 seconds ====")
+        sleep(2)
+
+        response = module.msgHandler(ThalesZMQMessage(EncoderMessages.report()))
+        self.assertEqual(response.name, "EncoderResponse")
+        self.assertEqual(response.body.state, EncoderResponse.RUNNING)
+        self.assertEqual(response.body.inputActive, True)
+        self.assertEqual(response.body.streamActive, True)
+
+        response = module.msgHandler(ThalesZMQMessage(EncoderMessages.stop()))
+        self.assertEqual(response.name, "EncoderResponse")
+        self.assertEqual(response.body.state, EncoderResponse.STOPPED)
+        self.assertEqual(response.body.inputActive, False)
+        self.assertEqual(response.body.streamActive, False)
+
+        response = module.msgHandler(ThalesZMQMessage(EncoderMessages.report()))
+        self.assertEqual(response.name, "EncoderResponse")
+        self.assertEqual(response.body.state, EncoderResponse.STOPPED)
+        self.assertEqual(response.body.inputActive, False)
+        self.assertEqual(response.body.streamActive, False)
+
+        log.info("==== Test complete ====")
+
+if __name__ == '__main__':
+    unittest.main()
+
+## @endcond

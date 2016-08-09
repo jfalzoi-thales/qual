@@ -8,7 +8,7 @@ class Encoder(Module):
     ## Constructor
     #  @param   self
     #  @param   config  Configuration for this module instance
-    def __init__(self, config = None):
+    def __init__(self, config = None, deserialize=False):
         #  Initializes parent class
         super(Encoder, self).__init__(config)
         ## Address for communicating with QTA running on the IFE VM
@@ -16,8 +16,11 @@ class Encoder(Module):
         self.loadConfig(attributes=('ifeVmQtaAddr',))
         ## Connection to QTA running on the IFE VM
         self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log)
+        ## Flag for unit test to deserialize responses
+        self.deserialize = deserialize
         #  Add handler to available message handlers
         self.addMsgHandler(EncoderRequest, self.handler)
+
 
     ## Handles incoming messages
     #  Receives tzmq request and passes it to the QTA running on the IFE VM
@@ -25,13 +28,16 @@ class Encoder(Module):
     #  @param   msg   tzmq format message
     #  @return  EncoderResponse object
     def handler(self, msg):
-        response = EncoderResponse()
         ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(msg)
 
         if ifeVmQtaResponse.name == "EncoderResponse":
+            if self.deserialize:
+                deserializedResponse = EncoderResponse()
+                deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
+                ifeVmQtaResponse.body = deserializedResponse
+
             return ifeVmQtaResponse
         else:
             self.log.error("Unexpected response from IFE VM Encoder: %s" % ifeVmQtaResponse.name)
-            response.state = EncoderResponse.STOPPED
 
-        return ThalesZMQMessage(response)
+        return ThalesZMQMessage(EncoderResponse())
