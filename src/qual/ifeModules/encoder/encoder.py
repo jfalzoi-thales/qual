@@ -62,7 +62,7 @@ class IFEEncoder(Module):
             self.log.debug("Video Encoder started.")
         #  Create the response
         response = EncoderResponse()
-        response.AppStateT = self.state
+        response.state = self.state
         response.inputActive = self.inputActive
         response.streamActive = self.streamActive
 
@@ -86,7 +86,7 @@ class IFEEncoder(Module):
             self.log.debug("Video Encoder stopped.")
         # Create the response
         response = EncoderResponse()
-        response.AppStateT = self.state
+        response.state = self.state
         response.inputActive = self.inputActive
         response.streamActive = self.streamActive
 
@@ -99,7 +99,7 @@ class IFEEncoder(Module):
     def report(self):
         # Create the response
         response = EncoderResponse()
-        response.AppStateT = self.state
+        response.state = self.state
         response.inputActive = self.inputActive
         response.streamActive = self.streamActive
 

@@ -56,7 +56,7 @@ class Test_Encoder(unittest.TestCase):
         cls.log = logger.Logger(name='Test Encoder')
         cls.log.info('++++ Setup before Encoder module unit tests ++++')
         #  Create the module
-        cls.module = encoder.Encoder()
+        cls.module = encoder.IFEEncoder()
         #  Uncomment this if you don't want to see module debug messages
         #cls.module.log.setLevel(logger.INFO)
 
