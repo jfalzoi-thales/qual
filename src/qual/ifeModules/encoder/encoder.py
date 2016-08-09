@@ -32,10 +32,10 @@ class IFEEncoder(Module):
         if msg.body.requestType == EncoderRequest.RUN:
             response = self.start(msg.body.sink)
         elif msg.body.requestType == EncoderRequest.STOP:
-            #  According to ICD "sink" is ignored if STOP
+            #  "sink" is ignored if STOP
             response = self.stop()
         elif msg.body.requestType == EncoderRequest.REPORT:
-            #  According to ICD "sink" is ignored if REPORT
+            #  "sink" is ignored if REPORT
             response = self.report()
         else:
             self.log.error("Unexpected Request Type %d" % (msg.body.requestType))
@@ -56,10 +56,17 @@ class IFEEncoder(Module):
             self.log.error("Error starting Video Encoder.")
         else:
             #  Save the response variables
-            self.state = EncoderResponse.RUNNING
-            self.inputActive = True
-            self.streamActive = True
-            self.log.debug("Video Encoder started.")
+            output = subprocess.check_output(['videoEncoder.sh', 'status'])
+            if output == 'Running':
+                self.state = EncoderResponse.RUNNING
+                self.inputActive = True
+                self.streamActive = True
+                self.log.debug("Video Encoder started.")
+            else:
+                self.state = EncoderResponse.STOPPED
+                self.inputActive = False
+                self.streamActive = False
+                self.log.error("Video Encoder error starting.")
         #  Create the response
         response = EncoderResponse()
         response.state = self.state
@@ -97,6 +104,11 @@ class IFEEncoder(Module):
     #  @param   self
     #  @return  EncoderResponse object
     def report(self):
+        output = subprocess.check_output(['videoEncoder.sh', 'status'])
+        if output == 'Running':
+            self.state = EncoderResponse.RUNNING
+        else:
+            self.state = EncoderResponse.STOPPED
         # Create the response
         response = EncoderResponse()
         response.state = self.state
