@@ -7,7 +7,8 @@ from common.module.module import Module
 class AnalogAudio(Module):
     ## Constructor
     #  @param   self
-    #  @param   config  Configuration for this module instance
+    #  @param   config          Configuration for this module instance
+    #  @param   deserialize     Flag to deserialize the responses when running unit test
     def __init__(self, config=None, deserialize=False):
         #  Initializes parent class
         super(AnalogAudio, self).__init__(config)
@@ -27,16 +28,16 @@ class AnalogAudio(Module):
     #  @param   msg   tzmq format message
     #  @return  AnalogAudioResponse object
     def handler(self, msg):
-        response = AnalogAudioResponse()
         ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(msg)
 
         if ifeVmQtaResponse.name == "AnalogAudioResponse":
             if self.deserialize:
-                response.ParseFromString(ifeVmQtaResponse.serializedBody)
-                ifeVmQtaResponse.body = response
+                deserializedResponse = AnalogAudioResponse()
+                deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
+                ifeVmQtaResponse.body = deserializedResponse
 
             return ifeVmQtaResponse
         else:
             self.log.error("Unexpected response from IFE VM AnalogAudio: %s" % ifeVmQtaResponse.name)
 
-        return ThalesZMQMessage(response)
+        return ThalesZMQMessage(AnalogAudioResponse())

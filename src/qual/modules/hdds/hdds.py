@@ -10,6 +10,7 @@ class HDDS(Module):
     ## Constructor
     #  @param   self
     #  @param   config  Configuration for this module instance
+    #  @param   deserialize     Flag to deserialize the responses when running unit test
     def __init__(self, config=None, deserialize=False):
         #  Initialize parent class
         super(HDDS, self).__init__(config)
@@ -42,8 +43,9 @@ class HDDS(Module):
                 ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(msg)
                 if ifeVmQtaResponse.name == "HostDomainDeviceServiceResponse":
                     if self.deserialize:
-                        response.ParseFromString(ifeVmQtaResponse.serializedBody)
-                        ifeVmQtaResponse.body = response
+                        deserializedResponse = HostDomainDeviceServiceResponse()
+                        deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
+                        ifeVmQtaResponse.body = deserializedResponse
 
                     return ifeVmQtaResponse
                 else:
