@@ -8,7 +8,7 @@ class AnalogAudio(Module):
     ## Constructor
     #  @param   self
     #  @param   config  Configuration for this module instance
-    def __init__(self, config = None):
+    def __init__(self, config=None, deserialize=False):
         #  Initializes parent class
         super(AnalogAudio, self).__init__(config)
         ## Address for communicating with QTA running on the IFE VM
@@ -16,6 +16,8 @@ class AnalogAudio(Module):
         self.loadConfig(attributes=('ifeVmQtaAddr',))
         ## Connection to QTA running on the IFE VM
         self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log)
+        ## Flag for unit test to deserialize responses
+        self.deserialize = deserialize
         #  Add handler to available message handlers
         self.addMsgHandler(AnalogAudioRequest, self.handler)
 
@@ -29,6 +31,10 @@ class AnalogAudio(Module):
         ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(msg)
 
         if ifeVmQtaResponse.name == "AnalogAudioResponse":
+            if self.deserialize:
+                response.ParseFromString(ifeVmQtaResponse.serializedBody)
+                ifeVmQtaResponse.body = response
+
             return ifeVmQtaResponse
         else:
             self.log.error("Unexpected response from IFE VM AnalogAudio: %s" % ifeVmQtaResponse.name)

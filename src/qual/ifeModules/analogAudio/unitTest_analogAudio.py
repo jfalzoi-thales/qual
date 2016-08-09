@@ -15,7 +15,10 @@ class AnalogAudioMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Connect sink 1 to source 1",          AnalogAudioMessages.connectOut1In1),
+        return [("Report on sink 1",                    AnalogAudioMessages.reportOut1),
+                ("Report on sink 2",                    AnalogAudioMessages.reportOut2),
+                ("Report on all sinks",                 AnalogAudioMessages.reportAll),
+                ("Connect sink 1 to source 1",          AnalogAudioMessages.connectOut1In1),
                 ("Connect sink 2 to source 1",          AnalogAudioMessages.connectOut2In1),
                 ("Connect sink 1 to source 2",          AnalogAudioMessages.connectOut1In2),
                 ("Connect all sinks to source 1",       AnalogAudioMessages.connectAll),
@@ -23,10 +26,28 @@ class AnalogAudioMessages(ModuleMessages):
                 ("Connect sink 1 to bogus source",      AnalogAudioMessages.connectOut1InBogus),
                 ("Disconnect sink 1 from source",       AnalogAudioMessages.disconnectOut1),
                 ("Disconnect sink 2 from source",       AnalogAudioMessages.disconnectOut2),
-                ("Disconnect all sinks from source",    AnalogAudioMessages.disconnectAll),
-                ("Report on sink 1",                    AnalogAudioMessages.reportOut1),
-                ("Report on sink 2",                    AnalogAudioMessages.reportOut2),
-                ("Report on all sinks",                 AnalogAudioMessages.reportAll)]
+                ("Disconnect all sinks from source",    AnalogAudioMessages.disconnectAll)]
+
+    @staticmethod
+    def reportOut1():
+        message = AnalogAudioRequest()
+        message.requestType = AnalogAudioRequest.REPORT
+        message.sink = "VA_AUDOUT_1"
+        return message
+
+    @staticmethod
+    def reportOut2():
+        message = AnalogAudioRequest()
+        message.requestType = AnalogAudioRequest.REPORT
+        message.sink = "VA_AUDOUT_2"
+        return message
+
+    @staticmethod
+    def reportAll():
+        message = AnalogAudioRequest()
+        message.requestType = AnalogAudioRequest.REPORT
+        message.sink = "ALL"
+        return message
 
     @staticmethod
     def connectOut1In1():
@@ -97,27 +118,6 @@ class AnalogAudioMessages(ModuleMessages):
         message.sink = "ALL"
         return message
 
-    @staticmethod
-    def reportOut1():
-        message = AnalogAudioRequest()
-        message.requestType = AnalogAudioRequest.REPORT
-        message.sink = "VA_AUDOUT_1"
-        return message
-
-    @staticmethod
-    def reportOut2():
-        message = AnalogAudioRequest()
-        message.requestType = AnalogAudioRequest.REPORT
-        message.sink = "VA_AUDOUT_2"
-        return message
-
-    @staticmethod
-    def reportAll():
-        message = AnalogAudioRequest()
-        message.requestType = AnalogAudioRequest.REPORT
-        message.sink = "ALL"
-        return message
-
 
 ## AnalogAudio for IFE Unit Test
 class Test_AnalogAudio(unittest.TestCase):
@@ -164,6 +164,7 @@ class Test_AnalogAudio(unittest.TestCase):
 
         log.info("**** Valid Test Case: Connect Out 1 and In 1 ****")
         response = module.msgHandler(ThalesZMQMessage(AnalogAudioMessages.connectOut1In1()))
+
         self.assertEqual(response.body.loopback[0].sink, "VA_AUDOUT_1")
         self.assertEqual(response.body.loopback[0].source, "PA_70V_AUDIN_1")
         self.assertEqual(response.body.loopback[0].state, AnalogAudioResponse.CONNECTED)
