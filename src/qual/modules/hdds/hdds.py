@@ -10,7 +10,8 @@ class HDDS(Module):
     ## Constructor
     #  @param   self
     #  @param   config  Configuration for this module instance
-    def __init__(self, config = None):
+    #  @param   deserialize     Flag to deserialize the responses when running unit test
+    def __init__(self, config=None, deserialize=False):
         #  Initialize parent class
         super(HDDS, self).__init__(config)
         ## Client connection to the Host Domain Device Service
@@ -20,6 +21,8 @@ class HDDS(Module):
         self.loadConfig(attributes=('ifeVmQtaAddr',))
         ## Connection to QTA running on the IFE VM
         self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log)
+        ## Flag for unit test to deserialize responses
+        self.deserialize = deserialize
         #  Add handler to available message handlers
         self.addMsgHandler(HostDomainDeviceServiceRequest, self.handler)
 
@@ -39,6 +42,11 @@ class HDDS(Module):
                 # IFE get messages are handled by the QTA running on the IFE VM
                 ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(msg)
                 if ifeVmQtaResponse.name == "HostDomainDeviceServiceResponse":
+                    if self.deserialize:
+                        deserializedResponse = HostDomainDeviceServiceResponse()
+                        deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
+                        ifeVmQtaResponse.body = deserializedResponse
+
                     return ifeVmQtaResponse
                 else:
                     self.log.error("Unexpected response from IFE VM HDDS: %s" % ifeVmQtaResponse.name)

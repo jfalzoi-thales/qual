@@ -101,9 +101,9 @@ class ConfigurableObject(object):
         # For each of the following 3, look in the CWD first, then the config folder second. (Total 6 checks)
         # 1) If this is running as a unit test, look for a unitTest.ini first
         # 2) Then look for platform.ini, which should be present on the target
-        # 3) Then look for virtualMachine, which should always be present for testing
+        # 3) Then look for sims.ini, which should always be present for testing
 
-        iniCandidates = ['platform', 'virtualMachine']
+        iniCandidates = ['platform', 'sims']
         if 'unittest' in sys.modules:
             iniCandidates.insert(0, 'unitTest')
         for iniFile in iniCandidates:

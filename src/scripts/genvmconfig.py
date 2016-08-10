@@ -361,10 +361,10 @@ if __name__ == "__main__":
     config.assigned_devices = [VMDevices.IFE_USB_4232, VMDevices.IFE_USB_K60, VMDevices.IFE_USB_I2C]
     config.boot_virtual_disk = sys.argv[1]
 
-    # If running on a host that has the eno1 interface (i.e. running on an MPS),
-    # enable the CPU ethernet interface and Haswell CPU model
-    if subprocess.call(['ifconfig', 'eno1'], stdout=DEVNULL, stderr=DEVNULL) == 0:
-        config.assigned_devices.append(VMDevices.CPU_ETHERNET)
+    # If running on a host that has the ens1f0 interface (i.e. running on an MPS),
+    # enable the I350 ethernet interfaces and Haswell CPU model
+    if subprocess.call(['ifconfig', 'ens1f0'], stdout=DEVNULL, stderr=DEVNULL) == 0:
+        config.net_vf = 0
         config.cpu_model = "Haswell"
 
     # Create XML file from the config, and just output it - caller can redirect to file
