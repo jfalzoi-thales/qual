@@ -77,12 +77,24 @@ class IFEAnalogAudio(Module):
 
         if sink == "ALL":
             for output in self.outputs.keys():
-
-                #  If the connect command succeeds, add a connection between source input and sink output to self.connections
-                if self.runPavaTest("-c loopback -s %i -d %i" % (self.inputs[source], self.outputs[output])):
+                if source not in self.connections.values():
+                    #  If the connect commands succeed, add a connection between source input and sink output to self.connections
+                    if self.runPavaTest("-c pa -a 239.192.128.%i -k %i" % (self.inputs[source], self.inputs[source])):
+                        if self.runPavaTest("-c va -a 239.192.128.%i -k %i" % (self.inputs[source], self.outputs[output])):
+                            self.connections[output] = source
+                        else:
+                            self.runPavaTest("-c pa -k %i -D" % self.inputs[source])
+                elif self.runPavaTest("-c va -a 239.192.128.%i -k %i" % (self.inputs[source], self.outputs[output])):
                     self.connections[output] = source
-        elif self.runPavaTest("-c loopback -s %i -d %i" % (self.inputs[source], self.outputs[sink])):
-            self.connections[sink] = source
+        elif source not in self.connections.values():
+            #  If the connect commands succeed, add a connection between source input and sink output to self.connections
+            if self.runPavaTest("-c pa -a 239.192.128.%i -k %i" % (self.inputs[source], self.inputs[source])):
+                if self.runPavaTest("-c va -a 239.192.128.%i -k %i" % (self.inputs[source], self.outputs[sink])):
+                    self.connections[sink] = source
+                else:
+                    self.runPavaTest("-c pa -k %i -D" % self.inputs[source])
+            elif self.runPavaTest("-c va -a 239.192.128.%i -k %i" % (self.inputs[source], self.outputs[sink])):
+                self.connections[sink] = source
 
     ## Disconnects a specified output from its input
     #  @param   self
@@ -92,13 +104,21 @@ class IFEAnalogAudio(Module):
             for output in self.outputs.keys():
                 if output in self.connections.keys():
                     self.runPavaTest("-c va -k %i -D" % self.outputs[output])
+                    source = self.connections[output]
                     del self.connections[output]
+
+                    if source not in self.connections.values():
+                        self.runPavaTest("-c pa -k %i -D" % self.inputs[source])
                 else:
                     self.log.debug("Sink output %s not found in self.connections.  Nothing to disconnect." % output)
         else:
             if sink in self.connections.keys():
                 self.runPavaTest("-c va -k %i -D" % self.outputs[sink])
+                source = self.connections[sink]
                 del self.connections[sink]
+
+                if source not in self.connections.values():
+                    self.runPavaTest("-c pa -k %i -D" % self.inputs[source])
             else:
                 self.log.debug("Sink output %s not found in self.connections.  Nothing to disconnect." % sink)
 
