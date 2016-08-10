@@ -50,10 +50,10 @@ class IFEAnalogAudio(Module):
                 self.disconnect(msg.body.sink)
             elif msg.body.requestType != AnalogAudioRequest.REPORT:
                 self.log.error("Unexpected Request Type %d" % (msg.body.requestType))
+
+            self.report(response, msg.body.sink)
         else:
             self.log.warning("Invalid Sink: %s" % msg.body.sink)
-
-        self.report(response, msg.body.sink)
 
         return ThalesZMQMessage(response)
 
@@ -104,8 +104,7 @@ class IFEAnalogAudio(Module):
             for output in self.outputs.keys():
                 if output in self.connections.keys():
                     self.runPavaTest("-c va -k %i -D" % self.outputs[output])
-                    source = self.connections[output]
-                    del self.connections[output]
+                    source = self.connections.pop(output)
 
                     if source not in self.connections.values():
                         self.runPavaTest("-c pa -k %i -D" % self.inputs[source])
@@ -114,8 +113,7 @@ class IFEAnalogAudio(Module):
         else:
             if sink in self.connections.keys():
                 self.runPavaTest("-c va -k %i -D" % self.outputs[sink])
-                source = self.connections[sink]
-                del self.connections[sink]
+                source = self.connections.pop(sink)
 
                 if source not in self.connections.values():
                     self.runPavaTest("-c pa -k %i -D" % self.inputs[source])
