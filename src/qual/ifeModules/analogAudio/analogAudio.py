@@ -93,7 +93,7 @@ class IFEAnalogAudio(Module):
                     self.connections[sink] = source
                 else:
                     self.runPavaTest("-c pa -k %i -D" % self.inputs[source])
-            elif self.runPavaTest("-c va -a 239.192.128.%i -k %i" % (self.inputs[source], self.outputs[sink])):
+        elif self.runPavaTest("-c va -a 239.192.128.%i -k %i" % (self.inputs[source], self.outputs[sink])):
                 self.connections[sink] = source
 
     ## Disconnects a specified output from its input
