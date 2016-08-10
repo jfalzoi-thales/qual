@@ -87,6 +87,7 @@ cp -r * %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /%{_unitdir}/qual-sims.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-sims-service.preset
 %attr(0644,root,root) /thales/qual/src/simulator/*
+%attr(0755,root,root) /thales/qual/src/simulator/*.sh
 
 %exclude /thales/host/appliances/qual
 %exclude /thales/host/appliances/qual-startvm
