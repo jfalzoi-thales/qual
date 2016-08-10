@@ -2,7 +2,7 @@
 
 if [[ $1 = "status" ]]
 then
-    if [ -a /tmp/videoEncoder.tmp ]
+    if [ -e /tmp/videoEncoder.tmp ]
     then
         echo "Runnning"
     else

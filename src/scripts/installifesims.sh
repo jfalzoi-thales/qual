@@ -21,6 +21,6 @@ mv demo_binaryio demo_serial485 tempsensor voltsensor /usr/bin-disabled/
 cd /thales/qual/src/qual/ifeModules
 install -m755 arinc485/demo_serial485.sh /usr/bin/demo_serial485
 install -m755 gpio/demo_binaryio.sh /usr/bin/demo_binaryio
-install -m755 encoder/videoEncoder.sh /usr/bin/videoEncoder
+install -m755 encoder/videoEncoder.sh /usr/bin/videoEncoder.sh
 install -m755 hdds/tempsensor.sh /usr/bin/tempsensor
 install -m755 hdds/voltsensor.sh /usr/bin/voltsensor

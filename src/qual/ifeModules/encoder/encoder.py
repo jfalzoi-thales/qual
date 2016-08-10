@@ -69,8 +69,8 @@ class IFEEncoder(Module):
             self.startThread()
             self.state = EncoderResponse.RUNNING
             #  check the streamActive field
-            output = subprocess.check_output(['videoEncoder', 'status'])
-            if output == 'Running':
+            output = subprocess.check_output(['videoEncoder.sh', 'status'])
+            if output.rstrip() == 'Running':
                 self.streamActive = True
             else:
                 self.streamActive = False
@@ -93,8 +93,8 @@ class IFEEncoder(Module):
         self.serial.write('t')
         self.state = EncoderResponse.STOPPED
         #  check the streamActive field
-        output = subprocess.check_output(['videoEncoder', 'status'])
-        if output == 'Running':
+        output = subprocess.check_output(['videoEncoder.sh', 'status'])
+        if output.rstrip() == 'Running':
             self.streamActive = True
         else:
             self.streamActive = False
@@ -110,12 +110,8 @@ class IFEEncoder(Module):
     #  @param   self
     #  @return  EncoderResponse object
     def report(self):
-        output = subprocess.check_output(['videoEncoder', 'status'])
-        if output in ['Running','Started','Restarted']:
-            self.state = EncoderResponse.RUNNING
-        else:
-            self.state = EncoderResponse.STOPPED
-        if output == 'Running':
+        output = subprocess.check_output(['videoEncoder.sh', 'status'])
+        if output.rstrip() == 'Running':
             self.streamActive = True
         else:
             self.streamActive = False
@@ -141,7 +137,7 @@ class IFEEncoder(Module):
             #  Start
             self.serial.write('s')
             #  Now, we'll read all from the serial port
-            while True:
+            while self._running:
                 #  Add print here for debugging
                 self.serial.read()
         else:
