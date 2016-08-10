@@ -95,7 +95,6 @@ class Test_Encoder(unittest.TestCase):
         response = module.msgHandler(ThalesZMQMessage(EncoderMessages.run()))
         self.assertEqual(response.name, "EncoderResponse")
         self.assertEqual(response.body.state, EncoderResponse.RUNNING)
-        self.assertEqual(response.body.inputActive, True)
         self.assertEqual(response.body.streamActive, True)
 
         log.info("==== Wait 2 seconds ====")
@@ -104,19 +103,16 @@ class Test_Encoder(unittest.TestCase):
         response = module.msgHandler(ThalesZMQMessage(EncoderMessages.report()))
         self.assertEqual(response.name, "EncoderResponse")
         self.assertEqual(response.body.state, EncoderResponse.RUNNING)
-        self.assertEqual(response.body.inputActive, True)
         self.assertEqual(response.body.streamActive, True)
 
         response = module.msgHandler(ThalesZMQMessage(EncoderMessages.stop()))
         self.assertEqual(response.name, "EncoderResponse")
         self.assertEqual(response.body.state, EncoderResponse.STOPPED)
-        self.assertEqual(response.body.inputActive, False)
         self.assertEqual(response.body.streamActive, False)
 
         response = module.msgHandler(ThalesZMQMessage(EncoderMessages.report()))
         self.assertEqual(response.name, "EncoderResponse")
         self.assertEqual(response.body.state, EncoderResponse.STOPPED)
-        self.assertEqual(response.body.inputActive, False)
         self.assertEqual(response.body.streamActive, False)
 
         log.info("==== Test complete ====")
