@@ -30,8 +30,6 @@ buildqual () {
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/dockerscripts/buildqual.script"
     cd ${MPSBUILDDIR}/bin/
     QUALPXE=`ls -t1 livecd-mps-qual-*.tftpboot.tar.gz | head -1`
-    QUALUSBDISK=`ls -t1 livecd-mps-qual-*.usbdisk.img.gz | head -1`
-    QUALUSBPART=`ls -t1 livecd-mps-qual-*.usbpart.img.gz | head -1`
 }
 
 # Build qual-sims pxe image
@@ -41,14 +39,8 @@ buildsims () {
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/dockerscripts/buildqual.script"
     cd ${MPSBUILDDIR}/bin/
     OLDSIMSPXE=`ls -t1 livecd-mps-qual-*.tftpboot.tar.gz | head -1`
-    OLDSIMSUSBDISK=`ls -t1 livecd-mps-qual-*.usbdisk.img.gz | head -1`
-    OLDSIMSUSBPART=`ls -t1 livecd-mps-qual-*.usbpart.img.gz | head -1`
     NEWSIMSPXE=${OLDSIMSPXE/livecd-mps-qual/livecd-mps-qual-sims}
-    NEWSIMSUSBDISK=${OLDSIMSUSBDISK/livecd-mps-qual/livecd-mps-qual-sims}
-    NEWSIMSUSBPART=${OLDSIMSUSBPART/livecd-mps-qual/livecd-mps-qual-sims}
     sudo mv ${MPSBUILDDIR}/bin/${OLDSIMSPXE} ${MPSBUILDDIR}/bin/${NEWSIMSPXE}
-    sudo mv ${MPSBUILDDIR}/bin/${OLDSIMSUSBDISK} ${MPSBUILDDIR}/bin/${NEWSIMSUSBDISK}
-    sudo mv ${MPSBUILDDIR}/bin/${OLDSIMSUSBPART} ${MPSBUILDDIR}/bin/${NEWSIMSUSBPART}
 }
 
 # Builds qual-ife guest vm image
@@ -123,14 +115,10 @@ echo "Built guest-vm rpm: $GUESTVMRPM"
 
 if [ $BUILD != "SIMS" ]; then 
     echo "Built qual PXE image: $QUALPXE"
-    echo "Built qual USBDISK image: $QUALUSBDISK"
-    echo "Built qual USBPART image: $QUALUSBPART"
 fi
 
 if [ $BUILD != "QUAL" ]; then 
     echo "Built qual-sims PXE image: $NEWSIMSPXE"
-    echo "Built qual-sims USBDISK image: $NEWSIMSUSBDISK"
-    echo "Built qual-sims USBPART image: $NEWSIMSUSBPART"
 fi
 
 exit

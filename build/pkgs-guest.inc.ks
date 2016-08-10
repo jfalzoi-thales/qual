@@ -55,8 +55,10 @@ pciutils
 strace
 usbutils
 setserial
+minicom
 
 # Qual
 qual-ife
+pyserial
 
 %end

@@ -10,7 +10,7 @@ SRCISO=$2
 # mps-map        (MPS MAP   ISO+USB)
 # mps-psi        (MPS PSI   PXE)
 # mps-atp        (MPS ATP   ISO)
-# mps-qual       (MPS QUAL  ISO+USB+PXE)
+# mps-qual       (MPS QUAL  ISO+PXE)
 # mps-devel      (MPS devel ISO+USB)
 # mps-guest      (MPS guest ISO+qcow2+rpm)
 
@@ -285,8 +285,6 @@ case "$TARGET" in
 		make_iso "MPS QUAL" "mps-qual.ks"
 		echo "Building MPS QUAL PXE Image..."
 		make_pxe "$(iso_image_name mps-qual)"
-		echo "Building MPS QUAL Live-USB Image..."
-		make_usb "$(iso_image_name mps-qual)"
 		rm -f "$(iso_image_name mps-qual)"
 		;;&
 

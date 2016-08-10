@@ -77,7 +77,6 @@ cp -r * %{buildroot}/thales/qual/src/
 %exclude /thales/qual/src/scripts
 %exclude /thales/qual/src/qual/ifeModules
 %exclude /thales/qual/src/qual/config/ife.ini
-%exclude /thales/qual/src/qual/modules/ssd
 
 %files sims
 %attr(0755,root,root) /thales/host/appliances/qual-sims
