@@ -2,7 +2,7 @@
 # Specifications for the generation of a qual application RPM file
 #
 Name: qual
-Summary: An application used drive MPS hardware
+Summary: An application used to drive MPS hardware
 Version: 1.27
 Release: 1
 License: Proprietary
@@ -10,23 +10,27 @@ Group: Applications/Engineering
 URL: https://repo-tav.tklabs.com:8102/
 Source: %{name}-%{version}.tar.gz
 Requires: python-lxml
+Requires: pyserial
+Requires: python-zmq
+Requires: protobuf-python
 Requires: mps-config
 Requires: selinux-policy
 Requires: rsyslog
-Requires: arinc429-driver
-Requires: arinc717-driver
 Requires: host-domain-device-service
 %{?systemd_requires}
 BuildRequires: systemd
 
 %package sims
-Summary: An application that simulates MPS hardware pripherals
+Summary: An application that simulates MPS hardware peripherals
 Group: Development/Tools
 Requires: %{name} = %{version}
 
 %package ife
 Summary: An application that uses a VM to communicate with the MPS IFE card
 Group: Applications/Engineering
+Requires: pyserial
+Requires: python-zmq
+Requires: protobuf-python
 
 
 %description

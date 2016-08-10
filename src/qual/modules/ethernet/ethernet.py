@@ -1,6 +1,7 @@
 import subprocess
 import threading
 from time import sleep
+import netifaces
 from common.gpb.python.Ethernet_pb2 import EthernetRequest, EthernetResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.module.module import Module, ModuleException
@@ -45,7 +46,9 @@ class Ethernet(Module):
         super(Ethernet, self).__init__(config)
         ## Speed at which to send traffic in Mbits per second (0 for unlimited)
         self.bandwidthSpeed = 0
-        self.loadConfig(attributes=('bandwidthSpeed',))
+        ## Ethernet device to use for local port ENET_8
+        self.port8Device = "eno1"
+        self.loadConfig(attributes=('bandwidthSpeed', 'port8Device'))
         ## Dict of connections; key is local port, value is a ConnectionInfo object
         self.connections = {}
         ## Lock for access to connections dict
@@ -82,9 +85,23 @@ class Ethernet(Module):
     #  @param   connection ConnectionInfo object for this connection
     def startiperf(self, connection):
         #  'stdbuf -o L' modifies iperf3 to allow easily accessed line buffered output
-        connection.iperf = subprocess.Popen(
-            ["stdbuf", "-o", "L", "iperf3", "-c", connection.server, "-b", "%sM" % str(self.bandwidthSpeed), "-f", "m", "-t", "86400"],
-            stdout=subprocess.PIPE, bufsize=1)
+        cmd = ["stdbuf", "-o", "L", "iperf3", "-c", connection.server, "-b", "%sM" % str(self.bandwidthSpeed), "-f", "m", "-t", "86400"]
+        # Port ENET_8 is connected directly to interface eno1 on the MPS so
+        # if ENET_8 is specified, bind to the address of that port if possible.
+        if connection.localPort == "ENET_8" and self.port8Device in netifaces.interfaces():
+            ifaddrs = netifaces.ifaddresses(self.port8Device)
+            if netifaces.AF_INET in ifaddrs:
+                for ipcfg in ifaddrs[netifaces.AF_INET]:
+                    if "addr" in ipcfg:
+                        cmd += ["-B", ipcfg["addr"]]
+                        break
+            else:
+                self.log.warning("Interface %s does not have IP address", self.port8Device)
+        else:
+            self.log.warning("Interface %s not present", self.port8Device)
+
+        self.log.info("Starting: %s" % " ".join(cmd))
+        connection.iperf = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=1)
 
     ## Terminates a running iperf on a connection
     #  @param   self
