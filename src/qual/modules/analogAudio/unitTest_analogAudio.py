@@ -166,7 +166,6 @@ class Test_AnalogAudio(unittest.TestCase):
         response = module.msgHandler(ThalesZMQMessage(AnalogAudioMessages.connectOut1In1()))
 
 
-
         self.assertEqual(response.body.loopback[0].sink, "VA_AUDOUT_1")
         self.assertEqual(response.body.loopback[0].source, "PA_70V_AUDIN_1")
         self.assertEqual(response.body.loopback[0].state, AnalogAudioResponse.CONNECTED)
@@ -327,9 +326,7 @@ class Test_AnalogAudio(unittest.TestCase):
 
         log.info("**** Valid Test Case: Connect bogus In to Out 1 ****")
         response = module.msgHandler(ThalesZMQMessage(AnalogAudioMessages.connectOutBogusIn1()))
-        self.assertEqual(response.body.loopback[0].sink, "VA_AUDOUT_BOGUS")
-        self.assertEqual(response.body.loopback[0].source, "")
-        self.assertEqual(response.body.loopback[0].state, AnalogAudioResponse.DISCONNECTED)
+        self.assertEqual(len(response.body.loopback), 0)
 
         log.info("**** Valid Test Case: Connect In 1 to bogus Out ****")
         response = module.msgHandler(ThalesZMQMessage(AnalogAudioMessages.connectOut1InBogus()))
