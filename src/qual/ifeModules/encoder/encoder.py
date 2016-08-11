@@ -4,6 +4,7 @@ import threading
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.Encoder_pb2 import EncoderRequest, EncoderResponse
 from common.module.module import Module
+from qual.ifeModules.encoder.encoder_Exception import EncoderModuleSerialException
 
 ## Video Encoder Module Class
 class IFEEncoder(Module):
@@ -24,14 +25,14 @@ class IFEEncoder(Module):
         self.addThread(self.serialControl)
         #  Connect to the video encoder serial control
         try:
-            ## Serial connection
+            #  Serial connection
             self.serial = serial.Serial(port='/dev/ttyUSB2',
                                         baudrate=115200,
                                         parity=serial.PARITY_NONE,
                                         stopbits=serial.STOPBITS_ONE,
                                         bytesize=serial.EIGHTBITS)
-        except Exception:
-            self.log.error("Unable to connect to video encoder serial.")
+        except (serial.SerialException, OSError):
+            raise EncoderModuleSerialException('/dev/ttyUSB2')
 
     ## Handles incoming messages
     #
