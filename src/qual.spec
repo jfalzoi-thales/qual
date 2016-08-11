@@ -3,7 +3,7 @@
 #
 Name: qual
 Summary: An application used to drive MPS hardware
-Version: 1.33
+Version: 1.34
 Release: 1
 License: Proprietary
 Group: Applications/Engineering
@@ -52,35 +52,32 @@ This package runs an IFE virtual machine that is used to communicate with the IF
 mkdir -p %{buildroot}/%{_bindir} %{buildroot}/etc/sysconfig/network-scripts %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances
 cp systemd/qual.sh %{buildroot}/thales/host/appliances/qual
 cp systemd/qual-sims.sh %{buildroot}/thales/host/appliances/qual-sims
-cp systemd/qual-ife.sh %{buildroot}/%{_bindir}/qual-ife
 cp systemd/qual-startvm.sh %{buildroot}/thales/host/appliances/qual-startvm
+cp systemd/qual-ife.sh %{buildroot}/%{_bindir}/qual-ife
 cp systemd/qual*.service %{buildroot}/%{_unitdir}/
 cp systemd/50-qual*-service.preset %{buildroot}/usr/lib/systemd/system-preset/
 cp scripts/qtemenu.sh %{buildroot}/thales/host/appliances/qtemenu
 cp scripts/installifesims.sh %{buildroot}/%{_bindir}/installifesims
 cp scripts/genvmconfig.py %{buildroot}/thales/host/appliances/genvmconfig
 cp scripts/ifcfg-* %{buildroot}/etc/sysconfig/network-scripts/
-cp -r * %{buildroot}/thales/qual/src/
+cp -r common/* %{buildroot}/thales/qual/src/common
+cp -r qual/* %{buildroot}/thales/qual/src/qual
+cp -r simulator/* %{buildroot}/thales/qual/src/simulator
 
 
 %files
-%attr(0755,root,root) /thales/host/appliances/qual*
+%attr(0755,root,root) /thales/host/appliances/qual
+%attr(0755,root,root) /thales/host/appliances/qual-startvm
 %attr(0755,root,root) /thales/host/appliances/qtemenu
 %attr(0755,root,root) /thales/host/appliances/genvmconfig
-%attr(0644,root,root) /%{_unitdir}/qual*.service
-%attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual*-service.preset
-%attr(0644,root,root) /thales/qual/src/*
+%attr(0644,root,root) /%{_unitdir}/qual.service
+%attr(0644,root,root) /%{_unitdir}/qual-startvm.service
+%attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-service.preset
+%attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-startvm-service.preset
+%attr(0644,root,root) /thales/qual/src/common/*
+%attr(0644,root,root) /thales/qual/src/qual/*
 %attr(0755,root,root) /thales/qual/src/qual/modules/unittests.sh
 
-%exclude /thales/host/appliances/qual-sims
-%exclude /etc/sysconfig/network-scripts
-%exclude /%{_unitdir}/qual-sims.service
-%exclude /%{_unitdir}/qual-ife.service
-%exclude /usr/lib/systemd/system-preset/50-qual-sims-service.preset
-%exclude /usr/lib/systemd/system-preset/50-qual-ife-service.preset
-%exclude /thales/qual/src/simulator
-%exclude /thales/qual/src/systemd
-%exclude /thales/qual/src/scripts
 %exclude /thales/qual/src/qual/ifeModules
 %exclude /thales/qual/src/qual/config/ife.ini
 
@@ -91,39 +88,14 @@ cp -r * %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /thales/qual/src/simulator/*
 %attr(0755,root,root) /thales/qual/src/simulator/*.sh
 
-%exclude /thales/host/appliances/qual
-%exclude /thales/host/appliances/qual-startvm
-%exclude /thales/host/appliances/qtemenu
-%exclude /thales/host/appliances/genvmconfig
-%exclude /etc/sysconfig/network-scripts
-%exclude /%{_unitdir}/qual.service
-%exclude /%{_unitdir}/qual-ife.service
-%exclude /%{_unitdir}/qual-startvm.service
-%exclude /usr/lib/systemd/system-preset/50-qual-service.preset
-%exclude /usr/lib/systemd/system-preset/50-qual-ife-service.preset
-%exclude /usr/lib/systemd/system-preset/50-qual-startvm-service.preset
-%exclude /thales/qual/src/common
-%exclude /thales/qual/src/qual
-%exclude /thales/qual/src/systemd
-%exclude /thales/qual/src/scripts
-
 %files ife
 %attr(0755,root,root) %{_bindir}/*
 %attr(0644,root,root) /etc/sysconfig/network-scripts/ifcfg-*
 %attr(0644,root,root) /%{_unitdir}/qual-ife.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-ife-service.preset
-%attr(0644,root,root) /thales/qual/src/*
+%attr(0644,root,root) /thales/qual/src/common/*
+%attr(0644,root,root) /thales/qual/src/qual/*
 
-%exclude /thales/host/appliances
-%exclude /%{_unitdir}/qual.service
-%exclude /%{_unitdir}/qual-sims.service
-%exclude /%{_unitdir}/qual-startvm.service
-%exclude /usr/lib/systemd/system-preset/50-qual-service.preset
-%exclude /usr/lib/systemd/system-preset/50-qual-sims-service.preset
-%exclude /usr/lib/systemd/system-preset/50-qual-startvm-service.preset
-%exclude /thales/qual/src/simulator
-%exclude /thales/qual/src/systemd
-%exclude /thales/qual/src/scripts
 %exclude /thales/qual/src/qual/modules
 %exclude /thales/qual/src/qual/config/mps.ini
 %exclude /thales/qual/src/qual/config/sims.ini
