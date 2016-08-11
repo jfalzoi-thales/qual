@@ -10,7 +10,7 @@ if [ "$3" == "-k" ] && [ "$#" -eq 5 ]; then
     exit 0    
 fi
 
-if [ "$3" == "-s" ] && [ "$#" -eq 6 ]; then
+if [ "$3" == "-a" ] && [ "$#" -eq 6 ]; then
     echo "NOT AN ERROR"
     exit 0
 fi

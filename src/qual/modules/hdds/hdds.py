@@ -15,7 +15,7 @@ class HDDS(Module):
         #  Initialize parent class
         super(HDDS, self).__init__(config)
         ## Client connection to the Host Domain Device Service
-        self.hddsClient = ThalesZMQClient("tcp://localhost:40001", log=self.log)
+        self.hddsClient = ThalesZMQClient("tcp://localhost:40001", log=self.log, timeout=2000)
         ## Address for communicating with QTA running on the IFE VM
         self.ifeVmQtaAddr = "tcp://localhost:50003"
         self.loadConfig(attributes=('ifeVmQtaAddr',))

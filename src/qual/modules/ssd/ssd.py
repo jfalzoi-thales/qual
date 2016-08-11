@@ -92,14 +92,25 @@ class SSD(Module):
         self.__raidFS = "/mnt/qual"
         ## Location of FIO config file
         self.__fioConf = "/tmp/fio-qual.fio"
+        ## Whether or not to format the RAID at startup
+        self.formatRAID = True
         ## Default size partition (GBytes)
-        self.partitonsize = 100
-        self.loadConfig(attributes=('partitonsize',))
-        #  Init the RAID filesystem and store in device for use in collectIO
-        device = self.initFS()
+        self.partitionsize = 100
+        self.loadConfig(attributes=('partitionsize', 'formatRAID'))
         ## Read and Write bandwidth reported by fio tool
         self.readBandwidth = 0.0
         self.writeBandwidth = 0.0
+
+        if self.formatRAID:
+            #  Init the RAID filesystem and store in device for use in collectIO
+            device = self.initFS()
+        else:
+            #  Just check that mount point dir exists - allows us to test on any disk
+            if not os.path.exists(self.__raidFS):
+                raise SSDModuleException("Filesystem test dir %s not found" % self.__raidFS)
+            #  TODO: figure out device (not currently used)
+            device = "/dev/sda"
+
         ## SSD Data collection thread
         #self.collect = collectIO(device)
         #  Start data collection thread
@@ -107,8 +118,9 @@ class SSD(Module):
         #sleep(2)
         #  Create the FIO config file
         self.createFioConfig()
-        #  Run FIO to create 100M file
-        subprocess.Popen(['fio', self.__fioConf, '--runtime=0']).communicate()
+        #  Run FIO to create test file
+        self.log.info('Creating FIO test file...')
+        subprocess.Popen(['fio', self.__fioConf, '--runtime=0'], stdout=DEVNULL).communicate()
         #  Adding the fio tool thread
         self.addThread(self.runTool)
         #  Adding the message handler
@@ -225,7 +237,7 @@ class SSD(Module):
         partition.stdin.write('\n')
         partition.stdin.write('\n')
         partition.stdin.write('\n')
-        partition.stdin.write('+%sGB\n' % (self.partitonsize,))
+        partition.stdin.write('+%sGB\n' % (self.partitionsize,))
         partition.stdin.write('w\n')
         rc = partition.wait()
         self.log.debug("Command return code: %d" % rc)
@@ -310,11 +322,23 @@ class SSD(Module):
     def createFioConfig(self):
         f = open(self.__fioConf, mode='w')
         f.write('[global]\n')
-        f.write('rw=rw\n')
-        f.write('size=100M\n')
+        f.write('size=1000M\n')
+        f.write('ioengine=libaio\n')
+        f.write('iodepth=4\n')
+        f.write('bs=1M\n')
+        f.write('direct=1\n')
         f.write('\n')
-        f.write('[QUAL-SSD]\n')
+        f.write('[READ]\n')
+        f.write('stonewall\n')
+        f.write('new_group\n')
         f.write('directory=%s\n' % self.__raidFS)
+        f.write('rw=read\n')
+        f.write('\n')
+        f.write('[WRITE]\n')
+        f.write('stonewall\n')
+        f.write('new_group\n')
+        f.write('directory=%s\n' % self.__raidFS)
+        f.write('rw=write\n')
 
     ## Runs FIO tool
     #
@@ -322,11 +346,14 @@ class SSD(Module):
     def runTool(self):
         try:
             fio = subprocess.check_output(['fio', self.__fioConf, '--minimal', '--runtime=2'])
-            fields = fio.split(';')
-            self.readBandwidth = float(fields[6]) / 1024
-            self.writeBandwidth = float(fields[47]) / 1024
+            for line in fio.splitlines():
+                fields = line.split(';')
+                if fields[2] == "WRITE":
+                    self.writeBandwidth = float(fields[47]) / 1024
+                else:
+                    self.readBandwidth = float(fields[6]) / 1024
         except:
-            self.log.info("FIO Exited Early")
+            self.log.info("FIO Exited Early" if self._running else "FIO Stopped")
             pass
 
     ## Stops background thread
