@@ -127,6 +127,10 @@ class Ethernet(Module):
                 #  If iperf3 has exited, restart it (iperf3 has a maximum runtime before it exits)
                 if connection.iperf.poll() is not None:
                     self.log.debug("iperf on port %s ended; restarting" % connection.localPort)
+
+                    if connection.iperf.returncode != 0:
+                        sleep(.5)
+
                     self.startiperf(connection)
 
                 line = connection.iperf.stdout.readline()
