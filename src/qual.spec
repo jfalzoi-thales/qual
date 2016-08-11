@@ -11,6 +11,7 @@ URL: https://repo-tav.tklabs.com:8102/
 Source: %{name}-%{version}.tar.gz
 Requires: python-lxml
 Requires: pyserial
+Requires: python-netifaces
 Requires: python-zmq
 Requires: protobuf-python
 Requires: mps-config
