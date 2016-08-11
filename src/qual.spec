@@ -3,7 +3,7 @@
 #
 Name: qual
 Summary: An application used to drive MPS hardware
-Version: 1.34
+Version: 1.35
 Release: 1
 License: Proprietary
 Group: Applications/Engineering
@@ -60,9 +60,9 @@ cp scripts/qtemenu.sh %{buildroot}/thales/host/appliances/qtemenu
 cp scripts/installifesims.sh %{buildroot}/%{_bindir}/installifesims
 cp scripts/genvmconfig.py %{buildroot}/thales/host/appliances/genvmconfig
 cp scripts/ifcfg-* %{buildroot}/etc/sysconfig/network-scripts/
-cp -r common/* %{buildroot}/thales/qual/src/common
-cp -r qual/* %{buildroot}/thales/qual/src/qual
-cp -r simulator/* %{buildroot}/thales/qual/src/simulator
+cp -r common/ %{buildroot}/thales/qual/src/
+cp -r qual/ %{buildroot}/thales/qual/src/
+cp -r simulator/ %{buildroot}/thales/qual/src/
 
 
 %files
