@@ -107,9 +107,10 @@ class Ethernet(Module):
     #  @param   self
     #  @param   connection ConnectionInfo object for this connection
     def stopiperf(self, connection):
-        connection.iperf.terminate()
-        connection.iperf.wait()
-        connection.iperf = None
+        if connection.iperf is not None:
+            connection.iperf.terminate()
+            connection.iperf.wait()
+            connection.iperf = None
 
     ## Runs in thread to continually gather iperf3 data line by line and restarts iperf3 if process ends
     #  @param   self
@@ -129,6 +130,7 @@ class Ethernet(Module):
                     self.log.debug("iperf on port %s ended; restarting" % connection.localPort)
 
                     if connection.iperf.returncode != 0:
+                        connection.iperf = None
                         sleep(.5)
 
                     self.startiperf(connection)
