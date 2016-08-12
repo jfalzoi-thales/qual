@@ -5,9 +5,10 @@ kernel
 syslinux
 vi
 
-# from @base
+#from @base
 basesystem
 bash
+bzip2
 centos-release
 coreutils
 dhclient
@@ -29,11 +30,13 @@ rootfiles
 rsyslog
 tar
 wget
+xz
 
-# Kernel Modules
+# kernel modules
 kmod-i2c-mcp2221
 
-# FTDI Driver
+# FTDI driver
+libftd2xx
 libftdi
 
 # IFE card Drivers and Tools
@@ -48,9 +51,14 @@ protobuf-python
 
 # Development Tools
 less
+pciutils
 strace
+usbutils
+setserial
+minicom
 
 # Qual
 qual-ife
+pyserial
 
 %end

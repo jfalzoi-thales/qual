@@ -2,31 +2,36 @@
 # Specifications for the generation of a qual application RPM file
 #
 Name: qual
-Summary: An application used drive MPS hardware
-Version: 1.24
+Summary: An application used to drive MPS hardware
+Version: 1.33
 Release: 1
 License: Proprietary
 Group: Applications/Engineering
 URL: https://repo-tav.tklabs.com:8102/
 Source: %{name}-%{version}.tar.gz
 Requires: python-lxml
+Requires: pyserial
+Requires: python-netifaces
+Requires: python-zmq
+Requires: protobuf-python
 Requires: mps-config
 Requires: selinux-policy
 Requires: rsyslog
-Requires: arinc429-driver
-Requires: arinc717-driver
 Requires: host-domain-device-service
 %{?systemd_requires}
 BuildRequires: systemd
 
 %package sims
-Summary: An application that simulates MPS hardware pripherals
+Summary: An application that simulates MPS hardware peripherals
 Group: Development/Tools
 Requires: %{name} = %{version}
 
 %package ife
 Summary: An application that uses a VM to communicate with the MPS IFE card
 Group: Applications/Engineering
+Requires: pyserial
+Requires: python-zmq
+Requires: protobuf-python
 
 
 %description
@@ -65,6 +70,7 @@ cp -r * %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /%{_unitdir}/qual*.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual*-service.preset
 %attr(0644,root,root) /thales/qual/src/*
+%attr(0755,root,root) /thales/qual/src/qual/modules/unittests.sh
 
 %exclude /thales/host/appliances/qual-sims
 %exclude /etc/sysconfig/network-scripts
@@ -83,6 +89,7 @@ cp -r * %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /%{_unitdir}/qual-sims.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-sims-service.preset
 %attr(0644,root,root) /thales/qual/src/simulator/*
+%attr(0755,root,root) /thales/qual/src/simulator/*.sh
 
 %exclude /thales/host/appliances/qual
 %exclude /thales/host/appliances/qual-startvm
@@ -119,7 +126,7 @@ cp -r * %{buildroot}/thales/qual/src/
 %exclude /thales/qual/src/scripts
 %exclude /thales/qual/src/qual/modules
 %exclude /thales/qual/src/qual/config/mps.ini
-%exclude /thales/qual/src/qual/config/virtualMachine.ini
+%exclude /thales/qual/src/qual/config/sims.ini
 
 
 %post
@@ -128,7 +135,7 @@ cp -r * %{buildroot}/thales/qual/src/
 ln -f /thales/qual/src/qual/config/mps.ini /thales/qual/src/qual/config/platform.ini
 sed -i -e 's|#$ModLoad imudp|$ModLoad imudp|g' -e 's|#$UDPServerRun 514|$UDPServerRun 514|g' /etc/rsyslog.conf
 echo -e "\$ActionQueueFileName fwdRule1\n\$ActionQueueMaxDiskSpace 2g\n\$ActionQueueSaveOnShutdown on\n\$ActionQueueType LinkedList\n\$ActionResumeRetryCount -1\n*.* @192.168.137.1:514" >> /etc/rsyslog.conf
-sed -i 's|service_prvkey_file|#service_prvkey_file|g' /thales/host/config/HDDS.conf
+sed -i -e 's|service_prvkey_file|#service_prvkey_file|g' -e 's|tcp://192.168.1.4:40001|tcp://*:40001|g' /thales/host/config/HDDS.conf
 
 %posttrans
 ln -s ../default.xml /etc/libvirt/qemu/networks/autostart/default.xml

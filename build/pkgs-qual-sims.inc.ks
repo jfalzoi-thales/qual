@@ -5,7 +5,7 @@ kernel
 syslinux
 vi
 
-# from @base
+#from @base
 basesystem
 bash
 bzip2
@@ -36,13 +36,15 @@ wget
 xz
 zip
 
-# Kernel Modules
+# kernel modules
 kmod-i2c-mcp2221
+kmod-e1000e
 
-# MPS Config, Tools and Libs
+# mps config, tools and libs
 mps-config
 #mps-config-qual
-#mps-config-map
+#mps-config-qual-tk
+#mps-keys
 #mps-tools
 mpsinst-tools
 #libmps-utils
@@ -51,10 +53,11 @@ mpsinst-tools
 #libsema
 #sema-driver
 
-# FTDI Driver
+# FTDI driver
+libftd2xx
 libftdi
 
-# I2C manager
+# I2C Manager
 #i2c-device-manager
 
 # GPIO Manager
@@ -63,17 +66,26 @@ libftdi
 # SPI Manager
 #spi-manager
 
-# Power Supply Monitor
-#power-supply-monitor
-
 # ARINC Drivers
 #arinc429-driver
 #arinc717-driver
 
-# Higher Level Services
-#host-domain-device-service
+# RTC Driver
+#rtc-driver
 
-# TPM Packages
+# Power Supply Monitor
+#power-supply-monitor
+
+# MAP test tools
+#test-tools
+#arinc717-driver-tests
+
+# Higher level services
+host-domain-device-service
+fake-nms
+
+
+# TPM packages
 #trousers
 #tpm-tools
 
@@ -85,13 +97,11 @@ python-zmq
 protobuf-python
 
 # Development Tools
-i2c-tools
 less
-minicom
-nfs-utils
 pciutils
 strace
 usbutils
+setserial
 
 # Qual
 qual
@@ -103,5 +113,6 @@ pyserial
 fio
 pmbw
 ethtool
+mps-guest-vm
 
 %end

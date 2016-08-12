@@ -20,7 +20,7 @@ class ThalesZMQClient(object):
     # @param timeout  How long to wait for responses from the server
     # @param log      Logger to use to log communication errors
     # @param msgParts Number of message parts to send/receive
-    def __init__(self, address, timeout=200, log=None, msgParts=3):
+    def __init__(self, address, timeout=500, log=None, msgParts=3):
         ## Address to connect to
         self.address = address
         ## Number of message parts to send/receive
