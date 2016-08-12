@@ -31,6 +31,8 @@ rsyslog
 tar
 wget
 xz
+openssh-server
+openssh-clients
 
 # kernel modules
 kmod-i2c-mcp2221
