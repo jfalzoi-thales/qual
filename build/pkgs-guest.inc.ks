@@ -25,14 +25,14 @@ selinux-policy
 selinux-policy-targeted
 linux-firmware
 net-tools
+openssh-server
+openssh-clients
 python
 rootfiles
 rsyslog
 tar
 wget
 xz
-openssh-server
-openssh-clients
 
 # kernel modules
 kmod-i2c-mcp2221
