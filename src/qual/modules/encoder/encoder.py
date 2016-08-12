@@ -40,4 +40,9 @@ class Encoder(Module):
         else:
             self.log.error("Unexpected response from IFE VM Encoder: %s" % ifeVmQtaResponse.name)
 
-        return ThalesZMQMessage(EncoderResponse())
+        response = EncoderResponse()
+        response.state = EncoderResponse.STOPPED
+        response.inputActive = False
+        response.streamActive = False
+
+        return ThalesZMQMessage(response)

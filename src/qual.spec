@@ -3,7 +3,7 @@
 #
 Name: qual
 Summary: An application used to drive MPS hardware
-Version: 1.31
+Version: 1.33
 Release: 1
 License: Proprietary
 Group: Applications/Engineering
@@ -70,6 +70,7 @@ cp -r * %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /%{_unitdir}/qual*.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual*-service.preset
 %attr(0644,root,root) /thales/qual/src/*
+%attr(0755,root,root) /thales/qual/src/qual/modules/unittests.sh
 
 %exclude /thales/host/appliances/qual-sims
 %exclude /etc/sysconfig/network-scripts
