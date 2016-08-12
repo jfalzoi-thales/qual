@@ -46,6 +46,7 @@ mps-config
 mps-config-qual-tk
 mps-keys
 mps-tools
+mps-ife
 mpsinst-tools
 libmps-utils
 
