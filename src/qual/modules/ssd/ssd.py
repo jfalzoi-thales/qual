@@ -35,7 +35,6 @@ class SSD(Module):
         if self.formatRAID:
             #  Check if fio files already exist on the system.  If they do, initialization is probably complete already
             if not os.path.isfile("%s/READ.0.0" % self.__raidFS) or not os.path.isfile("%s/WRITE.0.0" % self.__raidFS):
-                #  Init the RAID filesystem and store in device for use in collectIO
                 self.initFS()
             else:
                 self.log.info("It appears that initialization has already been completed on this system.  Skipping.")
@@ -101,10 +100,9 @@ class SSD(Module):
     #  @param     self
     #  @param     response  An SSDResponse object
     def report(self, response):
-        #info = self.collect.getioInfo()
         response.state = SSDResponse.RUNNING if self._running else SSDResponse.STOPPED
-        response.readBandwidth = self.readBandwidth #info[0]
-        response.writeBandwidth = self.writeBandwidth #info[1]
+        response.readBandwidth = self.readBandwidth
+        response.writeBandwidth = self.writeBandwidth
 
     ## Creates the RAID-0
     #  @param   self
