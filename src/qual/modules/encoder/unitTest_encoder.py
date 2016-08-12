@@ -12,7 +12,7 @@ from common.module.modulemsgs import ModuleMessages
 class EncoderMessages(ModuleMessages):
     @staticmethod
     def getMenuTitle():
-        return "Encoder"
+        return "Encoder for IFE"
 
     @staticmethod
     def getMenuItems():
