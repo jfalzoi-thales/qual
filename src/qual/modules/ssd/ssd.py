@@ -34,7 +34,7 @@ class SSD(Module):
 
         if self.formatRAID:
             #  Check if fio files already exist on the system.  If they do, initialization is probably complete already
-            if not os.path.isfile("%s/READ.0.0" % self.__raidFS) and not os.path.isfile("%s/WRITE.0.0" % self.__raidFS):
+            if not os.path.isfile("%s/READ.0.0" % self.__raidFS) or not os.path.isfile("%s/WRITE.0.0" % self.__raidFS):
                 #  Init the RAID filesystem and store in device for use in collectIO
                 self.initFS()
             else:
