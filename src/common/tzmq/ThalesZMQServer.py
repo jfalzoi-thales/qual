@@ -13,15 +13,19 @@ from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 class ThalesZMQServer(object):
     ## Constructor
     #
-    # @param address  ZMQ address string for socket to bind to
-    # @param msgParts Number of message parts to send/receive
-    def __init__(self, address, msgParts=3):
+    # @param address       ZMQ address string for socket to bind to
+    # @param msgParts      Number of message parts for both request and response
+    # @param requestParts  Number of message parts for request
+    # @param responseParts Number of message parts for response
+    def __init__(self, address, msgParts=3, requestParts=0, responseParts=0):
         ## Logger implementation, based on standard python logger
         self.log = Logger(type(self).__name__)
         ## ZMQ address for socket to bind to
         self.address = address
-        ## Number of message parts to send/receive
-        self.msgParts = msgParts
+        ## Number of message parts to use for request
+        self.requestParts = requestParts if requestParts > 0 else msgParts
+        ## Number of message parts to use for response
+        self.responseParts = responseParts if responseParts > 0 else msgParts
         ## Default request name, used for single-part messages
         self.defaultRequestName = "Request"
         ## ZMQ context
@@ -46,14 +50,14 @@ class ThalesZMQServer(object):
             response = None
 
             # Check the message has the expected number of parts
-            if len(requestData) == self.msgParts:
+            if len(requestData) == self.requestParts:
                 # Package request data into a message object, handling the different message formats
-                if self.msgParts == 3:
+                if self.requestParts == 3:
                     # "Thales Common Network Messaging" format has 3 parts: name, header, body
                     request = ThalesZMQMessage(name=str(requestData[0]))
                     request.header.ParseFromString(requestData[1])
                     request.serializedBody = requestData[2]
-                elif self.msgParts == 2:
+                elif self.requestParts == 2:
                     # Two-part messages have a name and a body
                     request = ThalesZMQMessage(name=str(requestData[0]))
                     request.serializedBody = requestData[1]
@@ -66,15 +70,15 @@ class ThalesZMQServer(object):
                 # Hand the request off to to HandleRequest(), which will return the response
                 response = self.handleRequest(request)
             else:
-                self.log.error("Malformed message received (%d parts, expected %d)" % (len(requestData), self.msgParts))
+                self.log.error("Malformed message received (%d parts, expected %d)" % (len(requestData), self.requestParts))
                 response = self.getMalformedMessageErrorResponse()
 
             # Send the response message back to the client.
-            self.log.debug("Sending GPB %s (%d parts)" % (response.name, self.msgParts))
-            if self.msgParts == 3:
+            self.log.debug("Sending GPB %s (%d parts)" % (response.name, self.responseParts))
+            if self.responseParts == 3:
                 # "Thales Common Network Messaging" format has 3 parts: name, header, body
                 self.zsocket.send_multipart((response.name, response.serializedHeader, response.serializedBody))
-            elif self.msgParts == 2:
+            elif self.responseParts == 2:
                 # Two-part messages have a name and a body
                 self.zsocket.send_multipart((response.name, response.serializedBody))
             else:
