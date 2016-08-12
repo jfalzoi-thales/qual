@@ -29,25 +29,29 @@ class HDDSSimulator(ThalesZMQServer):
         self.log.setLevel(logger.INFO)
         # List of properties that can be get/set
         self.properties = {"carrier_card.switch.temperature": "50.4",
-                           "external_pins.input.pin_e7":      "LOW",
-                           "external_pins.input.pin_d7":      "LOW",
-                           "external_pins.input.pin_c7":      "LOW",
-                           "external_pins.input.pin_b7":      "LOW",
-                           "external_pins.input.pin_a7":      "LOW",
-                           "external_pins.input.pin_c8":      "LOW",
-                           "external_pins.output.pin_e8":     "LOW",
-                           "external_pins.output.pin_e6":     "LOW",
-                           "external_pins.output.pin_d6":     "LOW",
-                           "external_pins.output.pin_c6":     "LOW",
-                           "external_pins.output.pin_b6":     "LOW",
-                           "external_pins.output.pin_a6":     "LOW"}
+                           "external_pins.input.pin_a_d13":   "LOW",
+                           "external_pins.input.pin_a_b14":   "LOW",
+                           "external_pins.input.pin_a_b13":   "LOW",
+                           "external_pins.input.pin_a_c15":   "LOW",
+                           "external_pins.input.pin_a_a15":   "LOW",
+                           "external_pins.input.pin_b_a8":    "LOW",
+                           "external_pins.output.pin_a_e15":  "LOW",
+                           "external_pins.output.pin_a_d14":  "LOW",
+                           "external_pins.output.pin_a_d15":  "LOW",
+                           "external_pins.output.pin_a_c14":  "LOW",
+                           "external_pins.output.pin_a_c13":  "LOW",
+                           "external_pins.output.pin_a_a13":  "LOW",
+                           "power_supply.28V_monitor.voltage":              "28.375256",
+                           "power_supply.28V_monitor.current":              "1.845365",
+                           "power_supply.28V_monitor.external_temperature": "38.375000",
+                           "power_supply.28V_monitor.internal_temperature": "41.000000"}
         # Simulate GPIO loopback by linking outputs to inputs
-        self.gpioMap = {"external_pins.output.pin_e8": "external_pins.input.pin_c8",
-                        "external_pins.output.pin_e6": "external_pins.input.pin_e7",
-                        "external_pins.output.pin_d6": "external_pins.input.pin_d7",
-                        "external_pins.output.pin_c6": "external_pins.input.pin_c7",
-                        "external_pins.output.pin_b6": "external_pins.input.pin_b7",
-                        "external_pins.output.pin_a6": "external_pins.input.pin_a7"}
+        self.gpioMap = {"external_pins.output.pin_a_e15": "external_pins.input.pin_a_d13",
+                        "external_pins.output.pin_a_d14": "external_pins.input.pin_a_b14",
+                        "external_pins.output.pin_a_d15": "external_pins.input.pin_a_b13",
+                        "external_pins.output.pin_a_c14": "external_pins.input.pin_a_c15",
+                        "external_pins.output.pin_a_c13": "external_pins.input.pin_a_a15",
+                        "external_pins.output.pin_a_a13": "external_pins.input.pin_b_a8"}
 
     ## Called by base class when a request is received from a client.
     # @param request ThalesZMQMessage object containing received request
