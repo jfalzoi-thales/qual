@@ -15,23 +15,31 @@ class HDDSMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Get HDDS value", HDDSMessages.get),
-                ("Set HDDS value", HDDSMessages.set),
+        return [("Get power supply value", HDDSMessages.getPS),
+                ("Get GPIO pin", HDDSMessages.get),
+                ("Set GPIO pin", HDDSMessages.set),
                 ("Get IFE temperature", HDDSMessages.getTemp),
                 ("Get IFE voltage",     HDDSMessages.getVolt)]
+
+    @staticmethod
+    def getPS():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.GET
+        message.key = "power_supply.28V_monitor.current"
+        return message
 
     @staticmethod
     def get():
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.GET
-        message.key = "external_pins.output.pin_a6"
+        message.key = "external_pins.output.pin_a_a13"
         return message
 
     @staticmethod
     def set():
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.SET
-        message.key = "external_pins.output.pin_a6"
+        message.key = "external_pins.output.pin_a_a13"
         message.value = "HIGH"
         return message
 
