@@ -8,7 +8,7 @@ Release: 1
 License: Proprietary
 Group: Applications/Engineering
 URL: https://repo-tav.tklabs.com:8102/
-Source: %{name}-%{version}.tar.gz
+Source: %{name}.tar.gz
 %{?systemd_requires}
 BuildRequires: systemd
 
@@ -16,9 +16,9 @@ BuildRequires: systemd
 This package contains drivers and tools for exercising the functionality of the IFE card in the MPS environment.
 
 %prep
-%setup -q -n %{name}-%{version}
+%setup -q -n %{name}
 mkdir ife-lls-mps
-cd ife-lls-mps; rpm2cpio ../dist/ife-lls-mps-%{version}-1.x86_64.rpm | cpio -idmv
+cd ife-lls-mps; rpm2cpio ../dist/ife-lls-mps-%{version}-1.x86_64.rpm | cpio -idm
 
 %clean
 rm -rf ife-lls-mps
