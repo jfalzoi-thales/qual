@@ -2,13 +2,10 @@
 echo "Qual package version is: `rpm -q --queryformat='%{VERSION}' qual-ife`"
 
 # Install and load Microchip driver for I2C devices
-lsmod | fgrep -q i2c_mcp2221
-if [ $? != 0 ]; then
-    if ! driver_install.sh; then
-        echo "Failed to install Microchip driver"
-    elif ! driver_load.sh; then
-        echo "Failed to load Microchip driver"
-    fi
+if ! driver_install.sh; then
+    echo "Failed to install Microchip driver"
+elif ! driver_load.sh; then
+    echo "Failed to load Microchip driver"
 fi
 
 # Set up device node that CLI tools expect

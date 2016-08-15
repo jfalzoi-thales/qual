@@ -26,11 +26,11 @@ class QTEMenu(object):
 
         if useJson:
             ## Client connection to QTA
-            self.client = JsonZMQClient(address, timeout=2000)
+            self.client = JsonZMQClient(address, timeout=7000)
             print "Opened connection to", address, "for JSON messaging"
         else:
             ## Client connection to QTA
-            self.client = ThalesZMQClient(address, timeout=2000)
+            self.client = ThalesZMQClient(address, timeout=7000)
             print "Opened connection to", address, "for GPB messaging"
 
     ## Print a menu of actions for a particular module
