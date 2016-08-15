@@ -9,7 +9,7 @@ Group: System Environment/Libraries
 URL: http://www.thalesgroup.com/
 Vendor: Thales Avionics, Inc.
 License: Proprietary
-Source: %{name}-%{version}.tar.gz
+Source: %{name}.tar.gz
 Requires: mps-config
 %{?systemd_requires}
 BuildRequires: systemd
@@ -18,7 +18,7 @@ BuildRequires: systemd
 QUAL Specific configuration.
 
 %prep
-%setup -q -n %{name}-%{version}
+%setup -q -n %{name}
 
 %install
 mkdir -p %{buildroot}/etc/sysconfig/network-scripts/qual

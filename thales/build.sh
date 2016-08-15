@@ -21,7 +21,9 @@ for DIRENT in *; do
         if [ -n "$SPEC" ]; then
             echo "Building $SPEC in $DIRENT"
             rm -rf ~/rpmbuild
-            rpmbuild --quiet --build-in-place -bb $SPEC
+            mkdir -p ~/rpmbuild/SOURCES/
+            tar czf ~/rpmbuild/SOURCES/$DIRENT.tar.gz --exclude=*.spec -C .. $DIRENT
+            rpmbuild --quiet -bb $SPEC
             if [ $? = 0 ]; then
                 mv ~/rpmbuild/RPMS/*/*.rpm $RPMDIR
             else
