@@ -15,8 +15,10 @@ class HDDSMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Get single value", HDDSMessages.get),
-                ("Set single value", HDDSMessages.set)]
+        return [("Get HDDS value", HDDSMessages.get),
+                ("Set HDDS value", HDDSMessages.set),
+                ("Get IFE temperature", HDDSMessages.getTemp),
+                ("Get IFE voltage",     HDDSMessages.getVolt)]
 
     @staticmethod
     def get():
@@ -94,7 +96,7 @@ class Test_HDDS(unittest.TestCase):
         cls.log = Logger(name='Test HDDS')
         cls.log.info('++++ Setup before HDDS module unit tests ++++')
         # Create the module
-        cls.module = hdds.HDDS()
+        cls.module = hdds.HDDS(deserialize=True)
         # Uncomment this if you want to see module debug messages
         #cls.module.log.setLevel("DEBUG")
 

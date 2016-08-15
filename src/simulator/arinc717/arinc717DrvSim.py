@@ -80,9 +80,9 @@ class ARINC717DriverSimulator(ThalesZMQServer):
                 responseMsg.errorCode = Response.NOT_SUPPORTED
 
             elif requestMsg.type == Request.SET_CONFIG:
-                # Set Config request - unsupported
+                # Set Config request - Just return success
                 responseMsg.type = Response.STATUS
-                responseMsg.errorCode = Response.NOT_SUPPORTED
+                responseMsg.errorCode = Response.NONE
 
             else:
                 # Unknown request type

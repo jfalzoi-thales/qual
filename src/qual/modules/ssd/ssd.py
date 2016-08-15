@@ -1,8 +1,6 @@
 import subprocess
 import os
-import threading
 from time import sleep
-
 from common.module.module import Module
 from common.gpb.python.SSD_pb2 import SSDRequest, SSDResponse
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -11,74 +9,7 @@ from qual.modules.ssd.ssd_Exception import SSDModuleException
 ## Discard the output
 DEVNULL = open(os.devnull, 'wb')
 
-## Collects IO information
-#
-class collectIO(threading.Thread):
-    ## Constructor
-    #  @param   self
-    #  @param   sleeptime   Number of seconds to sleep DEFAULT = [1]
-    def __init__(self, device, sleeptime=1):
-        # Initializes threading
-        threading.Thread.__init__(self)
-        ## Lock for preventing thread issues
-        self.lock = threading.Lock()
-        ## Device name
-        self.device = device
-        ## Sleeptime in seconds
-        self.sleeptime = sleeptime
-        ## Write count in Megabytes
-        self.write = 0.0
-        ## Read count in Megabytes
-        self.read = 0.0
-        ## Thread exits when self.quit = True
-        self.quit = False
-
-    ## Grabs IO statistics from Linux
-    #  Retreives IO information from '/proc/diskstats' and parses necessary information
-    #  @param   self
-    #  @return  io_infos   Array containing data read from diskstats
-    def getioData(self):
-        with open('/proc/diskstats', 'r') as io_stats:
-            #  Parses Linux IO data from diskstats file
-            for content in io_stats.readlines():
-                for line in content.split('\n'):
-                    info = line.split(' ')
-                    info[:] = [x for x in info if x != '']
-
-                    if len(info) > 2:
-                        if info[2] == self.device:
-                            return info
-
-    ## Returns read and write values
-    #  Retreives IO information from '/proc/diskstats' and parses necessary information
-    #  @param   self
-    #  @return  io      Array containing read and write data
-    def getioInfo(self):
-        self.lock.acquire()
-        io = [self.read, self.write]
-        self.lock.release()
-
-        return io
-
-    ## Calculates read and write values in Megabytes
-    #  Overrides run() method in Thread
-    #  Uses the raw values obtained from self.getioData() function and calculates read and write values
-    #  @param     self
-    def run(self):
-        start = self.getioData()
-
-        while not self.quit:
-            sleep(self.sleeptime)
-            stop = self.getioData()
-            self.lock.acquire()
-            # The data is in 512-byte sectors; We divide by 2048 in order to change this into Megabytes
-            self.read = (float(stop[5]) - float(start[5])) / 2048
-            self.write = (float(stop[9]) - float(start[9])) / 2048
-            self.lock.release()
-            start = stop
-
 ## SSD Module Class
-#
 class SSD(Module):
     ## Constructor
     #  @param       self
@@ -92,32 +23,38 @@ class SSD(Module):
         self.__raidFS = "/mnt/qual"
         ## Location of FIO config file
         self.__fioConf = "/tmp/fio-qual.fio"
+        ## Whether or not to format the RAID at startup
+        self.formatRAID = True
         ## Default size partition (GBytes)
-        self.partitonsize = 100
-        self.loadConfig(attributes=('partitonsize',))
-        #  Init the RAID filesystem and store in device for use in collectIO
-        device = self.initFS()
+        self.partitionsize = 100
+        self.loadConfig(attributes=('partitionsize', 'formatRAID'))
         ## Read and Write bandwidth reported by fio tool
         self.readBandwidth = 0.0
         self.writeBandwidth = 0.0
-        ## SSD Data collection thread
-        #self.collect = collectIO(device)
-        #  Start data collection thread
-        #self.collect.start()
-        #sleep(2)
+
+        if self.formatRAID:
+            #  Check if fio files already exist on the system.  If they do, initialization is probably complete already
+            if not os.path.isfile("%s/READ.0.0" % self.__raidFS) or not os.path.isfile("%s/WRITE.0.0" % self.__raidFS):
+                self.initFS()
+            else:
+                self.log.info("It appears that initialization has already been completed on this system.  Skipping.")
+        else:
+            #  Just check that mount point dir exists - allows us to test on any disk
+            if not os.path.exists(self.__raidFS):
+                raise SSDModuleException("Filesystem test dir %s not found" % self.__raidFS)
+
         #  Create the FIO config file
         self.createFioConfig()
-        #  Run FIO to create 100M file
-        subprocess.Popen(['fio', self.__fioConf, '--runtime=0']).communicate()
+        #  Run FIO to create test file
+        self.log.info('Creating FIO test file...')
+        subprocess.Popen(['fio', self.__fioConf, '--runtime=0'], stdout=DEVNULL).communicate()
         #  Adding the fio tool thread
         self.addThread(self.runTool)
         #  Adding the message handler
         self.addMsgHandler(SSDRequest, self.handlerMessage)
 
     ## Handles incoming messages
-    #
     #  Receives tzmq request and runs requested process
-    #
     #  @param     self
     #  @param     msg      TZMQ format message
     #  @return    response     A ThalesZMQMessage object
@@ -136,7 +73,6 @@ class SSD(Module):
         return ThalesZMQMessage(response)
 
     ## Starts running FIO tool
-    #
     #  @param     self
     #  @param     response  An SSDResponse object
     def start(self, response):
@@ -148,7 +84,6 @@ class SSD(Module):
         self.report(response)
 
     ## Stops running FIO tool
-    #
     #  @param     self
     #  @param     response  An SSDResponse object
     def stop(self, response):
@@ -162,17 +97,14 @@ class SSD(Module):
         self.writeBandwidth = 0.0
 
     ## Reports data from fio tool
-    #
     #  @param     self
     #  @param     response  An SSDResponse object
     def report(self, response):
-        #info = self.collect.getioInfo()
         response.state = SSDResponse.RUNNING if self._running else SSDResponse.STOPPED
-        response.readBandwidth = self.readBandwidth #info[0]
-        response.writeBandwidth = self.writeBandwidth #info[1]
+        response.readBandwidth = self.readBandwidth
+        response.writeBandwidth = self.writeBandwidth
 
     ## Creates the RAID-0
-    #
     #  @param   self
     def initFS(self):
         self.log.info('Initializing the SSD file system, this may take some time...')
@@ -225,7 +157,7 @@ class SSD(Module):
         partition.stdin.write('\n')
         partition.stdin.write('\n')
         partition.stdin.write('\n')
-        partition.stdin.write('+%sGB\n' % (self.partitonsize,))
+        partition.stdin.write('+%sGB\n' % (self.partitionsize,))
         partition.stdin.write('w\n')
         rc = partition.wait()
         self.log.debug("Command return code: %d" % rc)
@@ -271,7 +203,6 @@ class SSD(Module):
         return device
 
     ## Runs a command, and can raise an exception if the command fails
-    #
     #  @param   self
     #  @param   cmd       Command to run (single string, will be run with shell=True)
     #  @param   failText  Text to include in exception; if not provided, exception will not be raised
@@ -285,7 +216,6 @@ class SSD(Module):
             raise SSDModuleException(msg=failText)
 
     ## Check to see if a filesystem is mounted or not, and raise exception
-    #
     #  @param   self
     #  @param   fs        Device name or mount point of filesystem to search for
     #  @param   mounted   Expect filesystem to be mounted or not
@@ -305,37 +235,47 @@ class SSD(Module):
         return isMounted
 
     ## Creates config file for FIO tool
-    #
     #  @param   self
     def createFioConfig(self):
         f = open(self.__fioConf, mode='w')
         f.write('[global]\n')
-        f.write('rw=rw\n')
-        f.write('size=100M\n')
+        f.write('size=1000M\n')
+        f.write('ioengine=libaio\n')
+        f.write('iodepth=4\n')
+        f.write('bs=1M\n')
+        f.write('direct=1\n')
         f.write('\n')
-        f.write('[QUAL-SSD]\n')
+        f.write('[READ]\n')
+        f.write('stonewall\n')
+        f.write('new_group\n')
         f.write('directory=%s\n' % self.__raidFS)
+        f.write('rw=read\n')
+        f.write('\n')
+        f.write('[WRITE]\n')
+        f.write('stonewall\n')
+        f.write('new_group\n')
+        f.write('directory=%s\n' % self.__raidFS)
+        f.write('rw=write\n')
 
     ## Runs FIO tool
-    #
     #  @param   self
     def runTool(self):
         try:
             fio = subprocess.check_output(['fio', self.__fioConf, '--minimal', '--runtime=2'])
-            fields = fio.split(';')
-            self.readBandwidth = float(fields[6]) / 1024
-            self.writeBandwidth = float(fields[47]) / 1024
+            for line in fio.splitlines():
+                fields = line.split(';')
+                if fields[2] == "WRITE":
+                    self.writeBandwidth = float(fields[47]) / 1024
+                else:
+                    self.readBandwidth = float(fields[6]) / 1024
         except:
-            self.log.info("FIO Exited Early")
+            self.log.info("FIO Exited Early" if self._running else "FIO Stopped")
             pass
 
     ## Stops background thread
-    #
     #  @param     self
     def terminate(self):
         if self._running:
             self._running = False
             subprocess.Popen(['pkill', '-9', 'fio']).communicate()
             self.stopThread()
-
-        #self.collect.quit = True

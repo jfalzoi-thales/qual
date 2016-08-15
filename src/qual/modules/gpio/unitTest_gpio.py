@@ -19,13 +19,16 @@ class GPIOMessages(ModuleMessages):
     def getMenuItems():
         return [("Report for input 1",             GPIOMessages.reportIn1),
                 ("Report for input 2",             GPIOMessages.reportIn2),
+                ("Report for input 7",             GPIOMessages.reportIn7),
                 ("Report for all inputs",          GPIOMessages.reportAll),
                 ("Connect input 1 to output 1",    GPIOMessages.connectIn1Out1),
                 ("Connect input 2 to output 1",    GPIOMessages.connectIn2Out1),
                 ("Connect input 2 to output 2",    GPIOMessages.connectIn2Out2),
+                ("Connect input 7 to output 7",    GPIOMessages.connectIn7Out7),
                 ("Connect all inputs to output 3", GPIOMessages.connectInAllOut3),
                 ("Disconnect input 1",             GPIOMessages.disconnectIn1),
                 ("Disconnect input 2",             GPIOMessages.disconnectIn2),
+                ("Disconnect input 7",             GPIOMessages.disconnectIn7),
                 ("Disconnect all inputs",          GPIOMessages.disconnectAll)]
 
     @staticmethod
@@ -181,6 +184,8 @@ class Test_GPIO(unittest.TestCase):
         module = self.__class__.module
         log.info("==== Reset module state ====")
         module.msgHandler(ThalesZMQMessage(GPIOMessages.disconnectAll()))
+        # Sleep a bit to allow GPIO background thread to process disconnect
+        sleep(1)
 
     ## Test case: Try to connect an invalid input pin
     # Should return an empty GPIOResponse
@@ -319,7 +324,7 @@ class Test_GPIO(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
 
-        log.info("**** Test case: Connect a linked input/output pair ****")
+        log.info("**** Test case: Connect an IFE input/output pair ****")
         log.info("==== Report before connecting ====")
         response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn7()))
         self.assertEqual(response.name, "GPIOResponse")
@@ -330,7 +335,7 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN7")
         self.assertEqual(response.body.status[0].gpOut, "")
 
-        log.info("==== Connect linked pair ====")
+        log.info("==== Connect IFE pair ====")
         response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn7Out7()))
         self.assertEqual(response.name, "GPIOResponse")
         self.assertEqual(len(response.body.status), 1)

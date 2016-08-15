@@ -33,14 +33,16 @@ class QualTestApp(ConfigurableObject):
         self.gpbServiceAddress = "tcp://*:50001"
         ## Address to use for JSON listener
         self.jsonServiceAddress = "tcp://*:50002"
+        ## Directory to search for modules
+        self.moduleDir = "qual.modules"
         # Read config file and update specified instance variables
-        self.loadConfig(attributes=('gpbServiceAddress','jsonServiceAddress'))
+        self.loadConfig(attributes=('gpbServiceAddress','jsonServiceAddress','moduleDir'))
 
         ## Map of {<class>:[<instances>...]}
         self.__instances = {}
 
         ## All available classes in QUAL modules for QTA
-        self.__modClasses = ClassFinder(rootPath='qual.modules',
+        self.__modClasses = ClassFinder(rootPath=self.moduleDir,
                                         baseClass=Module)
 
         ## All available classes in GPB modules for QTA
@@ -114,7 +116,7 @@ class QualTestApp(ConfigurableObject):
                         # If the message class matches one of the instances, pass the message
                         if msgHandler[0] == request.body.__class__:
                             # Get the ThalesZMQ response object
-                            self.log.info("Passing %s message to %s module" % (request.name, modObject.__class__.__name__))
+                            self.log.debug("Passing %s message to %s module" % (request.name, modObject.__class__.__name__))
                             response = modObject.msgHandler(request)
                             if response is not None:
                                 break

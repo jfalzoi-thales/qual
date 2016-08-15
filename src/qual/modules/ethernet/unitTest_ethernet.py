@@ -16,9 +16,12 @@ class EthernetMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Report",  EthernetMessages.report),
-                ("Run",     EthernetMessages.run),
-                ("Stop",    EthernetMessages.stop)]
+        return [("Report ENET_1",  EthernetMessages.report),
+                ("Run ENET_1",     EthernetMessages.run),
+                ("Stop ENET_1",    EthernetMessages.stop),
+                ("Report ENET_8",  EthernetMessages.reportPort8),
+                ("Run ENET_8",     EthernetMessages.runPort8),
+                ("Stop ENET_8",    EthernetMessages.stopPort8)]
 
     @staticmethod
     def report():
@@ -69,6 +72,28 @@ class EthernetMessages(ModuleMessages):
         message = EthernetRequest()
         message.requestType = EthernetRequest.STOP
         message.local = "ENET_2"
+        return message
+
+    @staticmethod
+    def reportPort8():
+        message = EthernetRequest()
+        message.requestType = EthernetRequest.REPORT
+        message.local = "ENET_8"
+        return message
+
+    @staticmethod
+    def runPort8():
+        message = EthernetRequest()
+        message.requestType = EthernetRequest.RUN
+        message.local = "ENET_8"
+        message.remote = "10.10.42.21"
+        return message
+
+    @staticmethod
+    def stopPort8():
+        message = EthernetRequest()
+        message.requestType = EthernetRequest.STOP
+        message.local = "ENET_8"
         return message
 
 
