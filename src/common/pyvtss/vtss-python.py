@@ -1,14 +1,8 @@
 import os
-import IPy
 import json
 import httplib
 import base64
-import urllib
-
-## Errors Code
-ERR_METHOD_NOT_FOUND    = 1
-ERR_WRONG_NUM_PARAM     = 2
-
+from src.common.pyvtss.exception_Vtss_python import MethodNotFoundException, WrongParamException
 
 ## Class to handle wrap the VTSS switch interface
 class PyVtss(object):
@@ -77,7 +71,7 @@ class PyVtss(object):
                 dic = method
                 break
         if dic == None:
-            return ERR_METHOD_NOT_FOUND
+            raise MethodNotFoundException(request[0])
 
         types = {}
         for type in jsonObj['types']:
@@ -87,7 +81,7 @@ class PyVtss(object):
         #  Check the params of the call
         if len(request[1:]) != 0:
             if len(request[1:]) != len(dic['params']):
-                return ERR_WRONG_NUM_PARAM
+                raise WrongParamException(len(dic['params'], len(request[1:])))
 
             i = 1
             for param in dic['params']:
