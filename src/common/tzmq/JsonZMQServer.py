@@ -57,6 +57,7 @@ class JsonZMQServer(object):
                     reqBody = JsonConversion.json2gpb(reqName, json.loads(requestData[1]))
                 except Exception as e:
                     self.log.error("Failed to convert JSON to GPB: %s" % e.message)
+                    self.log.error(requestData[1])
                 else:
                     # Package request data into a ThalesZMQMessage object
                     request = ThalesZMQMessage(name=reqName)
