@@ -32,10 +32,12 @@ class CarrierCardData(Module):
 
         ## Ethernet device for I350
         self.ethDevice = "TEST_FILE"
+        ## Magic code for ethtool to write to EEPROM - hardware-dependent
+        self.ethtoolMagic = "0x15238086"
         ## Enable WRITE_PROTECT function
         self.enableWriteProtect = False
         # Load configuration from config file
-        self.loadConfig(attributes=("ethDevice", "enableWriteProtect"))
+        self.loadConfig(attributes=("ethDevice", "enableWriteProtect", "ethtoolMagic"))
 
         if self.enableWriteProtect:
             self.log.info("Write protect function enabled")
@@ -305,7 +307,7 @@ class CarrierCardData(Module):
 
         # We store the 256-byte VPD block at offset 0x3e00
         self.log.info("Writing VPD block to EEPROM")
-        cmd = ['ethtool', '-E', self.ethDevice, 'magic', '0x15218086', 'offset', '0x3e00']
+        cmd = ['ethtool', '-E', self.ethDevice, 'magic', self.ethtoolMagic, 'offset', '0x3e00']
         self.log.debug("Writing %d bytes to command: %s" % (len(vpd), " ".join(cmd)))
         ethtool = subprocess.Popen(cmd, stdin=subprocess.PIPE)
         ethtool.stdin.write(vpd)
@@ -433,7 +435,7 @@ class CarrierCardData(Module):
             return True
         else:
             # Call ethtool to write the word at the specified offset
-            cmd = ['ethtool', '-E', self.ethDevice, 'magic', '0x15218086', 'offset', str(offset)]
+            cmd = ['ethtool', '-E', self.ethDevice, 'magic', self.ethtoolMagic, 'offset', str(offset)]
             self.log.debug("Writing 2 bytes to command: %s" % " ".join(cmd))
             ethtool = subprocess.Popen(cmd, stdin=subprocess.PIPE)
             ethtool.stdin.write(data)
