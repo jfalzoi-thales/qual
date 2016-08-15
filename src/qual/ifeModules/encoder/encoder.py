@@ -1,6 +1,6 @@
 import subprocess
 import serial
-import threading
+from time import sleep
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.Encoder_pb2 import EncoderRequest, EncoderResponse
 from common.module.module import Module
@@ -19,20 +19,33 @@ class IFEEncoder(Module):
         self.addMsgHandler(EncoderRequest, self.handler)
         #  State default state
         self.state = EncoderResponse.STOPPED
-        #  StreamActive default state
+        ## StreamActive state
         self.streamActive = False
+        ## Current IP address
+        self.ip = ""
+        ## Current port
+        self.port = ""
+        ## Approaching prompt detected by reader
+        self.promptImminent = False
         #  Add the thread
-        self.addThread(self.serialControl)
+        self.addThread(self.serialReader)
+
         #  Connect to the video encoder serial control
         try:
-            #  Serial connection
+            ## Serial connection
             self.serial = serial.Serial(port='/dev/ttyUSB2',
                                         baudrate=115200,
                                         parity=serial.PARITY_NONE,
                                         stopbits=serial.STOPBITS_ONE,
-                                        bytesize=serial.EIGHTBITS)
+                                        bytesize=serial.EIGHTBITS,
+                                        timeout=1)
         except (serial.SerialException, OSError):
             raise EncoderModuleSerialException('/dev/ttyUSB2')
+
+        #  Write a newline to wake up the console
+        self.serial.write('\n')
+        #  Start the reader thread
+        self.startThread()
 
     ## Handles incoming messages
     #
@@ -51,7 +64,7 @@ class IFEEncoder(Module):
             #  "sink" is ignored if REPORT
             response = self.report()
         else:
-            self.log.error("Unexpected Request Type %d" % (msg.body.requestType))
+            self.log.error("Unexpected Request Type %d" % msg.body.requestType)
 
         return ThalesZMQMessage(response)
 
@@ -65,16 +78,42 @@ class IFEEncoder(Module):
         if len(val) != 2:
             self.log.error("Wrong sink passed.")
         else:
-            self.ip = val[0]
-            self.port = val[1]
-            self.startThread()
+            ip = val[0]
+            port = val[1]
+
+            #  TODO: Replace sleeps with checking for expected output
+
+            #  Configure IP if it has changed
+            if ip != self.ip:
+                self.ip = ip
+                self.log.info("Request IP")
+                self.serial.write('k')
+                sleep(0.5)
+                self.log.info("Enter IP")
+                self.serial.write(self.ip+'\n')
+                sleep(1.5)
+
+            #  Configure the Port if it has changed
+            if port != self.port:
+                self.port = port
+                self.log.info("Request port")
+                self.serial.write('l')
+                sleep(0.5)
+                self.log.info("Enter port")
+                self.serial.write(self.port+'\n')
+                sleep(1.5)
+
+            # Send the 'start' command
+            self.log.info("Request start")
+            self.serial.write('s')
+            #  TODO: Wait a moment and check status and only change self.state if status is not "Stopped"
             self.state = EncoderResponse.RUNNING
-            #  check the streamActive field
-            output = subprocess.check_output(['videoEncoder.sh', 'status'])
-            if output.rstrip() == 'Running':
-                self.streamActive = True
-            else:
-                self.streamActive = False
+
+            #  Check the streamActive field
+            status = subprocess.check_output(['videoEncoder.sh', 'status']).rstrip()
+            self.log.info("Status is %s" % status)
+            self.streamActive = (status == 'Running')
+
         #  Create the response
         response = EncoderResponse()
         response.state = self.state
@@ -87,19 +126,18 @@ class IFEEncoder(Module):
     #  @param   self
     #  @return  EncoderResponse object
     def stop(self):
-        #  Stop the thread
-        self._running = False
-        self.stopThread()
         #  Send the 'stop' command
+        self.log.info("Request stop")
         self.serial.write('t')
+        sleep(0.5)
         self.state = EncoderResponse.STOPPED
-        #  check the streamActive field
-        output = subprocess.check_output(['videoEncoder.sh', 'status'])
-        if output.rstrip() == 'Running':
-            self.streamActive = True
-        else:
-            self.streamActive = False
-        # Create the response
+
+        #  Check the streamActive field
+        status = subprocess.check_output(['videoEncoder.sh', 'status']).rstrip()
+        self.log.info("Status is %s" % status)
+        self.streamActive = (status == 'Running')
+
+        #  Create the response
         response = EncoderResponse()
         response.state = self.state
         response.streamActive = self.streamActive
@@ -111,39 +149,34 @@ class IFEEncoder(Module):
     #  @param   self
     #  @return  EncoderResponse object
     def report(self):
-        output = subprocess.check_output(['videoEncoder.sh', 'status'])
-        if output.rstrip() == 'Running':
-            self.streamActive = True
-        else:
-            self.streamActive = False
-        # Create the response
+        #  Check the streamActive field
+        status = subprocess.check_output(['videoEncoder.sh', 'status']).rstrip()
+        self.streamActive = (status == 'Running')
+
+        #  Create the response
         response = EncoderResponse()
         response.state = self.state
         response.streamActive = self.streamActive
 
         return response
 
-    ## Runs the video encoder serial control
+    ## Reads from the video encoder serial console
     #
     #  @param   self
     #  @return  void
-    def serialControl(self):
-        if isinstance(self.serial, serial.Serial):
-            #  Configure IP
-            self.serial.write('k')
-            self.serial.write(self.ip+'\n')
-            #  Configure the Port
-            self.serial.write('l')
-            self.serial.write(self.port+'\n')
-            #  Start
-            self.serial.write('s')
-            #  Now, we'll read all from the serial port
-            while self._running:
-                #  Add print here for debugging
-                self.serial.read()
-        else:
-            self.log.error("No video encoder serial control.")
-
+    def serialReader(self):
+        line = self.serial.readline()
+        if line != "":
+            #  Uncomment to watch the console output
+            #  print line.rstrip()
+            #  TODO: set flag to indicate when safe to send command
+            if "Y -- Load Factory" in line:
+                #  We're almost at the prompt - set a flag for next line
+                self.promptImminent = True
+            elif self.promptImminent:
+                #  We've reached the line before the prompt
+                self.log.info("Prompt is imminent")
+                self.promptImminent = False
 
     ## Stops background thread
     #

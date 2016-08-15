@@ -4,7 +4,7 @@ if [[ $1 = "status" ]]
 then
     if [ -e /tmp/videoEncoder.tmp ]
     then
-        echo "Runnning"
+        echo "Running"
     else
         echo "Stopped"
     fi
@@ -16,6 +16,6 @@ then
     rm /tmp/videoEncoder.tmp
 else
     echo
-    echo "Ivalid Parameter."
+    echo "Invalid Parameter."
     echo
 fi

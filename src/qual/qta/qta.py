@@ -116,7 +116,7 @@ class QualTestApp(ConfigurableObject):
                         # If the message class matches one of the instances, pass the message
                         if msgHandler[0] == request.body.__class__:
                             # Get the ThalesZMQ response object
-                            self.log.info("Passing %s message to %s module" % (request.name, modObject.__class__.__name__))
+                            self.log.debug("Passing %s message to %s module" % (request.name, modObject.__class__.__name__))
                             response = modObject.msgHandler(request)
                             if response is not None:
                                 break
