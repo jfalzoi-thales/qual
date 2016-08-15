@@ -16,7 +16,7 @@ class AnalogAudio(Module):
         self.ifeVmQtaAddr = "tcp://localhost:50003"
         self.loadConfig(attributes=('ifeVmQtaAddr',))
         ## Connection to QTA running on the IFE VM
-        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log)
+        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log, timeout=2000)
         ## Flag for unit test to deserialize responses
         self.deserialize = deserialize
         #  Add handler to available message handlers
