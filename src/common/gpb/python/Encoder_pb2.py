@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='Encoder.proto',
   package='mpsqual',
-  serialized_pb=_b('\n\rEncoder.proto\x12\x07mpsqual\"\x8e\x01\n\x0e\x45ncoderRequest\x12?\n\x0brequestType\x18\x01 \x02(\x0e\x32$.mpsqual.EncoderRequest.RequestTypeT:\x04STOP\x12\x0c\n\x04sink\x18\x02 \x01(\t\"-\n\x0cRequestTypeT\x12\x08\n\x04STOP\x10\x00\x12\x07\n\x03RUN\x10\x01\x12\n\n\x06REPORT\x10\x02\"\xa4\x01\n\x0f\x45ncoderResponse\x12\x31\n\x05state\x18\x01 \x02(\x0e\x32\".mpsqual.EncoderResponse.AppStateT\x12\x1a\n\x0binputActive\x18\x02 \x02(\x08:\x05\x66\x61lse\x12\x1b\n\x0cstreamActive\x18\x03 \x02(\x08:\x05\x66\x61lse\"%\n\tAppStateT\x12\x0b\n\x07STOPPED\x10\x00\x12\x0b\n\x07RUNNING\x10\x01')
+  serialized_pb=_b('\n\rEncoder.proto\x12\x07mpsqual\"\x8e\x01\n\x0e\x45ncoderRequest\x12?\n\x0brequestType\x18\x01 \x02(\x0e\x32$.mpsqual.EncoderRequest.RequestTypeT:\x04STOP\x12\x0c\n\x04sink\x18\x02 \x01(\t\"-\n\x0cRequestTypeT\x12\x08\n\x04STOP\x10\x00\x12\x07\n\x03RUN\x10\x01\x12\n\n\x06REPORT\x10\x02\"\x88\x01\n\x0f\x45ncoderResponse\x12\x31\n\x05state\x18\x01 \x02(\x0e\x32\".mpsqual.EncoderResponse.AppStateT\x12\x1b\n\x0cstreamActive\x18\x03 \x02(\x08:\x05\x66\x61lse\"%\n\tAppStateT\x12\x0b\n\x07STOPPED\x10\x00\x12\x0b\n\x07RUNNING\x10\x01')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -67,8 +67,8 @@ _ENCODERRESPONSE_APPSTATET = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=299,
-  serialized_end=336,
+  serialized_start=271,
+  serialized_end=308,
 )
 _sym_db.RegisterEnumDescriptor(_ENCODERRESPONSE_APPSTATET)
 
@@ -126,14 +126,7 @@ _ENCODERRESPONSE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='inputActive', full_name='mpsqual.EncoderResponse.inputActive', index=1,
-      number=2, type=8, cpp_type=7, label=2,
-      has_default_value=True, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='streamActive', full_name='mpsqual.EncoderResponse.streamActive', index=2,
+      name='streamActive', full_name='mpsqual.EncoderResponse.streamActive', index=1,
       number=3, type=8, cpp_type=7, label=2,
       has_default_value=True, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
@@ -152,7 +145,7 @@ _ENCODERRESPONSE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=172,
-  serialized_end=336,
+  serialized_end=308,
 )
 
 _ENCODERREQUEST.fields_by_name['requestType'].enum_type = _ENCODERREQUEST_REQUESTTYPET

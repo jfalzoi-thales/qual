@@ -79,7 +79,7 @@ while true ; do
     esac
 done
 
-if [ "$@" != "" ]; then usage; fi
+if [ "$#" != 0 ]; then usage; fi
 
 set -e
 

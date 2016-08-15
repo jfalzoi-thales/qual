@@ -18,6 +18,5 @@ message EncoderResponse {
 	}
 		
 	required AppStateT state = 1;
-	required bool inputActive = 2 [default = false];
 	required bool streamActive = 3 [default = false];
 }

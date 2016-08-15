@@ -25,6 +25,8 @@ selinux-policy
 selinux-policy-targeted
 linux-firmware
 net-tools
+openssh-server
+openssh-clients
 python
 rootfiles
 rsyslog

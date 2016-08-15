@@ -42,7 +42,6 @@ class Encoder(Module):
 
         response = EncoderResponse()
         response.state = EncoderResponse.STOPPED
-        response.inputActive = False
         response.streamActive = False
 
         return ThalesZMQMessage(response)
