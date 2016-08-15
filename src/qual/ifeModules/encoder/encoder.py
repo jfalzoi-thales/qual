@@ -25,6 +25,8 @@ class IFEEncoder(Module):
         self.ip = ""
         ## Current port
         self.port = ""
+        ## Approaching prompt detected by reader
+        self.promptImminent = False
         #  Add the thread
         self.addThread(self.serialReader)
 
@@ -84,30 +86,34 @@ class IFEEncoder(Module):
             #  Configure IP if it has changed
             if ip != self.ip:
                 self.ip = ip
+                self.log.info("Request IP")
                 self.serial.write('k')
                 sleep(0.5)
+                self.log.info("Enter IP")
                 self.serial.write(self.ip+'\n')
                 sleep(1.5)
 
             #  Configure the Port if it has changed
             if port != self.port:
                 self.port = port
+                self.log.info("Request port")
                 self.serial.write('l')
                 sleep(0.5)
+                self.log.info("Enter port")
                 self.serial.write(self.port+'\n')
                 sleep(1.5)
 
-            #  Start
+            # Send the 'start' command
+            self.log.info("Request start")
             self.serial.write('s')
-
             #  TODO: Wait a moment and check status and only change self.state if status is not "Stopped"
             self.state = EncoderResponse.RUNNING
+
             #  Check the streamActive field
-            output = subprocess.check_output(['videoEncoder.sh', 'status'])
-            if output.rstrip() == 'Running':
-                self.streamActive = True
-            else:
-                self.streamActive = False
+            status = subprocess.check_output(['videoEncoder.sh', 'status']).rstrip()
+            self.log.info("Status is %s" % status)
+            self.streamActive = (status == 'Running')
+
         #  Create the response
         response = EncoderResponse()
         response.state = self.state
@@ -121,16 +127,17 @@ class IFEEncoder(Module):
     #  @return  EncoderResponse object
     def stop(self):
         #  Send the 'stop' command
+        self.log.info("Request stop")
         self.serial.write('t')
-        sleep(1)
+        sleep(0.5)
         self.state = EncoderResponse.STOPPED
-        #  check the streamActive field
-        output = subprocess.check_output(['videoEncoder.sh', 'status'])
-        if output.rstrip() == 'Running':
-            self.streamActive = True
-        else:
-            self.streamActive = False
-        # Create the response
+
+        #  Check the streamActive field
+        status = subprocess.check_output(['videoEncoder.sh', 'status']).rstrip()
+        self.log.info("Status is %s" % status)
+        self.streamActive = (status == 'Running')
+
+        #  Create the response
         response = EncoderResponse()
         response.state = self.state
         response.streamActive = self.streamActive
@@ -142,12 +149,11 @@ class IFEEncoder(Module):
     #  @param   self
     #  @return  EncoderResponse object
     def report(self):
-        output = subprocess.check_output(['videoEncoder.sh', 'status'])
-        if output.rstrip() == 'Running':
-            self.streamActive = True
-        else:
-            self.streamActive = False
-        # Create the response
+        #  Check the streamActive field
+        status = subprocess.check_output(['videoEncoder.sh', 'status']).rstrip()
+        self.streamActive = (status == 'Running')
+
+        #  Create the response
         response = EncoderResponse()
         response.state = self.state
         response.streamActive = self.streamActive
@@ -164,7 +170,13 @@ class IFEEncoder(Module):
             #  Uncomment to watch the console output
             #  print line.rstrip()
             #  TODO: set flag to indicate when safe to send command
-            pass
+            if "Y -- Load Factory" in line:
+                #  We're almost at the prompt - set a flag for next line
+                self.promptImminent = True
+            elif self.promptImminent:
+                #  We've reached the line before the prompt
+                self.log.info("Prompt is imminent")
+                self.promptImminent = False
 
     ## Stops background thread
     #
