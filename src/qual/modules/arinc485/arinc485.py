@@ -29,6 +29,9 @@ class ARINC485(Module):
         ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(msg)
 
         if ifeVmQtaResponse.name == "ARINC485Response":
+            deserializedResponse = ARINC485Response()
+            deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
+            ifeVmQtaResponse.body = deserializedResponse
             return ifeVmQtaResponse
         else:
             self.log.error("Unexpected response from IFE VM ARINC485: %s" % ifeVmQtaResponse.name)

@@ -31,11 +31,9 @@ class AnalogAudio(Module):
         ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(msg)
 
         if ifeVmQtaResponse.name == "AnalogAudioResponse":
-            if self.deserialize:
-                deserializedResponse = AnalogAudioResponse()
-                deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
-                ifeVmQtaResponse.body = deserializedResponse
-
+            deserializedResponse = AnalogAudioResponse()
+            deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
+            ifeVmQtaResponse.body = deserializedResponse
             return ifeVmQtaResponse
         else:
             self.log.error("Unexpected response from IFE VM AnalogAudio: %s" % ifeVmQtaResponse.name)

@@ -31,11 +31,9 @@ class Encoder(Module):
         ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(msg)
 
         if ifeVmQtaResponse.name == "EncoderResponse":
-            if self.deserialize:
-                deserializedResponse = EncoderResponse()
-                deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
-                ifeVmQtaResponse.body = deserializedResponse
-
+            deserializedResponse = EncoderResponse()
+            deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
+            ifeVmQtaResponse.body = deserializedResponse
             return ifeVmQtaResponse
         else:
             self.log.error("Unexpected response from IFE VM Encoder: %s" % ifeVmQtaResponse.name)
