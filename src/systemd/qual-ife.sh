@@ -31,6 +31,18 @@ if [ $? != 0 ]; then
     ifup ens3
 fi
 
+ifconfig ens5 | fgrep -q 10.1.69.
+if [ $? != 0 ]; then
+    sleep 1
+    ifup ens5
+fi
+
+ifconfig ens6 | fgrep -q 192.168.0.
+if [ $? != 0 ]; then
+    sleep 1
+    ifup ens6
+fi
+
 # Start Qual Test Application
 cd /thales/qual/src/
 PYTHONPATH=`pwd` python qual/ifeGPIO/ifeGPIO.py &
