@@ -12,6 +12,7 @@ fi
 
 if [ "$3" == "-a" ] && [ "$#" -eq 6 ]; then
     echo "NOT AN ERROR"
+    sleep 1
     exit 0
 fi
 
