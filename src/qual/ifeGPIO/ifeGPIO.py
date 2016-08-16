@@ -103,5 +103,5 @@ class IFEGPIO(ThalesZMQServer):
                 response.error = ResponseMessage.OK
 
 if __name__ == "__main__":
-    simulator = IFEGPIO()
-    simulator.run()
+    ifeGPIO = IFEGPIO()
+    ifeGPIO.run()
