@@ -22,7 +22,6 @@ class IFEGPIO(ThalesZMQServer):
     #  @return  ThalesZMQMessage object containing a response
     def handleRequest(self, msg):
         #  Route messages based on type
-        print msg.name
         if msg.name == "RequestMessage":
             request = RequestMessage()
             request.ParseFromString(msg.serializedBody)
