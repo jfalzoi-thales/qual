@@ -28,14 +28,20 @@ class AnalogAudio(Module):
     #  @param   msg   tzmq format message
     #  @return  AnalogAudioResponse object
     def handler(self, msg):
+        if msg.body.requestType == AnalogAudioRequest.CONNECT:
+            self.log.info("AnalogAudio - connect %s %s" % (msg.body.source, msg.body.sink))
+        elif msg.body.requestType == AnalogAudioRequest.DISCONNECT:
+            self.log.info("AnalogAudio - disconnect %s" % msg.body.sink)
+        else:
+            self.log.info("AnalogAudio - report %s" % msg.body.sink)
+
         ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(msg)
 
         if ifeVmQtaResponse.name == "AnalogAudioResponse":
-            if self.deserialize:
-                deserializedResponse = AnalogAudioResponse()
-                deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
-                ifeVmQtaResponse.body = deserializedResponse
-
+            deserializedResponse = AnalogAudioResponse()
+            deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
+            ifeVmQtaResponse.body = deserializedResponse
+            self.log.info("AnalogAudio - returning response")
             return ifeVmQtaResponse
         else:
             self.log.error("Unexpected response from IFE VM AnalogAudio: %s" % ifeVmQtaResponse.name)
