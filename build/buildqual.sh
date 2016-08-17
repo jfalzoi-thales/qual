@@ -84,6 +84,7 @@ if [ "$#" != 0 ]; then usage; fi
 set -e
 
 if [ $RPM == "YES" ]; then
+    # Build main qual RPMs and copy into repo
     cd ${QUALSRCDIR}/
     echo "Please use your own Git credentials to log in. \(^^\) \(^^)/ (/^^)/"
     git fetch origin dev/QUAL
@@ -93,11 +94,24 @@ if [ $RPM == "YES" ]; then
     titoqual
     git push origin dev/QUAL
     sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/qual-*.rpm
-    sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/mps-guest-vm-*.rpm
-    sudo rm -f ${MPSBUILDDIR}/bin/mps-guest-vm-*.rpm
     sudo mv /tmp/tito/x86_64/* ${MPSBUILDDIR}/repo/packages/x86_64/
+
+    # Build supplemental qual RPMs and copy into repo
+    cd ${QUALSRCDIR}/../thales
+    ./build.sh
+    for file in /tmp/thales-rpms/*.rpm; do
+        basepkg=`rpm -q --queryformat='%{NAME}' -p ${file}`
+        sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/${basepkg}-[0-9]*.rpm
+    done
+    sudo mv /tmp/thales-rpms/*.rpm ${MPSBUILDDIR}/repo/packages/x86_64/
+
+    # Update the repo before we build the guest VM image
+    cd
+    sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/mps-guest-vm-*.rpm
     sudo createrepo --update ${MPSBUILDDIR}/repo/packages/
+
     # Build guest-vm RPM and store in repo
+    sudo rm -f ${MPSBUILDDIR}/bin/mps-guest-vm-*.rpm
     buildife
     sudo rm -f ${MPSBUILDDIR}/bin/guest-vm*
     sudo cp ${MPSBUILDDIR}/bin/mps-guest-vm-*.rpm ${MPSBUILDDIR}/repo/packages/x86_64/
