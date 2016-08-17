@@ -11,6 +11,8 @@ Vendor: Thales Avionics, Inc.
 License: Proprietary
 Source: %{name}.tar.gz
 Requires: mps-config
+Requires: gpio-manager
+Requires: spi-manager
 %{?systemd_requires}
 BuildRequires: systemd
 
