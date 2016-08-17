@@ -147,13 +147,7 @@ CHANGES TO IT ARE LIKELY TO BE OVERWRITTEN AND LOST.
 
 # mapping from VMConfig.net_vf number to physical PCI addresses
 _host_vf_ifaces = {
-    0: ( (0, 2, 0x10, 0), (0, 2, 0x10, 1), (0, 2, 0x10, 2), (0, 2, 0x10, 3) ),
-    1: ( (0, 2, 0x10, 4), (0, 2, 0x10, 5), (0, 2, 0x10, 6), (0, 2, 0x10, 7) ),
-    2: ( (0, 2, 0x11, 0), (0, 2, 0x11, 1), (0, 2, 0x11, 2), (0, 2, 0x11, 3) ),
-    3: ( (0, 2, 0x11, 4), (0, 2, 0x11, 5), (0, 2, 0x11, 6), (0, 2, 0x11, 7) ),
-    4: ( (0, 2, 0x12, 0), (0, 2, 0x12, 1), (0, 2, 0x12, 2), (0, 2, 0x12, 3) ),
-    5: ( (0, 2, 0x12, 4), (0, 2, 0x12, 5), (0, 2, 0x12, 6), (0, 2, 0x12, 7) ),
-    6: ( (0, 2, 0x13, 0), (0, 2, 0x13, 1), (0, 2, 0x13, 2), (0, 2, 0x13, 3) ),
+    0: ( (0, 1, 0x10, 0), (0, 1, 0x11, 0), (0, 1, 0x12, 0), (0, 1, 0x13, 0) ),
 }
 
 
@@ -328,9 +322,9 @@ def format_domain_XML(config):
         elif dev in (VMDevices.IFE_USB_4232, VMDevices.IFE_USB_K60, VMDevices.IFE_USB_I2C):
             # USB devices
             usb_location = {
-                VMDevices.IFE_USB_4232: '1-5',
-                VMDevices.IFE_USB_K60:  '1-7',
-                VMDevices.IFE_USB_I2C:  '1-8',
+                VMDevices.IFE_USB_4232: '1-2',
+                VMDevices.IFE_USB_K60:  '1-3',
+                VMDevices.IFE_USB_I2C:  '1-7',
             }
             try:
                 with open('/sys/bus/usb/devices/'+usb_location[dev]+'/devnum', 'r') as f:

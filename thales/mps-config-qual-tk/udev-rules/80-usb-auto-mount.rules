@@ -1,0 +1,32 @@
+# This script automounts the USB storage devices connected to Front Panel USB port (only)
+# to /media/front_panel_usb/p<num> directory.
+
+# Don't process any events from non-ordinary-partition devices
+KERNEL!="sd[a-z]*", GOTO="auto_mount_end"
+SUBSYSTEM!="block", GOTO="auto_mount_end"
+ENV{DEVTYPE}!="partition", ENV{DEVTYPE}!="disk", GOTO="auto_mount_end"
+ENV{ID_FS_USAGE}!="filesystem", GOTO="auto_mount_end"
+# the partition must be on usb block device connected to the front panel (either USB 2.0 or USB 3.0)
+# SKYLAKE
+DEVPATH!="*/usb1/1-6/*/block/*", DEVPATH!="*/usb2/2-6/*/block/*", GOTO="auto_mount_end"
+
+# Mount directory
+ENV{dir_name}="/media/front_panel_usb/p1"
+ATTRS{partition}!="", ENV{dir_name}="/media/front_panel_usb/p$attr{partition}"
+
+# Global mount options
+ACTION=="add", ENV{mount_options}="relatime"
+
+# Filesystem-specific mount options
+ACTION=="add", ENV{ID_FS_TYPE}=="vfat|ntfs", ENV{mount_options}="$env{mount_options},utf8"
+
+# Mount the device
+ACTION=="add", RUN+="/usr/bin/mkdir -p $env{dir_name}", RUN+="/usr/bin/mount -o $env{mount_options} /dev/%k $env{dir_name}"
+
+# Clean up after removal
+ACTION=="remove", ENV{dir_name}!="", RUN+="/usr/bin/umount -l /dev/%k", RUN+="/usr/bin/rmdir $env{dir_name}", RUN+="/usr/bin/rmdir --ignore-fail-on-non-empty /media/front_panel_usb/"
+
+
+# Exit
+LABEL="auto_mount_end"
+

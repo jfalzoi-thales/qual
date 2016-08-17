@@ -1,0 +1,39 @@
+# this file properly binds the i2c_mcp2221 driver to the right device handled by I2CDeviceMgr
+# and automatically unbinds the driver from all other devices (for IFE-I2C passthrough)
+
+# quickfilter: parse only adding MCP2221 USB/I2C devices
+ACTION!="add", GOTO="i2c_mcp2221_hacks_end"
+
+# not from USB? goto checking the i2c symlink
+SUBSYSTEM!="usb", GOTO="i2c_mcp2221_check_i2c_device"
+
+# act only on specific ports where MCP2221 are expected to be connected and only for proper VID/PID
+ENV{DEVTYPE}!="usb_interface", GOTO="i2c_mcp2221_hacks_end"
+# SKYLAKE
+DEVPATH!="*/usb1/1-1/*", DEVPATH!="*/usb1/1-7/*", GOTO="i2c_mcp2221_hacks_end"
+ENV{PRODUCT}!="4d8/dd/*", GOTO="i2c_mcp2221_hacks_end"
+
+# extract USB interface identifier
+PROGRAM="/bin/sh -c 'echo $DEVPATH | sed -nre s#^.*/usb[0-9]/.*/\([0-9]-[0-9\.]+:[0-9]\.[0-9]\)\$#\\1#p'", ENV{usb_dev_id}="%c"
+# if not extracted, give up to avoid doing something unexpected
+ENV{usb_dev_id}=="", GOTO="i2c_mcp2221_hacks_end"
+
+# unbind current driver (it's wrong nevertheless)
+RUN+="/bin/sh -c 'echo $env{usb_dev_id} > /sys/$env{DEVPATH}/driver/unbind'"
+
+# bind mcp2221 driver only to the right interface
+DEVPATH=="*/usb1/1-1/1-1:1.2", RUN+="/sbin/modprobe i2c-dev", RUN+="/sbin/modprobe i2c-mcp2221", RUN+="/bin/sh -c 'echo $env{usb_dev_id} > /sys/bus/usb/drivers/i2c-mcp2221/bind'"
+
+GOTO="i2c_mcp2221_hacks_end"
+
+# second part of the rule: adding symlink to the I2C device
+LABEL="i2c_mcp2221_check_i2c_device"
+SUBSYSTEM!="i2c-dev", GOTO="i2c_mcp2221_hacks_end"
+KERNEL!="i2c-*", GOTO="i2c_mcp2221_hacks_end"
+
+DEVPATH=="*/usb1/1-1/1-1:1.2/i2c-*", SYMLINK+="i2c-mcp2221", SYMLINK+="mps/i2c-mcp2221-main", TAG+="systemd"
+
+
+# Exit
+LABEL="i2c_mcp2221_hacks_end"
+
