@@ -375,6 +375,7 @@ class Test_AnalogAudio(unittest.TestCase):
         self.assertEqual(response.body.loopback[5].sink, "VA_AUDOUT_6")
         self.assertEqual(response.body.loopback[5].source, "")
         self.assertEqual(response.body.loopback[5].state, AnalogAudioResponse.DISCONNECTED)
+        #  Setting up a connection with pavaTest takes 1.5-3 seconds each
         sleep(10)
 
         log.info("**** Valid Test Case: Report on all Out after Connect ****")
@@ -388,7 +389,7 @@ class Test_AnalogAudio(unittest.TestCase):
         self.assertEqual(response.body.loopback[5].sink, "VA_AUDOUT_6")
         self.assertEqual(response.body.loopback[5].source, "PA_70V_AUDIN_1")
         self.assertEqual(response.body.loopback[5].state, AnalogAudioResponse.CONNECTED)
-        sleep(10)
+        sleep(5)
 
         log.info("**** Valid Test Case: Report on all Out after Disconnect ****")
         response = module.msgHandler(ThalesZMQMessage(AnalogAudioMessages.reportAll()))

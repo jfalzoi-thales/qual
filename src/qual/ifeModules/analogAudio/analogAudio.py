@@ -34,7 +34,7 @@ class IFEAnalogAudio(Module):
         self.requests = Queue()
         #  Add handler to available message handlers
         self.addMsgHandler(AnalogAudioRequest, self.handler)
-        #  Add thread to handle the command queue
+        #  Add thread to handle the request queue
         self.addThread(self.requestQueue)
 
     ## Handles incoming messages
@@ -65,7 +65,7 @@ class IFEAnalogAudio(Module):
 
         return ThalesZMQMessage(response)
 
-    ## Runs pavaTest.sh with specified command and checks return code for success
+    ## Runs pavaTest.sh with specified command and checks output for success
     #  @param   self
     #  @param   cmd         Command to run with pavaTest.sh
     #  @return  success     True if pavaTest.sh was run successfully, else False
@@ -152,7 +152,7 @@ class IFEAnalogAudio(Module):
             else:
                 self.log.debug("Sink output %s not found in self.connections.  Nothing to disconnect." % sink)
 
-    ## Reports connection status for all sinks
+    ## Reports connection status
     #  @param   self
     #  @param   response  An AnalogAudioResponse object
     #  @param   sink      Sink output to report on
