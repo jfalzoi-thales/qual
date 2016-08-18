@@ -140,7 +140,7 @@ class Test_AnalogAudio(unittest.TestCase):
         #  Uncomment this if you want to see module debug messages
         #cls.module.log.setLevel("DEBUG")
 
-    ## Teardown when done with Ethernet test cases
+    ## Teardown when done with test cases
     #  This is run only once when we're done with all test cases
     @classmethod
     def tearDownClass(cls):
@@ -151,16 +151,16 @@ class Test_AnalogAudio(unittest.TestCase):
     #                   Disconnect Out 1, Report on Out 1 after Disconnect
     #  Asserts:
     #       sink    == "VA_AUDOUT_1"
-    #       source  == "PA_70V_AUDIN_1"
-    #       state   == CONNECTED
-    #       ---------------------
-    #       sink    == "VA_AUDOUT_1"
-    #       source  == "PA_70V_AUDIN_1"
-    #       state   == CONNECTED
-    #       ---------------------
-    #       sink    == "VA_AUDOUT_1"
     #       source  == ""
     #       state   == DISCONNECTED
+    #       ---------------------
+    #       sink    == "VA_AUDOUT_1"
+    #       source  == "PA_70V_AUDIN_1"
+    #       state   == CONNECTED
+    #       ---------------------
+    #       sink    == "VA_AUDOUT_1"
+    #       source  == "PA_70V_AUDIN_1"
+    #       state   == CONNECTED
     #       ---------------------
     #       sink    == "VA_AUDOUT_1"
     #       source  == ""
@@ -203,12 +203,12 @@ class Test_AnalogAudio(unittest.TestCase):
     #                   Report all after Disconnect
     #  Asserts:
     #       sink    == "VA_AUDOUT_1"
-    #       source  == "PA_70V_AUDIN_1"
-    #       state   == CONNECTED
+    #       source  == ""
+    #       state   == DISCONNECTED
     #       ---------------------
     #       sink    == "VA_AUDOUT_2"
-    #       source  == "PA_70V_AUDIN_1"
-    #       state   == CONNECTED
+    #       source  == ""
+    #       state   == DISCONNECTED
     #       ---------------------
     #       sink    == "VA_AUDOUT_1"
     #       source  == "PA_70V_AUDIN_1"
@@ -221,8 +221,8 @@ class Test_AnalogAudio(unittest.TestCase):
     #       state   == DISCONNECTED
     #       ---------------------
     #       sink    == "VA_AUDOUT_1"
-    #       source  == ""
-    #       state   == DISCONNECTED
+    #       source  == "PA_70V_AUDIN_1"
+    #       state   == CONNECTED
     #       ---------------------
     #       sink    == "VA_AUDOUT_1"
     #       source  == "PA_AUDIN_2"
@@ -235,12 +235,12 @@ class Test_AnalogAudio(unittest.TestCase):
     #       state   == DISCONNECTED
     #       ---------------------
     #       sink    == "VA_AUDOUT_1"
-    #       source  == ""
-    #       state   == DISCONNECTED
+    #       source  == "PA_AUDIN_2"
+    #       state   == CONNECTED
     #       ---------------------
     #       sink    == "VA_AUDOUT_2"
-    #       source  == ""
-    #       state   == DISCONNECTED
+    #       source  == "PA_70V_AUDIN_1"
+    #       state   == CONNECTED
     #       ---------------------
     #       sink    == "VA_AUDOUT_1"
     #       source  == ""
@@ -323,9 +323,7 @@ class Test_AnalogAudio(unittest.TestCase):
 
     ## Valid Test Case: Connect bogus In to Out 1, Connect In 1 to bogus Out
     #  Asserts:
-    #       sink    == "VA_AUDOUT_BOGUS"
-    #       source  == ""
-    #       state   == DISCONNECTED
+    #       len(response.body.loopback) == 0
     #       ---------------------
     #       sink    == "VA_AUDOUT_1"
     #       source  == ""
@@ -351,16 +349,16 @@ class Test_AnalogAudio(unittest.TestCase):
     #                   Disconnect All Out, Report on all Out after Disconnect
     #  Asserts:
     #       sink    == "VA_AUDOUT_6"
-    #       source  == "PA_70V_AUDIN_1"
-    #       state   == CONNECTED
-    #       ---------------------
-    #       sink    == "VA_AUDOUT_6"
-    #       source  == "PA_70V_AUDIN_1"
-    #       state   == CONNECTED
-    #       ---------------------
-    #       sink    == "VA_AUDOUT_6"
     #       source  == ""
     #       state   == DISCONNECTED
+    #       ---------------------
+    #       sink    == "VA_AUDOUT_6"
+    #       source  == "PA_70V_AUDIN_1"
+    #       state   == CONNECTED
+    #       ---------------------
+    #       sink    == "VA_AUDOUT_6"
+    #       source  == "PA_70V_AUDIN_1"
+    #       state   == CONNECTED
     #       ---------------------
     #       sink    == "VA_AUDOUT_6"
     #       source  == ""
