@@ -1,0 +1,11 @@
+# This script is responsible for RS232 devices friendly names in /dev
+
+# act only on normal serial devices
+KERNEL!="ttyS*", GOTO="mps_serial_RS232_end"
+
+ATTRS{port}=="0x240", SYMLINK+="ttyRS232", SYMLINK+="mps/ttyRS232", TAG+="systemd"
+ATTRS{port}=="0x248", SYMLINK+="ttyConsole"
+# ttyConsole: no symlink in /dev/mps/ because it's not intented to be used as systemd .device unit
+
+# Exit
+LABEL="mps_serial_RS232_end"

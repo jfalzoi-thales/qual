@@ -4,7 +4,7 @@
 Name: mps-config-qual-tk
 Summary: QUAL Specific configuration
 Version: 1.0.11
-Release: 2
+Release: 3
 Group: System Environment/Libraries
 URL: http://www.thalesgroup.com/
 Vendor: Thales Avionics, Inc.
