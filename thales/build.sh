@@ -28,8 +28,9 @@ for DIRENT in *; do
                 mv ~/rpmbuild/RPMS/*/*.rpm $RPMDIR
             else
                 echo "rpmbuild failed!"
+                exit 1
             fi
-            rm -rf ~/rpmbuild debugfiles.list debuglinks.list debugsources.list elfbins.list
+            rm -rf ~/rpmbuild
         fi
         cd ..
     fi
