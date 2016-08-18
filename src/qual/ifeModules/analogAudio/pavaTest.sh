@@ -6,12 +6,12 @@ if [ "$#" -lt 3 ]; then
 fi
 
 if [ "$3" == "-k" ] && [ "$#" -eq 5 ]; then
-    echo "NOT AN ERROR"
+    echo "some pin disabled"
     exit 0    
 fi
 
 if [ "$3" == "-a" ] && [ "$#" -eq 6 ]; then
-    echo "NOT AN ERROR"
+    echo "some program succeeded"
     sleep 1
     exit 0
 fi
