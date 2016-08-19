@@ -25,6 +25,7 @@ QUAL Specific configuration.
 %install
 mkdir -p %{buildroot}/opt/config-update %{buildroot}/etc
 cp -R network-scripts udev-rules host-config %{buildroot}/opt/config-update/
+mv %{buildroot}/opt/config-update/network-scripts/ifcfg-ens6sk %{buildroot}/opt/config-update/network-scripts/ifcfg-ens6:sk
 touch %{buildroot}/etc/mps-config-qual
 
 %files
