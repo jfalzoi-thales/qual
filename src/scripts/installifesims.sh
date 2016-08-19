@@ -5,7 +5,7 @@ if [ ! -e /usr/bin/demo_binaryio ]; then
     exit 1
 fi
 
-if [ ! -e /thales/qual/src/qual/ifeModules/gpio/demo_binaryio.sh ]; then
+if [ ! -e /thales/qual/src/qual/ifeModules/encoder/videoEncoder.sh ]; then
     echo "Qual software does not appear to be installed"
     exit 1
 fi
@@ -17,7 +17,7 @@ fi
 
 mkdir -p /usr/bin-disabled
 cd /usr/bin
-mv demo_binaryio demo_serial485 tempsensor voltsensor /usr/bin-disabled/
+mv demo_binaryio demo_serial485 tempsensor voltsensor fpga pavaTest.sh videoEncoder.sh /usr/bin-disabled/
 cd /thales/qual/src/qual/ifeModules
 install -m755 arinc485/demo_serial485.sh /usr/bin/demo_serial485
 install -m755 encoder/videoEncoder.sh /usr/bin/videoEncoder.sh
@@ -26,3 +26,4 @@ install -m755 hdds/voltsensor.sh /usr/bin/voltsensor
 install -m755 analogAudio/pavaTest.sh /usr/bin/
 cd /thales/qual/src/qual/ifeGPIO
 install -m755 demo_binaryio.sh /usr/bin/demo_binaryio
+install -m755 fpga.sh /usr/bin/fpga
