@@ -17,19 +17,23 @@ class GPIOMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Report for input 1",             GPIOMessages.reportIn1),
-                ("Report for input 2",             GPIOMessages.reportIn2),
-                ("Report for input 7",             GPIOMessages.reportIn7),
-                ("Report for all inputs",          GPIOMessages.reportAll),
-                ("Connect input 1 to output 1",    GPIOMessages.connectIn1Out1),
-                ("Connect input 2 to output 1",    GPIOMessages.connectIn2Out1),
-                ("Connect input 2 to output 2",    GPIOMessages.connectIn2Out2),
-                ("Connect input 7 to output 7",    GPIOMessages.connectIn7Out7),
-                ("Connect all inputs to output 3", GPIOMessages.connectInAllOut3),
-                ("Disconnect input 1",             GPIOMessages.disconnectIn1),
-                ("Disconnect input 2",             GPIOMessages.disconnectIn2),
-                ("Disconnect input 7",             GPIOMessages.disconnectIn7),
-                ("Disconnect all inputs",          GPIOMessages.disconnectAll)]
+        return [("Report for input 1",                  GPIOMessages.reportIn1),
+                ("Report for input 2",                  GPIOMessages.reportIn2),
+                ("Report for input 7",                  GPIOMessages.reportIn7),
+                ("Report for PA input 1",               GPIOMessages.reportPAIn1),
+                ("Report for PA Mute",                  GPIOMessages.reportPAMute),
+                ("Report for all inputs",               GPIOMessages.reportAll),
+                ("Connect input 1 to output 1",         GPIOMessages.connectIn1Out1),
+                ("Connect input 2 to output 1",         GPIOMessages.connectIn2Out1),
+                ("Connect input 2 to output 2",         GPIOMessages.connectIn2Out2),
+                ("Connect input 7 to output 7",         GPIOMessages.connectIn7Out7),
+                ("Connect PA input 1 to VA output 1",   GPIOMessages.connectPAIn1VAOut1),
+                ("Connect all inputs to output 3",      GPIOMessages.connectInAllOut3),
+                ("Disconnect input 1",                  GPIOMessages.disconnectIn1),
+                ("Disconnect input 2",                  GPIOMessages.disconnectIn2),
+                ("Disconnect input 7",                  GPIOMessages.disconnectIn7),
+                ("Disconnect PA input 1",               GPIOMessages.disconnectPAIn1),
+                ("Disconnect all inputs",               GPIOMessages.disconnectAll)]
 
     @staticmethod
     def reportIn1():
@@ -50,6 +54,20 @@ class GPIOMessages(ModuleMessages):
         message = GPIORequest()
         message.requestType = GPIORequest.REPORT
         message.gpIn = "GP_KYLN_IN7"
+        return message
+
+    @staticmethod
+    def reportPAIn1():
+        message = GPIORequest()
+        message.requestType = GPIORequest.REPORT
+        message.gpIn = "PA_KYLN_IN1"
+        return message
+
+    @staticmethod
+    def reportPAMute():
+        message = GPIORequest()
+        message.requestType = GPIORequest.REPORT
+        message.gpIn = "PA_MUTE_KYLN_IN"
         return message
 
     @staticmethod
@@ -92,6 +110,14 @@ class GPIOMessages(ModuleMessages):
         return message
 
     @staticmethod
+    def connectPAIn1VAOut1():
+        message = GPIORequest()
+        message.requestType = GPIORequest.CONNECT
+        message.gpIn = "PA_KYLN_IN1"
+        message.gpOut = "VA_KYLN_OUT1"
+        return message
+
+    @staticmethod
     def connectInAllOut3():
         message = GPIORequest()
         message.requestType = GPIORequest.CONNECT
@@ -118,6 +144,13 @@ class GPIOMessages(ModuleMessages):
         message = GPIORequest()
         message.requestType = GPIORequest.DISCONNECT
         message.gpIn = "GP_KYLN_IN7"
+        return message
+
+    @staticmethod
+    def disconnectPAIn1():
+        message = GPIORequest()
+        message.requestType = GPIORequest.DISCONNECT
+        message.gpIn = "PA_KYLN_IN1"
         return message
 
     @staticmethod
@@ -370,6 +403,74 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN7")
         self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT7")
         log.info("==== Test complete ====")
+
+    ## Test case: Connect an IFE PAVA input/output pair
+    # This test case will connect two IFE PAVA pins, wait 5 seconds, then
+    # verify that the report indicates 2-3 matches and 0 mismatches.
+    def test_ifePAVAPair(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: Connect an IFE PAVA input/output pair ****")
+        log.info("==== Report before connecting ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportPAIn1()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
+        self.assertEqual(response.body.status[0].matchCount, 0)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpOut, "")
+
+        log.info("==== Connect IFE PAVA pair ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectPAIn1VAOut1()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
+        self.assertEqual(response.body.status[0].matchCount, 0)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+
+        log.info("==== Wait 5 seconds to accumulate statistics ====")
+        sleep(5)
+
+        log.info("==== Get report after 5 seconds ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportPAIn1()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
+        self.assertGreaterEqual(response.body.status[0].matchCount, 2)
+        self.assertLessEqual(response.body.status[0].matchCount, 3)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+
+        log.info("==== Disconnect connected PAVA pair ====")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.disconnectPAIn1()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
+        self.assertGreaterEqual(response.body.status[0].matchCount, 2)
+        self.assertLessEqual(response.body.status[0].matchCount, 3)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_KYLN_IN1")
+        self.assertEqual(response.body.status[0].gpOut, "VA_KYLN_OUT1")
+        log.info("==== Test complete ====")
+
+    ## Test case: Report on PA Mute
+    def test_ifePAMute(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: Report on PA Mute ****")
+        response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportPAMute()))
+        self.assertEqual(response.name, "GPIOResponse")
+        self.assertEqual(len(response.body.status), 1)
+        self.assertEqual(response.body.status[0].conState, GPIOResponse.DISCONNECTED)
+        self.assertEqual(response.body.status[0].matchCount, 0)
+        self.assertEqual(response.body.status[0].mismatchCount, 0)
+        self.assertEqual(response.body.status[0].gpIn, "PA_MUTE_KYLN_IN")
 
     ## Test case: Connect an unlinked input/output pair
     # This test case will connect an "unlinked" pair, wait 5 seconds, then

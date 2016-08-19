@@ -48,18 +48,34 @@ class GPIO(module.Module):
                            "GP_KYLN_OUT6": self.PinInfo(self.gpioManagerSet, "OUTPUT_6_PIN_E8"),
                            "GP_KYLN_OUT7": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_01"),
                            "GP_KYLN_OUT8": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_02"),
-                           "GP_KYLN_OUT9": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_03")}
+                           "GP_KYLN_OUT9": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_03"),
+                           "VA_KYLN_OUT1": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT1"),
+                           "VA_KYLN_OUT2": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT2"),
+                           "VA_KYLN_OUT3": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT3"),
+                           "VA_KYLN_OUT4": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT4"),
+                           "VA_KYLN_OUT5": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT5"),
+                           "VA_KYLN_OUT6": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT6")}
+
         ## Dict mapping GPIO input pins to handler and handler pin name
-        self.inputPins = {"GP_KYLN_IN1":     self.PinInfo(self.gpioManagerGet, "INPUT_1_PIN_A7"),
-                          "GP_KYLN_IN2":     self.PinInfo(self.gpioManagerGet, "INPUT_2_PIN_B7"),
-                          "GP_KYLN_IN3":     self.PinInfo(self.gpioManagerGet, "INPUT_3_PIN_C7"),
-                          "GP_KYLN_IN4":     self.PinInfo(self.gpioManagerGet, "INPUT_4_PIN_D7"),
-                          "GP_KYLN_IN5":     self.PinInfo(self.gpioManagerGet, "INPUT_5_PIN_E7"),
-                          "PA_ALL_KYLN_IN":  self.PinInfo(self.gpioManagerGet, "PA_All_PIN_C8"),
-                          "GP_KYLN_IN6":     self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_01"),
-                          "GP_KYLN_IN7":     self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_02"),
-                          "GP_KYLN_IN8":     self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_03"),
-                          "GP_KYLN_IN9":     self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_04")}
+        self.inputPins = {"GP_KYLN_IN1": self.PinInfo(self.gpioManagerGet, "INPUT_1_PIN_A7"),
+                          "GP_KYLN_IN2": self.PinInfo(self.gpioManagerGet, "INPUT_2_PIN_B7"),
+                          "GP_KYLN_IN3": self.PinInfo(self.gpioManagerGet, "INPUT_3_PIN_C7"),
+                          "GP_KYLN_IN4": self.PinInfo(self.gpioManagerGet, "INPUT_4_PIN_D7"),
+                          "GP_KYLN_IN5": self.PinInfo(self.gpioManagerGet, "INPUT_5_PIN_E7"),
+                          "PA_ALL_KYLN_IN": self.PinInfo(self.gpioManagerGet, "PA_All_PIN_C8"),
+                          "GP_KYLN_IN6": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_01"),
+                          "GP_KYLN_IN7": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_02"),
+                          "GP_KYLN_IN8": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_03"),
+                          "GP_KYLN_IN9": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_04"),
+                          "PA_KYLN_IN1": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN1"),
+                          "PA_KYLN_IN2": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN2"),
+                          "PA_KYLN_IN3": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN3"),
+                          "PA_KYLN_IN4": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN4"),
+                          "PA_KYLN_IN5": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN5"),
+                          "PA_KYLN_IN6": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN6"),
+                          "PA_KYLN_IN7": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN7"),
+                          "PA_KYLN_IN8": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN8"),
+                          "PA_MUTE_KYLN_IN": self.PinInfo(self.ifeVmQtaGet, "PA_MUTE")}
         ## Dict of connections; key is input pin, value is a ConnectionInfo object
         self.connections = {}
         ## List of connections we're done with
