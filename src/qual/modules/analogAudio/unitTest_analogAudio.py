@@ -135,7 +135,7 @@ class Test_AnalogAudio(unittest.TestCase):
         cls.log = Logger(name='Test AudioAnalog-IFE')
         cls.log.info('++++ Setup before AnalogAudio-IFE module unit tests ++++')
         #  Create the module
-        cls.module = analogAudio.IFEAnalogAudio()
+        cls.module = analogAudio.AnalogAudio()
         #  Uncomment this if you want to see module debug messages
         #cls.module.log.setLevel("DEBUG")
 
