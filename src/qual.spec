@@ -60,6 +60,7 @@ cp scripts/qtemenu.sh %{buildroot}/thales/host/appliances/qtemenu
 cp scripts/installifesims.sh %{buildroot}/%{_bindir}/installifesims
 cp scripts/genvmconfig.py %{buildroot}/thales/host/appliances/genvmconfig
 cp scripts/ifcfg-* %{buildroot}/etc/sysconfig/network-scripts/
+mv %{buildroot}/etc/sysconfig/network-scripts/ifcfg-ens6sk %{buildroot}/etc/sysconfig/network-scripts/ifcfg-ens6:sk
 cp -r common/ %{buildroot}/thales/qual/src/
 cp -r qual/ %{buildroot}/thales/qual/src/
 cp -r simulator/ %{buildroot}/thales/qual/src/
