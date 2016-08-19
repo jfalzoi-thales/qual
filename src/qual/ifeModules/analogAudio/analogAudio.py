@@ -95,7 +95,7 @@ class IFEAnalogAudio(Module):
 
         if msg is not "EXIT":
             if msg.body.requestType == AnalogAudioRequest.CONNECT:
-                    self.connect(msg.body.source, msg.body.sink)
+                self.connect(msg.body.source, msg.body.sink)
             else:
                 self.disconnect(msg.body.sink)
 
