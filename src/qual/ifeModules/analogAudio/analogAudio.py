@@ -49,7 +49,9 @@ class IFEAnalogAudio(Module):
         if msg.body.sink != "ALL" and msg.body.sink not in self.outputs.keys():
             self.log.warning("Invalid Sink: %s" % msg.body.sink)
         elif msg.body.requestType == AnalogAudioRequest.CONNECT:
-            if msg.body.source not in self.inputs.keys():
+            if msg.body.sink == "ALL":
+                self.log.warning("Connect ALL request not currently supported")
+            elif msg.body.source not in self.inputs.keys():
                 self.log.warning("Invalid Source: %s" % msg.body.source)
             else:
                 self.requests.put(msg)
@@ -75,15 +77,9 @@ class IFEAnalogAudio(Module):
         output = out.split()
 
         if cmd.endswith("-D"):
-            if output[len(output) - 1] == "disabled":
-                success = True
-            else:
-                success = False
+            success = (output[len(output) - 1] == "disabled")
         else:
-            if output[len(output) - 1] == "succeeded":
-                success = True
-            else:
-                success = False
+            success = (output[len(output) - 1] == "succeeded")
 
         if not success: self.log.warning("'pavaTest.sh %s' failed to run with output: %s" % (cmd, out))
         return success
@@ -99,7 +95,6 @@ class IFEAnalogAudio(Module):
             else:
                 self.disconnect(msg.body.sink)
 
-
     ## Connects a specified input to a specified output
     #  @param   self
     #  @param   source      Source input
@@ -107,26 +102,16 @@ class IFEAnalogAudio(Module):
     def connect(self, source, sink):
         self.disconnect(sink)
 
-        if sink == "ALL":
-            for output in self.outputs.keys():
-                if source not in self.connections.values():
-                    #  If the connect commands succeed, add a connection between source input and sink output to self.connections
-                    if self.runPavaTest("-c pa -a 239.192.128.%i -k %i" % (self.inputs[source], self.inputs[source])):
-                        if self.runPavaTest("-c va -a 239.192.128.%i -k %i" % (self.inputs[source], self.outputs[output])):
-                            self.connections[output] = source
-                        else:
-                            self.runPavaTest("-c pa -k %i -D" % self.inputs[source])
-                elif self.runPavaTest("-c va -a 239.192.128.%i -k %i" % (self.inputs[source], self.outputs[output])):
-                    self.connections[output] = source
-        elif source not in self.connections.values():
-            #  If the connect commands succeed, add a connection between source input and sink output to self.connections
-            if self.runPavaTest("-c pa -a 239.192.128.%i -k %i" % (self.inputs[source], self.inputs[source])):
-                if self.runPavaTest("-c va -a 239.192.128.%i -k %i" % (self.inputs[source], self.outputs[sink])):
-                    self.connections[sink] = source
-                else:
-                    self.runPavaTest("-c pa -k %i -D" % self.inputs[source])
-        elif self.runPavaTest("-c va -a 239.192.128.%i -k %i" % (self.inputs[source], self.outputs[sink])):
-                self.connections[sink] = source
+        # We don't currently allow multiple sinks per source, so disconnect if source is in use
+        for connSink, connSource in self.connections.items():
+            if connSource == source:
+                self.log.info("Source %s in use; disconnecting" % source)
+                self.disconnect(connSink)
+                break
+
+        #  If the connect commands succeed, add a connection between source input and sink output to self.connections
+        if self.runPavaTest("-c loopback -s %i -d %i" % (self.inputs[source], self.outputs[sink])):
+            self.connections[sink] = source
 
     ## Disconnects a specified output from its input
     #  @param   self
