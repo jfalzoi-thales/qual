@@ -299,7 +299,7 @@ def format_domain_XML(config):
             # PCI devices
             pci_passthrough = {
                 VMDevices.AUDIO:        ((0, 0, 0x1b, 0), (0, 0, 0x1b, 0)),
-                VMDevices.CPU_ETHERNET: ((0, 0, 0x19, 0), (0, 0, 0x19, 0)),
+                VMDevices.CPU_ETHERNET: ((0, 0, 0x1f, 6), (0, 0, 0x6, 0)),
             }
             host_device, vm_device = pci_passthrough[dev]
             el = et.Element('hostdev', mode='subsystem', type='pci', managed='yes')
@@ -358,7 +358,8 @@ if __name__ == "__main__":
     # If running on a host that has the ens1f0 interface (i.e. running on an MPS),
     # enable the I350 ethernet interfaces and Haswell CPU model
     if subprocess.call(['ifconfig', 'ens1f0'], stdout=DEVNULL, stderr=DEVNULL) == 0:
-        config.net_vf = 0
+        #config.net_vf = 0
+        config.assigned_devices.append(VMDevices.CPU_ETHERNET)
         config.cpu_model = "Haswell"
 
     # Create XML file from the config, and just output it - caller can redirect to file

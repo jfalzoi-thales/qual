@@ -31,10 +31,10 @@ if [ $? != 0 ]; then
     ifup ens3
 fi
 
-ifconfig ens5 | fgrep -q 10.1.69.
+ifconfig ens6:sk | fgrep -q 10.1.69.
 if [ $? != 0 ]; then
     sleep 1
-    ifup ens5
+    ifup ens6:sk
 fi
 
 ifconfig ens6 | fgrep -q 192.168.0.
