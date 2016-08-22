@@ -22,6 +22,18 @@ enum BPDUStates {
     DISABLED = 4;
 }
 
+message ConfigPortState {
+    required string namedPort = 1;
+    required BPDUStates state = 2;
+}
+
+message BPDUPortState {
+    required string namedPort = 1;
+    required BPDUStates state = 2;
+    required bool success = 3;
+    optional ErrorMessage error = 4;
+}
+
 message PortInfoReq {
     repeated string portInfoKey = 1;
 }
@@ -37,18 +49,6 @@ message ConfigBPDUReq {
 message ConfigBPDUResp {
     required bool status = 1;
     optional ErrorMessage error = 2;
-}
-
-message BPDUPortState {
-    required string namedPort = 1;
-    required BPDUStates state = 2;
-    required bool success = 3;
-    optional ErrorMessage error = 4;
-}
-
-message ConfigPortState {
-    required string namedPort = 1;
-    required BPDUStates state = 2;
 }
 
 message ConfigPortStateReq {
