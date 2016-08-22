@@ -1,0 +1,22 @@
+package mpsqual;
+
+message EncoderRequest {
+	enum RequestTypeT {
+		STOP = 0;
+		RUN	= 1;
+		REPORT = 2;
+	}
+	
+	required RequestTypeT requestType = 1 [default = STOP];
+	optional string sink = 2;
+}
+
+message EncoderResponse {
+	enum AppStateT {
+		STOPPED	= 0;
+		RUNNING	= 1;
+	}
+		
+	required AppStateT state = 1;
+	required bool streamActive = 3 [default = false];
+}

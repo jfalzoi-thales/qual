@@ -1,0 +1,18 @@
+package mpsqual;
+
+message HostDomainDeviceServiceRequest {
+    enum RequestTypeT {
+        GET = 0;
+        SET = 1;
+    }
+
+    required RequestTypeT requestType = 1 [default = GET];
+    required string key = 2;
+    optional string value = 3;
+}
+
+message HostDomainDeviceServiceResponse {
+    required bool success = 1;
+    required string key = 2;
+    required string value = 3;
+}

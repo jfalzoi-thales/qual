@@ -1,0 +1,38 @@
+package mpsqual;
+
+enum GpioDirection {
+    UNKNOWN_DIR = 2;
+    INPUT = 0;
+    OUTPUT = 1;
+}
+
+message RequestMessage {
+    enum RequestTypeT {
+        GET = 0;
+        SET = 1;
+    }
+
+    required string pin_name = 1;
+    required RequestTypeT request_type = 2 [default = GET];
+    optional bool value = 3 [default = false];
+    optional GpioDirection direction = 4;
+}
+
+message ResponseMessage {
+    enum ErrStatusCode {
+        OK = 0;
+        IMPROPER_PIN_NAME = 1;
+        IMPROPER_STATE_VALUE = 2;
+        IMPROPER_REQUEST_TYPE = 3;
+        IMPROPER_MESSAGE = 4;
+        DIRECTION_SET_ERROR = 5;
+        SET_INPUT_PIN_ERR = 6;
+        GPIO_DRIVER_ERR = 7;
+        UNKNOWN_ERR = 8;
+    }
+
+    required string pin_name = 1;
+    required bool state = 2 [default = false];
+    required GpioDirection direction = 3 [default = INPUT];
+    required ErrStatusCode error = 4 [default = OK];
+}
