@@ -5,7 +5,7 @@ import base64
 from exception_Vtss import MethodNotFoundException, WrongParamException
 
 ## Class to handle wrap the VTSS switch interface
-class PyVtss(object):
+class Vtss(object):
     ## Constructor
     #
     #  @param: self
@@ -25,14 +25,14 @@ class PyVtss(object):
     #
     #  @type:  str
     #  @param: path - path to save the spec file. If not passed, 'cwd' will be used
-    def downloadSpecFiles(self, path=None):
-        if path != None:
+    def downloadSpecFiles(self, path="", update=False):
+        if path != "":
             #  Check if valid path
             if not os.path.exists(path):
                 raise IOError
             self.specFile = '%s/%s' % (path, self.specFile)
 
-        if not os.path.exists(self.specFile):
+        if not os.path.exists(self.specFile) or update:
             #  Init the connection
             http = httplib.HTTPConnection(self.ip, 80)
 
