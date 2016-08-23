@@ -1,11 +1,10 @@
-from common.configurableObject.configurableObject import ConfigurableObject
 from common.module.moduleshell import ModuleShell
 from common.tzmq.ThalesZMQServer import ThalesZMQServer
 
 
 ## Host NMS Class
 # Uses a ModuleShell to initialize modules and route messages to them
-class HNMS(ConfigurableObject, ModuleShell):
+class HNMS(ModuleShell):
     ## Constructor
     # @param self
     def __init__(self):
@@ -42,3 +41,10 @@ def main():
 
     # Terminate HNMS so we can exit cleanly
     hnms.terminate()
+
+    # Return exit code for HNMS wrapper script
+    return 0
+
+
+if __name__ == '__main__':
+    main()
