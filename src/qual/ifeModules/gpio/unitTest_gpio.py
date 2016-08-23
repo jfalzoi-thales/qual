@@ -16,11 +16,13 @@ class IFEGPIOMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Set", RequestMessage.setAll),
-                ("Get", RequestMessage.getAll)]
+        return [("All Set", IFEGPIOMessages.allSet),
+                ("All Get", IFEGPIOMessages.allGet),
+                ("Set",     IFEGPIOMessages.set),
+                ("Get",     IFEGPIOMessages.get)]
 
     @staticmethod
-    def setAll():
+    def allSet():
         messageList = []
 
         for pin in ["LLS_OUT_GP_KL_01", "LLS_OUT_GP_KL_02", "LLS_OUT_GP_KL_03",
@@ -34,7 +36,7 @@ class IFEGPIOMessages(ModuleMessages):
         return messageList
 
     @staticmethod
-    def getAll():
+    def allGet():
         messageList = []
 
         for pin in ["LLS_IN_GP_KL_01", "LLS_IN_GP_KL_02", "LLS_IN_GP_KL_03", "LLS_IN_GP_KL_04",
@@ -44,7 +46,23 @@ class IFEGPIOMessages(ModuleMessages):
             message.pin_name = pin
             message.request_type = RequestMessage.GET
             messageList.append(message)
+
         return messageList
+
+    @staticmethod
+    def set():
+        message = RequestMessage()
+        message.pin_name = "VA_KLOUT1"
+        message.value = True
+        message.request_type = RequestMessage.SET
+        return message
+
+    @staticmethod
+    def get():
+        message = RequestMessage()
+        message.pin_name = "PA_KLIN1"
+        message.request_type = RequestMessage.GET
+        return message
 
 ## IFEGPIO Unit Test
 class Test_IFEGPIO(unittest.TestCase):
@@ -73,22 +91,47 @@ class Test_IFEGPIO(unittest.TestCase):
         log.info("**** Test case: All Set Messages and All Get Messages ****")
         log.info("==== Sending All Set Message ====")
 
-        for message in IFEGPIOMessages.setAll():
+        for message in IFEGPIOMessages.allSet():
             response = module.msgHandler(ThalesZMQMessage(message))
             self.assertEqual(response.name, "ResponseMessage")
             self.assertEqual(response.body.pin_name, message.pin_name)
             self.assertEqual(response.body.state, message.value)
             self.assertEqual(response.body.direction, OUTPUT)
             self.assertEqual(response.body.error, ResponseMessage.OK)
+            sleep(3)
 
         log.info("==== Sending All Get Message ====")
 
-        for message in IFEGPIOMessages.getAll():
+        for message in IFEGPIOMessages.allGet():
             response = module.msgHandler(ThalesZMQMessage(message))
             self.assertEqual(response.name, "ResponseMessage")
             self.assertEqual(response.body.pin_name, message.pin_name)
             self.assertEqual(response.body.direction, INPUT)
             self.assertEqual(response.body.error, ResponseMessage.OK)
+            sleep(3)
+
+    ## Tests the functionality of a single PA and VA pin for the gpio module
+    def test_SetGet(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: One Set Message and One Get Message ****")
+        log.info("==== Sending One Set Message ====")
+
+        response = module.msgHandler(ThalesZMQMessage(IFEGPIOMessages.set()))
+        self.assertEqual(response.name, "ResponseMessage")
+        self.assertEqual(response.body.pin_name, "VA_KLOUT1")
+        self.assertEqual(response.body.state, True)
+        self.assertEqual(response.body.direction, OUTPUT)
+        self.assertEqual(response.body.error, ResponseMessage.OK)
+
+        log.info("==== Sending One Get Message ====")
+
+        response = module.msgHandler(ThalesZMQMessage(IFEGPIOMessages.get()))
+        self.assertEqual(response.name, "ResponseMessage")
+        self.assertEqual(response.body.pin_name, "PA_KLIN1")
+        self.assertEqual(response.body.direction, INPUT)
+        self.assertEqual(response.body.error, ResponseMessage.OK)
 
 if __name__ == '__main__':
     unittest.main()
