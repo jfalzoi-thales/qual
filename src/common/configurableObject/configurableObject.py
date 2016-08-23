@@ -12,7 +12,7 @@ class ConfigurableObject(object):
     # @param self
     # @param configSection INI File section to read configuration from (default to class name)
     def __init__(self, configSection=None):
-
+        self._moduleDir = 'nms'
         self._iniFile = None
         self._iniPath = self._findConfig()
         self._iniParser = SafeConfigParser()
@@ -118,10 +118,10 @@ class ConfigurableObject(object):
             if 'src' in moduleDir:
                 while os.path.basename(moduleDir) != 'src':
                     moduleDir = os.path.dirname(moduleDir)
-                moduleDir = moduleDir + os.path.sep + 'qual' + os.path.sep + 'config'
+                moduleDir = os.path.join(moduleDir, self._moduleDir,'config')
             else:
                 # Try relative to the current directory
-                moduleDir = 'qual' + os.path.sep + 'config'
+                moduleDir = os.path.join(self._moduleDir,'config')
 
             if not os.path.isdir(moduleDir):
                 raise ConfigurableObjectException('Could not find configuration directory %s' % (moduleDir,))

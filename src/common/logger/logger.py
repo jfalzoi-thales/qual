@@ -52,6 +52,7 @@ class Logger(logging.getLoggerClass(), ConfigurableObject):
         self.syslogAddress = 'localhost'
         ## Syslog port
         self.syslogPort = 514
+        self.syslogLabel = 'mps-dev'
 
         # Default to local syslog on Linux because rsyslogd doesn't enable TCP/UDP logging by default
         if sys.platform.startswith('linux'):
@@ -67,7 +68,7 @@ class Logger(logging.getLoggerClass(), ConfigurableObject):
         logging.getLoggerClass().__init__(self, name, level=self.logLevel)
         ConfigurableObject.__init__(self, name)
 
-        self.loadConfig(attributes=('logLevel','syslogAddress','syslogPort','syslogProtocol',))
+        self.loadConfig(attributes=('logLevel','syslogAddress','syslogPort','syslogProtocol','syslogLabel'))
         self._formatConsoleChannel()
         self._formatSyslogChannel()
         self.setLevel(self.logLevel)
@@ -134,6 +135,6 @@ class Logger(logging.getLoggerClass(), ConfigurableObject):
         ch = logging.handlers.SysLogHandler(address=address, socktype=socktype)
 
         ch.setLevel(DEBUG)
-        formatter = logging.Formatter('mps-qual: %(name)s - %(message)s')
+        formatter = logging.Formatter('%s: %%(name)s - %%(message)s' % (self.syslogLabel,))
         ch.setFormatter(formatter)
         self.addHandler(ch)

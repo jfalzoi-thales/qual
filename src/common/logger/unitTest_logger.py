@@ -166,6 +166,9 @@ class Test_Module(unittest.TestCase):
         self.assertIn('Unknown Log Level', logLines[0])
         pass
 
+
+
+
 if __name__ == '__main__':
     unittest.main()
 ## @endcond
