@@ -22,6 +22,8 @@ class ConfigurableObject(object):
     # @param self
     # @param configSection INI File section to read configuration from (default to class name)
     def __init__(self, configSection=None):
+        # Init the superclass
+        super(ConfigurableObject, self).__init__()
         self._iniFile = None
         self._iniPath = self._findConfig()
         self._iniParser = SafeConfigParser()
