@@ -1,6 +1,6 @@
 import subprocess
 import os
-from common.tzmq.ThalesZMQServer import ThalesZMQServer
+from common.module.module import Module
 from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from common.gpb.python.GPIOManager_pb2 import RequestMessage, ResponseMessage, INPUT, OUTPUT, UNKNOWN_DIR
 
@@ -8,10 +8,12 @@ from common.gpb.python.GPIOManager_pb2 import RequestMessage, ResponseMessage, I
 DEVNULL = open(os.devnull, 'wb')
 
 ## IFEGPIO Class
-class IFEGPIO(ThalesZMQServer):
+class IFEGPIO(Module):
     ## Constructor
-    def __init__(self):
-        super(IFEGPIO, self).__init__(address="tcp://*:50010")
+    #  @param   self
+    #  @param   config  Configuration for this module instance
+    def __init__(self, config = None):
+        super(IFEGPIO, self).__init__(config)
         ## List of supported input pins
         self.inputPins = ["LLS_IN_GP_KL_01", "LLS_IN_GP_KL_02", "LLS_IN_GP_KL_03", "LLS_IN_GP_KL_04",
                           "PA_KLIN1", "PA_KLIN2", "PA_KLIN3", "PA_KLIN4", "PA_KLIN5", "PA_KLIN6", "PA_KLIN7",
@@ -19,6 +21,10 @@ class IFEGPIO(ThalesZMQServer):
         ## List of supported output pins
         self.outputPins = ["LLS_OUT_GP_KL_01", "LLS_OUT_GP_KL_02", "LLS_OUT_GP_KL_03",
                            "VA_KLOUT1", "VA_KLOUT2", "VA_KLOUT3", "VA_KLOUT4", "VA_KLOUT5", "VA_KLOUT6"]
+        ## Lock to prevent running command line tools at the same time as Analog Audio module
+        self.commandLock = self.getNamedLock("commandLock")
+        #  Add IFEGPIO Message handler
+        self.addMsgHandler(RequestMessage, self.handleRequest)
 
     ## Called by base class when a request is received from a client.
     #  @param   msg ThalesZMQMessage object containing received request
@@ -26,17 +32,15 @@ class IFEGPIO(ThalesZMQServer):
     def handleRequest(self, msg):
         #  Route messages based on type
         if msg.name == "RequestMessage":
-            request = RequestMessage()
-            request.ParseFromString(msg.serializedBody)
             response = ResponseMessage()
-            response.pin_name = request.pin_name
+            response.pin_name = msg.body.pin_name
 
-            if request.request_type == RequestMessage.GET:
-                self.handleGet(request, response)
-            elif request.request_type == RequestMessage.SET:
-                self.handleSet(request, response)
+            if msg.body.request_type == RequestMessage.GET:
+                self.handleGet(msg.body, response)
+            elif msg.body.request_type == RequestMessage.SET:
+                self.handleSet(msg.body, response)
             else:
-                self.log.error("Unexpected Request Type %d" % request.request_type)
+                self.log.error("Unexpected Request Type %d" % msg.body.request_type)
                 response.direction = UNKNOWN_DIR
                 response.state = False
                 response.error = ResponseMessage.IMPROPER_REQUEST_TYPE
@@ -44,7 +48,6 @@ class IFEGPIO(ThalesZMQServer):
             return ThalesZMQMessage(response)
         else:
             self.log.error("Error! Unsupported request type: %s" % msg.name)
-            return self.getUnsupportedMessageErrorResponse()
 
     ## Handles incoming GET requests
     #  @param     self
@@ -88,7 +91,9 @@ class IFEGPIO(ThalesZMQServer):
                 cmd = 'fpga %s' % reg
                 self.log.debug(cmd)
                 try:
+                    self.commandLock.acquire()
                     output = subprocess.check_output(cmd, shell=True)
+                    self.commandLock.release()
                 except subprocess.CalledProcessError:
                     self.log.error("Error return from fpga for pin %s" % request.pin_name)
                 else:
@@ -133,7 +138,9 @@ class IFEGPIO(ThalesZMQServer):
                 cmd = 'fpga 0x8B'
                 self.log.debug(cmd)
                 try:
+                    self.commandLock.acquire()
                     output = subprocess.check_output(cmd, shell=True)
+                    self.commandLock.release()
                 except subprocess.CalledProcessError:
                     self.log.error("Error return from fpga for pin %s" % request.pin_name)
                 else:
@@ -146,13 +153,11 @@ class IFEGPIO(ThalesZMQServer):
                             write = hex(int(output, 16) & ~(1 << pin))
 
                         cmd = 'fpga 0x8B %s' % str(write)
+                        self.commandLock.acquire()
                         rc = subprocess.call(cmd, shell=True, stdout=DEVNULL)
+                        self.commandLock.release()
 
                         if rc != 0:
                             self.log.error("Error return from fpga for pin %s" % request.pin_name)
                         else:
                             response.error = ResponseMessage.OK
-
-if __name__ == "__main__":
-    ifeGPIO = IFEGPIO()
-    ifeGPIO.run()
