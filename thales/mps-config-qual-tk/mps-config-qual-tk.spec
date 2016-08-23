@@ -23,6 +23,7 @@ QUAL Specific configuration.
 %install
 mkdir -p %{buildroot}/opt/config-update %{buildroot}/etc
 cp -R network-scripts %{buildroot}/opt/config-update/
+cp -R units %{buildroot}/opt/config-update/
 touch %{buildroot}/etc/mps-config-qual
 
 %files
@@ -31,3 +32,4 @@ touch %{buildroot}/etc/mps-config-qual
 
 %post
 cd /etc/sysconfig/network-scripts && mv -f /opt/config-update/network-scripts/* .
+cd %{_unitdir} && mv -f /opt/config-update/units/* .
