@@ -1,4 +1,4 @@
-from threading import Thread
+from threading import Thread, Lock
 from time import sleep
 import datetime
 import sys
@@ -85,6 +85,20 @@ class Module(ConfigurableObject):
                                           (self.name,msg.body.__class__.name,))
 
 
+    ## Dict of named locks - class static variable used by getNamedLock
+    namedLocks = {}
+
+    ## Get a lock that can be shared between modules.
+    #
+    # If two modules request a lock with the same name, it will be the same lock.
+    # @param cls  Class (since this is a class method)
+    # @param name Name of the lock
+    # @return     threading.Lock object
+    @classmethod
+    def getNamedLock(cls, name):
+        if name not in cls.namedLocks:
+            cls.namedLocks[name] = Lock()
+        return cls.namedLocks[name]
 
 
     #--------------Threading Funtions Below------------------
