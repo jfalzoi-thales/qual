@@ -2,7 +2,7 @@ import os
 import json
 import httplib
 import base64
-from src.common.pyvtss.exception_Vtss_python import MethodNotFoundException, WrongParamException
+from exception_Vtss import MethodNotFoundException, WrongParamException
 
 ## Class to handle wrap the VTSS switch interface
 class PyVtss(object):
@@ -78,8 +78,9 @@ class PyVtss(object):
             types[type['type-name']] = type
 
         params = []
-        #  Check the params of the call
-        if len(request[1:]) != 0:
+        #  Check the params of the call and
+        #  if the call has attributes
+        if len(request) > 1:
             if len(request[1:]) != len(dic['params']):
                 raise WrongParamException(len(dic['params'], len(request[1:])))
 
