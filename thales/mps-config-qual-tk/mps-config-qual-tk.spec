@@ -3,16 +3,14 @@
 #
 Name: mps-config-qual-tk
 Summary: QUAL Specific configuration
-Version: 1.0.11
-Release: 3
+Version: 1.0.13
+Release: 1
 Group: System Environment/Libraries
 URL: http://www.thalesgroup.com/
 Vendor: Thales Avionics, Inc.
 License: Proprietary
 Source: %{name}.tar.gz
 Requires: mps-config
-Requires: gpio-manager
-Requires: spi-manager
 %{?systemd_requires}
 BuildRequires: systemd
 
@@ -24,7 +22,8 @@ QUAL Specific configuration.
 
 %install
 mkdir -p %{buildroot}/opt/config-update %{buildroot}/etc
-cp -R network-scripts udev-rules host-config %{buildroot}/opt/config-update/
+cp -R network-scripts %{buildroot}/opt/config-update/
+cp -R units %{buildroot}/opt/config-update/
 touch %{buildroot}/etc/mps-config-qual
 
 %files
@@ -33,5 +32,4 @@ touch %{buildroot}/etc/mps-config-qual
 
 %post
 cd /etc/sysconfig/network-scripts && mv -f /opt/config-update/network-scripts/* .
-cd /etc/udev/rules.d && mv -f /opt/config-update/udev-rules/* .
-cd /thales/host/config && mv -f /opt/config-update/host-config/* .
+cd %{_unitdir} && mv -f /opt/config-update/units/* .
