@@ -70,7 +70,7 @@ class Vtss(object):
             if method['method-name'] == request[0]:
                 dic = method
                 break
-        if dic == None:
+        if dic is None:
             raise MethodNotFoundException(request[0])
 
         types = {}
@@ -82,7 +82,7 @@ class Vtss(object):
         #  if the call has attributes
         if len(request) > 1:
             if len(request[1:]) != len(dic['params']):
-                raise WrongParamException(len(dic['params'], len(request[1:])))
+                raise WrongParamException(len(dic['params']), len(request[1:]))
 
             i = 1
             for param in dic['params']:
@@ -119,7 +119,7 @@ class Vtss(object):
         if type.has_key("json-encoding-type"):
             encode = type["json-encoding-type"]
 
-        if encode == None:
+        if encode is None:
             raise TypeError
 
         if encode == "String":
