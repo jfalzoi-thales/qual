@@ -30,7 +30,7 @@ class IFEAnalogAudio(Module):
                         "VA_AUDOUT_4": 4,
                         "VA_AUDOUT_5": 5,
                         "VA_AUDOUT_6": 6}
-        ## Lock to prevent running command line tools at the same time as Analog Audio module
+        ## Lock to prevent running pavaTest command line tools at the same time as IFEGPIO module
         self.commandLock = self.getNamedLock("commandLock")
         ## Queue for storing connect and disconnect requests
         self.requests = Queue()

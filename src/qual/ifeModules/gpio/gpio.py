@@ -21,7 +21,7 @@ class IFEGPIO(Module):
         ## List of supported output pins
         self.outputPins = ["LLS_OUT_GP_KL_01", "LLS_OUT_GP_KL_02", "LLS_OUT_GP_KL_03",
                            "VA_KLOUT1", "VA_KLOUT2", "VA_KLOUT3", "VA_KLOUT4", "VA_KLOUT5", "VA_KLOUT6"]
-        ## Lock to prevent running command line tools at the same time as Analog Audio module
+        ## Lock to prevent running fpga command line tools at the same time as Analog Audio module
         self.commandLock = self.getNamedLock("commandLock")
         #  Add IFEGPIO Message handler
         self.addMsgHandler(RequestMessage, self.handleRequest)

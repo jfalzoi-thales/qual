@@ -42,7 +42,6 @@ class IFEGPIOMessages(ModuleMessages):
                     "PA_KLIN8", "PA_MUTE"]:
             message = RequestMessage()
             message.pin_name = pin
-            print ( "PIN NAME: %s " % message.pin_name)
             message.request_type = RequestMessage.GET
             messageList.append(message)
         return messageList
