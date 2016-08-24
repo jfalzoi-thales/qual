@@ -30,6 +30,8 @@ class IFEAnalogAudio(Module):
                         "VA_AUDOUT_4": 4,
                         "VA_AUDOUT_5": 5,
                         "VA_AUDOUT_6": 6}
+        ## Lock to prevent running pavaTest command line tools at the same time as IFEGPIO module
+        self.commandLock = self.getNamedLock("commandLock")
         ## Queue for storing connect and disconnect requests
         self.requests = Queue()
         #  Add handler to available message handlers
@@ -73,7 +75,9 @@ class IFEAnalogAudio(Module):
     #  @return  success     True if pavaTest.sh was run successfully, else False
     def runPavaTest(self, cmd):
         self.log.info("Running 'pavaTest.sh %s' command." % cmd)
+        self.commandLock.acquire()
         out = check_output(["pavaTest.sh"] + cmd.split())
+        self.commandLock.release()
         output = out.split()
 
         if cmd.endswith("-D"):

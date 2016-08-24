@@ -68,6 +68,13 @@ class Test_Module(unittest.TestCase):
         status = module1.msgHandler(msg)
         self.assertTrue(status.body.response)
 
+    def test_lock(self):
+        module1 = Example(config=Example.getConfigurations()[0])
+        module2 = Example(config=Example.getConfigurations()[1])
+        lock1 = module1.getNamedLock("Test")
+        lock2 = module2.getNamedLock("Test")
+        self.assertEqual(lock1, lock2)
+
     def test_thread(self):
         testSeconds = 10
         module1 = Example(config=Example.getConfigurations()[0])
