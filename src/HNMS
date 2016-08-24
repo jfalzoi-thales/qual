@@ -5,5 +5,5 @@
 import sys
 
 if __name__ == '__main__':
-    from nms.hnms import main
+    from nms.host.hnms import main
     sys.exit(main())
