@@ -13,8 +13,8 @@ machine:
     zmq
 
 The following additional packages are required by Qual software,
-but the mps-builder Qual build just pulls standard CentOS packages
-for them, so they can just be installed using 'yum' if you need them:
+but the mps-builder Qual build pulls standard CentOS packages for
+them, so they can just be installed using 'yum':
 
     fio
     iperf3
