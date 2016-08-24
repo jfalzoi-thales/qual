@@ -10,9 +10,9 @@ from tklabs_utils.configurableObject.exception import ConfigurableObjectExceptio
 class ConfigurableObject(object):
 
     if 'unittest' in sys.modules:
-        _iniFileList = ['unitTest','default',]
+        _iniFileList = ['unitTest','sims',]
     else:
-        _iniFileList = ['default',]
+        _iniFileList = ['sims',]
 
     @classmethod
     def setIniFilename(cls, filename):
