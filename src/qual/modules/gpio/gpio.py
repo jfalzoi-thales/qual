@@ -90,7 +90,7 @@ class GPIO(module.Module):
         self.ifeVmQtaAddr = "tcp://localhost:50003"
         self.loadConfig(attributes=('ifeVmQtaAddr',))
         ## Connection to QTA running on the IFE VM
-        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log)
+        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log, timeout=4000)
         # Set up thread to toggle outputs
         self.addThread(self.toggleOutputs)
 
@@ -236,6 +236,12 @@ class GPIO(module.Module):
             pinInfo = self.outputPins[outputPin]
             pinInfo.func(pinInfo.name, self.outputState)
 
+        # Requirement MPS-SRS-272 states to toggle "at 0.5 Hz with a 50% duty cycle"
+        # which I interpret as 0.5 Hz for a complete on/off cycle, or 1 second at each state.
+        # Note we do the sleep between the set and the get because some pins (specifically
+        # the PA/VA IFE pins) are slow to register a change on the input side.
+        sleep(0.9)
+
         # For each input pin in the connection list, get its value and increment matches/mismatches
         for inputPin, connection in connectionsCopy.items():
             pinInfo = self.inputPins[inputPin]
@@ -258,10 +264,6 @@ class GPIO(module.Module):
                     connection.matches += 1
                 else:
                     connection.mismatches += 1
-
-        # Requirement MPS-SRS-272 states to toggle "at 0.5 Hz with a 50% duty cycle"
-        # which I interpret as 0.5 Hz for a complete on/off cycle, or 1 second at each state.
-        sleep(1)
 
         # Operate on a copy of dead connections to reduce locking in background thread
         self.connectionsLock.acquire()
