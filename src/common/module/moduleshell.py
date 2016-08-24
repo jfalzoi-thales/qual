@@ -38,6 +38,11 @@ class ModuleShell(object):
         ## Lock for access to handler
         self.handlerLock = Lock()
 
+        if len(self.__modClasses.classmap) == 0:
+            self.log.warning("No modules found in %s" % self.moduleDir)
+        if len(self.__gpbClasses.classmap) == 0:
+            self.log.warning("No message classes found in %s" % self.messageDir)
+
         #  Create instances for each possible configuration
         for className in self.__modClasses.classmap.keys():
             _class = self.__modClasses.getClassByName(className)
