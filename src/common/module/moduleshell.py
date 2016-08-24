@@ -20,11 +20,11 @@ class ModuleShell(object):
     # @param self
     # @param moduleDir  Directory to scan for module classes
     # @param messageDir Directory to scan for GPB message classes
-    def __init__(self, moduleDir, messageDir):
+    def __init__(self, name, moduleDir, messageDir):
         # Init the superclass
         super(ModuleShell, self).__init__()
         ## Logger implementation, based on standard python logger
-        self.log = Logger(type(self).__name__)
+        self.log = Logger(name)
         ## Directory to scan for module classes
         self.moduleDir = moduleDir
         ## Directory to scan for GPB message classes
