@@ -171,7 +171,8 @@ class QtaJsonListener(JsonZMQServer):
         return self.qta.handleRequest(request)
 
 
-if __name__ == "__main__":
+## Main function for Qual Test Application
+def main():
     # Create a QTA instance and the GPB and JSON listeners
     qta = QualTestApp()
     gpbListener = QtaGpbListener(qta)
@@ -188,3 +189,10 @@ if __name__ == "__main__":
 
     # Terminate QTA so we can exit cleanly
     qta.terminate()
+
+    # Return exit code for HNMS wrapper script
+    return 0
+
+
+if __name__ == "__main__":
+    main()

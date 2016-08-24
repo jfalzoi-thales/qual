@@ -20,11 +20,11 @@ class ModuleShell(object):
     # @param self
     # @param moduleDir  Directory to scan for module classes
     # @param messageDir Directory to scan for GPB message classes
-    def __init__(self, moduleDir, messageDir):
+    def __init__(self, name, moduleDir, messageDir):
         # Init the superclass
         super(ModuleShell, self).__init__()
         ## Logger implementation, based on standard python logger
-        self.log = Logger(type(self).__name__)
+        self.log = Logger(name)
         ## Directory to scan for module classes
         self.moduleDir = moduleDir
         ## Directory to scan for GPB message classes
@@ -37,6 +37,11 @@ class ModuleShell(object):
         self.__gpbClasses = ClassFinder(rootPath=self.messageDir, baseClass=Message)
         ## Lock for access to handler
         self.handlerLock = Lock()
+
+        if len(self.__modClasses.classmap) == 0:
+            self.log.warning("No modules found in %s" % self.moduleDir)
+        if len(self.__gpbClasses.classmap) == 0:
+            self.log.warning("No message classes found in %s" % self.messageDir)
 
         #  Create instances for each possible configuration
         for className in self.__modClasses.classmap.keys():
