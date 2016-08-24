@@ -8,13 +8,22 @@ from common.configurableObject.exception import ConfigurableObjectException
 ## A class loads configuration files from INI.
 class ConfigurableObject(object):
 
+    if 'unittest' in sys.modules:
+        _iniFileList = ['unitTest','default',]
+    else:
+        _iniFileList = ['default',]
+
+    @classmethod
+    def setIniFilename(cls, filename):
+        cls._iniFileList.insert(0, filename)
+
+
     ##Constructor
     # @param self
     # @param configSection INI File section to read configuration from (default to class name)
     def __init__(self, configSection=None):
         # Init the superclass
         super(ConfigurableObject, self).__init__()
-
         self._iniFile = None
         self._iniPath = self._findConfig()
         self._iniParser = SafeConfigParser()
@@ -104,11 +113,7 @@ class ConfigurableObject(object):
         # 1) If this is running as a unit test, look for a unitTest.ini first
         # 2) Then look for platform.ini, which should be present on the target
         # 3) Then look for sims.ini, which should always be present for testing
-
-        iniCandidates = ['platform', 'sims']
-        if 'unittest' in sys.modules:
-            iniCandidates.insert(0, 'unitTest')
-        for iniFile in iniCandidates:
+        for iniFile in ConfigurableObject._iniFileList:
 
             #First, look in the local directory
             if os.path.isfile('%s.ini' % (iniFile)):
@@ -120,17 +125,17 @@ class ConfigurableObject(object):
             if 'src' in moduleDir:
                 while os.path.basename(moduleDir) != 'src':
                     moduleDir = os.path.dirname(moduleDir)
-                moduleDir = moduleDir + os.path.sep + 'qual' + os.path.sep + 'config'
+                moduleDir = os.path.join(moduleDir,'config')
             else:
                 # Try relative to the current directory
-                moduleDir = 'qual' + os.path.sep + 'config'
+                moduleDir = os.path.join('config')
 
             if not os.path.isdir(moduleDir):
                 raise ConfigurableObjectException('Could not find configuration directory %s' % (moduleDir,))
-            filepath = moduleDir + os.path.sep + iniFile + '.ini'
+            filepath = os.path.join(moduleDir, '%s.ini' % (iniFile,))
             if os.path.isfile(filepath):
                 self._iniFile = iniFile
                 return filepath
 
-        raise ConfigurableObjectException('INI File not found')
+        raise ConfigurableObjectException('INI File not found: %s ' % (ConfigurableObject._iniFileList))
 
