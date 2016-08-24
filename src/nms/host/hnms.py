@@ -12,9 +12,9 @@ class HNMS(ConfigurableObject):
         # Init the superclass
         super(HNMS, self).__init__()
         ## Address to use for GPB listener
-        self.serviceAddress = "tcp://*:50001"
+        self.serviceAddress = "ipc:///tmp/nms.sock"
         #  Read config file and update specified instance variables
-        self.loadConfig(attributes=('gpbServiceAddress',))
+        self.loadConfig(attributes=('serviceAddress',))
         ## Module shell that will contain the modules
         self.moduleShell = ModuleShell(name="HNMS", moduleDir="nms.host.modules", messageDir="nms.host.pb2")
 
