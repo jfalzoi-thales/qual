@@ -1,7 +1,9 @@
 import subprocess
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.HDDS_pb2 import HostDomainDeviceServiceRequest, HostDomainDeviceServiceResponse
-from common.module.module import Module
+
+from qual.pb2.HDDS_pb2 import HostDomainDeviceServiceRequest, HostDomainDeviceServiceResponse
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## HDDS Module for IFE sensors
 class IFEHDDS(Module):

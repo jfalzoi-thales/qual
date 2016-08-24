@@ -1,10 +1,12 @@
 import argparse
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.JsonZMQClient import JsonZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.classFinder.classFinder import ClassFinder
-from common.module.modulemsgs import ModuleMessages
 from google.protobuf.message import Message
+
+from tklabs_utils.classFinder.classFinder import ClassFinder
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.JsonZMQClient import JsonZMQClient
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## Class that provides a menu-driven QTE simulator
 class QTEMenu(object):
@@ -18,7 +20,7 @@ class QTEMenu(object):
         self.__modClass = ClassFinder(rootPath='qual.modules',
                                      baseClass=ModuleMessages)
         ## ClassFinder for GPB message classes
-        self.__qualMessage = ClassFinder(rootPath='common.gpb.python',
+        self.__qualMessage = ClassFinder(rootPath='qual.pb2',
                                          baseClass=Message)
 
         # Construct address to connect to

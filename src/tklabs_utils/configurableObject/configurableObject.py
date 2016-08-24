@@ -2,7 +2,8 @@ import inspect
 import os
 import sys
 from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
-from common.configurableObject.exception import ConfigurableObjectException
+
+from tklabs_utils.configurableObject.exception import ConfigurableObjectException
 
 
 ## A class loads configuration files from INI.

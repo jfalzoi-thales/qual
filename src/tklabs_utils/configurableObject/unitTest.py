@@ -1,5 +1,7 @@
 import unittest
-from common.configurableObject.configurableObject import ConfigurableObject
+
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+
 
 #  @cond doxygen_unittest
 

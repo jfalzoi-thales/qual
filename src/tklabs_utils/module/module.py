@@ -1,10 +1,12 @@
-from threading import Thread, Lock
-from time import sleep
 import datetime
 import sys
-from common.configurableObject.configurableObject import ConfigurableObject
-from common.logger.logger import Logger
-from common.module.exception import ModuleException
+from threading import Thread, Lock
+from time import sleep
+
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.exception import ModuleException
+
 
 ## Module Base class
 class Module(ConfigurableObject):

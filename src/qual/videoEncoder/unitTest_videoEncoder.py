@@ -2,7 +2,7 @@
 ## Ethernet Unit Test
 import unittest
 
-from common.logger import logger
+from tklabs_utils.logger import logger
 from videoEncoder import VideoEncoder
 
 

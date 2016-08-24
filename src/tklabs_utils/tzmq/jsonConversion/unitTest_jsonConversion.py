@@ -1,15 +1,12 @@
 import unittest
 
-
-from common.gpb.jsonConversion.jsonConversion import JsonConversion
-from common.gpb.python.CPULoading_pb2 import CPULoadingRequest
-from common.gpb.python.HDAudio_pb2 import HDAudioRequest
-from common.gpb.python.HDDS_pb2 import GetResp
-from common.gpb.python.PowerInfo_pb2 import PowerInfo
+from common.pb2.PowerInfo_pb2 import PowerInfo
+from qual.pb2.CPULoading_pb2 import CPULoadingRequest
+from qual.pb2.HDAudio_pb2 import HDAudioRequest
+from qual.pb2.HDDS_pb2 import GetResp
+from tklabs_utils.tzmq.jsonConversion.jsonConversion import JsonConversion
 
 # @cond doxygen_unittest
-from common.gpb.python.SystemMonitoring_pb2 import SystemMonitoringResponse
-
 
 class TestJsonConverstion(unittest.TestCase):
 

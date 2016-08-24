@@ -1,10 +1,12 @@
 import unittest
-import analogAudio
 from time import sleep
-from common.gpb.python.AnalogAudio_pb2 import AnalogAudioRequest, AnalogAudioResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
+
+import analogAudio
+from qual.pb2.AnalogAudio_pb2 import AnalogAudioRequest, AnalogAudioResponse
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 #  @cond doxygen_unittest
 

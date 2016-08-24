@@ -3,7 +3,8 @@ import logging
 import logging.handlers
 import socket
 import sys
-from common.configurableObject.configurableObject import ConfigurableObject
+
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 
 CRITICAL = logging.CRITICAL
 FATAL = logging.FATAL

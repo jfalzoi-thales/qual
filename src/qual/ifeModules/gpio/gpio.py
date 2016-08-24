@@ -1,8 +1,9 @@
-import subprocess
 import os
-from common.module.module import Module
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.GPIOManager_pb2 import RequestMessage, ResponseMessage, INPUT, OUTPUT, UNKNOWN_DIR
+import subprocess
+
+from common.pb2.GPIOManager_pb2 import RequestMessage, ResponseMessage, INPUT, OUTPUT, UNKNOWN_DIR
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 ## Discard the output
 DEVNULL = open(os.devnull, 'wb')

@@ -1,7 +1,8 @@
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.AnalogAudio_pb2 import AnalogAudioRequest, AnalogAudioResponse
-from common.module.module import Module
+from qual.pb2.AnalogAudio_pb2 import AnalogAudioRequest, AnalogAudioResponse
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## AnalogAudio Module Class
 class AnalogAudio(Module):

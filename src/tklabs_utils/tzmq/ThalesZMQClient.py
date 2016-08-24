@@ -1,7 +1,7 @@
-
 import zmq
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
+
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 
 ## Thales ZMQ Client class
