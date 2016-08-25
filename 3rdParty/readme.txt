@@ -19,4 +19,5 @@ them, so they can just be installed using 'yum':
     fio
     iperf3
     pyserial
+    python-lxml
     python-netifaces
