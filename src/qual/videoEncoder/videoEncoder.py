@@ -1,6 +1,6 @@
 import httplib
 
-from common.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 
 
 '''

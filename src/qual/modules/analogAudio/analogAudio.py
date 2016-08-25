@@ -1,7 +1,8 @@
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.AnalogAudio_pb2 import AnalogAudioRequest, AnalogAudioResponse
-from common.module.module import Module
+from qual.pb2.AnalogAudio_pb2 import AnalogAudioRequest, AnalogAudioResponse
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## AnalogAudio Module Class
 class AnalogAudio(Module):
@@ -33,7 +34,7 @@ class AnalogAudio(Module):
         elif msg.body.requestType == AnalogAudioRequest.DISCONNECT:
             self.log.info("AnalogAudio - disconnect %s" % msg.body.sink)
         else:
-            self.log.info("AnalogAudio - report %s" % msg.body.sink)
+            self.log.debug("AnalogAudio - report %s" % msg.body.sink)
 
         ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(msg)
 
@@ -41,7 +42,7 @@ class AnalogAudio(Module):
             deserializedResponse = AnalogAudioResponse()
             deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
             ifeVmQtaResponse.body = deserializedResponse
-            self.log.info("AnalogAudio - returning response")
+            self.log.debug("AnalogAudio - returning response")
             return ifeVmQtaResponse
         else:
             self.log.error("Unexpected response from IFE VM AnalogAudio: %s" % ifeVmQtaResponse.name)

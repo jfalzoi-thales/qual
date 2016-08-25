@@ -1,11 +1,12 @@
-import unittest
 import time
+import unittest
 
-from common.gpb.python.HDAudio_pb2 import HDAudioRequest, HDAudioResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
-from qual.modules.hdAudio.hdAudio import HDAudio
+from hdAudio import HDAudio
+from qual.pb2.HDAudio_pb2 import HDAudioRequest, HDAudioResponse
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 
@@ -217,7 +218,7 @@ class Test_HDAudio(unittest.TestCase):
     #       source == "4kHz_60sec.wav"
     #       volume == 73
     #       ---------------------
-    def test_ConnectReportDisconnect_Vol50(self):
+    def test_ConnectReportDisconnect_Vol50_4kHz(self):
         log = self.__class__.log
         module = self.__class__.module
 

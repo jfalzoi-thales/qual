@@ -1,8 +1,7 @@
-
-from common.logger import logger
-from common.tzmq.ThalesZMQServer import ThalesZMQServer
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.PowerInfo_pb2 import GetPowerInfo, PowerInfo
+from common.pb2.PowerInfo_pb2 import GetPowerInfo, PowerInfo
+from tklabs_utils.logger import logger
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
 
 
 ## Power Supply Monitor Simulator class

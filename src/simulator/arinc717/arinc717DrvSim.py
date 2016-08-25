@@ -1,11 +1,11 @@
-
-import sys
 import os
+import sys
 import time
-from common.logger import logger
-from common.tzmq.ThalesZMQServer import ThalesZMQServer
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.ARINC717Driver_pb2 import Request, Response
+
+from common.pb2.ARINC717Driver_pb2 import Request, Response
+from tklabs_utils.logger import logger
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
 
 
 ## ARINC 717 Driver Simulator class

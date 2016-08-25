@@ -1,13 +1,13 @@
-
 from threading import Thread, Lock
-from common.configurableObject.configurableObject import ConfigurableObject
-from common.tzmq.ThalesZMQServer import ThalesZMQServer
-from common.tzmq.JsonZMQServer import JsonZMQServer
-from common.logger.logger import Logger
-from common.classFinder.classFinder import ClassFinder
-from common.module.module import Module
-from common.module.exception import ModuleException
 from google.protobuf.message import Message
+
+from tklabs_utils.classFinder.classFinder import ClassFinder
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.exception import ModuleException
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.JsonZMQServer import JsonZMQServer
+from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
 
 
 ## Qual Test Application Class
@@ -46,7 +46,7 @@ class QualTestApp(ConfigurableObject):
                                         baseClass=Module)
 
         ## All available classes in GPB modules for QTA
-        self.__gpbClasses = ClassFinder(rootPath='common.gpb.python',
+        self.__gpbClasses = ClassFinder(rootPath='qual.pb2',
                                         baseClass=Message)
 
         ## Lock for access to handler
@@ -173,6 +173,7 @@ class QtaJsonListener(JsonZMQServer):
 
 ## Main function for Qual Test Application
 def main():
+    ConfigurableObject.setIniFilename("sims")
     # Create a QTA instance and the GPB and JSON listeners
     qta = QualTestApp()
     gpbListener = QtaGpbListener(qta)

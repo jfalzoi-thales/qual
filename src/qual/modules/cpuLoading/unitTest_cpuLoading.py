@@ -1,11 +1,12 @@
-import unittest
 import time
+import unittest
 
 import cpuLoading
-from common.gpb.python.CPULoading_pb2 import CPULoadingRequest, CPULoadingResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.CPULoading_pb2 import CPULoadingRequest, CPULoadingResponse
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 #  @cond doxygen_unittest
 

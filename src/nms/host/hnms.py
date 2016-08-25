@@ -1,6 +1,6 @@
-from common.configurableObject.configurableObject import ConfigurableObject
-from common.module.moduleshell import ModuleShell
-from common.tzmq.ThalesZMQServer import ThalesZMQServer
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.module.moduleshell import ModuleShell
+from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
 
 
 ## Host NMS Class
