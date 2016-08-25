@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ ! -e common/tzmq/ThalesZMQServer.py ] || [ ! -e simulator/gpio/gpioMgrSim.py ]; then
+if [ ! -e tklabs_utils/tzmq/ThalesZMQServer.py ] || [ ! -e simulator/gpio/gpioMgrSim.py ]; then
     echo "Please run this script from the 'src' directory of the project"
     exit 1
 fi

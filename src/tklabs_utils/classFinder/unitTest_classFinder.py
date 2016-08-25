@@ -1,7 +1,7 @@
 import unittest
-
-from common.classFinder.classFinder import ClassFinder
 from google.protobuf.message import Message
+
+from tklabs_utils.classFinder.classFinder import ClassFinder
 
 # @cond doxygen_unittest
 class TestStringMethods(unittest.TestCase):

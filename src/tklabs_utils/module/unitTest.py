@@ -1,8 +1,9 @@
 import unittest
 from time import sleep
 
-from common.logger.logger import Logger
-from common.module.module import Module
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.module import Module
+
 
 # @cond doxygen_unittest
 

@@ -1,9 +1,10 @@
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.HDDS_pb2 import HostDomainDeviceServiceRequest, HostDomainDeviceServiceResponse
-from common.gpb.python.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp
-from common.gpb.python.ErrorMessage_pb2 import ErrorMessage
-from common.module.module import Module
+from common.pb2.ErrorMessage_pb2 import ErrorMessage
+from common.pb2.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp
+from qual.pb2.HDDS_pb2 import HostDomainDeviceServiceRequest, HostDomainDeviceServiceResponse
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## HDDS Module
 class HDDS(Module):

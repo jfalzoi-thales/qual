@@ -2,16 +2,17 @@ import inspect
 import os
 import sys
 from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
-from common.configurableObject.exception import ConfigurableObjectException
+
+from tklabs_utils.configurableObject.exception import ConfigurableObjectException
 
 
 ## A class loads configuration files from INI.
 class ConfigurableObject(object):
 
     if 'unittest' in sys.modules:
-        _iniFileList = ['unitTest','default',]
+        _iniFileList = ['unitTest','sims',]
     else:
-        _iniFileList = ['default',]
+        _iniFileList = ['sims',]
 
     @classmethod
     def setIniFilename(cls, filename):

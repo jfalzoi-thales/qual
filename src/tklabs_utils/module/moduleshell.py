@@ -1,10 +1,11 @@
 from threading import Lock
-from common.logger.logger import Logger
-from common.classFinder.classFinder import ClassFinder
-from common.module.module import Module
-from common.module.exception import ModuleException
 from google.protobuf.message import Message
-from common.tzmq.ThalesZMQServer import ThalesZMQServer
+
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.classFinder.classFinder import ClassFinder
+from tklabs_utils.module.module import Module
+from tklabs_utils.module.exception import ModuleException
+from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
 
 
 ## Module Shell Class

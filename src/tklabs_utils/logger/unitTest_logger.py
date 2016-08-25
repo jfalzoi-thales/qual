@@ -1,11 +1,9 @@
-import unittest
-from time import sleep
-from cStringIO import StringIO
 import sys
+import unittest
+from cStringIO import StringIO
 
-
-from common.logger import logger
-from common.logger.logger import Logger
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.logger import logger
 
 # @cond doxygen_unittest
 class Test_Module(unittest.TestCase):

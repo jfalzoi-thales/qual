@@ -1,7 +1,7 @@
+from common.pb2.PowerInfo_pb2 import GetPowerInfo, PowerInfo
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.PowerInfo_pb2 import GetPowerInfo, PowerInfo
 
 # @cond doxygen_unittest
 

@@ -1,5 +1,4 @@
-
-from common.gpb.python.MessageHeader_pb2 import MessageHeader
+from common.pb2.MessageHeader_pb2 import MessageHeader
 
 
 ## Encapsulates a message as defined by the "Thales Common Network Messaging" document.

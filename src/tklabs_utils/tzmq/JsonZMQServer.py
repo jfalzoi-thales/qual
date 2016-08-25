@@ -1,10 +1,10 @@
-
-import zmq
 import json
-from common.logger.logger import Logger
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.tzmq.ThalesZMQServer import ThalesZMQServer
-from common.gpb.jsonConversion.jsonConversion import JsonConversion
+import zmq
+
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
+from tklabs_utils.tzmq.jsonConversion.jsonConversion import JsonConversion
 
 
 ## JSON ZMQ Server class

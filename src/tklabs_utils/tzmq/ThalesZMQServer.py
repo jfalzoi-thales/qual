@@ -1,8 +1,8 @@
-
 import zmq
-from common.logger.logger import Logger
-from common.gpb.python.ErrorMessage_pb2 import ErrorMessage
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
+from common.pb2.ErrorMessage_pb2 import ErrorMessage
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 
 ## Thales ZMQ Server class

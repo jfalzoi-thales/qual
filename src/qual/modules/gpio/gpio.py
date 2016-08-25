@@ -1,12 +1,12 @@
 import collections
-from time import sleep
 import threading
+from time import sleep
 
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.GPIO_pb2 import GPIORequest, GPIOResponse
-from common.gpb.python.GPIOManager_pb2 import RequestMessage, ResponseMessage
-from common.module import module
+from common.pb2.GPIOManager_pb2 import RequestMessage, ResponseMessage
+from qual.pb2.GPIO_pb2 import GPIORequest, GPIOResponse
+from tklabs_utils.module import module
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 
 ## Connection info container class

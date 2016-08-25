@@ -1,6 +1,8 @@
-from common.classFinder.classFinder import ClassFinder
-from google.protobuf.message import Message
 from google.protobuf.descriptor import FieldDescriptor as FD
+from google.protobuf.message import Message
+
+from tklabs_utils.classFinder.classFinder import ClassFinder
+
 
 ## A class that serializes /Deserializes GPB buffers to/from JSON.
 #
@@ -17,7 +19,7 @@ from google.protobuf.descriptor import FieldDescriptor as FD
 class JsonConversion(object):
 
     ## All available classes in GPB modules for QTA,
-    _knownGpbClasses = ClassFinder(rootPath='common.gpb.python', baseClass=Message)
+    _knownGpbClasses = ClassFinder(rootPath='qual.pb2', baseClass=Message)
 
     ##Convert a GPB buffer object into a JSON object
     #@param cls This is a class method
