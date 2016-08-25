@@ -2,9 +2,9 @@ import unittest
 import time
 from nms.guest.pb2.nms_guest_api_pb2 import *
 from nms.guest.modules.configportstate.configPortState import PortStateConfig
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
 
 # @cond doxygen_unittest
 
@@ -26,7 +26,7 @@ class ConfigPortStateMessages(ModuleMessages):
     def blocking():
         message = ConfigPortStateReq()
         portState = message.state.add()
-        portState.namedPort = "internal.i350_1"
+        portState.namedPort = 'internal.switch_2'
         portState.state = BLOCKING
         return message
 
@@ -34,7 +34,7 @@ class ConfigPortStateMessages(ModuleMessages):
     def listening():
         message = ConfigPortStateReq()
         portState = message.state.add()
-        portState.namedPort = "internal.i350_1"
+        portState.namedPort = "internal.switch_2"
         portState.state = LISTENING
         return message
 
@@ -42,7 +42,7 @@ class ConfigPortStateMessages(ModuleMessages):
     def learning():
         message = ConfigPortStateReq()
         portState = message.state.add()
-        portState.namedPort = "internal.i350_1"
+        portState.namedPort = "internal.switch_2"
         portState.state = LEARNING
         return message
 
@@ -50,7 +50,7 @@ class ConfigPortStateMessages(ModuleMessages):
     def forwarding():
         message = ConfigPortStateReq()
         portState = message.state.add()
-        portState.namedPort = "internal.i350_1"
+        portState.namedPort = "internal.switch_2"
         portState.state = FORWARDING
         return message
 
@@ -58,7 +58,7 @@ class ConfigPortStateMessages(ModuleMessages):
     def disabled():
         message = ConfigPortStateReq()
         portState = message.state.add()
-        portState.namedPort = "internal.i350_1"
+        portState.namedPort = "internal.switch_2"
         portState.state = DISABLED
         return message
 
@@ -100,17 +100,89 @@ class Test_ConfigPortState(unittest.TestCase):
         zmqMsg = ThalesZMQMessage(msg)
         module.msgHandler(zmqMsg)
 
-    ## Valid Test case:
+    ## Valid Test case
     #
+    #   Send a BLOCKING Message
     def test_Block(self):
         log = self.__class__.log
         module = self.__class__.module
 
         log.info("**** Test case: BLOCKING message ****")
         response = module.msgHandler(ThalesZMQMessage(ConfigPortStateMessages.blocking()))
+
         # Asserts
+        self.assertEqual(response.name, "ConfigPortStateResp")
+        # Get the BPDUState of the response
+        bpduResp = response.body.state[0]
+        self.assertEqual(bpduResp.namedPort, "internal.switch_2")
+        self.assertNotEqual(bpduResp.state, DISABLED)
+        self.assertEqual(bpduResp.success, True)
 
         log.info("==== Test complete ====")
+
+
+    ## Valid Test case
+    #
+    #  Send a LEARNING Message
+    def test_Learning(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: LEARNING message ****")
+        response = module.msgHandler(ThalesZMQMessage(ConfigPortStateMessages.learning()))
+
+        # Asserts
+        self.assertEqual(response.name, "ConfigPortStateResp")
+        # Get the BPDUState of the response
+        bpduResp = response.body.state[0]
+        self.assertEqual(bpduResp.namedPort, "internal.switch_2")
+        self.assertNotEqual(bpduResp.state, DISABLED)
+        self.assertEqual(bpduResp.success, True)
+
+        log.info("==== Test complete ====")
+
+
+    ## Valid Test case
+    #
+    #   Send a FORWARDING Message
+    def test_Forwarding(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: FORWARDING message ****")
+        response = module.msgHandler(ThalesZMQMessage(ConfigPortStateMessages.forwarding()))
+
+        # Asserts
+        self.assertEqual(response.name, "ConfigPortStateResp")
+        # Get the BPDUState of the response
+        bpduResp = response.body.state[0]
+        self.assertEqual(bpduResp.namedPort, "internal.switch_2")
+        self.assertNotEqual(bpduResp.state, DISABLED)
+        self.assertEqual(bpduResp.success, True)
+
+        log.info("==== Test complete ====")
+
+
+    ## Valid Test case
+    #
+    #   Send a DISABLED Message
+    def test_Disabled(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: DISABLED message ****")
+        response = module.msgHandler(ThalesZMQMessage(ConfigPortStateMessages.disabled()))
+
+        # Asserts
+        self.assertEqual(response.name, "ConfigPortStateResp")
+        # Get the BPDUState of the response
+        bpduResp = response.body.state[0]
+        self.assertEqual(bpduResp.namedPort, "internal.switch_2")
+        self.assertEqual(bpduResp.state, DISABLED)
+        self.assertEqual(bpduResp.success, True)
+
+        log.info("==== Test complete ====")
+
 
 if __name__ == '__main__':
     unittest.main()

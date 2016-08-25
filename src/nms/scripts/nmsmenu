@@ -1,9 +1,0 @@
-#!/usr/bin/python2
-
-# just an entrypoint script for NMS menu test app.
-
-import sys
-
-if __name__ == '__main__':
-    from nms.nmsmenu import main
-    sys.exit(main())

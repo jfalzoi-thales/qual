@@ -1,9 +1,0 @@
-#!/usr/bin/python2
-
-# just an entrypoint script for Host Domain NMS.
-
-import sys
-
-if __name__ == '__main__':
-    from nms.hnms import main
-    sys.exit(main())

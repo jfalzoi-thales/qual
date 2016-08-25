@@ -1,10 +1,9 @@
-import subprocess
 import re
-import os
+import subprocess
 
-from common.module.module import Module, ModuleException
-from common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from qual.pb2.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
+from tklabs_utils.module.module import Module, ModuleException
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 
 ## Memory Bandwidth Module Exception Class

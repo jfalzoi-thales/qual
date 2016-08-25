@@ -1,14 +1,13 @@
-
 import os
 import subprocess
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.CarrierCardData_pb2 import CarrierCardDataRequest, CarrierCardDataResponse, ErrorMsg
-from common.module.module import Module, ModuleException
+
+from qual.pb2.CarrierCardData_pb2 import CarrierCardDataRequest, CarrierCardDataResponse, ErrorMsg
+from tklabs_utils.module.module import Module, ModuleException
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 
 ## Discard the output
 DEVNULL = open(os.devnull, 'wb')
-
 
 ## CarrierCardData Module Exception Class
 class CarrierCardDataModuleException(ModuleException):

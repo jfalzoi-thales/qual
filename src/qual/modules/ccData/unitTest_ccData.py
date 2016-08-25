@@ -1,10 +1,11 @@
 import unittest
-from time import sleep
+
 import ccData
-from common.gpb.python.CarrierCardData_pb2 import CarrierCardDataRequest, ErrorMsg
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.CarrierCardData_pb2 import CarrierCardDataRequest, ErrorMsg
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 #  @cond doxygen_unittest
 
