@@ -4,13 +4,16 @@
 Name: mps-config-qual-tk
 Summary: QUAL Specific configuration
 Version: 1.0.13
-Release: 1
+Release: 2
 Group: System Environment/Libraries
 URL: http://www.thalesgroup.com/
 Vendor: Thales Avionics, Inc.
 License: Proprietary
 Source: %{name}.tar.gz
 Requires: mps-config
+Requires: selinux-policy
+Requires: rsyslog
+Requires: host-domain-device-service
 %{?systemd_requires}
 BuildRequires: systemd
 
@@ -33,3 +36,9 @@ touch %{buildroot}/etc/mps-config-qual
 %post
 cd /etc/sysconfig/network-scripts && mv -f /opt/config-update/network-scripts/* .
 cd %{_unitdir} && mv -f /opt/config-update/units/* .
+sed -i -e 's|#$ModLoad imudp|$ModLoad imudp|g' -e 's|#$UDPServerRun 514|$UDPServerRun 514|g' /etc/rsyslog.conf
+sed -i -e 's|service_prvkey_file|#service_prvkey_file|g' -e 's|tcp://192.168.1.4:40001|tcp://*:40001|g' /thales/host/config/HDDS.conf
+
+%posttrans
+ln -s ../default.xml /etc/libvirt/qemu/networks/autostart/default.xml
+sed -i 's|SELINUX=enforcing|SELINUX=permissive|g' /etc/selinux/config

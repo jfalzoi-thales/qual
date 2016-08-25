@@ -14,10 +14,6 @@ Requires: pyserial
 Requires: python-netifaces
 Requires: python-zmq
 Requires: protobuf-python
-Requires: mps-config
-Requires: selinux-policy
-Requires: rsyslog
-Requires: host-domain-device-service
 %{?systemd_requires}
 BuildRequires: systemd
 
@@ -25,6 +21,7 @@ BuildRequires: systemd
 Summary: An application that simulates MPS hardware peripherals
 Group: Development/Tools
 Requires: %{name} = %{version}
+Requires: mps-config
 
 %package ife
 Summary: An application that uses a VM to communicate with the MPS IFE card
@@ -49,7 +46,7 @@ This package runs an IFE virtual machine that is used to communicate with the IF
 
 
 %install
-mkdir -p %{buildroot}/%{_bindir} %{buildroot}/etc/sysconfig/network-scripts %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances
+mkdir -p %{buildroot}/%{_bindir} %{buildroot}/etc/sysconfig/network-scripts %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src/config %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances
 cp systemd/qual.sh %{buildroot}/thales/host/appliances/qual
 cp systemd/qual-sims.sh %{buildroot}/thales/host/appliances/qual-sims
 cp systemd/qual-startvm.sh %{buildroot}/thales/host/appliances/qual-startvm
@@ -61,9 +58,14 @@ cp scripts/installifesims.sh %{buildroot}/%{_bindir}/installifesims
 cp scripts/genvmconfig.py %{buildroot}/thales/host/appliances/genvmconfig
 cp scripts/ifcfg-* %{buildroot}/etc/sysconfig/network-scripts/
 mv %{buildroot}/etc/sysconfig/network-scripts/ifcfg-ens6sk %{buildroot}/etc/sysconfig/network-scripts/ifcfg-ens6:sk
+cp QTA qtemenu %{buildroot}/thales/qual/src/
 cp -r common/ %{buildroot}/thales/qual/src/
+cp -r tklabs_utils/ %{buildroot}/thales/qual/src/
 cp -r qual/ %{buildroot}/thales/qual/src/
 cp -r simulator/ %{buildroot}/thales/qual/src/
+cp config/qual.conf %{buildroot}/thales/qual/src/config/qual-sims.conf
+cp config/qual-mps.conf %{buildroot}/thales/qual/src/config/qual.conf
+cp config/qual-ife.conf %{buildroot}/thales/qual/src/config/
 
 
 %files
@@ -75,18 +77,22 @@ cp -r simulator/ %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /%{_unitdir}/qual-startvm.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-service.preset
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-startvm-service.preset
-%attr(0644,root,root) /thales/qual/src/common/*
-%attr(0644,root,root) /thales/qual/src/qual/*
+%attr(0755,root,root) /thales/qual/src/QTA
+%attr(0755,root,root) /thales/qual/src/qtemenu
+%attr(0644,root,root) /thales/qual/src/config/qual.conf
+/thales/qual/src/common/*
+/thales/qual/src/tklabs_utils/*
+/thales/qual/src/qual/*
 %attr(0755,root,root) /thales/qual/src/qual/modules/unittests.sh
 
 %exclude /thales/qual/src/qual/ifeModules
-%exclude /thales/qual/src/qual/config/ife.ini
 
 %files sims
 %attr(0755,root,root) /thales/host/appliances/qual-sims
 %attr(0644,root,root) /%{_unitdir}/qual-sims.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-sims-service.preset
-%attr(0644,root,root) /thales/qual/src/simulator/*
+%attr(0644,root,root) /thales/qual/src/config/qual-sims.conf
+/thales/qual/src/simulator/*
 %attr(0755,root,root) /thales/qual/src/simulator/*.sh
 
 %files ife
@@ -94,34 +100,28 @@ cp -r simulator/ %{buildroot}/thales/qual/src/
 %attr(0644,root,root) /etc/sysconfig/network-scripts/ifcfg-*
 %attr(0644,root,root) /%{_unitdir}/qual-ife.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-ife-service.preset
-%attr(0644,root,root) /thales/qual/src/common/*
-%attr(0644,root,root) /thales/qual/src/qual/*
+%attr(0755,root,root) /thales/qual/src/QTA
+%attr(0755,root,root) /thales/qual/src/qtemenu
+%attr(0644,root,root) /thales/qual/src/config/qual-ife.conf
+/thales/qual/src/common/*
+/thales/qual/src/tklabs_utils/*
+/thales/qual/src/qual/*
 
 %exclude /thales/qual/src/qual/modules
-%exclude /thales/qual/src/qual/config/mps.ini
-%exclude /thales/qual/src/qual/config/sims.ini
 
 
 %post
 %systemd_post qual.service
 %systemd_post qual-startvm.service
-ln -f /thales/qual/src/qual/config/mps.ini /thales/qual/src/qual/config/platform.ini
-sed -i -e 's|#$ModLoad imudp|$ModLoad imudp|g' -e 's|#$UDPServerRun 514|$UDPServerRun 514|g' /etc/rsyslog.conf
-echo -e "\$ActionQueueFileName fwdRule1\n\$ActionQueueMaxDiskSpace 2g\n\$ActionQueueSaveOnShutdown on\n\$ActionQueueType LinkedList\n\$ActionResumeRetryCount -1\n*.* @192.168.137.1:514" >> /etc/rsyslog.conf
-sed -i -e 's|service_prvkey_file|#service_prvkey_file|g' -e 's|tcp://192.168.1.4:40001|tcp://*:40001|g' /thales/host/config/HDDS.conf
-
-%posttrans
-ln -s ../default.xml /etc/libvirt/qemu/networks/autostart/default.xml
-sed -i 's|SELINUX=enforcing|SELINUX=permissive|g' /etc/selinux/config
 
 %post sims
 %systemd_post qual-sims.service
-rm -f /thales/qual/src/qual/config/platform.ini
 rm -f /usr/lib/systemd/system-preset/50-mps-drivers.preset
 rm -f /etc/systemd/system/mps-drivers.target.wants/*
 rm -f /etc/udev/rules.d/80*
 rm -f /etc/udev/rules.d/95*
+mv -f /thales/qual/src/config/qual-sims.conf /thales/qual/src/config/qual.conf
 
 %post ife
 %systemd_post qual-ife.service
-ln -f /thales/qual/src/qual/config/ife.ini /thales/qual/src/qual/config/platform.ini
+mv -f /thales/qual/src/config/qual-ife.conf /thales/qual/src/config/qual.conf
