@@ -63,8 +63,8 @@ cp -r common/ %{buildroot}/thales/qual/src/
 cp -r tklabs_utils/ %{buildroot}/thales/qual/src/
 cp -r qual/ %{buildroot}/thales/qual/src/
 cp -r simulator/ %{buildroot}/thales/qual/src/
+cp config/qual-mps.conf %{buildroot}/thales/qual/src/config/
 cp config/qual.conf %{buildroot}/thales/qual/src/config/qual-sims.conf
-cp config/qual-mps.conf %{buildroot}/thales/qual/src/config/qual.conf
 cp config/qual-ife.conf %{buildroot}/thales/qual/src/config/
 
 
@@ -79,7 +79,7 @@ cp config/qual-ife.conf %{buildroot}/thales/qual/src/config/
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-startvm-service.preset
 %attr(0755,root,root) /thales/qual/src/QTA
 %attr(0755,root,root) /thales/qual/src/qtemenu
-%attr(0644,root,root) /thales/qual/src/config/qual.conf
+%attr(0644,root,root) /thales/qual/src/config/qual-mps.conf
 /thales/qual/src/common/*
 /thales/qual/src/tklabs_utils/*
 /thales/qual/src/qual/*
@@ -113,6 +113,7 @@ cp config/qual-ife.conf %{buildroot}/thales/qual/src/config/
 %post
 %systemd_post qual.service
 %systemd_post qual-startvm.service
+mv -f /thales/qual/src/config/qual-mps.conf /thales/qual/src/config/qual.conf
 
 %post sims
 %systemd_post qual-sims.service
