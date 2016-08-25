@@ -132,7 +132,6 @@ class ConfigurableObject(object):
             if not os.path.isdir(moduleDir):
                 raise ConfigurableObjectException('Could not find configuration directory %s' % (moduleDir,))
             filepath = os.path.join(moduleDir, '%s.conf' % (iniFile,))
-            print filepath
             if os.path.isfile(filepath):
                 self._iniFile = iniFile
                 return filepath
