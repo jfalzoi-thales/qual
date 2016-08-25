@@ -40,6 +40,7 @@ class HnmsGpbListener(ThalesZMQServer):
 
 ## Main function for Host Network Management Service
 def main():
+    ConfigurableObject.setFilename("HNMS")
     # Create a HNMS instance and the GPB listener
     hnms = HNMS()
     gpbListener = HnmsGpbListener(hnms)

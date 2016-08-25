@@ -173,7 +173,7 @@ class QtaJsonListener(JsonZMQServer):
 
 ## Main function for Qual Test Application
 def main():
-    ConfigurableObject.setIniFilename("sims")
+    ConfigurableObject.setFilename("qual")
     # Create a QTA instance and the GPB and JSON listeners
     qta = QualTestApp()
     gpbListener = QtaGpbListener(qta)
