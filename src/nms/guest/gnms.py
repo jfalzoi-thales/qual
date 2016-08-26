@@ -40,6 +40,7 @@ class GnmsGpbListener(ThalesZMQServer):
 
 ## Main function for Guest Network Management Service
 def main():
+    ConfigurableObject.setFilename("GNMS")
     # Create a GNMS instance and the GPB listener
     gnms = GNMS()
     gpbListener = GnmsGpbListener(gnms)

@@ -22,6 +22,8 @@ class QTEMenu(object):
         ## ClassFinder for GPB message classes
         self.__qualMessage = ClassFinder(rootPath='qual.pb2',
                                          baseClass=Message)
+        ## Exit flag
+        self.__exit = False
 
         # Construct address to connect to
         address = str.format('tcp://{}:{}', server, 50002 if useJson else 50001)
@@ -50,6 +52,11 @@ class QTEMenu(object):
             except ValueError:
                 print "Input must be a number."
                 continue
+            except KeyboardInterrupt:
+                print
+                self.__exit = True
+                return
+
             if action < 0 or action > lastItem:
                 print "Valid range is 0 to %d." % lastItem
                 continue
@@ -99,9 +106,12 @@ class QTEMenu(object):
                 print "Valid range is %d to %d." % (0, index-1)
                 continue
             self.moduleMenu(msgClassList[selectedModule])
+            if self.__exit:
+                return
 
 
-if __name__ == "__main__":
+## Main function for Qual menu test app
+def main():
     # Parse command line arguments
     cmdParameters = argparse.ArgumentParser(description="Provides a menu-driven test interface to the QTA.")
     cmdParameters.add_argument('-s',
@@ -118,3 +128,10 @@ if __name__ == "__main__":
     # Initialize and run the QTE
     qte = QTEMenu(args.server, args.useJson)
     qte.run()
+
+    # Return exit code for qtemenu wrapper script
+    return 0
+
+
+if __name__ == "__main__":
+    main()
