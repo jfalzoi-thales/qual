@@ -18,7 +18,7 @@ class PortStateConfig(Module):
         self.ip = "10.10.41.159"
         # path to the spec file
         self.spec_file_path = '../../../spec-file'
-        #self.loadConfig(attributes=('vtssip'))
+        self.loadConfig(attributes=('switchaddress'))
         # adding the message handler
         self.addMsgHandler(ConfigPortStateReq, self.hdlrMsg)
 
@@ -112,8 +112,7 @@ class PortStateConfig(Module):
             #  Set the port name in the response
             bpduPortState.namedPort = configPortState.namedPort
             #  Set the current port state
-            jsonPortState = vtss.callMethod(request=["mstp.status.interface.get", "%s" % (switchPortName[0],), 0])
-            bpduPortState.state = self.resolveState(jsonPortState['result']['PortState'])
+            bpduPortState.state = DISABLED
             #  Success is False
             bpduPortState.success = False
             #  Eror 1003: Port name does not exist in this setup
@@ -123,8 +122,7 @@ class PortStateConfig(Module):
             #  Set the port name in the response
             bpduPortState.namedPort = configPortState.namedPort
             #  Set the current port state
-            jsonPortState = vtss.callMethod(request=["mstp.status.interface.get", "%s" % (switchPortName[0],), 0])
-            bpduPortState.state = self.resolveState(jsonPortState['result']['PortState'])
+            bpduPortState.state = DISABLED
             #  Success is False
             bpduPortState.success = False
             #  Eror 1001: Port is not supported in this setup
