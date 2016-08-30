@@ -42,10 +42,9 @@ class HDDS(Module):
                 # IFE get messages are handled by the QTA running on the IFE VM
                 ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(msg)
                 if ifeVmQtaResponse.name == "HostDomainDeviceServiceResponse":
-                    if self.deserialize:
-                        deserializedResponse = HostDomainDeviceServiceResponse()
-                        deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
-                        ifeVmQtaResponse.body = deserializedResponse
+                    deserializedResponse = HostDomainDeviceServiceResponse()
+                    deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
+                    ifeVmQtaResponse.body = deserializedResponse
 
                     return ifeVmQtaResponse
                 else:
