@@ -1,3 +1,4 @@
+from time import sleep
 from Queue import Queue
 from subprocess import check_output
 
@@ -36,6 +37,10 @@ class IFEAnalogAudio(Module):
         self.commandLock = self.getNamedLock("commandLock")
         ## Queue for storing connect and disconnect requests
         self.requests = Queue()
+        ## Delay before running commands to give FPGA a break
+        self.commandDelay = 0.25
+        # Load configuration from config file
+        self.loadConfig(attributes=("commandDelay",))
         #  Add handler to available message handlers
         self.addMsgHandler(AnalogAudioRequest, self.handler)
         #  Add thread to handle the request queue
@@ -106,6 +111,7 @@ class IFEAnalogAudio(Module):
     #  @param   source      Source input
     #  @param   sink        Sink output
     def connect(self, source, sink):
+        sleep(self.commandDelay)
         self.disconnect(sink)
 
         # We don't currently allow multiple sinks per source, so disconnect if source is in use
@@ -115,6 +121,7 @@ class IFEAnalogAudio(Module):
                 self.disconnect(connSink)
                 break
 
+        sleep(self.commandDelay)
         #  If the connect commands succeed, add a connection between source input and sink output to self.connections
         if self.runPavaTest("-c loopback -s %i -d %i" % (self.inputs[source], self.outputs[sink])):
             self.connections[sink] = source

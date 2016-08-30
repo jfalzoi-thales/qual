@@ -99,6 +99,9 @@ czmq
 python-zmq
 protobuf-python
 
+# Most recent version of smartmontools
+smartmontools
+
 # Development Tools
 less
 pciutils
