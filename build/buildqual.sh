@@ -1,7 +1,7 @@
 #!/bin/bash
 
-QUALSRCDIR=/home/thales/qual/src
-MPSBUILDDIR=/home/thales/mps-builder
+QUALDIR=~/qual
+MPSBUILDDIR=~/mps-builder
 BUILD="QUAL"
 RPM="YES"
 
@@ -17,7 +17,7 @@ usage() {
 # Handle tito tag and build for qual
 titoqual () {
     echo "Building qual RPMs! ('-' )"
-    cd ${QUALSRCDIR}/
+    cd ${QUALDIR}/src
     tito init
     tito tag
     tito build --rpm --offline
@@ -26,7 +26,7 @@ titoqual () {
 # Build qual pxe image
 buildqual () {
     echo "(/*-*)/ Building qual images! \(*-*\)"
-    sudo cp ${QUALSRCDIR}/../build/pkgs-qual.inc.ks ${MPSBUILDDIR}/config/
+    cp ${QUALDIR}/build/mps-builder/config/pkgs-qual.inc.ks ${MPSBUILDDIR}/config/
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/dockerscripts/buildqual.script"
     cd ${MPSBUILDDIR}/bin/
     QUALPXE=`ls -t1 livecd-mps-qual-*.tftpboot.tar.gz | head -1`
@@ -35,7 +35,7 @@ buildqual () {
 # Build qual-sims pxe image
 buildsims () {
     echo "(/~-~)/ Building qual-sims images! \(~-~\)"
-    sudo cp ${QUALSRCDIR}/../build/pkgs-qual-sims.inc.ks ${MPSBUILDDIR}/config/pkgs-qual.inc.ks
+    cp ${QUALDIR}/build/mps-builder/config/pkgs-qual-sims.inc.ks ${MPSBUILDDIR}/config/pkgs-qual.inc.ks
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/dockerscripts/buildqual.script"
     cd ${MPSBUILDDIR}/bin/
     OLDSIMSPXE=`ls -t1 livecd-mps-qual-*.tftpboot.tar.gz | head -1`
@@ -45,8 +45,7 @@ buildsims () {
 
 # Builds qual-ife guest vm image
 buildife () {
-    echo "(/'-')/ Building qual-ife images! \('-'\)"
-    sudo cp ${QUALSRCDIR}/../build/pkgs-guest.inc.ks ${MPSBUILDDIR}/config/
+    echo "(/'-')/ Building qual-guest images! \('-'\)"
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/dockerscripts/buildguest.script"
     cd ${MPSBUILDDIR}/bin/
     GUESTVM=`ls -t1 livecd-mps-guest-*.vm.qcow2 | head -1`
@@ -83,9 +82,11 @@ if [ "$#" != 0 ]; then usage; fi
 
 set -e
 
+cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
+
 if [ $RPM == "YES" ]; then
     # Build main qual RPMs and copy into repo
-    cd ${QUALSRCDIR}/
+    cd ${QUALDIR}/
     echo "Please use your own Git credentials to log in. \(^^\) \(^^)/ (/^^)/"
     git fetch origin dev/QUAL
     git reset --hard FETCH_HEAD
@@ -97,7 +98,7 @@ if [ $RPM == "YES" ]; then
     sudo mv /tmp/tito/x86_64/* ${MPSBUILDDIR}/repo/packages/x86_64/
 
     # Build supplemental qual RPMs and copy into repo
-    cd ${QUALSRCDIR}/../thales
+    cd ${QUALDIR}/thales
     ./build.sh
     for file in /tmp/thales-rpms/*.rpm; do
         basepkg=`rpm -q --queryformat='%{NAME}' -p ${file}`
@@ -124,10 +125,7 @@ case $BUILD in
      "ALL") buildqual; buildsims;;
 esac
 
-echo "Built guest-vm image: $GUESTVM"
-echo "Built guest-vm rpm: $GUESTVMRPM"
-
-if [ $BUILD != "SIMS" ]; then 
+if [ $BUILD != "SIMS" ]; then
     echo "Built qual PXE image: $QUALPXE"
 fi
 
