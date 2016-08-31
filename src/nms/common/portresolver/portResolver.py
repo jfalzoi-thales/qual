@@ -1,3 +1,9 @@
+import os
+import ConfigParser
+
+# Config file path
+conf_path = '/thales/host/config/system/system.conf'
+
 #  Dictionary with the statics port names
 portNames = {
     'external.enet_1' :('Gi 1/14',True),
@@ -55,6 +61,21 @@ def resolvePort(portName):
     #  Look for the name into keys
     name = portNames[portName] if portName in portNames.keys() else None
 
-    # TODO: add here the other ways to resolve the name, once we get the document
+    # If name is None, we might be able to resolve it with the config file
+    if os.path.exists(conf_path):
+        conf = ConfigParser.SafeConfigParser()
+        # Read the file
+        conf.read(conf_path)
+        # See if file has the network section
+        if conf.has_section(section='network'):
+            # Get all touples in network section
+            configs = conf.items(section='network')
+            # Get the port names of the network section
+            names = [x[1] for x in configs]
+            # Loor for the name into the port names
+            for aux in names:
+                if aux in portNames.keys():
+                    name = portNames[aux]
+                    break
 
     return name
