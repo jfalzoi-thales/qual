@@ -11,7 +11,7 @@ class Vtss(object):
     #  @param: self
     #  @type:  str
     #  @param: switchIP - IP of the switch
-    def __init__(self, switchIP=None, user='admin', password='', specFile='vtss-spec-rpc.spec'):
+    def __init__(self, switchIP=None, user='admin', password='', specFile='mps-vtss-spec-rpc.spec'):
         #  IP of the switch
         self.ip = switchIP
         #  User name
