@@ -20,7 +20,7 @@ titoqual () {
     cd ${QUALDIR}/src
     tito init
 
-    if NEWTAG == "YES"; then tito tag; fi
+    if [ "$NEWTAG" == "YES" ]; then tito tag; fi
 
     VERSION=`cat ${QUALDIR}/.tito/packages/qual | cut -f 1 -d ' '`
     tito build --rpm --tag=qual-${VERSION} --offline
@@ -102,7 +102,7 @@ git clean -df
 rm -rf /tmp/tito
 titoqual
 
-if NEWTAG == "YES"; then
+if [ "$NEWTAG" == "YES" ]; then
     git push --tags origin dev/QUAL
 fi
 
