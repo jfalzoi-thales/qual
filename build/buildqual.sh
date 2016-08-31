@@ -3,12 +3,12 @@
 QUALDIR=~/qual
 MPSBUILDDIR=~/mps-builder
 BUILD="QUAL"
-RPM="YES"
+NEWTAG="NO"
 
 # Display buildqual command usage
 usage() {
     echo "Unrecognized parameter specified.  Accepted parameters are:
-                -n|--norpm 	- builds images without re-building RPMs
+                -n|--newtag	- builds RPMs with a new tag
                 -s|--sims	- builds only qual-sims image
                 -a|--all 	- builds both qual and qual-sims images"
     exit 1
@@ -19,8 +19,11 @@ titoqual () {
     echo "Building qual RPMs! ('-' )"
     cd ${QUALDIR}/src
     tito init
-    tito tag
-    tito build --rpm --offline
+
+    if NEWTAG == "YES"; then tito tag; fi
+
+    VERSION=`cat ${QUALDIR}/.tito/packages/qual | cut -f 1 -d ' '`
+    tito build --rpm --tag=qual-${VERSION} --offline
 }
 
 # Build qual pxe image
@@ -29,7 +32,10 @@ buildqual () {
     cp ${QUALDIR}/build/mps-builder/config/pkgs-qual.inc.ks ${MPSBUILDDIR}/config/
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/dockerscripts/buildqual.script"
     cd ${MPSBUILDDIR}/bin/
-    QUALPXE=`ls -t1 livecd-mps-qual-*.tftpboot.tar.gz | head -1`
+    OLDQUALPXE=`ls -t1 livecd-mps-qual-*.tftpboot.tar.gz | head -1`
+    TIMESTAMP=`echo ${OLDQUALPXE} | cut -f 4 -d '-'`
+    NEWQUALPXE=livecd-mps-qual-${VERSION}-${TIMESTAMP}.tftpboot.tar.gz
+    sudo mv ${MPSBUILDDIR}/bin/${OLDQUALPXE} ${MPSBUILDDIR}/bin/${NEWQUALPXE}
 }
 
 # Build qual-sims pxe image
@@ -39,7 +45,8 @@ buildsims () {
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/dockerscripts/buildqual.script"
     cd ${MPSBUILDDIR}/bin/
     OLDSIMSPXE=`ls -t1 livecd-mps-qual-*.tftpboot.tar.gz | head -1`
-    NEWSIMSPXE=${OLDSIMSPXE/livecd-mps-qual/livecd-mps-qual-sims}
+    TIMESTAMP=`echo ${OLDSIMSPXE} | cut -f 4 -d '-'`
+    NEWSIMSPXE=livecd-mps-qual-sims-${VERSION}-${TIMESTAMP}.tftpboot.tar.gz
     sudo mv ${MPSBUILDDIR}/bin/${OLDSIMSPXE} ${MPSBUILDDIR}/bin/${NEWSIMSPXE}
 }
 
@@ -48,24 +55,26 @@ buildife () {
     echo "(/'-')/ Building qual-guest images! \('-'\)"
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/dockerscripts/buildguest.script"
     cd ${MPSBUILDDIR}/bin/
-    GUESTVM=`ls -t1 livecd-mps-guest-*.vm.qcow2 | head -1`
     GUESTVMRPM=`ls -t1 mps-guest-vm-*.x86_64.rpm | head -1`
+    sudo mv ${MPSBUILDDIR}/bin/mps-guest-vm-*.rpm ${MPSBUILDDIR}/repo/packages/x86_64/
+    sudo createrepo --update ${MPSBUILDDIR}/repo/packages/
+    sudo rm -f ${MPSBUILDDIR}/bin/*guest*
 }
 
 
 # Check for parameters: 
-# if none,	build only qual image 
-# if norpm,	build images without re-building RPMs
-# if sims,	build only sims image 
-# if all,	build both
-TEMP=`getopt -o nsa --long norpm,sims,all -n 'buildqual.sh' -- "$@" 2>/dev/null`
+# if none,	    build only qual image
+# if new RPM,	build RPMs with a new tag
+# if sims,	    build only sims image
+# if all,	    build both
+TEMP=`getopt -o nsa --long newtag,sims,all -n 'buildqual.sh' -- "$@" 2>/dev/null`
 if [ "$?" != 0 ]; then usage; fi
 eval set -- "$TEMP"
 
 while true ; do
     case "$1" in
-        -n|--norpm)
-            RPM="NO"
+        -n|--newtag)
+            NEWTAG="YES"
             shift;;
         -s|--sims)
             BUILD="SIMS"
@@ -84,49 +93,47 @@ set -e
 
 cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
 
-if [ $RPM == "YES" ]; then
-    # Build main qual RPMs and copy into repo
-    cd ${QUALDIR}/
-    echo "Please use your own Git credentials to log in. \(^^\) \(^^)/ (/^^)/"
-    git fetch origin dev/QUAL
-    git reset --hard FETCH_HEAD
-    git clean -df
-    rm -rf /tmp/tito
-    titoqual
-    git push origin dev/QUAL
-    sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/qual-*.rpm
-    sudo mv /tmp/tito/x86_64/* ${MPSBUILDDIR}/repo/packages/x86_64/
+# Build main qual RPMs and copy into repo
+cd ${QUALDIR}/
+echo "Please use your own Git credentials to log in. \(^^\) \(^^)/ (/^^)/"
+git fetch origin dev/QUAL
+git reset --hard FETCH_HEAD
+git clean -df
+rm -rf /tmp/tito
+titoqual
+git push --tags origin dev/QUAL
+sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/qual-*.rpm
+sudo mv /tmp/tito/x86_64/* ${MPSBUILDDIR}/repo/packages/x86_64/
 
-    # Build supplemental qual RPMs and copy into repo
-    cd ${QUALDIR}/thales
-    ./build.sh
-    for file in /tmp/thales-rpms/*.rpm; do
-        basepkg=`rpm -q --queryformat='%{NAME}' -p ${file}`
-        sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/${basepkg}-[0-9]*.rpm
-    done
-    sudo mv /tmp/thales-rpms/*.rpm ${MPSBUILDDIR}/repo/packages/x86_64/
+# Build supplemental qual RPMs and copy into repo
+cd ${QUALDIR}/thales
+./build.sh
 
-    # Build 3rdParty qual RPMs and copy into repo
-    cd ${QUALDIR}/3rdParty
-    ./build.sh
-    for file in /tmp/3rdParty-rpms/*.rpm; do
-        basepkg=`rpm -q --queryformat='%{NAME}' -p ${file}`
-        sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/${basepkg}-[0-9]*.rpm
-    done
-    sudo mv /tmp/3rdParty-rpms/*.rpm ${MPSBUILDDIR}/repo/packages/x86_64/
+for file in /tmp/thales-rpms/*.rpm; do
+    basepkg=`rpm -q --queryformat='%{NAME}' -p ${file}`
+    sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/${basepkg}-[0-9]*.rpm
+done
 
-    # Update the repo before we build the guest VM image
-    cd
-    sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/mps-guest-vm-*.rpm
-    sudo createrepo --update ${MPSBUILDDIR}/repo/packages/
+sudo mv /tmp/thales-rpms/*.rpm ${MPSBUILDDIR}/repo/packages/x86_64/
 
-    # Build guest-vm RPM and store in repo
-    sudo rm -f ${MPSBUILDDIR}/bin/mps-guest-vm-*.rpm
-    buildife
-    sudo rm -f ${MPSBUILDDIR}/bin/guest-vm*
-    sudo cp ${MPSBUILDDIR}/bin/mps-guest-vm-*.rpm ${MPSBUILDDIR}/repo/packages/x86_64/
-    sudo createrepo --update ${MPSBUILDDIR}/repo/packages/
-fi
+# Build 3rdParty qual RPMs and copy into repo
+cd ${QUALDIR}/3rdParty
+./build.sh
+
+for file in /tmp/3rdParty-rpms/*.rpm; do
+    basepkg=`rpm -q --queryformat='%{NAME}' -p ${file}`
+    sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/${basepkg}-[0-9]*.rpm
+done
+
+sudo mv /tmp/3rdParty-rpms/*.rpm ${MPSBUILDDIR}/repo/packages/x86_64/
+
+# Update the repo before we build the guest VM image
+cd
+sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/mps-guest-vm-*.rpm
+sudo createrepo --update ${MPSBUILDDIR}/repo/packages/
+
+# Build guest-vm RPM and store in repo
+buildife
 
 case $BUILD in
     "QUAL") buildqual;;
@@ -135,7 +142,7 @@ case $BUILD in
 esac
 
 if [ $BUILD != "SIMS" ]; then
-    echo "Built qual PXE image: $QUALPXE"
+    echo "Built qual PXE image: $NEWQUALPXE"
 fi
 
 if [ $BUILD != "QUAL" ]; then 
