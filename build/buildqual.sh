@@ -106,6 +106,15 @@ if [ $RPM == "YES" ]; then
     done
     sudo mv /tmp/thales-rpms/*.rpm ${MPSBUILDDIR}/repo/packages/x86_64/
 
+    # Build 3rdParty qual RPMs and copy into repo
+    cd ${QUALDIR}/3rdParty
+    ./build.sh
+    for file in /tmp/3rdParty-rpms/*.rpm; do
+        basepkg=`rpm -q --queryformat='%{NAME}' -p ${file}`
+        sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/${basepkg}-[0-9]*.rpm
+    done
+    sudo mv /tmp/3rdParty-rpms/*.rpm ${MPSBUILDDIR}/repo/packages/x86_64/
+
     # Update the repo before we build the guest VM image
     cd
     sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/mps-guest-vm-*.rpm
