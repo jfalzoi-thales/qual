@@ -18,7 +18,7 @@ class PortStateConfig(Module):
         self.ip = "10.10.41.159"
         # path to the spec file
         self.spec_file_path = '../../../spec-file'
-        self.loadConfig(attributes=('switchaddress'))
+        self.loadConfig(attributes=('switchAddress'))
         # adding the message handler
         self.addMsgHandler(ConfigPortStateReq, self.hdlrMsg)
 
