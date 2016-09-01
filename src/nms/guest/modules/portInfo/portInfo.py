@@ -54,6 +54,7 @@ class PortInfo(Module):
                     if "*" in keyParts:
                         self.wild(response, keyParts)
                     else:
+                        self.ethCache = {}
                         name = '.'.join(keyParts[:-1])
                         port = resolvePort(name)
 
@@ -93,6 +94,7 @@ class PortInfo(Module):
     def wild(self, response, keyParts):
         if keyParts[0] == "*":
             for name in portNames:
+                self.ethCache = {}
                 port = resolvePort(name)
 
                 if port[1]:
@@ -108,6 +110,7 @@ class PortInfo(Module):
                     else:
                         self.inside(response, name, keyParts[-1], port[0])
         else:
+            self.ethCache = {}
             name = '.'.join(keyParts[:-1])
             port = resolvePort(name)
 
@@ -141,9 +144,7 @@ class PortInfo(Module):
     #  @param     config  Configuration for this module instance
     def tempFunc(self, response, keyParts, port, field):
         print "Called placeholder function! \o/"
-        response.add()
         response.values.success = True
-        response.values.keyValue.key = '.'.join(keyParts)
         response.values.keyValue.value = "YAY SUCCESS"
 
     ## Constructor
@@ -151,11 +152,19 @@ class PortInfo(Module):
     #  @param     config  Configuration for this module instance
     def runIpLinkShow(self, response, port, field):
         try:
-            out = subprocess.check_output(["ip", "link", "show", port])
-            response.values.success = True
-            response.values.keyValue.value = out.split()[field]
+            #  The logic at the end removes unnecessary info from the front and splits by line
+            out = subprocess.check_output(["ip", "link", "show", port]).split('> ')[-1].split('\n')
+            data =[]
+            count = 0
+
+            for line in out:
+                data += line.strip().split()
+
+            while count < len(data):
+                self.ipLinkCache[data[count]] = data[count + 1]
+                count += 2
         except:
-            self.error(response, 1005)
+            self.ipLinkCache = {}
 
     ## Constructor
     #  @param     self
@@ -186,7 +195,7 @@ class PortInfo(Module):
         if not self.ethCache:
             self.runEthtool(port)
 
-        if self.ethCache:
+        if field in self.ethCache:
             response.values.success = True
 
             if field == "Speed":
