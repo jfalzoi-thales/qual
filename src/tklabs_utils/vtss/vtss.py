@@ -2,6 +2,7 @@ import os
 import json
 import httplib
 import base64
+import ssl
 from exception_Vtss import MethodNotFoundException, WrongParamException
 
 ## Class to handle wrap the VTSS switch interface
@@ -34,7 +35,7 @@ class Vtss(object):
 
         if not os.path.exists(self.specFile) or update:
             #  Init the connection
-            http = httplib.HTTPConnection(self.ip, 80)
+            http = httplib.HTTPSConnection(self.ip, 443, context=ssl._create_default_https_context())
 
             ## Get the json specs
             auth = base64.b64encode(bytes('%s:%s' % (self.user, self.password,)).decode('utf-8'))
@@ -142,7 +143,7 @@ class Vtss(object):
     #  @param: post
     def postRequest(self, post):
         #  Init the connection
-        http = httplib.HTTPConnection(self.ip, 80)
+        http = httplib.HTTPSConnection(self.ip, 443, context=ssl._create_default_https_context())
         ## Get the json specs
         auth = base64.b64encode(bytes('%s:%s' % (self.user, self.password,)).decode('utf-8'))
         header = {'Authorization': 'Basic %s' % auth, 'Content-type': 'application/json'}
