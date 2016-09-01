@@ -1,6 +1,7 @@
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp
+from common.pb2.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 

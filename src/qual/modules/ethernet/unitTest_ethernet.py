@@ -1,10 +1,12 @@
 import unittest
 from time import sleep
+
 import ethernet
-from common.gpb.python.Ethernet_pb2 import EthernetRequest, EthernetResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger import logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.Ethernet_pb2 import EthernetRequest, EthernetResponse
+from tklabs_utils.logger import logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 

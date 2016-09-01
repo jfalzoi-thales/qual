@@ -1,10 +1,12 @@
-import unittest
 import time
-from qual.modules.memorybandwidth.memorybandwidth import MemoryBandwidth
-from common.gpb.python.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
+import unittest
+
+from memorybandwidth import MemoryBandwidth
+from qual.pb2.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 

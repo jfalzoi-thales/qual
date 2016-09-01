@@ -1,10 +1,10 @@
-
-import sys
 import os
-from common.logger import logger
-from common.tzmq.ThalesZMQServer import ThalesZMQServer
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.ARINC429Driver_pb2 import Request, Response
+import sys
+
+from common.pb2.ARINC429Driver_pb2 import Request, Response
+from tklabs_utils.logger import logger
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
 
 
 ## Input info container class

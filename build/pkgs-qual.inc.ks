@@ -39,6 +39,7 @@ zip
 # kernel modules
 kmod-i2c-mcp2221
 kmod-e1000e
+kmod-igb
 
 # mps config, tools and libs
 mps-config
@@ -54,7 +55,6 @@ libsema
 sema-driver
 
 # FTDI driver
-libftd2xx
 libftdi
 
 # IFE card Drivers and Tools
@@ -99,12 +99,15 @@ czmq
 python-zmq
 protobuf-python
 
+# Most recent version of smartmontools
+smartmontools
+
 # Development Tools
 less
 pciutils
 strace
 usbutils
-setserial
+minicom
 
 # Qual
 qual

@@ -1,7 +1,8 @@
-from common.logger import logger
-from common.tzmq.ThalesZMQServer import ThalesZMQServer
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp, FAILURE_INVALID_KEY
+from common.pb2.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp, FAILURE_INVALID_KEY
+from tklabs_utils.logger import logger
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
+
 
 ## HDDS Simulator class
 # Implements a subset of the Host Domain Device Service, as specified

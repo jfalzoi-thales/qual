@@ -1,8 +1,7 @@
-
-from common.logger import logger
-from common.tzmq.ThalesZMQServer import ThalesZMQServer
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.GPIOManager_pb2 import RequestMessage, ResponseMessage, INPUT, OUTPUT
+from common.pb2.GPIOManager_pb2 import RequestMessage, ResponseMessage, INPUT, OUTPUT
+from tklabs_utils.logger import logger
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
 
 
 ## GPIO Manager Simulator class

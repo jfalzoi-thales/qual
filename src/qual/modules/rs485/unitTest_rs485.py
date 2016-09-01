@@ -1,11 +1,12 @@
-import unittest
 import time
+import unittest
 
-from qual.modules.rs485.rs485 import Rs485
-from common.gpb.python.RS485_pb2 import RS485Request, RS485Response
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.RS485_pb2 import RS485Request, RS485Response
+from rs485 import Rs485
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 
