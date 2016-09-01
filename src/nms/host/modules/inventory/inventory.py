@@ -1,3 +1,5 @@
+import os.path
+
 from nms.host.pb2.nms_host_api_pb2 import InventoryReq, InventoryResp, FAILURE_TO_OBTAIN_INVENTORY
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -14,9 +16,15 @@ class Inventory(Module):
         super(Inventory, self).__init__(config)
 
         ## Ethernet device for I350
-        self.ethDevice = "TEST_FILE"
+        self.i350EthernetDev = "ens1f"
         # Load configuration from config file
-        self.loadConfig(attributes=("ethDevice",))
+        self.loadConfig(attributes=("i350EthernetDev",))
+
+        # Determine if device exists; if not, fall back to file mode
+        self.ethDevice = self.i350EthernetDev + "0"
+        if not os.path.exists("/sys/class/net/%s" % self.ethDevice):
+            self.log.warning("Ethernet device %s not found; using TEST_FILE mode" % self.ethDevice)
+            self.ethDevice = "TEST_FILE"
 
         ## Map two-character VPD field names to HDDS field names
         self.vpdToHDDS = {"PN": "part_number",
@@ -41,18 +49,21 @@ class Inventory(Module):
     #  @return    a ThalesZMQMessage object containing the response message
     def handleMsg(self, msg):
         response = InventoryResp()
-        success = self.readAndParseVPD()
-        if not success:
-            self.log.error("Failure reading VPD")
+        response.success = self.readAndParseVPD()
+        if not response.success:
+            self.log.error("Read VPD from I350 device failed")
             response.error.error_code = FAILURE_TO_OBTAIN_INVENTORY
-            response.error.description = "Read VPD from EEPROM failed"
-            return
-
-        response.success = True
-        for key, value in self.vpd.vpdEntries.items():
-            kv = response.values.add()
-            kv.key = self.vpdToHDDS[key]
-            kv.value = value
+            response.error.error_description = "Unable to read carrier card inventory from device"
+        elif len(self.vpd.vpdEntries) == 0:
+            self.log.error("No valid VPD data found on I350 device")
+            response.error.error_code = FAILURE_TO_OBTAIN_INVENTORY
+            response.error.error_description = "No carrier card inventory data found"
+        else:
+            for key, value in self.vpd.vpdEntries.items():
+                valueResp = response.values.add()
+                valueResp.success = True
+                valueResp.keyValue.key = self.vpdToHDDS[key]
+                valueResp.keyValue.value = value
 
         return ThalesZMQMessage(response)
 
@@ -75,7 +86,6 @@ class Inventory(Module):
     #  @param  self
     #  @return VPD data
     def readVPD(self):
-        vpdBytes = None
         if self.ethDevice == "TEST_FILE":
             vpdFile = "/tmp/vpd.bin"
         else:
@@ -87,7 +97,8 @@ class Inventory(Module):
             fh.close()
         except IOError:
             self.log.error("Unable to read VPD file")
+            return None
         if len(vpdBytes) <= 1:
             self.log.error("Short read from VPD file")
-            vpdBytes = None
+            return None
         return vpdBytes
