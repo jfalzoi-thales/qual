@@ -18,7 +18,7 @@ while true ; do
     case "$1" in
         -i|--iperf) 
             IPADDR="$2"
-            sed -i.bak 's/10.10.42.231/'"$IPADDR"'/g' ${ETHPATH}/unitTest_ethernet.py
+            sed -i.bak 's/10.10.41.115/'"$IPADDR"'/g' ${ETHPATH}/unitTest_ethernet.py
             shift 2;;
         --)
             shift; break;;
