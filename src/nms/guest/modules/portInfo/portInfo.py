@@ -16,23 +16,23 @@ class PortInfo(Module):
         ## Named tuple for storing key functions and parsing fields
         self.keyInfo = collections.namedtuple("keyInfo", "func field")
         ## Dict containing possible keys and their functions for internal ports
-        self.insidePortFuncs = {"shutdown":           self.keyInfo(self.runIpLinkShow, 8),
-                                  "speed":              self.keyInfo(self.getEthdata, "Speed"),
-                                  "configured_speed":   self.keyInfo(self.getEthdata, "Auto-negotiation"),
-                                  "flow_control":       self.keyInfo(self.runEthtoola, 0),
-                                  "MTU":                self.keyInfo(self.runIpLinkShow, 4),
-                                  "link":               self.keyInfo(self.getEthdata, "Link detected"),
-                                  "vlan_id":            self.keyInfo(self.runFakeVlan, 1337),
-                                  "BPDU_state":         self.keyInfo(self.unsupported, 0)}
+        self.insidePortFuncs = {"shutdown":             self.keyInfo(self.runIpLinkShow, "state"),
+                                "speed":                self.keyInfo(self.getEthData, "Speed"),
+                                "configured_speed":     self.keyInfo(self.getEthData, "Auto-negotiation"),
+                                "flow_control":         self.keyInfo(self.runEthtoola, 0),
+                                "MTU":                  self.keyInfo(self.getIpLinkData, "mtu"),
+                                "link":                 self.keyInfo(self.getEthData, "Link detected"),
+                                "vlan_id":              self.keyInfo(self.runFakeVlan, 1337),
+                                "BPDU_state":           self.keyInfo(self.unsupported, 0)}
         ## Dict containing possible keys and their functions for external ports
-        self.outsidePortFuncs = {"shutdown":           self.keyInfo(self.tempFunc, 0),
-                                  "speed":              self.keyInfo(self.tempFunc, 0),
-                                  "configured_speed":   self.keyInfo(self.tempFunc, 0),
-                                  "flow_control":       self.keyInfo(self.tempFunc, 0),
-                                  "MTU":                self.keyInfo(self.tempFunc, 0),
-                                  "link":               self.keyInfo(self.tempFunc, 0),
-                                  "vlan_id":            self.keyInfo(self.tempFunc, 0),
-                                  "BPDU_state":         self.keyInfo(self.tempFunc, 0)}
+        self.outsidePortFuncs = {"shutdown":            self.keyInfo(self.tempFunc, 0),
+                                 "speed":               self.keyInfo(self.tempFunc, 0),
+                                 "configured_speed":    self.keyInfo(self.tempFunc, 0),
+                                 "flow_control":        self.keyInfo(self.tempFunc, 0),
+                                 "MTU":                 self.keyInfo(self.tempFunc, 0),
+                                 "link":                self.keyInfo(self.tempFunc, 0),
+                                 "vlan_id":             self.keyInfo(self.tempFunc, 0),
+                                 "BPDU_state":          self.keyInfo(self.tempFunc, 0)}
         ## Dict for storing relevant output from Ethtool calls
         self.ethCache = {}
         ## Dict for storing relevant output from IpLinkShow calls
@@ -150,12 +150,12 @@ class PortInfo(Module):
     ## Constructor
     #  @param     self
     #  @param     config  Configuration for this module instance
-    def runIpLinkShow(self, response, port, field):
+    def runIpLinkShow(self, port):
         try:
+            data = []
+            count = 0
             #  The logic at the end removes unnecessary info from the front and splits by line
             out = subprocess.check_output(["ip", "link", "show", port]).split('> ')[-1].split('\n')
-            data =[]
-            count = 0
 
             for line in out:
                 data += line.strip().split()
@@ -165,6 +165,26 @@ class PortInfo(Module):
                 count += 2
         except:
             self.ipLinkCache = {}
+
+    ## Constructor
+    #  @param     self
+    #  @param     config  Configuration for this module instance
+    def getIpLinkData(self, response, port, field):
+        if not self.ipLinkCache:
+            self.runIpLinkShow(port)
+
+        if field in self.ipLinkCache:
+            response.values.success = True
+
+            if field == "state":
+                state = "POWERED" if self.ipLinkCache[field] == "UP" else "SHUTDOWN"
+                response.values.keyValue.value = state
+            elif field == "mtu":
+                response.values.keyValue.value = bytes(self.ipLinkCache[field])
+            else:
+                self.error(response, 1005)
+        else:
+            self.error(response, 1005)
 
     ## Constructor
     #  @param     self
@@ -183,7 +203,7 @@ class PortInfo(Module):
     ## Constructor
     #  @param     self
     #  @param     config  Configuration for this module instance
-    def getEthdata(self, response, port, field):
+    def getEthData(self, response, port, field):
         portSpeed = {"10" : "FORCE10MODE",
                      "100" : "FORCE100MODE",
                      "1000" : "FORCE1GMODE",
@@ -209,8 +229,11 @@ class PortInfo(Module):
                     speed = portSpeed[self.ethCache["Speed"].rstrip('Mb/s')]
                     duplex = "FDX" if self.ethCache["Duplex"] == "Full" else "HDX"
                     response.values.keyValue.value = speed + duplex
+            elif field == "Link detected":
+                link = "LINK_UP" if self.ethCache[field] == "yes" else "LINK_DOWN"
+                response.values.keyValue.value = link
             else:
-                response.values.keyValue.value = self.ethCache[field]
+                self.error(response, 1005)
         else:
             self.error(response, 1005)
 
