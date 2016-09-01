@@ -32,6 +32,11 @@ echo "Checking out tag ${MPSBUILDTAG}"
 cd ${MPSBUILDDIR}
 git checkout -q --detach tags/${MPSBUILDTAG}
 
+# Build docker container if not available
+docker images | grep -q ^mps/mpsbuilder
+if [ "$?" != 0 ]; then
+    docker build -t mps/mpsbuilder:centos7 dockerfile/
+fi
 
 echo "Applying mps-builder changes for Qual"
 cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
