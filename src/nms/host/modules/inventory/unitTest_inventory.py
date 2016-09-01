@@ -1,5 +1,6 @@
 import unittest
 
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from inventory import Inventory
 from nms.host.pb2.nms_host_api_pb2 import InventoryReq
 from tklabs_utils.logger.logger import Logger
@@ -59,6 +60,7 @@ class Test_Inventory(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    ConfigurableObject.setFilename("HNMS")
     unittest.main()
 
 ## @endcond
