@@ -50,7 +50,7 @@ portNames = {
 }
 
 # If name is None, we might be able to resolve it with the config file
-names = []
+configurablesPortNames = {}
 if os.path.exists(conf_path):
     conf = ConfigParser.SafeConfigParser()
     # Read the file
@@ -59,8 +59,12 @@ if os.path.exists(conf_path):
     if conf.has_section(section='network'):
         # Get all touples in network section
         configs = conf.items(section='network')
-        # Get the port names of the network section
-        names = [x[1] for x in configs]
+        # Get the port names of the network section.
+        # and create the dictionary with the actual port names
+        for aux in configs:
+            configurablesPortNames[aux[0]]=aux[1]
+
+
 
 ## Resolves the VTSS switch port number according with the string passed
 #
@@ -70,14 +74,10 @@ if os.path.exists(conf_path):
 #  @return: port name to the switch. Eg: "Gi 1/25" or "Gi 14/25"
 #  @notes: If return None, no port name found
 def resolvePort(portName):
+    portName = portName.lower()
     #  Look for the name into keys
     name = portNames[portName] if portName in portNames.keys() else None
-
-    # Loor for the name into the port names
-    if names != []:
-        for aux in names:
-            if aux in portNames.keys():
-                name = portNames[aux]
-                break
+    # if no name was found, try into the conf file
+    name = portNames[configurablesPortNames[portName]] if name == None and portName in configurablesPortNames.keys() else None
 
     return name
