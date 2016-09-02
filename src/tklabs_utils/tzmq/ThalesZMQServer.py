@@ -17,7 +17,7 @@ class ThalesZMQServer(object):
     # @param msgParts      Number of message parts for both request and response
     # @param requestParts  Number of message parts for request
     # @param responseParts Number of message parts for response
-    def __init__(self, address, msgParts=3, requestParts=0, responseParts=0):
+    def __init__(self, address, msgParts=3, requestParts=0, responseParts=0, allowNoBody=False):
         ## Logger implementation, based on standard python logger
         self.log = Logger(type(self).__name__)
         ## ZMQ address for socket to bind to
@@ -26,6 +26,8 @@ class ThalesZMQServer(object):
         self.requestParts = requestParts if requestParts > 0 else msgParts
         ## Number of message parts to use for response
         self.responseParts = responseParts if responseParts > 0 else msgParts
+        ## Whether to allow messages with no body
+        self.allowNoBody = allowNoBody
         ## Default request name, used for single-part messages
         self.defaultRequestName = "Request"
         ## ZMQ context
@@ -50,13 +52,16 @@ class ThalesZMQServer(object):
             response = None
 
             # Check the message has the expected number of parts
-            if len(requestData) == self.requestParts:
+            if len(requestData) == self.requestParts or (self.allowNoBody and len(requestData) == 2 and self.requestParts == 3):
                 # Package request data into a message object, handling the different message formats
                 if self.requestParts == 3:
                     # "Thales Common Network Messaging" format has 3 parts: name, header, body
                     request = ThalesZMQMessage(name=str(requestData[0]))
                     request.header.ParseFromString(requestData[1])
-                    request.serializedBody = requestData[2]
+                    if len(requestData) == 3:
+                        request.serializedBody = requestData[2]
+                    else:
+                        self.log.info("Message had no body, allowed since allowNoBody=True")
                 elif self.requestParts == 2:
                     # Two-part messages have a name and a body
                     request = ThalesZMQMessage(name=str(requestData[0]))
