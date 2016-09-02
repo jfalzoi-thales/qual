@@ -26,7 +26,7 @@ class Vtss(object):
     #
     #  @type:  str
     #  @param: path - path to save the spec file. If not passed, 'cwd' will be used
-    def downloadSpecFiles(self, path="", update=False):
+    def downloadSpecFiles(self, path="/tmp", update=False):
         if path != "":
             #  Check if valid path
             if not os.path.exists(path):

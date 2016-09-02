@@ -15,7 +15,7 @@ portNames = {
     'external.enet_13':('Gi 1/3',True),
     'external.enet_14':('Gi 1/2',True),
     'external.enet_15':('Gi 1/1',True),
-    'external.front_panel':('unkown', False),
+    'external.front_panel':('Gi 1/16', False),
     #  Internal port names
     'internal.switch_1' :('Gi 1/1',True),
     'internal.switch_2' :('Gi 1/2',True),
