@@ -1,3 +1,5 @@
+from time import sleep
+
 from common.pb2.PowerInfo_pb2 import GetPowerInfo, PowerInfo
 from tklabs_utils.logger import logger
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -20,7 +22,7 @@ from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
 class PowerSupplyMonSimulator(ThalesZMQServer):
     def __init__(self):
         super(PowerSupplyMonSimulator, self).__init__(address="ipc:///tmp/pwr-supp-mon.sock",
-                                                      msgParts=2)
+                                                      requestParts=2, responseParts=1)
 
         # Turn down ThalesZMQServer debug level
         self.log.setLevel(logger.INFO)
@@ -35,11 +37,11 @@ class PowerSupplyMonSimulator(ThalesZMQServer):
                                          "EXT_TEMP":                     "33.3",
                                          "INT_TEMP":                     "44.4",
                                          "VCC":                          "5.0"},
-                           "LTC2990-2": {"VOLTAGE":                      "4.2",
-                                         "CURRENT":                      "1234.5",
+                           "LTC2990-2": {"VOLTAGE":                      "28.234",
+                                         "CURRENT":                      "1.2345",
                                          "EXT_TEMP":                     "33.3",
                                          "INT_TEMP":                     "44.4",
-                                         "VCC":                          "5.0"},
+                                         "VCC":                          "3.33"},
                            "LTC2990-3": {"VOLTAGE":                      "4.3",
                                          "CURRENT":                      "1234.5",
                                          "EXT_TEMP":                     "33.3",
@@ -96,19 +98,33 @@ class PowerSupplyMonSimulator(ThalesZMQServer):
             powerInfo = PowerInfo()
 
             if getPowerInfo.name == "":
-                # Empty device name means return all params for all devices
+                # Empty device name means return all properties for all devices
                 powerInfo.errorCode = PowerInfo.SUCCESS
                 for name in self.properties.keys():
                     self.AddAllToResponse(name, powerInfo)
             elif getPowerInfo.name in self.properties:
-                # For now, don't allow retrieving specific values, only all values for a device
-                powerInfo.errorCode = PowerInfo.SUCCESS
-                self.AddAllToResponse(getPowerInfo.name, powerInfo)
+                if getPowerInfo.key == "":
+                    # Empty key means return all properties for specified device
+                    powerInfo.errorCode = PowerInfo.SUCCESS
+                    self.AddAllToResponse(getPowerInfo.name, powerInfo)
+                else:
+                    # Return single property
+                    deviceProps = self.properties[getPowerInfo.name]
+                    if getPowerInfo.key in deviceProps:
+                        powerInfo.errorCode = PowerInfo.SUCCESS
+                        valueResp = powerInfo.values.add()
+                        valueResp.name = getPowerInfo.name
+                        valueResp.key = getPowerInfo.key
+                        valueResp.value = deviceProps[getPowerInfo.key]
+                    else:
+                        print "Get request for unknown key:", getPowerInfo.key
+                        powerInfo.errorCode = PowerInfo.INVALID_KEY
             else:
                 print "Get request for unknown device:", getPowerInfo.name
                 powerInfo.errorCode = PowerInfo.INVALID_DEVICE_NAME
 
-            # Send response back to client
+            # Send response back to client, sleeping a bit first because real PSM can be slow
+            sleep(0.3)
             return ThalesZMQMessage(powerInfo)
 
         else:

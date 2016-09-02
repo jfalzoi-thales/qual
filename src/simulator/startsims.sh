@@ -14,7 +14,7 @@ python simulator/pwrsupp/pwrSuppMonSim.py &
 python simulator/sema/semaDrvSim.py &
 
 # Only start HDDS simulator if real HDDS is not running
-REALHDDS=`ps x | grep HDDS | grep -v grep`
+REALHDDS=`ps ax | grep HDDS | grep -v grep`
 if [ -z "$REALHDDS" ]; then
     python simulator/hdds/hddsSim.py &
 fi
