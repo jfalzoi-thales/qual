@@ -49,6 +49,18 @@ portNames = {
     'internal.i350_4'   :('ens1f3',False)
 }
 
+# If name is None, we might be able to resolve it with the config file
+names = []
+if os.path.exists(conf_path):
+    conf = ConfigParser.SafeConfigParser()
+    # Read the file
+    conf.read(conf_path)
+    # See if file has the network section
+    if conf.has_section(section='network'):
+        # Get all touples in network section
+        configs = conf.items(section='network')
+        # Get the port names of the network section
+        names = [x[1] for x in configs]
 
 ## Resolves the VTSS switch port number according with the string passed
 #
@@ -61,21 +73,11 @@ def resolvePort(portName):
     #  Look for the name into keys
     name = portNames[portName] if portName in portNames.keys() else None
 
-    # If name is None, we might be able to resolve it with the config file
-    if os.path.exists(conf_path):
-        conf = ConfigParser.SafeConfigParser()
-        # Read the file
-        conf.read(conf_path)
-        # See if file has the network section
-        if conf.has_section(section='network'):
-            # Get all touples in network section
-            configs = conf.items(section='network')
-            # Get the port names of the network section
-            names = [x[1] for x in configs]
-            # Loor for the name into the port names
-            for aux in names:
-                if aux in portNames.keys():
-                    name = portNames[aux]
-                    break
+    # Loor for the name into the port names
+    if names != []:
+        for aux in names:
+            if aux in portNames.keys():
+                name = portNames[aux]
+                break
 
     return name
