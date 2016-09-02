@@ -16,15 +16,19 @@ from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 class ThalesZMQClient(object):
     ## Constructor
     #
-    # @param address  ZMQ address string of server to connect to
-    # @param timeout  How long to wait for responses from the server
-    # @param log      Logger to use to log communication errors
-    # @param msgParts Number of message parts to send/receive
-    def __init__(self, address, timeout=500, log=None, msgParts=3):
+    # @param address       ZMQ address string of server to connect to
+    # @param timeout       How long to wait for responses from the server
+    # @param log           Logger to use to log communication errors
+    # @param msgParts      Number of message parts for both request and response
+    # @param requestParts  Number of message parts for request
+    # @param responseParts Number of message parts for response
+    def __init__(self, address, timeout=500, log=None, msgParts=3, requestParts=0, responseParts=0):
         ## Address to connect to
         self.address = address
-        ## Number of message parts to send/receive
-        self.msgParts = msgParts
+        ## Number of message parts to use for request
+        self.requestParts = requestParts if requestParts > 0 else msgParts
+        ## Number of message parts to use for response
+        self.responseParts = responseParts if responseParts > 0 else msgParts
         ## How long to wait for responses
         self.timeout = timeout
         ## Logger
@@ -61,10 +65,10 @@ class ThalesZMQClient(object):
     # @return ThalesZMQMessage object containing received response
     #
     def sendRequest(self, request):
-        if self.msgParts == 3:
+        if self.requestParts == 3:
             # "Thales Common Network Messaging" format has 3 parts: name, header, body
             self.zsocket.send_multipart((request.name, request.serializedHeader, request.serializedBody))
-        elif self.msgParts == 2:
+        elif self.requestParts == 2:
             # Two-part messages have a name and a body
             self.zsocket.send_multipart((request.name, request.serializedBody))
         else:
@@ -81,14 +85,14 @@ class ThalesZMQClient(object):
             self.openSocket()
 
         # Check the message has the expected number of parts
-        if responseData is not None and len(responseData) == self.msgParts:
+        if responseData is not None and len(responseData) == self.responseParts:
             # Package response into a message object, handling the different message formats
-            if self.msgParts == 3:
+            if self.responseParts == 3:
                 # "Thales Common Network Messaging" format has 3 parts: name, header, body
                 response = ThalesZMQMessage(name=str(responseData[0]))
                 response.header.ParseFromString(responseData[1])
                 response.serializedBody = responseData[2]
-            elif self.msgParts == 2:
+            elif self.responseParts == 2:
                 # Two-part messages have a name and a body
                 response = ThalesZMQMessage(name=str(responseData[0]))
                 response.serializedBody = responseData[1]
@@ -101,7 +105,7 @@ class ThalesZMQClient(object):
         if responseData is None:
             self.log.error("Timeout waiting for response from %s" % self.address)
         else:
-            self.log.error("Malformed message received (%d parts, expected %d)" % (len(requestData), self.msgParts))
+            self.log.error("Malformed message received (%d parts, expected %d)" % (len(requestData), self.responseParts))
 
         # Return an empty response object
         return ThalesZMQMessage()
