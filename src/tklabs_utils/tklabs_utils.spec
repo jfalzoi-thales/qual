@@ -6,7 +6,7 @@ Group: System Environment/Libraries
 URL: https://repo-tav.tklabs.com:8102/
 Vendor: TKLabs
 License: Proprietary
-Packager: TKLabs <placeholder@tklabs.com>
+Packager: Builder <builder@tklabs.com>
 Source: %{name}-%{version}.tar.gz
 BuildRequires: python2-devel
 
@@ -22,12 +22,8 @@ cp -r * %{buildroot}/%{python2_sitelib}/tklabs_utils/
 
 %files
 %{python2_sitelib}/tklabs_utils/
-%exclude %{python2_sitelib}/tklabs_utils/tklabs_utils.spec
 %exclude %{python2_sitelib}/tklabs_utils/*/unitTest*
 %exclude %{python2_sitelib}/tklabs_utils/tzmq/jsonConversion/readme.md
 %exclude %{python2_sitelib}/tklabs_utils/tzmq/jsonConversion/unitTest*
 
 %changelog
-* Fri Sep 02 2016 Christopher Wallace <chris.wallace@tklabs.com> 1.0.0-1
-- new package built with tito
-
