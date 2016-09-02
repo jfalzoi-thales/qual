@@ -78,6 +78,7 @@ def resolvePort(portName):
     #  Look for the name into keys
     name = portNames[portName] if portName in portNames.keys() else None
     # if no name was found, try into the conf file
-    name = portNames[configurablesPortNames[portName]] if name == None and portName in configurablesPortNames.keys() else None
+    if name == None:
+        name = portNames[configurablesPortNames[portName]] if portName in configurablesPortNames.keys() else None
 
     return name
