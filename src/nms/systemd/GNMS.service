@@ -1,0 +1,14 @@
+[Unit]
+Description=Guest Network Management Service
+Wants=local-fs.target
+After=local-fs.target network.target
+
+[Service]
+Type=notify
+ExecStart=__THALES_BIN_DIR__/GNMS
+Restart=on-failure
+RestartSec=10s
+RestartPreventExitStatus=127
+
+[Install]
+WantedBy=mps-services.target
