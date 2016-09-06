@@ -13,7 +13,7 @@ from tklabs_utils.module.modulemsgs import ModuleMessages
 class VlanAssignmentMessages(ModuleMessages):
     @staticmethod
     def getMenuTitle():
-        return "Config Port State"
+        return "VLAN Assignment"
 
     @staticmethod
     def getMenuItems():
@@ -56,7 +56,7 @@ class Test_VlanAssig(unittest.TestCase):
     # This is run only once when we're done with all test cases
     @classmethod
     def tearDownClass(cls):
-        cls.log.info("++++ Teardown after Config Port State module unit tests ++++")
+        cls.log.info("++++ Teardown after VLAN Assignment module unit tests ++++")
         cls.module.terminate()
 
     ## Test setup
