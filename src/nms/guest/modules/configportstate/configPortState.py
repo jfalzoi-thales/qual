@@ -15,10 +15,10 @@ class PortStateConfig(Module):
         # Constructor of the parent class
         super(PortStateConfig, self).__init__(config)
         # IP address of the device
-        self.ip = "10.10.41.159"
+        self.switchAddress = "10.10.41.159"
         # path to the spec file
-        self.spec_file_path = '../../../spec-file'
-        self.loadConfig(attributes=('switchAddress'))
+        self.spec_file_path = '/tmp'
+        self.loadConfig(attributes=('switchAddress',))
         # adding the message handler
         self.addMsgHandler(ConfigPortStateReq, self.hdlrMsg)
 
@@ -57,7 +57,7 @@ class PortStateConfig(Module):
 
         #  Create the Vtss object with the relative path where
         #  we'll always place the spec file to avoid multiple downloas
-        vtss = Vtss(switchIP=self.ip, specFile='mps-vtss-spec-rpc.spec')
+        vtss = Vtss(switchIP=self.switchAddress, specFile='mps-vtss-spec-rpc.spec')
 
         #  Try to download the spec file if it doesn't exits
         vtss.downloadSpecFiles(path=self.spec_file_path)

@@ -45,7 +45,7 @@ class HnmsGpbListener(ThalesZMQServer):
         ## HNMS instance we will be linked to
         self.hnms = hnms
         # Init the superclass
-        super(HnmsGpbListener, self).__init__(address=hnms.serviceAddress)
+        super(HnmsGpbListener, self).__init__(address=hnms.serviceAddress, allowNoBody=True)
 
     ## Called by base class when a request is received from a client.
     #

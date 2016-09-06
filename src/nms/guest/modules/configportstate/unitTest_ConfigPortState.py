@@ -1,5 +1,5 @@
 import unittest
-import time
+
 from nms.guest.pb2.nms_guest_api_pb2 import *
 from nms.guest.modules.configportstate.configPortState import PortStateConfig
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -20,7 +20,7 @@ class ConfigPortStateMessages(ModuleMessages):
                 ("Send LISTENING",  ConfigPortStateMessages.listening),
                 ("Send LLEARNING",  ConfigPortStateMessages.learning),
                 ("Send FORWARDING", ConfigPortStateMessages.forwarding),
-                ("Send DISABLED",   ConfigPortStateMessages.desabled)]
+                ("Send DISABLED",   ConfigPortStateMessages.disabled)]
 
     @staticmethod
     def blocking():
