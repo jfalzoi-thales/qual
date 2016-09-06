@@ -63,12 +63,12 @@ sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
 %systemd_postun_with_restart GNMS.service
 
 %files
-%{THALES_BIN_DIR}/GNMS
-%{THALES_BIN_DIR}/HNMS
-%{THALES_BIN_DIR}/nmsmenu
-%{appdir}/scripts/GNMS
-%{appdir}/scripts/HNMS
-%{appdir}/scripts/nmsmenu
+%attr(0755,root,root) %{THALES_BIN_DIR}/GNMS
+%attr(0755,root,root) %{THALES_BIN_DIR}/HNMS
+%attr(0755,root,root) %{THALES_BIN_DIR}/nmsmenu
+%attr(0755,root,root) %{appdir}/scripts/GNMS
+%attr(0755,root,root) %{appdir}/scripts/HNMS
+%attr(0755,root,root) %{appdir}/scripts/nmsmenu
 %{appdir}/*.py
 %{appdir}/*/*.py
 %{appdir}/*/*/*.py
@@ -79,13 +79,5 @@ sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
 %exclude %{appdir}/proto
 %exclude %{appdir}/config
 %exclude %{appdir}/systemd
-%exclude %{appdir}/*.pyc
-%exclude %{appdir}/*/*.pyc
-%exclude %{appdir}/*/*/*.pyc
-%exclude %{appdir}/*/*/*/*.pyc
-%exclude %{appdir}/*.pyo
-%exclude %{appdir}/*/*.pyo
-%exclude %{appdir}/*/*/*.pyo
-%exclude %{appdir}/*/*/*/*.pyo
 
 %changelog
