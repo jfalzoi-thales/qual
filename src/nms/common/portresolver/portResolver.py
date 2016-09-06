@@ -1,3 +1,9 @@
+import os
+import ConfigParser
+
+# Config file path
+conf_path = '/thales/host/config/system/system.conf'
+
 #  Dictionary with the statics port names
 portNames = {
     'external.enet_1' :('Gi 1/14',True),
@@ -43,6 +49,22 @@ portNames = {
     'internal.i350_4'   :('ens1f3',False)
 }
 
+# If name is None, we might be able to resolve it with the config file
+configurablesPortNames = {}
+if os.path.exists(conf_path):
+    conf = ConfigParser.SafeConfigParser()
+    # Read the file
+    conf.read(conf_path)
+    # See if file has the network section
+    if conf.has_section(section='network'):
+        # Get all touples in network section
+        configs = conf.items(section='network')
+        # Get the port names of the network section.
+        # and create the dictionary with the actual port names
+        for aux in configs:
+            configurablesPortNames[aux[0]]=aux[1]
+
+
 
 ## Resolves the VTSS switch port number according with the string passed
 #
@@ -52,9 +74,11 @@ portNames = {
 #  @return: port name to the switch. Eg: "Gi 1/25" or "Gi 14/25"
 #  @notes: If return None, no port name found
 def resolvePort(portName):
+    portName = portName.lower()
     #  Look for the name into keys
     name = portNames[portName] if portName in portNames.keys() else None
-
-    # TODO: add here the other ways to resolve the name, once we get the document
+    # if no name was found, try into the conf file
+    if name == None:
+        name = portNames[configurablesPortNames[portName]] if portName in configurablesPortNames.keys() else None
 
     return name
