@@ -12,16 +12,17 @@ class PwrSuppMonClient(ThalesZMQClient):
     #
     def __init__(self):
         super(PwrSuppMonClient, self).__init__(address="ipc:///tmp/pwr-supp-mon.sock",
-                                               msgParts=2)
+                                               requestParts=2, responseParts=1, timeout=500)
 
     ## Sends a "GetPowerInfo" message to the simulator and prints the response
     #
-    def sendGetReq(self, name):
+    def sendGetReq(self, name, key=""):
         # Create a simple (one key) GetReq
         getPowerInfo = GetPowerInfo()
         if name != "":
             print "Request info for device:", name
             getPowerInfo.name = name
+            getPowerInfo.key = key
         else:
             print "Request info for all devices"
 
@@ -29,7 +30,7 @@ class PwrSuppMonClient(ThalesZMQClient):
         response = self.sendRequest(ThalesZMQMessage(getPowerInfo))
 
         # Parse the response
-        if response.name == "PowerInfo":
+        if response.name == self.defaultResponseName:
             powerInfo = PowerInfo()
             powerInfo.ParseFromString(response.serializedBody)
             if powerInfo.errorCode == PowerInfo.SUCCESS:
@@ -49,6 +50,7 @@ if __name__ == "__main__":
     client = PwrSuppMonClient()
 
     # Send some get requests.
+    client.sendGetReq("LTC2990-2", key="CURRENT")
     client.sendGetReq("ZL6105")
     client.sendGetReq("")
     client.sendGetReq("bogus_name")
