@@ -115,23 +115,28 @@ class ConfigurableObject(object):
         for iniFile in ConfigurableObject._iniFileList:
 
             #First, look in the local directory
-            if os.path.isfile('%s.conf' % (iniFile)):
+            if os.path.isfile('%s.conf' % iniFile):
                 self._iniFile = iniFile
-                return '%s.conf' % (iniFile)
+                return '%s.conf' % iniFile
 
-            #If its not there, look in the config directory
+            #If its not there, walk up the source tree and look for a config directory
             moduleDir = os.path.dirname(inspect.getsourcefile(self.__class__))
             if 'src' in moduleDir:
                 while os.path.basename(moduleDir) != 'src':
                     moduleDir = os.path.dirname(moduleDir)
-                moduleDir = os.path.join(moduleDir,'config')
+                    if os.path.isdir(os.path.join(moduleDir, 'config')):
+                        break
+                moduleDir = os.path.join(moduleDir, 'config')
+            # Then try the target system directory
+            elif os.path.isdir('/thales/host/config'):
+                moduleDir = '/thales/host/config'
             else:
                 # Try relative to the current directory
                 moduleDir = 'config'
 
             if not os.path.isdir(moduleDir):
                 raise ConfigurableObjectException('Could not find configuration directory %s' % (moduleDir,))
-            filepath = os.path.join(moduleDir, '%s.conf' % (iniFile,))
+            filepath = os.path.join(moduleDir, '%s.conf' % iniFile)
             if os.path.isfile(filepath):
                 self._iniFile = iniFile
                 return filepath
