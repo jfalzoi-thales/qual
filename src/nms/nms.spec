@@ -33,10 +33,11 @@ Network Management Service handles switch and internal communication and configu
 %build
 
 %install
-mkdir -p %{buildroot}/%{appdir}/ %{buildroot}/%{THALES_CONF_DIR}/ %{buildroot}/%{_unitdir}/
+mkdir -p %{buildroot}/%{appdir}/ %{buildroot}/%{THALES_CONF_DIR}/ %{buildroot}/%{_unitdir}/ %{buildroot}/usr/lib/systemd/system-preset
 cp -rav * %{buildroot}/%{appdir}
 cp -rav config/*.conf %{buildroot}/%{THALES_CONF_DIR}/
 cp -rav systemd/*.service %{buildroot}/%{_unitdir}/
+cp -rav systemd/*.preset %{buildroot}/usr/lib/systemd/system-preset/
 ln -s %{appdir}/scripts/GNMS %{buildroot}/%{THALES_BIN_DIR}/GNMS
 ln -s %{appdir}/scripts/HNMS %{buildroot}/%{THALES_BIN_DIR}/HNMS
 ln -s %{appdir}/scripts/nmsmenu %{buildroot}/%{THALES_BIN_DIR}/nmsmenu
