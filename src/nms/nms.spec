@@ -33,8 +33,8 @@ Network Management Service handles switch and internal communication and configu
 %build
 
 %install
-mkdir -p %{buildroot}/%{appdir}/ %{buildroot}/%{THALES_CONF_DIR}/ %{buildroot}/%{_unitdir}/ %{buildroot}/usr/lib/systemd/system-preset
-cp -rav * %{buildroot}/%{appdir}
+mkdir -p %{buildroot}/%{appdir}/ %{buildroot}/%{THALES_CONF_DIR}/ %{buildroot}/%{_unitdir}/ %{buildroot}/usr/lib/systemd/system-preset/
+cp -rav * %{buildroot}/%{appdir}/
 cp -rav config/*.conf %{buildroot}/%{THALES_CONF_DIR}/
 cp -rav systemd/*.service %{buildroot}/%{_unitdir}/
 cp -rav systemd/*.preset %{buildroot}/usr/lib/systemd/system-preset/
@@ -69,12 +69,10 @@ sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
 %attr(0755,root,root) %{appdir}/scripts/GNMS
 %attr(0755,root,root) %{appdir}/scripts/HNMS
 %attr(0755,root,root) %{appdir}/scripts/nmsmenu
-%{appdir}/*.py
-%{appdir}/*/*.py
-%{appdir}/*/*/*.py
-%{appdir}/*/*/*/*.py
+%{appdir}/*
 %{THALES_CONF_DIR}/*
 %{_unitdir}/*
+/usr/lib/systemd/system-preset/*
 %exclude %{appdir}/nms.spec
 %exclude %{appdir}/proto
 %exclude %{appdir}/config
