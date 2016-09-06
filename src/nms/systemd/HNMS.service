@@ -1,5 +1,7 @@
 [Unit]
 Description=Host Network Management Service
+Wants=local-fs.target
+After=local-fs.target network.target
 
 [Service]
 Type=notify

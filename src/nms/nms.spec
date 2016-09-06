@@ -30,6 +30,8 @@ Network Management Service handles switch and internal communication and configu
 %prep
 %setup -q -n %{name}-%{version}
 
+%build
+
 %install
 mkdir -p %{buildroot}/%{appdir}/ %{buildroot}/%{THALES_CONF_DIR}/ %{buildroot}/%{_unitdir}/
 cp -rav * %{buildroot}/%{appdir}
@@ -39,12 +41,12 @@ ln -s %{appdir}/scripts/GNMS %{buildroot}/%{THALES_BIN_DIR}/GNMS
 ln -s %{appdir}/scripts/HNMS %{buildroot}/%{THALES_BIN_DIR}/HNMS
 ln -s %{appdir}/scripts/nmsmenu %{buildroot}/%{THALES_BIN_DIR}/nmsmenu
 sed -i -re 's|__THALES_BIN_DIR__|%{THALES_BIN_DIR}|g' \
-	-e 's|__THALES_CONF_DIR__|%{THALES_CONF_DIR}|g' \
-	-e 's|__THALES_DATA_DIR__|%{THALES_DATA_DIR}|g' \
-	-e 's|__THALES_RUNTIME_DIR__|%{THALES_RUNTIME_DIR}|g' %{buildroot}/%{_unitdir}/*.service
+    -e 's|__THALES_CONF_DIR__|%{THALES_CONF_DIR}|g' \
+    -e 's|__THALES_DATA_DIR__|%{THALES_DATA_DIR}|g' \
+    -e 's|__THALES_RUNTIME_DIR__|%{THALES_RUNTIME_DIR}|g' %{buildroot}/%{_unitdir}/*.service
 sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
-	-e 's|/thales/host/config|%{THALES_CONF_DIR}|g' \
-	-e 's|/thales/host/data|%{THALES_DATA_DIR}|g' \
+    -e 's|/thales/host/config|%{THALES_CONF_DIR}|g' \
+    -e 's|/thales/host/data|%{THALES_DATA_DIR}|g' \
     -e 's|/thales/host/runtime|%{THALES_RUNTIME_DIR}|g' %{buildroot}/%{THALES_CONF_DIR}/*.conf
 
 %post
@@ -63,18 +65,26 @@ sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
 %{THALES_BIN_DIR}/GNMS
 %{THALES_BIN_DIR}/HNMS
 %{THALES_BIN_DIR}/nmsmenu
-%{appdir}/GNMS
-%{appdir}/HNMS
-%{appdir}/nmsmenu
+%{appdir}/scripts/GNMS
+%{appdir}/scripts/HNMS
+%{appdir}/scripts/nmsmenu
+%{appdir}/*.py
 %{appdir}/*/*.py
 %{appdir}/*/*/*.py
+%{appdir}/*/*/*/*.py
 %{THALES_CONF_DIR}/*
 %{_unitdir}/*
+%exclude %{appdir}/nms.spec
+%exclude %{appdir}/proto
 %exclude %{appdir}/config
 %exclude %{appdir}/systemd
+%exclude %{appdir}/*.pyc
 %exclude %{appdir}/*/*.pyc
 %exclude %{appdir}/*/*/*.pyc
+%exclude %{appdir}/*/*/*/*.pyc
+%exclude %{appdir}/*.pyo
 %exclude %{appdir}/*/*.pyo
 %exclude %{appdir}/*/*/*.pyo
+%exclude %{appdir}/*/*/*/*.pyo
 
 %changelog
