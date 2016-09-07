@@ -9,6 +9,8 @@ all:
 	$(PROTOC) --python_out=../pb2 MessageHeader.proto
 	$(PROTOC) --python_out=../pb2 PowerInfo.proto
 	$(PROTOC) --python_out=../pb2 SEMA.proto
+	$(PROTOC) --python_out=../pb2 rtc_driver.proto
+	$(PROTOC) --python_out=../pb2 common_nm.proto
 
 clean:
 	rm ../pb2/*_pb2.py 2>/dev/null || true
