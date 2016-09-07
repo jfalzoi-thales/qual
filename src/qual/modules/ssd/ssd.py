@@ -1,10 +1,11 @@
-import subprocess
 import os
+import subprocess
 from time import sleep
-from common.module.module import Module
-from common.gpb.python.SSD_pb2 import SSDRequest, SSDResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from qual.modules.ssd.ssd_Exception import SSDModuleException
+
+from qual.pb2.SSD_pb2 import SSDRequest, SSDResponse
+from ssd_Exception import SSDModuleException
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 ## Discard the output
 DEVNULL = open(os.devnull, 'wb')
