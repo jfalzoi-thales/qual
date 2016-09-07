@@ -1,4 +1,4 @@
-from nms.common.portresolver.portResolver import resolvePort
+from tklabs_utils.vtss.portResolver import resolvePort
 from nms.host.pb2.nms_host_api_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage

@@ -6,6 +6,7 @@ import netifaces
 from qual.pb2.Ethernet_pb2 import EthernetRequest, EthernetResponse
 from tklabs_utils.module.module import Module, ModuleException
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from tklabs_utils.vtss.portResolver import resolvePort
 
 
 ## Ethernet Module Exception Class
