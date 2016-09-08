@@ -12,6 +12,7 @@ python simulator/arinc717/arinc717DrvSim.py &
 python simulator/gpio/gpioMgrSim.py &
 python simulator/pwrsupp/pwrSuppMonSim.py &
 python simulator/sema/semaDrvSim.py &
+python simulator/rtc/rtcDrvSim.py &
 
 # Only start HDDS simulator if real HDDS is not running
 REALHDDS=`ps ax | grep HDDS | grep -v grep`

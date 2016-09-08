@@ -14,7 +14,7 @@ class Rtc(Module):
         super(Rtc, self).__init__(None)
         # Init the ThalesZMQClient
         # per the "MAP Network Configuration" document.
-        self.thalesZMQClient = ThalesZMQClient(address="ipc:///tmp/rtc-drv.sock", log=self.log)
+        self.thalesZMQClient = ThalesZMQClient(address="ipc:///tmp/rtc-drv.sock", log=self.log, msgParts=2)
         # adding the message handler
         self.addMsgHandler(GetTime, self.handlerMessage)
         self.addMsgHandler(SetTime, self.handlerMessage)
