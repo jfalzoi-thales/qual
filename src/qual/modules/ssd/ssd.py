@@ -33,7 +33,14 @@ class SSD(Module):
         self.readBandwidth = 0.0
         self.writeBandwidth = 0.0
 
-        if self.formatRAID:
+        # If TSP Download filesystem is present, use it instead of formatting RAID
+        tspDownloadFS = "/tsp-download"
+        output = subprocess.check_output("mount | fgrep %s || true" % tspDownloadFS, shell=True)
+        isMounted = output != ''
+        if isMounted:
+            self.log.info("Using TSP download directory for filesystem tests")
+            self.__raidFS = tspDownloadFS
+        elif self.formatRAID:
             #  Check if fio files already exist on the system.  If they do, initialization is probably complete already
             if not os.path.isfile("%s/READ.0.0" % self.__raidFS) or not os.path.isfile("%s/WRITE.0.0" % self.__raidFS):
                 self.initFS()
