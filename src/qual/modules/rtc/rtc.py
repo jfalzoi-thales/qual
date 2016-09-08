@@ -1,6 +1,8 @@
 from common.pb2.rtc_driver_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 
 ## RTC Module class
@@ -24,5 +26,18 @@ class Rtc(Module):
     def handlerMessage(self, thalesZMQMessage):
         # Log the message request
         self.log.info('Message received: %s' % thalesZMQMessage.name)
+        deserializedResponse = TimeResponse()
         # Pass the message to the RTC Driver/Simulator
-        return self.thalesZMQClient.sendRequest(thalesZMQMessage)
+        response =  self.thalesZMQClient.sendRequest(thalesZMQMessage)
+        # Deserialize the response
+        if response.name == "TimeResponse":
+            deserializedResponse.ParseFromString(response.serializedBody)
+            response.body = deserializedResponse
+
+            return response
+        else:
+            self.log.error("Unexpected response from RTC: %s" % response.name)
+            # Return an RTC error
+            deserializedResponse.error = RTC_ERROR
+
+            return ThalesZMQMessage(deserializedResponse)

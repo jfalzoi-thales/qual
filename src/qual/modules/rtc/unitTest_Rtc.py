@@ -77,11 +77,9 @@ class Test_Rtc(unittest.TestCase):
 
         log.info("**** Test case: GetTime message ****")
         response = module.msgHandler(ThalesZMQMessage(RtcMessages.getTime()))
-        getResp = TimeResponse()
-        getResp.ParseFromString(response.serializedBody)
         # Asserts
-        self.assertEqual(getResp.error, SUCCESS)
-        self.assertTrue(isinstance(getResp.datetime, unicode))
+        self.assertEqual(response.body.error, SUCCESS)
+        self.assertTrue(isinstance(response.body.datetime, unicode))
         log.info("==== Test complete ====")
 
 
@@ -97,7 +95,7 @@ class Test_Rtc(unittest.TestCase):
         getResp = TimeResponse()
         getResp.ParseFromString(response.serializedBody)
         # Asserts
-        self.assertEqual(getResp.error, SUCCESS)
+        self.assertEqual(response.body.error, SUCCESS)
         log.info("==== Test complete ====")
 
 if __name__ == '__main__':
