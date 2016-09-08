@@ -14,9 +14,7 @@ class RTCDriverSimulator(ThalesZMQServer):
     ## Constructor
     def __init__(self):
         # Accoding to "MPS Network Configuration" document.
-        # TODO: On target system this needs to be 'ipc:///tmp/rtc-drv.sock'. Uncomment next line and comment/remove the other below
-        # super(RTCDriverSimulator, self).__init__('ipc:///tmp/rtc-drv.sock')
-        super(RTCDriverSimulator, self).__init__('tcp://*:40001')
+        super(RTCDriverSimulator, self).__init__('ipc:///tmp/rtc-drv.sock')
         # Date-Time pattern.
         self.dateTimePattern = '%Y-%m-%d %H:%M:%SZ'
 

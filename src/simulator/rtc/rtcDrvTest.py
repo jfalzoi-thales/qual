@@ -9,7 +9,7 @@ from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 class RtcDiverClient(ThalesZMQClient):
     ## Constructor
     def __init__(self):
-        super(RtcDiverClient, self).__init__("tcp://localhost:40001")
+        super(RtcDiverClient, self).__init__("ipc:///tmp/rtc-drv.sock")
 
     ## Sends a "GetTime" message to the simulator and prints the response
     def sendGetTime(self):
