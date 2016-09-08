@@ -14,6 +14,7 @@ Requires: pyserial
 Requires: python-netifaces
 Requires: python-zmq
 Requires: protobuf-python
+Requires: tftp
 Requires: tftp-server
 Requires: xinetd
 %{?systemd_requires}
