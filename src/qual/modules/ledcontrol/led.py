@@ -1,4 +1,4 @@
-from qual.pb2.led_control_pb2 import *
+from qual.pb2.LED_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
