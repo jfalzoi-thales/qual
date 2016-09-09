@@ -1,0 +1,9 @@
+#!/usr/bin/python2
+
+# just an entrypoint script for Guest Domain NMS.
+
+import sys
+
+if __name__ == '__main__':
+    from nms.guest.gnms import main
+    sys.exit(main())

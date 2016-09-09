@@ -1,8 +1,7 @@
-
-from common.logger import logger
-from common.tzmq.ThalesZMQServer import ThalesZMQServer
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.SEMA_pb2 import RequestStatusMessage, ResponseStatusMessage
+from common.pb2.SEMA_pb2 import RequestStatusMessage, ResponseStatusMessage
+from tklabs_utils.logger import logger
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
 
 
 ## SEMA Driver Simulator class

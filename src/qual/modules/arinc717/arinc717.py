@@ -1,10 +1,12 @@
 import os
-from common.gpb.python.ARINC717Frame_pb2 import ARINC717FrameRequest, ARINC717FrameResponse
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.ARINC717Driver_pb2 import Request, Response, ChannelConfig
-from common.gpb.python.GPIOManager_pb2 import RequestMessage, ResponseMessage
-from common.module.module import Module
+
+from common.pb2.ARINC717Driver_pb2 import Request, Response, ChannelConfig
+from common.pb2.GPIOManager_pb2 import RequestMessage, ResponseMessage
+from qual.pb2.ARINC717Frame_pb2 import ARINC717FrameRequest, ARINC717FrameResponse
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## ARINC717 Module
 class ARINC717(Module):
