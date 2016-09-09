@@ -46,7 +46,7 @@ This package runs an IFE virtual machine that is used to communicate with the IF
 
 
 %install
-mkdir -p %{buildroot}/%{_bindir} %{buildroot}/etc/sysconfig/network-scripts %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src/config %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances
+mkdir -p %{buildroot}/%{_bindir} %{buildroot}/etc/sysconfig/network-scripts %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src/config %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances %{buildroot}/tsp-download
 cp systemd/qual.sh %{buildroot}/thales/host/appliances/qual
 cp systemd/qual-sims.sh %{buildroot}/thales/host/appliances/qual-sims
 cp systemd/qual-startvm.sh %{buildroot}/thales/host/appliances/qual-startvm
@@ -84,6 +84,7 @@ cp config/qual-ife.conf %{buildroot}/thales/qual/src/config/
 /thales/qual/src/tklabs_utils/*
 /thales/qual/src/qual/*
 %attr(0755,root,root) /thales/qual/src/qual/modules/unittests.sh
+%attr(0755,root,root) /tsp-download
 
 %exclude /thales/qual/src/qual/ifeModules
 

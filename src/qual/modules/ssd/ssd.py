@@ -33,7 +33,16 @@ class SSD(Module):
         self.readBandwidth = 0.0
         self.writeBandwidth = 0.0
 
-        if self.formatRAID:
+        # If TSP Download filesystem is present, use it instead of formatting RAID
+        tspDownloadFS = "/tsp-download"
+        output = subprocess.check_output("mount | fgrep %s || true" % tspDownloadFS, shell=True)
+        isMounted = output != ''
+        if isMounted:
+            self.log.info("Using TSP download directory for filesystem tests")
+            self.__raidFS = tspDownloadFS
+            self.runCommand('rm -rf %s/*' % tspDownloadFS,
+                            failText='Unable to clean up TSP download directory')
+        elif self.formatRAID:
             #  Check if fio files already exist on the system.  If they do, initialization is probably complete already
             if not os.path.isfile("%s/READ.0.0" % self.__raidFS) or not os.path.isfile("%s/WRITE.0.0" % self.__raidFS):
                 self.initFS()
@@ -240,7 +249,7 @@ class SSD(Module):
     def createFioConfig(self):
         f = open(self.__fioConf, mode='w')
         f.write('[global]\n')
-        f.write('size=1000M\n')
+        f.write('size=960M\n')
         f.write('ioengine=libaio\n')
         f.write('iodepth=4\n')
         f.write('bs=1M\n')
