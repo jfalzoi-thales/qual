@@ -110,7 +110,7 @@ rm -rf /tmp/tito
 titoqual
 
 if [ "$TAG" == "YES" ]; then
-    git push --tags origin dev/QUAL
+    git push --tags origin "$BRANCH"
 fi
 
 sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/qual-*.rpm
