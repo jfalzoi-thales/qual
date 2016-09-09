@@ -1,6 +1,7 @@
 import unittest
 
 import ccData
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from qual.pb2.CarrierCardData_pb2 import CarrierCardDataRequest, ErrorMsg
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
@@ -34,25 +35,25 @@ class CarrierCardDataMessages(ModuleMessages):
         message = CarrierCardDataRequest()
         message.requestType = CarrierCardDataRequest.WRITE
         kv = message.values.add()
-        kv.key   = "part_number"
+        kv.key   = "carrier_card.part_number"
         kv.value = "TH-CC-ABC12345"
         kv = message.values.add()
-        kv.key   = "serial_number"
+        kv.key   = "carrier_card.serial_number"
         kv.value = "000000123456789"
         kv = message.values.add()
-        kv.key   = "revision"
+        kv.key   = "carrier_card.revision"
         kv.value = "27B-6"
         kv = message.values.add()
-        kv.key   = "manufacturer_pn"
+        kv.key   = "carrier_card.manufacturer_pn"
         kv.value = "TKL-9876543"
         kv = message.values.add()
-        kv.key   = "manufacturing_date"
+        kv.key   = "carrier_card.manufacturing_date"
         kv.value = "20160630"
         kv = message.values.add()
-        kv.key   = "manufacturer_name"
+        kv.key   = "carrier_card.manufacturer_name"
         kv.value = "tkLABS"
         kv = message.values.add()
-        kv.key   = "manufacturer_cage"
+        kv.key   = "carrier_card.manufacturer_cage"
         kv.value = "1234"
         return message
 
@@ -61,13 +62,13 @@ class CarrierCardDataMessages(ModuleMessages):
         message = CarrierCardDataRequest()
         message.requestType = CarrierCardDataRequest.WRITE
         kv = message.values.add()
-        kv.key   = "part_number"
+        kv.key   = "carrier_card.part_number"
         kv.value = "ABC-11111"
         kv = message.values.add()
-        kv.key   = "serial_number"
+        kv.key   = "carrier_card.serial_number"
         kv.value = "S55555555555"
         kv = message.values.add()
-        kv.key   = "revision"
+        kv.key   = "carrier_card.revision"
         kv.value = "A"
         return message
 
@@ -76,13 +77,13 @@ class CarrierCardDataMessages(ModuleMessages):
         message = CarrierCardDataRequest()
         message.requestType = CarrierCardDataRequest.WRITE
         kv = message.values.add()
-        kv.key   = "part_number"
+        kv.key   = "carrier_card.part_number"
         kv.value = "ABC-22222"
         kv = message.values.add()
-        kv.key   = "manufacturer_pn"
+        kv.key   = "carrier_card.manufacturer_pn"
         kv.value = "TKL-9876543"
         kv = message.values.add()
-        kv.key   = "manufacturing_date"
+        kv.key   = "carrier_card.manufacturing_date"
         kv.value = "20160630"
         return message
 
@@ -91,7 +92,7 @@ class CarrierCardDataMessages(ModuleMessages):
         message = CarrierCardDataRequest()
         message.requestType = CarrierCardDataRequest.WRITE
         kv = message.values.add()
-        kv.key   = "bogus_number"
+        kv.key   = "carrier_card.bogus_number"
         kv.value = "ABC-11111"
         return message
 
@@ -100,7 +101,7 @@ class CarrierCardDataMessages(ModuleMessages):
         message = CarrierCardDataRequest()
         message.requestType = CarrierCardDataRequest.WRITE
         kv = message.values.add()
-        kv.key   = "part_number"
+        kv.key   = "carrier_card.part_number"
         kv.value = ""
         return message
 
@@ -109,7 +110,7 @@ class CarrierCardDataMessages(ModuleMessages):
         message = CarrierCardDataRequest()
         message.requestType = CarrierCardDataRequest.WRITE
         kv = message.values.add()
-        kv.key   = "part_number"
+        kv.key   = "carrier_card.part_number"
         kv.value = "1234567890123456789012345"
         return message
 
@@ -161,8 +162,8 @@ class Test_CarrierCardData(unittest.TestCase):
         module = self.__class__.module
         log.info("==== Reset module state ====")
         # Clear write protection in simulated mode
-        if module.ethDevice == "TEST_FILE":
-            module.resetProtectionTestFile()
+        if module.i350Inventory.ethDevice == "TEST_FILE":
+            module.i350Inventory.resetProtectionTestFile()
 
     ## Test case: Send a WRITE message with invalid key
     # Expect failure with FAILURE_INVALID_KEY
@@ -282,19 +283,19 @@ class Test_CarrierCardData(unittest.TestCase):
         module = self.__class__.module
 
         log.info("**** Test case: WRITE_PROTECT message ****")
-        if module.ethDevice != "TEST_FILE":
+        if module.i350Inventory.ethDevice != "TEST_FILE":
             log.info("==== Not executing because module is not configured for test file mode ===")
             return
 
         log.info("==== Protect when enableWriteProtect is False ====")
-        module.enableWriteProtect = False
+        module.i350Inventory.enableWriteProtect = False
         response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writeProtect()))
         self.assertEqual(response.name, "CarrierCardDataResponse")
         self.assertEqual(response.body.success, False)
-        self.assertEqual(response.body.error.error_code, ErrorMsg.FAILURE_WRITE_PROTECT_DISABLED)
+        self.assertEqual(response.body.error.error_code, ErrorMsg.FAILURE_WRITE_FAILED)
 
         # Enable write protect function for remaining tests
-        module.enableWriteProtect = True
+        module.i350Inventory.enableWriteProtect = True
 
         log.info("==== Erase data ====")
         response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.eraseData()))
@@ -311,7 +312,7 @@ class Test_CarrierCardData(unittest.TestCase):
         response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writeProtect()))
         self.assertEqual(response.name, "CarrierCardDataResponse")
         self.assertEqual(response.body.success, False)
-        self.assertEqual(response.body.error.error_code, ErrorMsg.FAILURE_INVALID_VALUE)
+        self.assertEqual(response.body.error.error_code, ErrorMsg.FAILURE_WRITE_FAILED)
 
         log.info("==== Write additional data ====")
         response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writeFull()))
@@ -331,7 +332,7 @@ class Test_CarrierCardData(unittest.TestCase):
         self.assertEqual(response.body.writeProtected, True)
 
         log.info("==== Protect when already protected ====")
-        module.enableWriteProtect = True
+        module.i350Inventory.enableWriteProtect = True
         response = module.msgHandler(ThalesZMQMessage(CarrierCardDataMessages.writeProtect()))
         self.assertEqual(response.name, "CarrierCardDataResponse")
         self.assertEqual(response.body.success, True)
@@ -353,6 +354,7 @@ class Test_CarrierCardData(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    ConfigurableObject.setFilename("qual")
     unittest.main()
 
 ## @endcond
