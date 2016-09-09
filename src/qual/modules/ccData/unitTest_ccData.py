@@ -1,8 +1,8 @@
 import unittest
 
 import ccData
-from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from qual.pb2.CarrierCardData_pb2 import CarrierCardDataRequest, ErrorMsg
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -139,6 +139,7 @@ class Test_CarrierCardData(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = Logger(name='Test CarrierCardData')
         cls.log.info('++++ Setup before CarrierCardData module unit tests ++++')
@@ -354,7 +355,6 @@ class Test_CarrierCardData(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    ConfigurableObject.setFilename("qual")
     unittest.main()
 
 ## @endcond

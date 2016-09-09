@@ -2,6 +2,7 @@ import unittest
 
 import hdds
 from qual.pb2.HDDS_pb2 import HostDomainDeviceServiceRequest
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -102,6 +103,7 @@ class Test_HDDS(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = Logger(name='Test HDDS')
         cls.log.info('++++ Setup before HDDS module unit tests ++++')
