@@ -1,9 +1,6 @@
-import time
 import unittest
-from common.pb2.led_control_pb2 import *
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
-from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from qual.modules.ledcontrol.led import *
 
 
@@ -13,16 +10,16 @@ from qual.modules.ledcontrol.led import *
 class LedControlMessages(ModuleMessages):
     @staticmethod
     def getMenuTitle():
-        return "Real Time Clock"
+        return "LED Control"
 
     @staticmethod
     def getMenuItems():
         return [("(ON, LED_POST)",        LedControlMessages.onPost),
-                ("(ON, LED_TEST_GREEN)",  LedControlMessages.onTestGreen),
-                ("(ON, LED_TEST_YELLOW)", LedControlMessages.onTestYellow),
+                ("(ON, STATUS_GREEN)",  LedControlMessages.onTestGreen),
+                ("(ON, STATUS_YELLOW)", LedControlMessages.onTestYellow),
                 ("(OFF,LED_POST)",        LedControlMessages.getTime),
-                ("(OFF,LED_TEST_GREEN)",  LedControlMessages.setTime),
-                ("(OFF,LED_TEST_YELLOW)", LedControlMessages.getTime)]
+                ("(OFF,STATUS_GREEN)",  LedControlMessages.setTime),
+                ("(OFF,STATUS_YELLOW)", LedControlMessages.getTime)]
 
     @staticmethod
     def onPost():

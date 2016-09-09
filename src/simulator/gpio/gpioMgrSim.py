@@ -46,9 +46,9 @@ class GPIOManagerSimulator(ThalesZMQServer):
                      "INPUT_5_PIN_E7"    :False,
                      "PA_All_PIN_C8"     :False,
                      "RxLineSelect_717"  :False,
-                     "LED_POST"          :False,
-                     "LED_STATUS_GREEN"  :False,
-                     "LED_STATUS_YELLOW" :False}
+                     "Post_LED"          :False,
+                     "Status_LED_Green"  :False,
+                     "Status_LED_Yellow" :False}
 
         # Simulate GPIO loopback by linking outputs to inputs
         self.loopbackMap = {"OUTPUT_1_PIN_A6": "INPUT_1_PIN_A7",
