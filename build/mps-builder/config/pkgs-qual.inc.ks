@@ -121,4 +121,9 @@ pmbw
 ethtool
 mps-guest-vm
 
+# NMS
+tftp
+tftp-server
+xinetd
+
 %end
