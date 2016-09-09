@@ -4,13 +4,13 @@ QUALDIR=~/qual
 MPSBUILDDIR=~/mps-builder
 BUILD="QUAL"
 TAG="NO"
-BRANCH="QUAL"
+BRANCH="dev/NMS"
 
 # Display buildqual command usage
 usage() {
     echo "Unrecognized parameter specified.  Accepted parameters are:
                 -t|--tag	- builds RPMs with a new tag
-                -n|--nms    - builds images from dev/NMS branch
+                -b|--branch - builds images from specified branch
                 -s|--sims	- builds only qual-sims image
                 -a|--all 	- builds both qual and qual-sims images"
     exit 1
@@ -66,10 +66,11 @@ buildife () {
 
 # Check for parameters: 
 # if none,	    build only qual image
-# if new RPM,	build RPMs with a new tag
+# if tag,	    build RPMs with a new tag
+# if branch     build images from specified branch
 # if sims,	    build only sims image
 # if all,	    build both
-TEMP=`getopt -o tnsa --long tag,nms,sims,all -n 'buildqual.sh' -- "$@" 2>/dev/null`
+TEMP=`getopt -o tb:sa --long tag,branch:,sims,all -n 'buildqual.sh' -- "$@" 2>/dev/null`
 if [ "$?" != 0 ]; then usage; fi
 eval set -- "$TEMP"
 
@@ -78,9 +79,9 @@ while true ; do
         -t|--tag)
             TAG="YES"
             shift;;
-        -n|--nms)
-            BRANCH="NMS"
-            shift;;
+        -b|--branch)
+            BRANCH="$2"
+            shift 2;;
         -s|--sims)
             BUILD="SIMS"
             shift;;
@@ -102,12 +103,7 @@ cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
 cd ${QUALDIR}/
 echo "Please use your own Git credentials to log in. \(^^\) \(^^)/ (/^^)/"
 
-if [ "$BRANCH" == "NMS" ]; then
-    git fetch origin dev/NMS
-else
-    git fetch origin dev/QUAL
-fi
-
+git fetch origin "$BRANCH"
 git reset --hard FETCH_HEAD
 git clean -df
 rm -rf /tmp/tito
