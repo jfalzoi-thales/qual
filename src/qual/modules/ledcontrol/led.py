@@ -56,6 +56,7 @@ class Led(Module):
             boolState = True
         if state == LS_OFF:
             strState = 'OFF'
+            boolState = False
         if led == LED_POST:
             strLed = 'LED_POST'
         if led == LED_STATUS_GREEN:
