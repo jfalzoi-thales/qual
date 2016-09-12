@@ -9,6 +9,7 @@ License: Proprietary
 Group: Applications/Engineering
 URL: https://repo-tav.tklabs.com:8102/
 Source: %{name}.tar.gz
+Requires: pciutils
 
 %description
 This package contains tools and scripts for programming the I350 device.
