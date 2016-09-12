@@ -9,6 +9,7 @@ all:
 	$(PROTOC) --python_out=../pb2 CPULoading.proto
 	$(PROTOC) --python_out=../pb2 Encoder.proto
 	$(PROTOC) --python_out=../pb2 Ethernet.proto
+	$(PROTOC) --python_out=../pb2 FirmwareUpdate.proto
 	$(PROTOC) --python_out=../pb2 GPIO.proto
 	$(PROTOC) --python_out=../pb2 HDAudio.proto
 	$(PROTOC) --python_out=../pb2 HDDS.proto
