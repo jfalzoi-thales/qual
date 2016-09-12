@@ -1,0 +1,28 @@
+package mpsqual;
+
+enum FirmwareCommandsT {
+    FW_BIOS = 0;
+    FW_I350	= 1;
+    FW_SWITCH_BOOTLOADER = 2;
+    FW_SWITCH_FIRMWARE = 3;
+    FW_SWITCH_FIRMWARE_SWAP = 4;
+    FW_SWITCH_CONFIG = 5;
+    FW_SWITCH_CONFIG_SWAP = 6;
+}
+
+message FirmwareUpdateRequest {
+	required FirmwareCommandsT command = 1;
+    required bool reboot = 2;
+}
+
+message FirmwareUpdateResponse {
+	enum BIOSUpdateResultT {
+		ALL_FAILED = 0;
+		PRIMARY_PASSED = 1;
+		SECONDARY_PASSED = 2;
+		ALL_PASSED = 3;
+	}
+
+	required FirmwareCommandsT command = 1;
+	required BIOSUpdateResultT result = 2;
+}
