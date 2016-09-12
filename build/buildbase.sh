@@ -40,6 +40,7 @@ fi
 
 echo "Applying mps-builder changes for Qual"
 cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
+cat ${MPSBUILDDIR}/config/package.tags.add >> ${MPSBUILDDIR}/config/package.tags
 
 echo
 echo "Entering docker for build; at root prompt below type:"
