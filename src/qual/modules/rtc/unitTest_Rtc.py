@@ -19,10 +19,11 @@ class RtcMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("GetTime", RtcMessages.getTime),
-                ("SetTime", RtcMessages.setTime),
-                ("RTC_GET", RtcMessages.message_RTC_GET),
-                ("RTC_SET", RtcMessages.message_RTC_SET)]
+        return [("RTC_GET"        , RtcMessages.message_RTC_GET),
+                ("RTC_SET"        , RtcMessages.message_RTC_SET),
+                ("RTC_SYSTEM_SET" , RtcMessages.message_RTC_SYSTEM_SET()),
+                ("RTC_TO_SYSTEM"  , RtcMessages.message_RTC_TO_SYSTEM()),
+                ("SYSTEM_TO_RTC"  , RtcMessages.message_SYSTEM_TO_RTC())]
 
     @staticmethod
     def message_RTC_GET():

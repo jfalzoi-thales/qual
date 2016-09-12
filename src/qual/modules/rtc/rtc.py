@@ -12,7 +12,7 @@ import subprocess
 #   Passes through the RTC message
 class Rtc(Module):
     ## Constructor
-    def __init__(self):
+    def __init__(self, config=None):
         # Init the parent class
         super(Rtc, self).__init__(None)
         # Init the ThalesZMQClient
