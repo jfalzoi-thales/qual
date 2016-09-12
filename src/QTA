@@ -1,0 +1,9 @@
+#!/usr/bin/python2
+
+# just an entrypoint script for Qual Test Application.
+
+import sys
+
+if __name__ == '__main__':
+    from qual.qta.qta import main
+    sys.exit(main())

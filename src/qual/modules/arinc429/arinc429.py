@@ -1,12 +1,14 @@
 import collections
-from time import time, sleep
-import threading
 import os
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.ARINC429_pb2 import ARINC429Request, ARINC429Response
-from common.gpb.python.ARINC429Driver_pb2 import Request, Response, ChannelConfig
-from common.module import module
+import threading
+from time import time, sleep
+
+from common.pb2.ARINC429Driver_pb2 import Request, Response, ChannelConfig
+from qual.pb2.ARINC429_pb2 import ARINC429Request, ARINC429Response
+from tklabs_utils.module import module
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## Connection info container class
 class ConnectionInfo(object):
