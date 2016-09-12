@@ -6,10 +6,20 @@ from time import time, sleep
 
 from common.pb2.ARINC429Driver_pb2 import Request, Response, ChannelConfig
 from qual.pb2.ARINC429_pb2 import ARINC429Request, ARINC429Response
-from tklabs_utils.module import module
+from tklabs_utils.module.module import Module, ModuleException
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
+
+## ARINC429 Module Exception Class
+class ARINC429ModuleException(ModuleException):
+    ## Constructor
+    #  @param     self
+    #  @param     msg  Message text associated with this exception
+    def __init__(self, msg):
+        super(ARINC429ModuleException, self).__init__()
+        ## Message text associated with this exception
+        self.msg = msg
 
 ## Connection info container class
 class ConnectionInfo(object):
@@ -28,7 +38,7 @@ class ConnectionInfo(object):
         self.errorCount = 0
 
 ## ARINC429 Module
-class ARINC429(module.Module):
+class ARINC429(Module):
     ## Constructor
     #  @param     self
     #  @param     config  Configuration for this module instance
@@ -40,6 +50,8 @@ class ARINC429(module.Module):
 
         configParser = SafeConfigParser()
         configParser.read(thalesArinc429Config)
+
+        if configParser.sections() == []: raise ARINC429ModuleException('Missing or Empty Configuration File: %s' % thalesArinc429Config)
 
         ## Named tuple type to store channel info
         self.ChanInfo = collections.namedtuple("ChanInfo", "name chan")

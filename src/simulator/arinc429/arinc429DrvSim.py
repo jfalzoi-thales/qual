@@ -71,7 +71,10 @@ class ARINC429DriverSimulator(ThalesZMQServer):
         configParser = SafeConfigParser()
         configParser.read(thalesArinc429Config)
 
-            # Dict of input channels with info for each one
+        if configParser.sections() == []:
+            self.log.warning("Missing or Empty Configuration File: %s" % thalesArinc429Config)
+
+        # Dict of input channels with info for each one
         self.inputChannels = {configParser.get("receiver0:ARINC429-1", "name"): InputInfo(),
                               configParser.get("receiver1:ARINC429-1", "name"): InputInfo(),
                               configParser.get("receiver0:ARINC429-2", "name"): InputInfo(),
