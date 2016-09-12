@@ -21,28 +21,6 @@ class Rtc(Module):
         # adding the message handler
         self.addMsgHandler(RTCRequest, self.handlerRequestMessage)
 
-    ## Called by base class when a request is received from a client.
-    #
-    #  @param request ThalesZMQMessage object containing received request
-    def handlerGetSetMessage(self, thalesZMQMessage):
-        # Log the message request
-        self.log.info('Message received: %s' % thalesZMQMessage.name)
-        deserializedResponse = TimeResponse()
-        # Pass the message to the RTC Driver/Simulator
-        response =  self.rtcThalesZMQClient.sendRequest(thalesZMQMessage)
-        # Deserialize the response
-        if response.name == "TimeResponse":
-            deserializedResponse.ParseFromString(response.serializedBody)
-            response.body = deserializedResponse
-
-            return response
-        else:
-            self.log.error("Unexpected response from RTC: %s" % response.name)
-            # Return an RTC error
-            deserializedResponse.error = RTC_ERROR
-
-            return ThalesZMQMessage(deserializedResponse)
-
     ## Called by base class when an RTCRequest object is received from a client.
     #
     #  @param: RTC Request
