@@ -68,7 +68,7 @@ class ARINC429(Module):
                            "ARINC_429_RX5":  self.ChanInfo(configParser.get("receiver0:ARINC429-3", "name"), 4),
                            "ARINC_429_RX6":  self.ChanInfo(configParser.get("receiver1:ARINC429-3", "name"), 5),
                            "ARINC_429_RX7":  self.ChanInfo(configParser.get("receiver0:ARINC429-4", "name"), 6),
-                           "ARINC_429_RX8":  self.ChanInfo(configParser.get("receiver1:ARINC429-5", "name"), 7)}
+                           "ARINC_429_RX8":  self.ChanInfo(configParser.get("receiver1:ARINC429-4", "name"), 7)}
         ## Counter for data incrementing
         self.increment = 0
         ## Dict of connections; key is input channel, value is a ConnectionInfo object

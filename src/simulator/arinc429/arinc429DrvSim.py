@@ -88,13 +88,13 @@ class ARINC429DriverSimulator(ThalesZMQServer):
         self.loopbackMap = {configParser.get("transmitter0:ARINC429-1", "name"):
                             (configParser.get("receiver0:ARINC429-1", "name"),
                              configParser.get("receiver1:ARINC429-1", "name")),
-                            configParser.get("transmitter0:ARINC429-1", "name"):
+                            configParser.get("transmitter0:ARINC429-2", "name"):
                             (configParser.get("receiver0:ARINC429-2", "name"),
                              configParser.get("receiver1:ARINC429-2", "name")),
-                            configParser.get("transmitter0:ARINC429-1", "name"):
+                            configParser.get("transmitter0:ARINC429-3", "name"):
                             (configParser.get("receiver0:ARINC429-3", "name"),
                              configParser.get("receiver1:ARINC429-3", "name")),
-                            configParser.get("transmitter0:ARINC429-1", "name"):
+                            configParser.get("transmitter0:ARINC429-4", "name"):
                             (configParser.get("receiver0:ARINC429-4", "name"),
                              configParser.get("receiver1:ARINC429-4", "name"))}
 
