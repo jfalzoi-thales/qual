@@ -22,7 +22,7 @@ class FirmwareUpdate(Module):
                           FW_SWITCH_CONFIG:         self.unimplemented,
                           FW_SWITCH_CONFIG_SWAP:    self.unimplemented}
         ## Location of firmware images
-        self.firmPath = "../firmware/"
+        self.firmPath = "/thales/qual/firmware/"
         ## Queue for storing a reboot request
         self.reboot = Queue()
         #  Adds handler to available message handlers
@@ -55,7 +55,7 @@ class FirmwareUpdate(Module):
         secondary = False
 
         if call(["mps-biostool.sh", "set-active", "primary"]) == 0:
-            if call(["mps-biostool.sh", "program-from", "%sBIOSPrimary.firmware" % self.firmPath]) == 0:
+            if call(["mps-biostool.sh", "program-from", "%sBIOS.firmware" % self.firmPath]) == 0:
                 primary = True
             else:
                 self.log.warning("Unable to properly program primary BIOS.")
@@ -63,7 +63,7 @@ class FirmwareUpdate(Module):
             self.log.warning("Unable to set primary BIOS to active.")
 
         if call(["mps-biostool.sh", "set-active", "secondary"]) == 0:
-            if call(["mps-biostool.sh", "program-from", "%sBIOSSecondary.firmware" % self.firmPath]) == 0:
+            if call(["mps-biostool.sh", "program-from", "%sBIOS.firmware" % self.firmPath]) == 0:
                 secondary = True
             else:
                 self.log.warning("Unable to properly program secondary BIOS.")

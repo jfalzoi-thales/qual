@@ -49,7 +49,7 @@ This package runs an IFE virtual machine that is used to communicate with the IF
 
 
 %install
-mkdir -p %{buildroot}/%{_bindir} %{buildroot}/etc/sysconfig/network-scripts %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src/config %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances %{buildroot}/tsp-download
+mkdir -p %{buildroot}/%{_bindir} %{buildroot}/etc/sysconfig/network-scripts %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src/config %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances %{buildroot}/tsp-download %{buildroot}/thales/qual/firmware
 cp systemd/qual.sh %{buildroot}/thales/host/appliances/qual
 cp systemd/qual-sims.sh %{buildroot}/thales/host/appliances/qual-sims
 cp systemd/qual-startvm.sh %{buildroot}/thales/host/appliances/qual-startvm
@@ -65,10 +65,12 @@ cp QTA qtemenu %{buildroot}/thales/qual/src/
 cp -r common/ %{buildroot}/thales/qual/src/
 cp -r tklabs_utils/ %{buildroot}/thales/qual/src/
 cp -r qual/ %{buildroot}/thales/qual/src/
+mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/mps-biostool.sh %{buildroot}/%{_bindir}/
 cp -r simulator/ %{buildroot}/thales/qual/src/
 cp config/qual-mps.conf %{buildroot}/thales/qual/src/config/
 cp config/qual.conf %{buildroot}/thales/qual/src/config/qual-sims.conf
 cp config/qual-ife.conf %{buildroot}/thales/qual/src/config/
+echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BIOS.firmware
 
 
 %files
@@ -92,15 +94,18 @@ cp config/qual-ife.conf %{buildroot}/thales/qual/src/config/
 %exclude /thales/qual/src/qual/ifeModules
 
 %files sims
+%attr(0755,root,root) %{_bindir}/mps-biostool.sh
 %attr(0755,root,root) /thales/host/appliances/qual-sims
 %attr(0644,root,root) /%{_unitdir}/qual-sims.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-sims-service.preset
 %attr(0644,root,root) /thales/qual/src/config/qual-sims.conf
 /thales/qual/src/simulator/*
+/thales/qual/firmware/BIOS.firmware
 %attr(0755,root,root) /thales/qual/src/simulator/*.sh
 
 %files ife
-%attr(0755,root,root) %{_bindir}/*
+%attr(0755,root,root) %{_bindir}/qual-ife
+%attr(0755,root,root) %{_bindir}/installifesims
 %attr(0644,root,root) /etc/sysconfig/network-scripts/ifcfg-*
 %attr(0644,root,root) /%{_unitdir}/qual-ife.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-ife-service.preset
