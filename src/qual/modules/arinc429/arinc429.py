@@ -1,6 +1,7 @@
 import collections
 import os
 import threading
+from ConfigParser import SafeConfigParser
 from time import time, sleep
 
 from common.pb2.ARINC429Driver_pb2 import Request, Response, ChannelConfig
@@ -34,50 +35,28 @@ class ARINC429(module.Module):
     def __init__(self, config = None):
         super(ARINC429, self).__init__(config)
 
-        ## TX1 driver channel name (can be overridden by config)
-        self.tx1Channel = "tx00"
-        ## TX2 driver channel name (can be overridden by config)
-        self.tx2Channel = "tx10"
-        ## TX3 driver channel name (can be overridden by config)
-        self.tx3Channel = "tx20"
-        ## TX4 driver channel name (can be overridden by config)
-        self.tx4Channel = "tx30"
-        ## RX1 driver channel name (can be overridden by config)
-        self.rx1Channel = "rx00"
-        ## RX2 driver channel name (can be overridden by config)
-        self.rx2Channel = "rx01"
-        ## RX3 driver channel name (can be overridden by config)
-        self.rx3Channel = "rx10"
-        ## RX4 driver channel name (can be overridden by config)
-        self.rx4Channel = "rx11"
-        ## RX5 driver channel name (can be overridden by config)
-        self.rx5Channel = "rx20"
-        ## RX6 driver channel name (can be overridden by config)
-        self.rx6Channel = "rx21"
-        ## RX7 driver channel name (can be overridden by config)
-        self.rx7Channel = "rx30"
-        ## RX8 driver channel name (can be overridden by config)
-        self.rx8Channel = "rx31"
-        # Read config file and update specified instance variables
-        self.loadConfig(attributes=('tx1Channel', 'tx2Channel', 'tx3Channel', 'tx4Channel',
-                                    'rx1Channel', 'rx2Channel', 'rx3Channel', 'rx4Channel',
-                                    'rx5Channel', 'rx6Channel', 'rx7Channel', 'rx8Channel'))
+        #  Parse channel names from Thales ARINC429 Driver configuration file
+        thalesArinc429Config = "/thales/host/config/Arinc429Driver.conf"
+
+        configParser = SafeConfigParser()
+        configParser.read(thalesArinc429Config)
+
         ## Named tuple type to store channel info
         self.ChanInfo = collections.namedtuple("ChanInfo", "name chan")
         ## Dict mapping output channels to driver channel name and code
-        self.outputChans = {"ARINC_429_TX1": self.ChanInfo(self.tx1Channel, 0),
-                            "ARINC_429_TX2": self.ChanInfo(self.tx2Channel, 1),
-                            "ARINC_429_TX3": self.ChanInfo(self.tx3Channel, 2),
-                            "ARINC_429_TX4": self.ChanInfo(self.tx4Channel, 3)}
+        self.outputChans = {"ARINC_429_TX1": self.ChanInfo(configParser.get("transmitter0:ARINC429-1", "name"), 0),
+                            "ARINC_429_TX2": self.ChanInfo(configParser.get("transmitter0:ARINC429-2", "name"), 1),
+                            "ARINC_429_TX3": self.ChanInfo(configParser.get("transmitter0:ARINC429-3", "name"), 2),
+                            "ARINC_429_TX4": self.ChanInfo(configParser.get("transmitter0:ARINC429-4", "name"), 3)}
         ## Dict mapping input channels to driver channel name and code
-        self.inputChans = {"ARINC_429_RX1":  self.ChanInfo(self.rx1Channel, 0),
-                           "ARINC_429_RX2":  self.ChanInfo(self.rx2Channel, 1),
-                           "ARINC_429_RX3":  self.ChanInfo(self.rx3Channel, 2),
-                           "ARINC_429_RX4":  self.ChanInfo(self.rx4Channel, 3),
-                           "ARINC_429_RX5":  self.ChanInfo(self.rx5Channel, 4),
-                           "ARINC_429_RX6":  self.ChanInfo(self.rx6Channel, 5),
-                           "ARINC_429_RX7":  self.ChanInfo(self.rx7Channel, 6),
-                           "ARINC_429_RX8":  self.ChanInfo(self.rx8Channel, 7)}
+        self.inputChans = {"ARINC_429_RX1":  self.ChanInfo(configParser.get("receiver0:ARINC429-1", "name"), 0),
+                           "ARINC_429_RX2":  self.ChanInfo(configParser.get("receiver1:ARINC429-1", "name"), 1),
+                           "ARINC_429_RX3":  self.ChanInfo(configParser.get("receiver0:ARINC429-2", "name"), 2),
+                           "ARINC_429_RX4":  self.ChanInfo(configParser.get("receiver1:ARINC429-2", "name"), 3),
+                           "ARINC_429_RX5":  self.ChanInfo(configParser.get("receiver0:ARINC429-3", "name"), 4),
+                           "ARINC_429_RX6":  self.ChanInfo(configParser.get("receiver1:ARINC429-3", "name"), 5),
+                           "ARINC_429_RX7":  self.ChanInfo(configParser.get("receiver0:ARINC429-4", "name"), 6),
+                           "ARINC_429_RX8":  self.ChanInfo(configParser.get("receiver1:ARINC429-5", "name"), 7)}
         ## Counter for data incrementing
         self.increment = 0
         ## Dict of connections; key is input channel, value is a ConnectionInfo object
