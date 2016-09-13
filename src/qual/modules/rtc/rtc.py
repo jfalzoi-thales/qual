@@ -30,6 +30,8 @@ class Rtc(Module):
     def handlerRequestMessage(self,rtcRequest):
         # Create the empty response
         rtcResponse = RTCResponse()
+        rtcResponse.success = False
+        rtcResponse.timeString = ''
         # Request: RTC_GET
         if rtcRequest.body.requestType == RTCRequest.RTC_GET:
             rtcResponse = self.rtcGet()
@@ -50,7 +52,6 @@ class Rtc(Module):
                     rtcResponse.timeString = response.timeString
                 else:
                     self.log.error("Internal failure executing commnad 'date'")
-                    rtcResponse.success = False
             else:
                 # Here the error was logged in rtcGet() function
                 rtcResponse = response
@@ -62,14 +63,14 @@ class Rtc(Module):
             if rtcResponse.success:
                 # Set the system date time
                 if subprocess.call(['date', '-s', rtcRequest.body.timeString], stdout=DEVNULL, stderr=DEVNULL) == 0:
-                    rtcResponse.success = True
+                    pass
                 else:
                     self.log.error("Internal failure executing commnad 'date'")
                     rtcResponse.success = False
+                    rtcResponse.timeString = ''
         # Request: UNKNOWN
         else:
             self.log.error("Invalid RTC request: %d" % rtcRequest.body.requestType)
-            rtcResponse.success = False
 
         return ThalesZMQMessage(rtcResponse)
 
@@ -78,6 +79,8 @@ class Rtc(Module):
     def rtcGet(self):
         # Create the empty response
         rtcResponse = RTCResponse()
+        rtcResponse.success = False
+        rtcResponse.timeString = ''
         # Object to deserialize the response
         timeResponse = TimeResponse()
         # Pass the message to the RTC Driver/Simulator
@@ -90,10 +93,8 @@ class Rtc(Module):
                 rtcResponse.timeString = timeResponse.datetime
             else:
                 self.log.error("Error retrieving time from RTC: Error code %s" % timeResponse.error)
-                rtcResponse.success = False
         else:
             self.log.error("Unexpected response from RTC: %s" % response.name)
-            rtcResponse.success = False
 
         return rtcResponse
 
@@ -102,6 +103,8 @@ class Rtc(Module):
     def rtcSet(self, timeString):
         # Create the empty response
         rtcResponse = RTCResponse()
+        rtcResponse.success = False
+        rtcResponse.timeString = ''
         # Object to deserialize the response
         timeResponse = TimeResponse()
         # Create the Set Time obj
@@ -114,7 +117,6 @@ class Rtc(Module):
         if setTimeResponse.name == "TimeResponse":
             timeResponse.ParseFromString(setTimeResponse.serializedBody)
             if timeResponse.error == SUCCESS:
-                rtcResponse.success = True
                 # now, the RTC time
                 if getTimeResponse.name == "TimeResponse":
                     timeResponse.ParseFromString(getTimeResponse.serializedBody)
@@ -124,15 +126,11 @@ class Rtc(Module):
                         rtcResponse.timeString = timeResponse.datetime
                     else:
                         self.log.error("Error retrieving time from RTC: Error code %s" % timeResponse.error)
-                        rtcResponse.success = False
                 else:
                     self.log.error("Unexpected response from RTC: %s" % getTimeResponse.name)
-                    rtcResponse.success = False
             else:
                 self.log.error("Unexpected response from RTC: %s" % timeResponse.name)
-                rtcResponse.success = False
         else:
             self.log.error("Unexpected response from RTC: %s" % setTimeResponse.name)
-            rtcResponse.success = False
 
         return rtcResponse
