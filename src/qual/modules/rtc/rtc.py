@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from common.pb2.rtc_driver_pb2 import *
 from tklabs_utils.module.module import Module
@@ -6,7 +7,8 @@ from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from qual.pb2.RTC_pb2 import *
 import subprocess
 
-
+## Discard the output
+DEVNULL = open(os.devnull, 'wb')
 
 ## RTC Module class
 #   Passes through the RTC message
@@ -45,9 +47,12 @@ class Rtc(Module):
                 # Set the system date time
                 if subprocess.call(['date', '-s', response.timeString], stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0:
                     rtcResponse.success = True
+                    rtcResponse.timeString = response.timeString
                 else:
+                    self.log.error("Internal failure executing commnad 'date'")
                     rtcResponse.success = False
             else:
+                # Here the error was logged in rtcGet() function
                 rtcResponse = response
         # Request: RTC_SYSTEM_SET
         elif rtcRequest.body.requestType == RTCRequest.RTC_SYSTEM_SET:
@@ -56,9 +61,10 @@ class Rtc(Module):
             # Succeeded???
             if rtcResponse.success:
                 # Set the system date time
-                if subprocess.call(['date', '-s', rtcRequest.body.timeString], stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0:
+                if subprocess.call(['date', '-s', rtcRequest.body.timeString], stdout=DEVNULL, stderr=DEVNULL) == 0:
                     rtcResponse.success = True
                 else:
+                    self.log.error("Internal failure executing commnad 'date'")
                     rtcResponse.success = False
         # Request: UNKNOWN
         else:
@@ -83,6 +89,7 @@ class Rtc(Module):
                 rtcResponse.success = True
                 rtcResponse.timeString = timeResponse.datetime
             else:
+                self.log.error("Error retrieving time from RTC: Error code %s" % timeResponse.error)
                 rtcResponse.success = False
         else:
             self.log.error("Unexpected response from RTC: %s" % response.name)
@@ -101,28 +108,31 @@ class Rtc(Module):
         setTime = SetTime()
         setTime.datetime = timeString
         # Pass the message to the RTC Driver/Simulator
-        response = self.rtcThalesZMQClient.sendRequest(ThalesZMQMessage(setTime))
-        time = self.rtcThalesZMQClient.sendRequest(ThalesZMQMessage(GetTime()))
+        setTimeResponse = self.rtcThalesZMQClient.sendRequest(ThalesZMQMessage(setTime))
+        getTimeResponse = self.rtcThalesZMQClient.sendRequest(ThalesZMQMessage(GetTime()))
         # Deserialize the response
-        if response.name == "TimeResponse":
-            timeResponse.ParseFromString(response.serializedBody)
+        if setTimeResponse.name == "TimeResponse":
+            timeResponse.ParseFromString(setTimeResponse.serializedBody)
             if timeResponse.error == SUCCESS:
                 rtcResponse.success = True
                 # now, the RTC time
-                if time.name == "TimeResponse":
+                if getTimeResponse.name == "TimeResponse":
+                    timeResponse.ParseFromString(getTimeResponse.serializedBody)
                     # succeeded???
                     if timeResponse.error == SUCCESS:
                         rtcResponse.success = True
                         rtcResponse.timeString = timeResponse.datetime
                     else:
+                        self.log.error("Error retrieving time from RTC: Error code %s" % timeResponse.error)
                         rtcResponse.success = False
                 else:
-                    self.log.error("Unexpected response from RTC: %s" % response.name)
+                    self.log.error("Unexpected response from RTC: %s" % getTimeResponse.name)
                     rtcResponse.success = False
             else:
+                self.log.error("Unexpected response from RTC: %s" % timeResponse.name)
                 rtcResponse.success = False
         else:
-            self.log.error("Unexpected response from RTC: %s" % response.name)
+            self.log.error("Unexpected response from RTC: %s" % setTimeResponse.name)
             rtcResponse.success = False
 
         return rtcResponse
