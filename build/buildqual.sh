@@ -3,12 +3,14 @@
 QUALDIR=~/qual
 MPSBUILDDIR=~/mps-builder
 BUILD="QUAL"
-NEWTAG="NO"
+TAG="NO"
+BRANCH="dev/NMS"
 
 # Display buildqual command usage
 usage() {
     echo "Unrecognized parameter specified.  Accepted parameters are:
-                -n|--newtag	- builds RPMs with a new tag
+                -t|--tag	- builds RPMs with a new tag
+                -b|--branch - builds images from specified branch
                 -s|--sims	- builds only qual-sims image
                 -a|--all 	- builds both qual and qual-sims images"
     exit 1
@@ -20,7 +22,7 @@ titoqual () {
     cd ${QUALDIR}/src
     tito init
 
-    if [ "$NEWTAG" == "YES" ]; then tito tag; fi
+    if [ "$TAG" == "YES" ]; then tito tag; fi
 
     VERSION=`cat ${QUALDIR}/.tito/packages/qual | cut -f 1 -d ' '`
     tito build --rpm --tag=qual-${VERSION} --offline
@@ -64,18 +66,22 @@ buildife () {
 
 # Check for parameters: 
 # if none,	    build only qual image
-# if new RPM,	build RPMs with a new tag
+# if tag,	    build RPMs with a new tag
+# if branch     build images from specified branch
 # if sims,	    build only sims image
 # if all,	    build both
-TEMP=`getopt -o nsa --long newtag,sims,all -n 'buildqual.sh' -- "$@" 2>/dev/null`
+TEMP=`getopt -o tb:sa --long tag,branch:,sims,all -n 'buildqual.sh' -- "$@" 2>/dev/null`
 if [ "$?" != 0 ]; then usage; fi
 eval set -- "$TEMP"
 
 while true ; do
     case "$1" in
-        -n|--newtag)
-            NEWTAG="YES"
+        -t|--tag)
+            TAG="YES"
             shift;;
+        -b|--branch)
+            BRANCH="$2"
+            shift 2;;
         -s|--sims)
             BUILD="SIMS"
             shift;;
@@ -96,14 +102,15 @@ cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
 # Build main qual RPMs and copy into repo
 cd ${QUALDIR}/
 echo "Please use your own Git credentials to log in. \(^^\) \(^^)/ (/^^)/"
-git fetch origin dev/QUAL
+
+git fetch origin "$BRANCH"
 git reset --hard FETCH_HEAD
 git clean -df
 rm -rf /tmp/tito
 titoqual
 
-if [ "$NEWTAG" == "YES" ]; then
-    git push --tags origin dev/QUAL
+if [ "$TAG" == "YES" ]; then
+    git push --tags origin "$BRANCH"
 fi
 
 sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/qual-*.rpm
