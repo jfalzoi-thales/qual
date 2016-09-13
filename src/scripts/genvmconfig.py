@@ -9,8 +9,7 @@ Copyright (C) 2016 Thales Avionics, Inc.
 
 """
 
-import os
-import sys
+import sys, os, re
 import subprocess
 from lxml import etree as et
 
@@ -145,9 +144,15 @@ CHANGES TO IT ARE LIKELY TO BE OVERWRITTEN AND LOST.
 </domain>
 '''
 
-# mapping from VMConfig.net_vf number to physical PCI addresses
-_host_vf_ifaces = {
-    0: ( (0, 1, 0x10, 0), (0, 1, 0x11, 0), (0, 1, 0x12, 0), (0, 1, 0x13, 0) ),
+# mapping from VMConfig.net_vf number to /dev/mps/pci-... and NMS VF port names
+_vf_interfaces = {
+    0: ('i350_pf1_vf1', 'i350_pf2_vf1', 'i350_pf3_vf1', 'i350_pf4_vf1'),
+    1: ('i350_pf1_vf2', 'i350_pf2_vf2', 'i350_pf3_vf2', 'i350_pf4_vf2'),
+    2: ('i350_pf1_vf3', 'i350_pf2_vf3', 'i350_pf3_vf3', 'i350_pf4_vf3'),
+    3: ('i350_pf1_vf4', 'i350_pf2_vf4', 'i350_pf3_vf4', 'i350_pf4_vf4'),
+    4: ('i350_pf1_vf5', 'i350_pf2_vf5', 'i350_pf3_vf5', 'i350_pf4_vf5'),
+    5: ('i350_pf1_vf6', 'i350_pf2_vf6', 'i350_pf3_vf6', 'i350_pf4_vf6'),
+    6: ('i350_pf1_vf7', 'i350_pf2_vf7', 'i350_pf3_vf7', 'i350_pf4_vf7'),
 }
 
 
@@ -165,6 +170,30 @@ class VMException(Exception):
             return '{0.err_code}: {0.err_description}'.format(self)
         else:
             return str(self.err_code or self.err_description or self.__class__.__name__)
+
+
+def _read_pci_device_address(dev_name):
+    """Reads /dev/mps/pci-<dev_name>, and returns parsed PCI-address tuple."""
+    # read target PCI device address from a special file created by udev rules
+    # (address may be different depending on which board - HL/SL - the software is run)
+    try:
+        with open('/dev/mps/pci-' + dev_name, 'r') as f:
+            pci_addr_raw = f.readline().strip()
+    except EnvironmentError as e:
+        raise VMException(-1,
+                          b"Unknown PCI device {} (unable to read PCI addr: {})".format(dev_name, str(e)))
+    # the file should be in format DDDD:BB:SS.F (hex numbers: domain/bus/slot/function)
+    m = re.match('^([0-9A-Fa-f]+):([0-9A-Fa-f]+):([0-9A-Fa-f]+).([0-9A-Fa-f]+)$', pci_addr_raw)
+    if not m:
+        raise VMException(-1,
+                          b"Unknown PCI device {} (unable to parse PCI addr: {})".format(dev_name, pci_addr_raw))
+    # return it
+    try:
+        sys.stderr.write("Mapped PCI %s to %s", dev_name, pci_addr_raw)
+        return tuple(int(x, 16) for x in m.group(1, 2, 3, 4))
+    except Exception as e:
+        raise VMException(-1,
+                          b"Unknown PCI device {} (unable to format PCI addr: {})".format(dev_name, str(e)))
 
 
 def format_domain_XML(config):
@@ -260,10 +289,11 @@ def format_domain_XML(config):
 
     # network cards
     if isinstance(config.net_vf, int):
-        if config.net_vf not in _host_vf_ifaces:
+        if config.net_vf not in _vf_interfaces:
             raise VMException(-1, b"Unknown net VF {}".format(config.net_vf))
 
-        for i, pci_addr in enumerate(_host_vf_ifaces[config.net_vf]):
+        for i, vf_name in enumerate(_vf_interfaces[config.net_vf]):
+            pci_addr = _read_pci_device_address(vf_name)
             el = et.Element('hostdev', mode='subsystem', type='pci', managed='yes')
             addr = et.Element('address', **pci_addr_attrs(pci_addr))
             src = et.Element('source')
@@ -298,10 +328,11 @@ def format_domain_XML(config):
         if dev in (VMDevices.AUDIO, VMDevices.CPU_ETHERNET):
             # PCI devices
             pci_passthrough = {
-                VMDevices.AUDIO:        ((0, 0, 0x1b, 0), (0, 0, 0x1b, 0)),
-                VMDevices.CPU_ETHERNET: ((0, 0, 0x1f, 6), (0, 0, 0x6, 0)),
+                VMDevices.AUDIO:        ('audio',        (0, 0, 0x1b, 0)),
+                VMDevices.CPU_ETHERNET: ('cpu-ethernet', (0, 0, 0x19, 0)),
             }
-            host_device, vm_device = pci_passthrough[dev]
+            host_device_name, vm_device = pci_passthrough[dev]
+            host_device = _read_pci_device_address(host_device_name)
             el = et.Element('hostdev', mode='subsystem', type='pci', managed='yes')
             el.append(et.Element('driver', name='vfio'))
             addr = et.Element('address', **pci_addr_attrs(host_device))
@@ -322,19 +353,18 @@ def format_domain_XML(config):
         elif dev in (VMDevices.IFE_USB_4232, VMDevices.IFE_USB_K60, VMDevices.IFE_USB_I2C):
             # USB devices
             usb_location = {
-                VMDevices.IFE_USB_4232: '1-2',
-                VMDevices.IFE_USB_K60:  '1-3',
-                VMDevices.IFE_USB_I2C:  '1-7',
+                VMDevices.IFE_USB_4232: '/dev/mps/usb-ft4232-ife',
+                VMDevices.IFE_USB_K60:  '/dev/mps/usb-mk60-ife',
+                VMDevices.IFE_USB_I2C:  '/dev/mps/usb-mcp2221-ife',
             }
             try:
-                with open('/sys/bus/usb/devices/'+usb_location[dev]+'/devnum', 'r') as f:
-                    devnum = f.readline().strip()
-            except EnvironmentError:
-                sys.stderr.write("Device %s not found - ignoring\n" % dev)
-                #raise VMException(-1, b"Unable to read {} USB devnum (is it connected?)".format(dev))
-                continue
+                m = re.match('^/dev/bus/usb/0*([1-9][0-9]*)/0*([1-9][0-9]*)$',
+                             os.path.realpath(usb_location[dev]))
+                busnum, devnum = m.group(1, 2)
+            except AttributeError:
+                raise VMException(-1, b"Unable to read {} USB bus/dev numbers (is it connected?)".format(dev))
             el = et.Element('hostdev', mode='subsystem', type='usb', managed='yes')
-            addr = et.Element('address', bus='1', device=devnum)
+            addr = et.Element('address', bus=busnum, device=devnum)
             src = et.Element('source', startupPolicy='mandatory')
             src.append(addr)
             el.append(src)
@@ -352,14 +382,13 @@ if __name__ == "__main__":
     # General settings
     config.cpu = 1
     config.memory = 1024
-    config.assigned_devices = [VMDevices.IFE_USB_4232, VMDevices.IFE_USB_K60, VMDevices.IFE_USB_I2C]
     config.boot_virtual_disk = sys.argv[1]
 
     # If running on a host that has the ens1f0 interface (i.e. running on an MPS),
-    # enable the I350 ethernet interfaces and Haswell CPU model
+    # enable the passthrough devices and Haswell CPU model
     if subprocess.call(['ifconfig', 'ens1f0'], stdout=DEVNULL, stderr=DEVNULL) == 0:
-        #config.net_vf = 0
-        config.assigned_devices.append(VMDevices.CPU_ETHERNET)
+        config.assigned_devices = [VMDevices.IFE_USB_4232, VMDevices.IFE_USB_K60, VMDevices.IFE_USB_I2C]
+        config.net_vf = 0
         config.cpu_model = "Haswell"
 
     # Create XML file from the config, and just output it - caller can redirect to file
