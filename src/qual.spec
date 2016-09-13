@@ -49,7 +49,7 @@ This package runs an IFE virtual machine that is used to communicate with the IF
 
 
 %install
-mkdir -p %{buildroot}/%{_bindir} %{buildroot}/etc/sysconfig/network-scripts %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src/config %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances %{buildroot}/tsp-download %{buildroot}/thales/qual/firmware
+mkdir -p %{buildroot}/%{_bindir} %{buildroot}/etc/sysconfig/network-scripts %{buildroot}/%{_unitdir} %{buildroot}/thales/qual/src/config %{buildroot}/usr/lib/systemd/system-preset %{buildroot}/thales/host/appliances %{buildroot}/tsp-download %{buildroot}/thales/qual/firmware %{buildroot}/thales/host/config
 cp systemd/qual.sh %{buildroot}/thales/host/appliances/qual
 cp systemd/qual-sims.sh %{buildroot}/thales/host/appliances/qual-sims
 cp systemd/qual-startvm.sh %{buildroot}/thales/host/appliances/qual-startvm
@@ -67,6 +67,7 @@ cp -r tklabs_utils/ %{buildroot}/thales/qual/src/
 cp -r qual/ %{buildroot}/thales/qual/src/
 mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/mps-biostool.sh %{buildroot}/%{_bindir}/
 cp -r simulator/ %{buildroot}/thales/qual/src/
+mv %{buildroot}/thales/qual/src/simulator/arinc429/Arinc429Driver.conf %{buildroot}/thales/host/config/
 cp config/qual-mps.conf %{buildroot}/thales/qual/src/config/
 cp config/qual.conf %{buildroot}/thales/qual/src/config/qual-sims.conf
 cp config/qual-ife.conf %{buildroot}/thales/qual/src/config/
@@ -102,6 +103,7 @@ echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BI
 /thales/qual/src/simulator/*
 /thales/qual/firmware/BIOS.firmware
 %attr(0755,root,root) /thales/qual/src/simulator/*.sh
+/thales/host/config/Arinc429Driver.conf
 
 %files ife
 %attr(0755,root,root) %{_bindir}/qual-ife
