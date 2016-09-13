@@ -19,6 +19,7 @@ all:
 	$(PROTOC) --python_out=../pb2 SSD.proto
 	$(PROTOC) --python_out=../pb2 LED.proto
 	$(PROTOC) --python_out=../pb2 RTC.proto
+	$(PROTOC) --python_out=../pb2 OOF.proto
 
 clean:
 	rm ../pb2/*_pb2.py 2>/dev/null || true
