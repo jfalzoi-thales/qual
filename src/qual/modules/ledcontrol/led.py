@@ -10,7 +10,7 @@ from common.pb2.GPIOManager_pb2 import *
 #
 class Led(Module):
     ## Constructor
-    def __init__(self):
+    def __init__(self, config=None):
         # Init the parent class
         super(Led, self).__init__(None)
         # Init the ThalesZMQClient
