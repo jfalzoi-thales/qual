@@ -67,7 +67,7 @@ class HDDS(Module):
             hddsGetReq = None
 
             for value in msg.body.values:
-                if value.key.startswith(("ife.voltage", "ife.temperature")):
+                if value.key.startswith("ife"):
                     if ifeGetReq is None: ifeGetReq = HostDomainDeviceServiceRequest()
                     ifeGetReq.requestType = HostDomainDeviceServiceRequest.GET
                     ifeValue = ifeGetReq.values.add()
@@ -96,7 +96,7 @@ class HDDS(Module):
             hddsSetReq = None
 
             for value in msg.body.values:
-                if value.key.startswith(("ife.voltage", "ife.temperature")):
+                if value.key.startswith("ife"):
                     self.log.warning("Attempted to set ife voltage or temperature.  Nothing to do.")
                     self.addResp(response, value.key)
                 elif value.key.startswith("mac_address"):
