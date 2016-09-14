@@ -66,10 +66,11 @@ class Test_Oof(unittest.TestCase):
         module = self.__class__.module
 
         log.info("**** Test case: OOF Request message ****")
-        response = module.msgHandler(ThalesZMQMessage(OofMessages.message_Oof()))
+
+        oofResponse = module.msgHandler(ThalesZMQMessage(OofMessages.message_Oof()))
         # Asserts
-        self.assertTrue(response.body.success)
-        self.assertTrue(isinstance(response.body.timeString, unicode))
+        self.assertTrue(oofResponse.body.success)
+
         log.info("==== Test complete ====")
 
 if __name__ == '__main__':
