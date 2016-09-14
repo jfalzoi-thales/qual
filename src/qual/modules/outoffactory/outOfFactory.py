@@ -54,11 +54,9 @@ class Oof(Module):
     #  @param   fs        Device name or mount point of filesystem to search for
     def unmountIfMounted(self, fs):
         self.log.debug("Checking if filesystem %s is mounted" % fs)
-        cmd = 'mount | fgrep %s || true' % fs
-        output = subprocess.check_output(cmd, shell=True)
+        output = subprocess.check_output('mount | fgrep %s || true' % fs, shell=True)
         isMounted = output != ''
         if isMounted:
-            cmd = 'umount %s' % fs
-            if subprocess.call(cmd) != 0:
+            if subprocess.call(['umount', fs]) != 0:
                 self.log.error("Unable to unmount %s" % fs)
                 raise Exception()
