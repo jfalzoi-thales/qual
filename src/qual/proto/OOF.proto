@@ -1,0 +1,11 @@
+package mpsqual;
+
+message OutOfFactoryRequest
+{
+
+}
+
+message OutOfFactoryResponse
+{
+	required bool success = 1;
+}
