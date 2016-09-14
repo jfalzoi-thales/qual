@@ -362,7 +362,9 @@ def format_domain_XML(config):
                              os.path.realpath(usb_location[dev]))
                 busnum, devnum = m.group(1, 2)
             except AttributeError:
-                raise VMException(-1, b"Unable to read {} USB bus/dev numbers (is it connected?)".format(dev))
+                sys.stderr.write("Device %s not found - ignoring\n" % dev)
+                #raise VMException(-1, b"Unable to read {} USB bus/dev numbers (is it connected?)".format(dev))
+                continue
             el = et.Element('hostdev', mode='subsystem', type='usb', managed='yes')
             addr = et.Element('address', bus=busnum, device=devnum)
             src = et.Element('source', startupPolicy='mandatory')
