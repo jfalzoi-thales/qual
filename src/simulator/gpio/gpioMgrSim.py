@@ -33,19 +33,22 @@ class GPIOManagerSimulator(ThalesZMQServer):
         self.log.setLevel(logger.INFO)
 
         # List of pins that can be get/set
-        self.pins = {"OUTPUT_1_PIN_A6": False,
-                     "OUTPUT_2_PIN_B6": False,
-                     "OUTPUT_3_PIN_C6": False,
-                     "OUTPUT_4_PIN_D6": False,
-                     "OUTPUT_5_PIN_E6": False,
-                     "OUTPUT_6_PIN_E8": False,
-                     "INPUT_1_PIN_A7":  False,
-                     "INPUT_2_PIN_B7":  False,
-                     "INPUT_3_PIN_C7":  False,
-                     "INPUT_4_PIN_D7":  False,
-                     "INPUT_5_PIN_E7":  False,
-                     "PA_All_PIN_C8":   False,
-                     "RxLineSelect_717":False}
+        self.pins = {"OUTPUT_1_PIN_A6"   :False,
+                     "OUTPUT_2_PIN_B6"   :False,
+                     "OUTPUT_3_PIN_C6"   :False,
+                     "OUTPUT_4_PIN_D6"   :False,
+                     "OUTPUT_5_PIN_E6"   :False,
+                     "OUTPUT_6_PIN_E8"   :False,
+                     "INPUT_1_PIN_A7"    :False,
+                     "INPUT_2_PIN_B7"    :False,
+                     "INPUT_3_PIN_C7"    :False,
+                     "INPUT_4_PIN_D7"    :False,
+                     "INPUT_5_PIN_E7"    :False,
+                     "PA_All_PIN_C8"     :False,
+                     "RxLineSelect_717"  :False,
+                     "Post_LED"          :False,
+                     "Status_LED_Green"  :False,
+                     "Status_LED_Yellow" :False}
 
         # Simulate GPIO loopback by linking outputs to inputs
         self.loopbackMap = {"OUTPUT_1_PIN_A6": "INPUT_1_PIN_A7",
