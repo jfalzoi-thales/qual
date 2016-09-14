@@ -22,7 +22,7 @@ class SEMAInventory(object):
     ## Update values in the inventory area
     #  @param    self
     #  @param    values     dict of values to update
-    #  @return   tuple of success, error message
+    #  @return   True if success, False if failure
     def update(self, values):
         # Start by reading existing values, to which we'll add supplied values
         configParser = SafeConfigParser()
@@ -48,12 +48,12 @@ class SEMAInventory(object):
                 configParser.write(configFile)
         except IOError:
             self.log.error("Unable to write inventory data")
-            return False, "Unable to write inventory data"
+            return False
 
         # Create the compressed file
         if subprocess.call("gzip -c %s > %s" % (self.uncompressedFile, self.compressedFile), shell=True) != 0:
             self.log.error("Unable to write compressed inventory data")
-            return False, "Unable to write compressed inventory data"
+            return False
 
-        # Success
-        return True, ""
+        # Successful
+        return True

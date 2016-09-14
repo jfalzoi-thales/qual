@@ -3,7 +3,6 @@ import subprocess
 
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.vpd.vpd import VPD
-from ccData_Exception import CarrierCardDataModuleException
 
 
 ## Discard the output
@@ -47,17 +46,18 @@ class I350Inventory(ConfigurableObject):
             # Make sure we can talk to the device
             rc = subprocess.call(['ethtool', self.ethDevice], stdout=DEVNULL, stderr=DEVNULL)
             if rc != 0:
-                raise CarrierCardDataModuleException(msg="Unable to access device %s" % self.ethDevice)
-            self.log.info("Using Ethernet device %s", self.ethDevice)
+                self.log.error("Unable to access device %s" % self.ethDevice)
+            else:
+                self.log.info("Using Ethernet device %s", self.ethDevice)
 
         ## Map two-character VPD field names to HDDS field names
-        self.vpdToHDDS = {"PN": "carrier_card.part_number",
-                          "SN": "carrier_card.serial_number",
-                          "EC": "carrier_card.revision",
-                          "VP": "carrier_card.manufacturer_pn",
-                          "VD": "carrier_card.manufacturing_date",
-                          "VN": "carrier_card.manufacturer_name",
-                          "VC": "carrier_card.manufacturer_cage"}
+        self.vpdToHDDS = {"PN": "inventory.carrier_card.part_number",
+                          "SN": "inventory.carrier_card.serial_number",
+                          "EC": "inventory.carrier_card.revision",
+                          "VP": "inventory.carrier_card.manufacturer_pn",
+                          "VD": "inventory.carrier_card.manufacturing_date",
+                          "VN": "inventory.carrier_card.manufacturer_name",
+                          "VC": "inventory.carrier_card.manufacturer_cage"}
 
         ## Map HDDS field names to two-character VPD field names
         self.hddsToVPD = {v: k for k, v in self.vpdToHDDS.items()}
@@ -84,12 +84,12 @@ class I350Inventory(ConfigurableObject):
     ## Update values in the inventory area
     #  @param    self
     #  @param    values     dict of values to update
-    #  @return   tuple of success, error message
+    #  @return   True if success, False if failure
     def update(self, values):
         # Check if write-protected
         if self.getWriteProtectFlag():
             self.log.warning("Attempt to write to write-protected EEPROM")
-            return False, "Cannot write: EEPROM is write-protected"
+            return False
 
         # Start by reading existing VPD, to which we'll add supplied values
         self.readAndParseVPD()
@@ -104,25 +104,25 @@ class I350Inventory(ConfigurableObject):
         success = self.writeVPD(self.vpd.buildVPD())
         if not success:
             self.log.error("Failure writing VPD block")
-            return False, "Write VPD block to EEPROM failed"
+            return False
 
         # Write the VPD pointer into EEPROM if necessary
         success = self.writeVPDPointer()
         if not success:
             self.log.error("Failure writing VPD pointer")
-            return False, "Write VPD pointer to EEPROM failed"
+            return False
 
         # Successful
-        return True, ""
+        return True
 
     ## Erase the inventory area
     #  @param    self
-    #  @return   tuple of success, error message
+    #  @return   True if success, False if failure
     def erase(self):
         # Check if write-protected
         if self.getWriteProtectFlag():
             self.log.warning("Attempt to erase write-protected EEPROM")
-            return False, "Cannot erase: EEPROM is write-protected"
+            return False
 
         # Write VPD area with all 0xff bytes
         vpd = bytearray()
@@ -131,10 +131,10 @@ class I350Inventory(ConfigurableObject):
         success = self.writeVPD(vpd)
         if not success:
             self.log.error("Failure writing VPD block")
-            return False, "Write VPD block to EEPROM failed"
+            return False
 
         # Successful
-        return True, ""
+        return True
 
     ## Write-protect the inventory area
     #  @param    self
@@ -142,30 +142,30 @@ class I350Inventory(ConfigurableObject):
     def writeProtect(self):
         if not self.enableWriteProtect:
             self.log.warning("Attempt to write-protect when WP function is disabled")
-            return False, "Write Protect function disabled"
+            return False
 
         # Check if already write-protected
         if self.getWriteProtectFlag():
             self.log.info("Attempt to write-protect already write-protected EEPROM")
             # It's already in the state the user requested, so we'll consider this a success
-            return True, ""
+            return True
 
         # Sanity check: make sure that there is data programmed before we write-protect
         self.readAndParseVPD()
         # Arbitrary: check for programmed part number and serial number
         if "PN" not in self.vpd.vpdEntries or "SN" not in self.vpd.vpdEntries:
             self.log.warning("Attempt to write-protect when required data is missing")
-            return False, "Write protect request refused: VPD not yet programmed"
+            return False
 
         # Go ahead and attempt to set the write-protect flag.  No turning back now!
         success = self.setWriteProtectFlag()
         if not success:
             self.log.error("Error setting write protect flag")
-            return False, "Write Protect failed"
+            return False
 
         # Successful
         self.log.info("**** EEPROM is now write-protected ****")
-        return True, ""
+        return True
 
     ## Reads VPD from EEPROM (or test file) and updates self.vpdEntries
     #  @param  self
