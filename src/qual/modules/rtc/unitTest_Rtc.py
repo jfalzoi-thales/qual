@@ -3,7 +3,6 @@ import unittest
 from datetime import datetime
 
 from rtc import Rtc
-from common.pb2.rtc_driver_pb2 import *
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
