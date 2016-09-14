@@ -28,7 +28,9 @@ class Oof(Module):
         oofResponse.success = False
         # run the command, and catch the exception if it failed
         try:
-            self.runMakeRaidOOF()
+            self.unmountIfMounted("/mnt/qual")
+            self.unmountIfMounted("/tsp-download")
+            self.runDestroyRaid()
         except Exception:
             # if an error, success is already False
             pass
@@ -39,10 +41,24 @@ class Oof(Module):
 
     ## Runs a command, and can raise an exception if the command fails
     #  @param   self
-    def runMakeRaidOOF(self):
-        self.log.debug('Running: mpsinst-makeraid-oof')
-        rc = subprocess.call('./mpsinst-makeraid-oof.sh 10 \"YES,CLEAR_MY_DISKS\" > /tmp/outoffactory.log 2>&1', shell=True)
+    def runDestroyRaid(self):
+        self.log.debug('Running: mpsinst-destroyraid')
+        rc = subprocess.call('mpsinst-destroyraid 10 \"YES,CLEAR_MY_DISKS\" > /tmp/destroyraid.log 2>&1', shell=True)
         self.log.debug("Command return code: %d" % rc)
         if rc != 0:
             self.log.error('Unable to delete RAID volume')
             raise Exception()
+
+    ## Unmount a filesystem if mounted, and raise exception if it cannot be unmounted
+    #  @param   self
+    #  @param   fs        Device name or mount point of filesystem to search for
+    def unmountIfMounted(self, fs):
+        self.log.debug("Checking if filesystem %s is mounted" % fs)
+        cmd = 'mount | fgrep %s || true' % fs
+        output = subprocess.check_output(cmd, shell=True)
+        isMounted = output != ''
+        if isMounted:
+            cmd = 'umount %s' % fs
+            if subprocess.call(cmd) != 0:
+                self.log.error("Unable to unmount %s" % fs)
+                raise Exception()

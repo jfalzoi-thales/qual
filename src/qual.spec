@@ -66,6 +66,7 @@ cp -r common/ %{buildroot}/thales/qual/src/
 cp -r tklabs_utils/ %{buildroot}/thales/qual/src/
 cp -r qual/ %{buildroot}/thales/qual/src/
 mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/mps-biostool.sh %{buildroot}/%{_bindir}/
+mv %{buildroot}/thales/qual/src/qual/modules/outoffactory/mpsinst-destroyraid.sh %{buildroot}/thales/host/appliances/mpsinst-destroyraid
 cp -r simulator/ %{buildroot}/thales/qual/src/
 cp config/qual-mps.conf %{buildroot}/thales/qual/src/config/
 cp config/qual.conf %{buildroot}/thales/qual/src/config/qual-sims.conf
@@ -78,6 +79,7 @@ echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BI
 %attr(0755,root,root) /thales/host/appliances/qual-startvm
 %attr(0755,root,root) /thales/host/appliances/qtemenu
 %attr(0755,root,root) /thales/host/appliances/genvmconfig
+%attr(0755,root,root) /thales/host/appliances/mpsinst-destroyraid
 %attr(0644,root,root) /%{_unitdir}/qual.service
 %attr(0644,root,root) /%{_unitdir}/qual-startvm.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-service.preset
