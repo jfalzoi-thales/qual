@@ -74,6 +74,7 @@ class HDDS(Module):
                     ifeValue.key = value.key
                 elif value.key.startswith("mac_address"):
                     if macGetKeys is None: macGetKeys = []
+
                     if value.key.endswith("*"):
                         macGetKeys += self.macTypes
                     else:
