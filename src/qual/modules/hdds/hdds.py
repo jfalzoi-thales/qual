@@ -28,14 +28,14 @@ class HDDS(Module):
         ## Address for communicating with QTA running on the IFE VM
         self.ifeVmQtaAddr = "tcp://localhost:50003"
         self.loadConfig(attributes=('ifeVmQtaAddr', 'cpuEthernetDev', 'i350EthernetDev'))
+        ## Connection to QTA running on the IFE VM
+        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log)
         ## Mac address types for handling wild cards
         self.macTypes = ["mac_address.processor",
                          "mac_address.i350_1",
                          "mac_address.i350_2",
                          "mac_address.i350_3",
                          "mac_address.i350_4"]
-        ## Connection to QTA running on the IFE VM
-        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log)
         ## Inventory item length limits
         self.lengthLimits = {"part_number":        24,
                              "serial_number":      24,
@@ -119,12 +119,22 @@ class HDDS(Module):
 
         return ThalesZMQMessage(response)
 
+    ## Adds another set of values to the repeated property response field
+    #  @param   self
+    #  @param   response    A HostDomainDeviceServiceResponse object
+    #  @param   key         Key to be added to response, default empty
+    #  @param   value       Value of key to be added to response, default empty
+    #  @param   success     Success flag to be added to response, default False
     def addResp(self, response, key="", value="", success=False):
         respVal = response.values.add()
         respVal.key = key
         respVal.value = value
         respVal.success = success
 
+    ## Handles GET requests for IFE keys
+    #  @param   self
+    #  @param   response    A HostDomainDeviceServiceResponse object
+    #  @param   ifeReq      A HostDomainDeviceServiceRequest object to be sent to the Guest VM QTA
     def ifeGet(self, response, ifeReq):
         # IFE get messages are handled by the QTA running on the IFE VM
         ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(ifeReq)
@@ -137,6 +147,10 @@ class HDDS(Module):
             self.log.error("Unexpected response from IFE VM HDDS: %s" % ifeVmQtaResponse.name)
             self.addResp(response)
 
+    ## Handles GET requests for MAC keys
+    #  @param   self
+    #  @param   response    A HostDomainDeviceServiceResponse object
+    #  @param   macKeys     A list of keys used for requesting MAC addresses
     def macGet(self, response, macKeys):
         for key in macKeys:
             target = key.split('.')[1]
@@ -149,6 +163,11 @@ class HDDS(Module):
                 self.log.warning("Invalid or not yet supported key: %s" % key)
                 self.addResp(response, key)
 
+    ## Handles GET requests for CPU and I350 card MAC keys
+    #  @param   self
+    #  @param   response    A HostDomainDeviceServiceResponse object
+    #  @param   key         Key of MAC address to be obtained
+    #  @param   device      Device who's MAC address is being obtained
     def nicMacGet(self, response, key, device):
         mac = check_output(["cat", "/sys/class/net/%s/address" % device])
 
@@ -205,6 +224,10 @@ class HDDS(Module):
 
             self.addResp(response)
 
+    ## Handles SET requests for MAC keys
+    #  @param     self
+    #  @param     response  HostDomainDeviceServiceResponse object
+    #  @param     macPairs  Dict containing pairs of keys and MAC address values to be set
     def macSet(self, response, macPairs):
         for key in macPairs:
             target = key.split('.')[1]
@@ -215,6 +238,11 @@ class HDDS(Module):
                 self.log.warning("Invalid or not yet supported key: %s" % key)
                 self.addResp(response, key, macPairs[key])
 
+    ## Handles SET requests for CPU MAC key
+    #  @param     self
+    #  @param     response  HostDomainDeviceServiceResponse object
+    #  @param     key       Key of MAC address to be set
+    #  @param     mac       MAC address to be set
     def cpuMacSet(self, response, key, mac):
         getActive = check_output(["mps_biostool", "get-active"])
 
