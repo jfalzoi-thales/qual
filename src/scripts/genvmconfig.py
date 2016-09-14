@@ -189,7 +189,7 @@ def _read_pci_device_address(dev_name):
                           b"Unknown PCI device {} (unable to parse PCI addr: {})".format(dev_name, pci_addr_raw))
     # return it
     try:
-        sys.stderr.write("Mapped PCI %s to %s", dev_name, pci_addr_raw)
+        sys.stderr.write("Mapped PCI %s to %s" % (dev_name, pci_addr_raw))
         return tuple(int(x, 16) for x in m.group(1, 2, 3, 4))
     except Exception as e:
         raise VMException(-1,
