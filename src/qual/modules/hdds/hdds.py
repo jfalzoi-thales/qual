@@ -1,5 +1,4 @@
-from subprocess import call, check_output
-
+import subprocess
 from common.pb2.ErrorMessage_pb2 import ErrorMessage
 from common.pb2.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp
 from qual.pb2.HDDS_pb2 import HostDomainDeviceServiceRequest, HostDomainDeviceServiceResponse
@@ -41,45 +40,38 @@ class HDDS(Module):
 
         #  Split up the requests by key type and handle them
         if msg.body.requestType == HostDomainDeviceServiceRequest.GET:
-            ifeGetReq = None
-            macGetKeys = None
-            hddsGetReq = None
-
             for value in msg.body.values:
                 if value.key.startswith(("ife.voltage", "ife.temperature")):
-                    if ifeGetReq is None: ifeGetReq = HostDomainDeviceServiceRequest()
+                    if ifeGetReq == None: ifeGetReq = HostDomainDeviceServiceRequest()
                     ifeGetReq.requestType = HostDomainDeviceServiceRequest.GET
                     ifeValue = ifeGetReq.values.add()
                     ifeValue.key = value.key
                 elif value.key.startswith("mac_address"):
-                    if macGetKeys is None: macGetKeys = []
+                    if macGetKeys == None: macGetKeys = []
                     macGetKeys.append(value.key)
                 else:
-                    if hddsGetReq is None: hddsGetReq = GetReq()
+                    if hddsGetReq == None: hddsGetReq = GetReq()
                     hddsGetReq.key.append(value.key)
 
-            if ifeGetReq is not None: self.ifeGet(response, ifeGetReq)
-            if macGetKeys is not None: self.macGet(response, macGetKeys)
-            if hddsGetReq is not None: self.hddsGet(response, hddsGetReq)
+            if ifeGetReq != None: self.ifeGet(response, ifeGetReq)
+            if macGetKeys != None: self.macGet(response, macGetKeys)
+            if hddsGetReq != None: self.hddsGet(response, hddsGetReq)
         elif msg.body.requestType == HostDomainDeviceServiceRequest.SET:
-            macSetPairs = None
-            hddsSetReq = None
-
             for value in msg.body.values:
                 if value.key.startswith(("ife.voltage", "ife.temperature")):
                     self.log.warning("Attempted to set ife voltage or temperature.  Nothing to do.")
                     self.addResp(response, value.key)
                 elif value.key.startswith("mac_address"):
-                    if macSetPairs is None: macSetPairs = {}
+                    if macSetPairs == None: macSetPairs = {}
                     macSetPairs[value.key] = value.value
                 else:
-                    if hddsSetReq is None: hddsSetReq = SetReq()
+                    if hddsSetReq == None: hddsSetReq = SetReq()
                     hddsValue = hddsSetReq.values.add()
                     hddsValue.key = value.key
                     hddsValue.value = value.value
 
-            if macSetPairs is not None: self.macSet(response, macSetPairs)
-            if hddsSetReq is not None: self.hddsSet(response, hddsSetReq)
+            if macSetPairs != None: self.macSet(response, macSetPairs)
+            if hddsSetReq != None: self.hddsSet(response, hddsSetReq)
         else:
             self.log.error("Unexpected Request Type %d" % msg.body.requestType)
 
@@ -108,21 +100,11 @@ class HDDS(Module):
             target = key.split('.')[1]
 
             if target.startswith("processor"):
-                self.addMacResp(response, key, self.cpuEthernetDev)
+                #parse ip addr
             elif target.startswith("i350"):
-                self.addMacResp(response, key, self.i350EthernetDev + target[-1])
+                #parse ip addr
             else:
-                self.log.warning("Invalid or not yet supported key: %s" % key)
                 self.addResp(response, key)
-
-    def addMacResp(self, response, key, device):
-        mac = check_output(["cat", "/sys/class/net/%s/address" % device])
-
-        if mac != "":
-            self.addResp(response, key, mac, True)
-        else:
-            self.log.warning("Unable to retrieve MAC from: /sys/class/net/%s/address" % device)
-            self.addResp(response, key)
 
     ## Handles incoming GET requests
     #  @param     self
@@ -152,30 +134,9 @@ class HDDS(Module):
             self.addResp(response)
 
     def macSet(self, response, macPairs):
-        for key in macPairs:
-            target = key.split('.')[1]
-            
-            if target.startswith("processor"):
-                self.cpuMacSet(response, key, macPairs[key])
-            else:
-                self.log.warning("Invalid or not yet supported key: %s" % key)
-                self.addResp(response, key, macPairs[key])
-
-    def cpuMacSet(self, response, key, mac):
-
-        bank = check_output(["mps_biostool", "get-active"])
-
-        if bank != "":
-
-        else:
-            self.log.warning("Unable to get active BIOS bank.")
-            self.addResp(response, key, macPairs[key])
-        if bank !=
-
-        if call(["mps_biostool", "set-mac", macPairs[key]]) == 0:
-            if call(["mps_biostool", "set-active", "1"]) == 0:
-
-
+        #  DO STUFF TO SET TEH MAC
+        for pair in macPairs:
+            self.addResp(response, pair, macPairs[pair])
 
     ## Handles incoming SET requests
     #  @param     self
