@@ -1,4 +1,4 @@
-from subprocess import call, check_output
+from subprocess import call, check_call, check_output, CalledProcessError
 
 from common.pb2.ErrorMessage_pb2 import ErrorMessage
 from common.pb2.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp
@@ -30,6 +30,12 @@ class HDDS(Module):
         self.loadConfig(attributes=('ifeVmQtaAddr', 'cpuEthernetDev', 'i350EthernetDev'))
         ## Connection to QTA running on the IFE VM
         self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log)
+        ## Mac address types for handling wild cards
+        self.macTypes = ["mac_address.processor",
+                         "mac_address.i350_1",
+                         "mac_address.i350_2",
+                         "mac_address.i350_3",
+                         "mac_address.i350_4"]
         ## Inventory item length limits
         self.lengthLimits = {"part_number":        24,
                              "serial_number":      24,
@@ -61,14 +67,18 @@ class HDDS(Module):
             hddsGetReq = None
 
             for value in msg.body.values:
-                if value.key.startswith(("ife.voltage", "ife.temperature")):
+                if value.key.startswith("ife"):
                     if ifeGetReq is None: ifeGetReq = HostDomainDeviceServiceRequest()
                     ifeGetReq.requestType = HostDomainDeviceServiceRequest.GET
                     ifeValue = ifeGetReq.values.add()
                     ifeValue.key = value.key
                 elif value.key.startswith("mac_address"):
                     if macGetKeys is None: macGetKeys = []
-                    macGetKeys.append(value.key)
+
+                    if value.key.endswith("*"):
+                        macGetKeys += self.macTypes
+                    else:
+                        macGetKeys.append(value.key)
                 elif value.key.startswith("inventory.carrier_card"):
                     if inventoryGetKeys is None: inventoryGetKeys = []
                     inventoryGetKeys.append(value.key)
@@ -86,7 +96,7 @@ class HDDS(Module):
             hddsSetReq = None
 
             for value in msg.body.values:
-                if value.key.startswith(("ife.voltage", "ife.temperature")):
+                if value.key.startswith("ife"):
                     self.log.warning("Attempted to set ife voltage or temperature.  Nothing to do.")
                     self.addResp(response, value.key)
                 elif value.key.startswith("mac_address"):
@@ -109,12 +119,22 @@ class HDDS(Module):
 
         return ThalesZMQMessage(response)
 
+    ## Adds another set of values to the repeated property response field
+    #  @param   self
+    #  @param   response    A HostDomainDeviceServiceResponse object
+    #  @param   key         Key to be added to response, default empty
+    #  @param   value       Value of key to be added to response, default empty
+    #  @param   success     Success flag to be added to response, default False
     def addResp(self, response, key="", value="", success=False):
         respVal = response.values.add()
         respVal.key = key
         respVal.value = value
         respVal.success = success
 
+    ## Handles GET requests for IFE keys
+    #  @param   self
+    #  @param   response    A HostDomainDeviceServiceResponse object
+    #  @param   ifeReq      A HostDomainDeviceServiceRequest object to be sent to the Guest VM QTA
     def ifeGet(self, response, ifeReq):
         # IFE get messages are handled by the QTA running on the IFE VM
         ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(ifeReq)
@@ -127,19 +147,28 @@ class HDDS(Module):
             self.log.error("Unexpected response from IFE VM HDDS: %s" % ifeVmQtaResponse.name)
             self.addResp(response)
 
+    ## Handles GET requests for MAC keys
+    #  @param   self
+    #  @param   response    A HostDomainDeviceServiceResponse object
+    #  @param   macKeys     A list of keys used for requesting MAC addresses
     def macGet(self, response, macKeys):
         for key in macKeys:
             target = key.split('.')[1]
 
             if target.startswith("processor"):
-                self.addMacResp(response, key, self.cpuEthernetDev)
+                self.nicMacGet(response, key, self.cpuEthernetDev)
             elif target.startswith("i350"):
-                self.addMacResp(response, key, self.i350EthernetDev + target[-1])
+                self.nicMacGet(response, key, self.i350EthernetDev + target[-1])
             else:
                 self.log.warning("Invalid or not yet supported key: %s" % key)
                 self.addResp(response, key)
 
-    def addMacResp(self, response, key, device):
+    ## Handles GET requests for CPU and I350 card MAC keys
+    #  @param   self
+    #  @param   response    A HostDomainDeviceServiceResponse object
+    #  @param   key         Key of MAC address to be obtained
+    #  @param   device      Device who's MAC address is being obtained
+    def nicMacGet(self, response, key, device):
         mac = check_output(["cat", "/sys/class/net/%s/address" % device])
 
         if mac != "":
@@ -195,29 +224,47 @@ class HDDS(Module):
 
             self.addResp(response)
 
+    ## Handles SET requests for MAC keys
+    #  @param     self
+    #  @param     response  HostDomainDeviceServiceResponse object
+    #  @param     macPairs  Dict containing pairs of keys and MAC address values to be set
     def macSet(self, response, macPairs):
         for key in macPairs:
             target = key.split('.')[1]
-            
+
             if target.startswith("processor"):
                 self.cpuMacSet(response, key, macPairs[key])
             else:
                 self.log.warning("Invalid or not yet supported key: %s" % key)
                 self.addResp(response, key, macPairs[key])
 
+    ## Handles SET requests for CPU MAC key
+    #  @param     self
+    #  @param     response  HostDomainDeviceServiceResponse object
+    #  @param     key       Key of MAC address to be set
+    #  @param     mac       MAC address to be set
     def cpuMacSet(self, response, key, mac):
+        getActive = check_output(["mps_biostool", "get-active"])
 
-        bank = check_output(["mps_biostool", "get-active"])
+        if getActive != "":
+            bank = getActive[0]
 
-        if bank != "":
+            try:
+                if bank == "2":
+                    bank = "0"
+                    check_call(["mps_biostool", "set-active", "0"])
 
+                check_call(["mps_biostool", "set-mac", mac])
+                check_call(["mps_biostool", "set-active", str(1 - int(bank))])
+                check_call(["mps_biostool", "set-mac", mac])
+                self.addResp(response, key, mac, True)
+            except CalledProcessError as err:
+                self.log.warning("Unable to run %s" % err.cmd)
+                self.addResp(response, key, mac)
+            finally:
+                call(["mps_biostool", "set-active", bank])
         else:
             self.log.warning("Unable to get active BIOS bank.")
-            self.addResp(response, key, macPairs[key])
-        if bank !=
-
-        if call(["mps_biostool", "set-mac", macPairs[key]]) == 0:
-            if call(["mps_biostool", "set-active", "1"]) == 0:
 
     ## Handles SET requests for inventory items
     #  @param     self
