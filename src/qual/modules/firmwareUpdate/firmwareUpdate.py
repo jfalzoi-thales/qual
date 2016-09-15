@@ -94,6 +94,8 @@ class FirmwareUpdate(Module):
         else:
             self.log.warning("Unable to program I350 EEPROM.")
 
+        # TODO: Enable flash
+
         response.result = FirmwareUpdateResponse.ALL_PASSED if success else FirmwareUpdateResponse.ALL_FAILED
 
         if reboot: self.reboot.put("REBOOT")
