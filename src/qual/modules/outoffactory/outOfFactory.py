@@ -15,7 +15,7 @@ class Oof(Module):
         # Init the parent class
         super(Oof, self).__init__(None)
         # adding the message handler
-        self.addMsgHandler(OutOfFactoryRequest, self.handlerMessage)
+        self.addMsgHandler(SSDEraseRequest, self.handlerMessage)
 
     ## Called by base class when an OutOfFactoryRequest object is received from a client.
     #
@@ -23,7 +23,7 @@ class Oof(Module):
     #  @type:  OutOfFactoryRequest obj
     def handlerMessage(self,oofRequest):
         # Create the empty response
-        oofResponse = OutOfFactoryResponse()
+        oofResponse = SSDEraseResponse()
         # Init with failure
         oofResponse.success = False
         # run the command, and catch the exception if it failed
@@ -54,11 +54,9 @@ class Oof(Module):
     #  @param   fs        Device name or mount point of filesystem to search for
     def unmountIfMounted(self, fs):
         self.log.debug("Checking if filesystem %s is mounted" % fs)
-        cmd = 'mount | fgrep %s || true' % fs
-        output = subprocess.check_output(cmd, shell=True)
+        output = subprocess.check_output('mount | fgrep %s || true' % fs, shell=True)
         isMounted = output != ''
         if isMounted:
-            cmd = 'umount %s' % fs
-            if subprocess.call(cmd) != 0:
+            if subprocess.call(['umount', fs]) != 0:
                 self.log.error("Unable to unmount %s" % fs)
                 raise Exception()

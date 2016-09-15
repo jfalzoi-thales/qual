@@ -1,11 +1,11 @@
 package mpsqual;
 
-message OutOfFactoryRequest
+message SSDEraseRequest
 {
 
 }
 
-message OutOfFactoryResponse
+message SSDEraseResponse
 {
 	required bool success = 1;
 }

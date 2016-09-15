@@ -16,11 +16,11 @@ class OofMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Send OOF", OofMessages.message_Oof)]
+        return [("Send Erase SSD", OofMessages.message_SSDErase)]
 
     @staticmethod
-    def message_Oof():
-        message = OutOfFactoryRequest()
+    def message_SSDErase():
+        message = SSDEraseRequest()
         return message
 
 ## Out Of Factory Unit Test
@@ -58,16 +58,16 @@ class Test_Oof(unittest.TestCase):
         module = self.__class__.module
         log.info("==== Reset module state ====")
 
-    ## Valid Test case: Send a OOF Request
+    ## Valid Test case: Send a SSDErase Request
     #  Asserts:
     #    success == True
     def test_Oof(self):
         log = self.__class__.log
         module = self.__class__.module
 
-        log.info("**** Test case: OOF Request message ****")
+        log.info("**** Test case: SSDErase Request message ****")
 
-        oofResponse = module.msgHandler(ThalesZMQMessage(OofMessages.message_Oof()))
+        oofResponse = module.msgHandler(ThalesZMQMessage(OofMessages.message_SSDErase()))
         # Asserts
         self.assertTrue(oofResponse.body.success)
 
