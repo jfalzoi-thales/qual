@@ -87,6 +87,7 @@ arinc717-driver-tests
 
 # Higher level services
 host-domain-device-service
+fake-nms
 
 
 # TPM packages

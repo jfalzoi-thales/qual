@@ -87,6 +87,7 @@ memlockd
 
 # Higher level services
 host-domain-device-service
+fake-nms
 
 
 # TPM packages
