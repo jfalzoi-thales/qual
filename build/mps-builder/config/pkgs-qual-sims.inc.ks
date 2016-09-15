@@ -46,16 +46,18 @@ mps-config
 #mps-config-qual
 #mps-config-qual-tk
 #mps-keys
-#mps-tools
+mps-tools
 mpsinst-tools
-#libmps-utils
+libmps-utils
+
+memlockd
 
 # SEMA Driver
 #libsema
 #sema-driver
 
 # FTDI driver
-libftdi
+#libftdi
 
 # IFE card Drivers and Tools
 #mps-ife
