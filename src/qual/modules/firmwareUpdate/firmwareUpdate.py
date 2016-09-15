@@ -15,14 +15,15 @@ class FirmwareUpdate(Module):
         super(FirmwareUpdate, self).__init__(config)
         ## Dict for storing Firmware Commands and their handlers
         self.firmFuncs = {FW_BIOS:                  self.updateBIOS,
-                          FW_I350:                  self.unimplemented,
+                          FW_I350_EEPROM:           self.updateI350EEPROM,
+                          FW_I350_FLASH:            self.updateI350Flash,
                           FW_SWITCH_BOOTLOADER:     self.unimplemented,
                           FW_SWITCH_FIRMWARE:       self.unimplemented,
                           FW_SWITCH_FIRMWARE_SWAP:  self.unimplemented,
                           FW_SWITCH_CONFIG:         self.unimplemented,
                           FW_SWITCH_CONFIG_SWAP:    self.unimplemented}
         ## Location of firmware images
-        self.firmPath = "/thales/qual/firmware/"
+        self.firmPath = "/thales/qual/firmware"
         ## Queue for storing a reboot request
         self.reboot = Queue()
         #  Adds handler to available message handlers
@@ -46,7 +47,7 @@ class FirmwareUpdate(Module):
 
         return ThalesZMQMessage(response)
 
-    ## Attempts to upgrade the BIOS firmware using images included with QUAL
+    ## Attempts to upgrade the BIOS firmware using image included with QUAL
     #  @param   self
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
@@ -55,7 +56,7 @@ class FirmwareUpdate(Module):
         secondary = False
 
         if call(["mps-biostool.sh", "set-active", "primary"]) == 0:
-            if call(["mps-biostool.sh", "program-from", "%sBIOS.firmware" % self.firmPath]) == 0:
+            if call(["mps-biostool.sh", "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
                 primary = True
             else:
                 self.log.warning("Unable to properly program primary BIOS.")
@@ -63,7 +64,7 @@ class FirmwareUpdate(Module):
             self.log.warning("Unable to set primary BIOS to active.")
 
         if call(["mps-biostool.sh", "set-active", "secondary"]) == 0:
-            if call(["mps-biostool.sh", "program-from", "%sBIOS.firmware" % self.firmPath]) == 0:
+            if call(["mps-biostool.sh", "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
                 secondary = True
             else:
                 self.log.warning("Unable to properly program secondary BIOS.")
@@ -78,6 +79,40 @@ class FirmwareUpdate(Module):
             response.result = FirmwareUpdateResponse.SECONDARY_PASSED
         else:
             response.result = FirmwareUpdateResponse.ALL_FAILED
+
+        if reboot: self.reboot.put("REBOOT")
+
+    ## Attempts to upgrade the I350 EEPROM using image included with QUAL
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def updateI350EEPROM(self, response, reboot):
+        success = False
+
+        if call(["eeupdate64e", "-nic=2", "-data", "%s/i350_mps.txt" % self.firmPath]) == 0:
+            success = True
+        else:
+            self.log.warning("Unable to program I350 EEPROM.")
+
+        # TODO: Enable flash
+
+        response.result = FirmwareUpdateResponse.ALL_PASSED if success else FirmwareUpdateResponse.ALL_FAILED
+
+        if reboot: self.reboot.put("REBOOT")
+
+    ## Attempts to upgrade the I350 Flash using image included with QUAL
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def updateI350Flash(self, response, reboot):
+        success = False
+
+        if call(["i350-flashtool", "%s/i350_flash.bin" % self.firmPath]) == 0:
+            success = True
+        else:
+            self.log.warning("Unable to program I350 flash.")
+
+        response.result = FirmwareUpdateResponse.ALL_PASSED if success else FirmwareUpdateResponse.ALL_FAILED
 
         if reboot: self.reboot.put("REBOOT")
 
