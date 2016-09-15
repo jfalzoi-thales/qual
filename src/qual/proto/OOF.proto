@@ -1,0 +1,11 @@
+package mpsqual;
+
+message SSDEraseRequest
+{
+
+}
+
+message SSDEraseResponse
+{
+	required bool success = 1;
+}

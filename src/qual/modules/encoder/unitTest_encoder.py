@@ -1,10 +1,13 @@
 import unittest
 from time import sleep
+
 import encoder
-from common.gpb.python.Encoder_pb2 import EncoderRequest, EncoderResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger import logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.Encoder_pb2 import EncoderRequest, EncoderResponse
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.logger import logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 
@@ -52,6 +55,7 @@ class Test_Encoder(unittest.TestCase):
     #  This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         #  Create a logger so we can add details to a multi-step test case
         cls.log = logger.Logger(name='Test Encoder')
         cls.log.info('++++ Setup before Encoder module unit tests ++++')

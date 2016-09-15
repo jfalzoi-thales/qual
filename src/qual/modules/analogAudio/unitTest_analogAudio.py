@@ -1,10 +1,13 @@
 import unittest
-import analogAudio
 from time import sleep
-from common.gpb.python.AnalogAudio_pb2 import AnalogAudioRequest, AnalogAudioResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
+
+import analogAudio
+from qual.pb2.AnalogAudio_pb2 import AnalogAudioRequest, AnalogAudioResponse
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 #  @cond doxygen_unittest
 
@@ -131,6 +134,7 @@ class Test_AnalogAudio(unittest.TestCase):
     #  This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         #  Create a logger so we can add details to a multi-step test case
         cls.log = Logger(name='Test AudioAnalog-IFE')
         cls.log.info('++++ Setup before AnalogAudio-IFE module unit tests ++++')
