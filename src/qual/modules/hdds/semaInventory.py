@@ -42,7 +42,8 @@ class SEMAInventory(object):
             configParser.set(section, item, value)
 
         # Write the file
-        os.remove(self.uncompressedFile)
+        if os.path.exists(self.uncompressedFile):
+            os.remove(self.uncompressedFile)
         try:
             with open(self.uncompressedFile, 'wb') as configFile:
                 configParser.write(configFile)
