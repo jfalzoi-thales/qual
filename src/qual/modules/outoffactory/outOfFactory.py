@@ -15,7 +15,7 @@ class Oof(Module):
         # Init the parent class
         super(Oof, self).__init__(None)
         # adding the message handler
-        self.addMsgHandler(OutOfFactoryRequest, self.handlerMessage)
+        self.addMsgHandler(SSDEraseRequest, self.handlerMessage)
 
     ## Called by base class when an OutOfFactoryRequest object is received from a client.
     #
@@ -23,7 +23,7 @@ class Oof(Module):
     #  @type:  OutOfFactoryRequest obj
     def handlerMessage(self,oofRequest):
         # Create the empty response
-        oofResponse = OutOfFactoryResponse()
+        oofResponse = SSDEraseResponse()
         # Init with failure
         oofResponse.success = False
         # run the command, and catch the exception if it failed
