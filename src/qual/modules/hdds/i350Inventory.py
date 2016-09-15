@@ -16,25 +16,32 @@ class I350Inventory(ConfigurableObject):
     #  @param   log  Log object for this object to use
     def __init__(self, log):
         # Initialize parent class
-        super(I350Inventory, self).__init__(configSection="CarrierCardData")
+        super(I350Inventory, self).__init__(configSection="CarrierCardInventory")
 
         ## Log object
         self.log = log
-        ## Ethernet device for I350
-        self.ethDevice = "TEST_FILE"
+        ## Name of I350 Ethernet device
+        self.i350EthernetDev = "ens1f"
         ## Magic code for ethtool to write to EEPROM - hardware-dependent
         self.ethtoolMagic = "0x15238086"
         ## Enable WRITE_PROTECT function
         self.enableWriteProtect = False
         # Load configuration from config file
-        self.loadConfig(attributes=("ethDevice", "enableWriteProtect", "ethtoolMagic"))
+        self.loadConfig(attributes=("i350EthernetDev", "enableWriteProtect", "ethtoolMagic"))
 
         if self.enableWriteProtect:
             self.log.info("Write protect function enabled")
 
-        if self.ethDevice == "TEST_FILE":
+        ## Ethernet device for I350
+        self.ethDevice = self.i350EthernetDev + '0'
+        # Make sure we can talk to the device
+        if subprocess.call(['ethtool', self.ethDevice], stdout=DEVNULL, stderr=DEVNULL) == 0:
+            self.log.info("Using Ethernet device %s", self.ethDevice)
+        else:
+            self.log.warning("Unable to access I350 device %s for carrier card inventory" % self.ethDevice)
+            self.log.warning("Simulating I350 EEPROM using local file /tmp/vpd.bin")
+            self.ethDevice = "TEST_FILE"
             # Create our VPD test file
-            self.log.info("Simulating EEPROM using local file /tmp/vpd.bin")
             vpd = bytearray()
             for i in range(0, 256):
                 vpd.append(0xff)
@@ -42,13 +49,6 @@ class I350Inventory(ConfigurableObject):
             # Also create test files for the other words we read/write
             self.writeWord(0x5e, 0xffff)
             self.writeWord(0x24, 0x5c80)
-        else:
-            # Make sure we can talk to the device
-            rc = subprocess.call(['ethtool', self.ethDevice], stdout=DEVNULL, stderr=DEVNULL)
-            if rc != 0:
-                self.log.error("Unable to access device %s" % self.ethDevice)
-            else:
-                self.log.info("Using Ethernet device %s", self.ethDevice)
 
         ## Map two-character VPD field names to HDDS field names
         self.vpdToHDDS = {"PN": "inventory.carrier_card.part_number",
@@ -217,7 +217,7 @@ class I350Inventory(ConfigurableObject):
     #  @return True if write was successful, False if not
     def writeVPD(self, vpd):
         if self.ethDevice == "TEST_FILE":
-            self.log.info("Writing VPD block to file /tmp/vpd.bin")
+            self.log.debug("Writing VPD block to file /tmp/vpd.bin")
             fh = open("/tmp/vpd.bin", "wb")
             fh.write(str(vpd))
             fh.close()
