@@ -1,8 +1,9 @@
 import unittest
 from time import sleep
 
-from qual.pb2.SSD_pb2 import SSDRequest, SSDResponse
 from ssd import SSD
+from qual.pb2.SSD_pb2 import SSDRequest, SSDResponse
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -53,6 +54,7 @@ class Test_SSD(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = Logger(name='Test SSD')
         cls.log.info('++++ Setup before SSD module unit tests ++++')

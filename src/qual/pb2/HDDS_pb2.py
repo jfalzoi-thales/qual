@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='HDDS.proto',
   package='mpsqual',
-  serialized_pb=_b('\n\nHDDS.proto\x12\x07mpsqual\"\xae\x01\n\x1eHostDomainDeviceServiceRequest\x12N\n\x0brequestType\x18\x01 \x02(\x0e\x32\x34.mpsqual.HostDomainDeviceServiceRequest.RequestTypeT:\x03GET\x12\x0b\n\x03key\x18\x02 \x02(\t\x12\r\n\x05value\x18\x03 \x01(\t\" \n\x0cRequestTypeT\x12\x07\n\x03GET\x10\x00\x12\x07\n\x03SET\x10\x01\"N\n\x1fHostDomainDeviceServiceResponse\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x0b\n\x03key\x18\x02 \x02(\t\x12\r\n\x05value\x18\x03 \x02(\t')
+  serialized_pb=_b('\n\nHDDS.proto\x12\x07mpsqual\"\xfd\x01\n\x1eHostDomainDeviceServiceRequest\x12I\n\x0brequestType\x18\x01 \x02(\x0e\x32\x34.mpsqual.HostDomainDeviceServiceRequest.RequestTypeT\x12\x43\n\x06values\x18\x02 \x03(\x0b\x32\x33.mpsqual.HostDomainDeviceServiceRequest.PropertyReq\x1a)\n\x0bPropertyReq\x12\x0b\n\x03key\x18\x01 \x02(\t\x12\r\n\x05value\x18\x02 \x01(\t\" \n\x0cRequestTypeT\x12\x07\n\x03GET\x10\x00\x12\x07\n\x03SET\x10\x01\"\xa5\x01\n\x1fHostDomainDeviceServiceResponse\x12\x45\n\x06values\x18\x01 \x03(\x0b\x32\x35.mpsqual.HostDomainDeviceServiceResponse.PropertyResp\x1a;\n\x0cPropertyResp\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x0b\n\x03key\x18\x02 \x02(\t\x12\r\n\x05value\x18\x03 \x02(\t')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -41,11 +41,47 @@ _HOSTDOMAINDEVICESERVICEREQUEST_REQUESTTYPET = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=166,
-  serialized_end=198,
+  serialized_start=245,
+  serialized_end=277,
 )
 _sym_db.RegisterEnumDescriptor(_HOSTDOMAINDEVICESERVICEREQUEST_REQUESTTYPET)
 
+
+_HOSTDOMAINDEVICESERVICEREQUEST_PROPERTYREQ = _descriptor.Descriptor(
+  name='PropertyReq',
+  full_name='mpsqual.HostDomainDeviceServiceRequest.PropertyReq',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='key', full_name='mpsqual.HostDomainDeviceServiceRequest.PropertyReq.key', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='value', full_name='mpsqual.HostDomainDeviceServiceRequest.PropertyReq.value', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=202,
+  serialized_end=243,
+)
 
 _HOSTDOMAINDEVICESERVICEREQUEST = _descriptor.Descriptor(
   name='HostDomainDeviceServiceRequest',
@@ -57,28 +93,21 @@ _HOSTDOMAINDEVICESERVICEREQUEST = _descriptor.Descriptor(
     _descriptor.FieldDescriptor(
       name='requestType', full_name='mpsqual.HostDomainDeviceServiceRequest.requestType', index=0,
       number=1, type=14, cpp_type=8, label=2,
-      has_default_value=True, default_value=0,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='key', full_name='mpsqual.HostDomainDeviceServiceRequest.key', index=1,
-      number=2, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='value', full_name='mpsqual.HostDomainDeviceServiceRequest.value', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      name='values', full_name='mpsqual.HostDomainDeviceServiceRequest.values', index=1,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
   ],
   extensions=[
   ],
-  nested_types=[],
+  nested_types=[_HOSTDOMAINDEVICESERVICEREQUEST_PROPERTYREQ, ],
   enum_types=[
     _HOSTDOMAINDEVICESERVICEREQUEST_REQUESTTYPET,
   ],
@@ -88,33 +117,33 @@ _HOSTDOMAINDEVICESERVICEREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=24,
-  serialized_end=198,
+  serialized_end=277,
 )
 
 
-_HOSTDOMAINDEVICESERVICERESPONSE = _descriptor.Descriptor(
-  name='HostDomainDeviceServiceResponse',
-  full_name='mpsqual.HostDomainDeviceServiceResponse',
+_HOSTDOMAINDEVICESERVICERESPONSE_PROPERTYRESP = _descriptor.Descriptor(
+  name='PropertyResp',
+  full_name='mpsqual.HostDomainDeviceServiceResponse.PropertyResp',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='success', full_name='mpsqual.HostDomainDeviceServiceResponse.success', index=0,
+      name='success', full_name='mpsqual.HostDomainDeviceServiceResponse.PropertyResp.success', index=0,
       number=1, type=8, cpp_type=7, label=2,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='key', full_name='mpsqual.HostDomainDeviceServiceResponse.key', index=1,
+      name='key', full_name='mpsqual.HostDomainDeviceServiceResponse.PropertyResp.key', index=1,
       number=2, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='value', full_name='mpsqual.HostDomainDeviceServiceResponse.value', index=2,
+      name='value', full_name='mpsqual.HostDomainDeviceServiceResponse.PropertyResp.value', index=2,
       number=3, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -131,28 +160,77 @@ _HOSTDOMAINDEVICESERVICERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=200,
-  serialized_end=278,
+  serialized_start=386,
+  serialized_end=445,
 )
 
+_HOSTDOMAINDEVICESERVICERESPONSE = _descriptor.Descriptor(
+  name='HostDomainDeviceServiceResponse',
+  full_name='mpsqual.HostDomainDeviceServiceResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='values', full_name='mpsqual.HostDomainDeviceServiceResponse.values', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[_HOSTDOMAINDEVICESERVICERESPONSE_PROPERTYRESP, ],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=280,
+  serialized_end=445,
+)
+
+_HOSTDOMAINDEVICESERVICEREQUEST_PROPERTYREQ.containing_type = _HOSTDOMAINDEVICESERVICEREQUEST
 _HOSTDOMAINDEVICESERVICEREQUEST.fields_by_name['requestType'].enum_type = _HOSTDOMAINDEVICESERVICEREQUEST_REQUESTTYPET
+_HOSTDOMAINDEVICESERVICEREQUEST.fields_by_name['values'].message_type = _HOSTDOMAINDEVICESERVICEREQUEST_PROPERTYREQ
 _HOSTDOMAINDEVICESERVICEREQUEST_REQUESTTYPET.containing_type = _HOSTDOMAINDEVICESERVICEREQUEST
+_HOSTDOMAINDEVICESERVICERESPONSE_PROPERTYRESP.containing_type = _HOSTDOMAINDEVICESERVICERESPONSE
+_HOSTDOMAINDEVICESERVICERESPONSE.fields_by_name['values'].message_type = _HOSTDOMAINDEVICESERVICERESPONSE_PROPERTYRESP
 DESCRIPTOR.message_types_by_name['HostDomainDeviceServiceRequest'] = _HOSTDOMAINDEVICESERVICEREQUEST
 DESCRIPTOR.message_types_by_name['HostDomainDeviceServiceResponse'] = _HOSTDOMAINDEVICESERVICERESPONSE
 
 HostDomainDeviceServiceRequest = _reflection.GeneratedProtocolMessageType('HostDomainDeviceServiceRequest', (_message.Message,), dict(
+
+  PropertyReq = _reflection.GeneratedProtocolMessageType('PropertyReq', (_message.Message,), dict(
+    DESCRIPTOR = _HOSTDOMAINDEVICESERVICEREQUEST_PROPERTYREQ,
+    __module__ = 'HDDS_pb2'
+    # @@protoc_insertion_point(class_scope:mpsqual.HostDomainDeviceServiceRequest.PropertyReq)
+    ))
+  ,
   DESCRIPTOR = _HOSTDOMAINDEVICESERVICEREQUEST,
   __module__ = 'HDDS_pb2'
   # @@protoc_insertion_point(class_scope:mpsqual.HostDomainDeviceServiceRequest)
   ))
 _sym_db.RegisterMessage(HostDomainDeviceServiceRequest)
+_sym_db.RegisterMessage(HostDomainDeviceServiceRequest.PropertyReq)
 
 HostDomainDeviceServiceResponse = _reflection.GeneratedProtocolMessageType('HostDomainDeviceServiceResponse', (_message.Message,), dict(
+
+  PropertyResp = _reflection.GeneratedProtocolMessageType('PropertyResp', (_message.Message,), dict(
+    DESCRIPTOR = _HOSTDOMAINDEVICESERVICERESPONSE_PROPERTYRESP,
+    __module__ = 'HDDS_pb2'
+    # @@protoc_insertion_point(class_scope:mpsqual.HostDomainDeviceServiceResponse.PropertyResp)
+    ))
+  ,
   DESCRIPTOR = _HOSTDOMAINDEVICESERVICERESPONSE,
   __module__ = 'HDDS_pb2'
   # @@protoc_insertion_point(class_scope:mpsqual.HostDomainDeviceServiceResponse)
   ))
 _sym_db.RegisterMessage(HostDomainDeviceServiceResponse)
+_sym_db.RegisterMessage(HostDomainDeviceServiceResponse.PropertyResp)
 
 
 # @@protoc_insertion_point(module_scope)

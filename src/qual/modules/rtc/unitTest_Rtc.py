@@ -1,11 +1,12 @@
 import time
 import unittest
 from datetime import datetime
-from common.pb2.rtc_driver_pb2 import *
+
+from rtc import Rtc
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from qual.modules.rtc.rtc import *
 from qual.pb2.RTC_pb2 import *
 
 
@@ -69,6 +70,7 @@ class Test_Rtc(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = Logger(name='Test Real Time Clock')
         cls.log.info('++++ Setup before RTC module unit tests ++++')

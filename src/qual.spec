@@ -57,6 +57,8 @@ cp systemd/qual-ife.sh %{buildroot}/%{_bindir}/qual-ife
 cp systemd/qual*.service %{buildroot}/%{_unitdir}/
 cp systemd/50-qual*-service.preset %{buildroot}/usr/lib/systemd/system-preset/
 cp scripts/qtemenu.sh %{buildroot}/thales/host/appliances/qtemenu
+cp scripts/hddsget.sh %{buildroot}/thales/host/appliances/hddsget
+cp scripts/hddsset.sh %{buildroot}/thales/host/appliances/hddsset
 cp scripts/installifesims.sh %{buildroot}/%{_bindir}/installifesims
 cp scripts/genvmconfig.py %{buildroot}/thales/host/appliances/genvmconfig
 cp scripts/ifcfg-* %{buildroot}/etc/sysconfig/network-scripts/
@@ -81,6 +83,7 @@ echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BI
 %attr(0755,root,root) /thales/host/appliances/qtemenu
 %attr(0755,root,root) /thales/host/appliances/genvmconfig
 %attr(0755,root,root) /thales/host/appliances/mpsinst-destroyraid
+%attr(0755,root,root) /thales/host/appliances/hdds*
 %attr(0644,root,root) /%{_unitdir}/qual.service
 %attr(0644,root,root) /%{_unitdir}/qual-startvm.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-service.preset

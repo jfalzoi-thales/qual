@@ -1,50 +1,47 @@
 import os
 import subprocess
 
-from qual.pb2.CarrierCardData_pb2 import CarrierCardDataRequest, CarrierCardDataResponse, ErrorMsg
-from tklabs_utils.module.module import Module, ModuleException
-from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.vpd.vpd import VPD
 
 
 ## Discard the output
 DEVNULL = open(os.devnull, 'wb')
 
-## CarrierCardData Module Exception Class
-class CarrierCardDataModuleException(ModuleException):
-    ## Constructor
-    #  @param     self
-    #  @param     msg  Message text associated with this exception
-    def __init__(self, msg):
-        super(CarrierCardDataModuleException, self).__init__()
-        ## Message text associated with this exception
-        self.msg = msg
 
-
-## CarrierCardData Module Class
-class CarrierCardData(Module):
+## I350 Inventory Class
+class I350Inventory(ConfigurableObject):
     ## Constructor
     #  @param   self
-    #  @param   config  Configuration for this module instance
-    def __init__(self, config = None):
+    #  @param   log  Log object for this object to use
+    def __init__(self, log):
         # Initialize parent class
-        super(CarrierCardData, self).__init__(config)
+        super(I350Inventory, self).__init__(configSection="CarrierCardInventory")
 
-        ## Ethernet device for I350
-        self.ethDevice = "TEST_FILE"
+        ## Log object
+        self.log = log
+        ## Name of I350 Ethernet device
+        self.i350EthernetDev = "ens1f"
         ## Magic code for ethtool to write to EEPROM - hardware-dependent
         self.ethtoolMagic = "0x15238086"
         ## Enable WRITE_PROTECT function
         self.enableWriteProtect = False
         # Load configuration from config file
-        self.loadConfig(attributes=("ethDevice", "enableWriteProtect", "ethtoolMagic"))
+        self.loadConfig(attributes=("i350EthernetDev", "enableWriteProtect", "ethtoolMagic"))
 
         if self.enableWriteProtect:
             self.log.info("Write protect function enabled")
 
-        if self.ethDevice == "TEST_FILE":
+        ## Ethernet device for I350
+        self.ethDevice = self.i350EthernetDev + '0'
+        # Make sure we can talk to the device
+        if subprocess.call(['ethtool', self.ethDevice], stdout=DEVNULL, stderr=DEVNULL) == 0:
+            self.log.info("Using Ethernet device %s", self.ethDevice)
+        else:
+            self.log.warning("Unable to access I350 device %s for carrier card inventory" % self.ethDevice)
+            self.log.warning("Simulating I350 EEPROM using local file /tmp/vpd.bin")
+            self.ethDevice = "TEST_FILE"
             # Create our VPD test file
-            self.log.info("Simulating EEPROM using local file /tmp/vpd.bin")
             vpd = bytearray()
             for i in range(0, 256):
                 vpd.append(0xff)
@@ -52,202 +49,123 @@ class CarrierCardData(Module):
             # Also create test files for the other words we read/write
             self.writeWord(0x5e, 0xffff)
             self.writeWord(0x24, 0x5c80)
-        else:
-            # Make sure we can talk to the device
-            rc = subprocess.call(['ethtool', self.ethDevice], stdout=DEVNULL, stderr=DEVNULL)
-            if rc != 0:
-                raise CarrierCardDataModuleException(msg="Unable to access device %s" % self.ethDevice)
-            self.log.info("Using Ethernet device %s", self.ethDevice)
 
         ## Map two-character VPD field names to HDDS field names
-        self.vpdToHDDS = {"PN": "part_number",
-                          "SN": "serial_number",
-                          "EC": "revision",
-                          "VP": "manufacturer_pn",
-                          "VD": "manufacturing_date",
-                          "VN": "manufacturer_name",
-                          "VC": "manufacturer_cage"}
+        self.vpdToHDDS = {"PN": "inventory.carrier_card.part_number",
+                          "SN": "inventory.carrier_card.serial_number",
+                          "EC": "inventory.carrier_card.revision",
+                          "VP": "inventory.carrier_card.manufacturer_pn",
+                          "VD": "inventory.carrier_card.manufacturing_date",
+                          "VN": "inventory.carrier_card.manufacturer_name",
+                          "VC": "inventory.carrier_card.manufacturer_cage"}
 
         ## Map HDDS field names to two-character VPD field names
         self.hddsToVPD = {v: k for k, v in self.vpdToHDDS.items()}
 
-        ## Length limits, indexed by HDDS key
-        self.lengthLimits = self.hddsToVPD.copy()
-        for key in self.lengthLimits:
-            self.lengthLimits[key] = 8 if key in ("revision", "manufacturing_date", "manufacturer_cage") else 24
-
         ## VPD parser/builder
         self.vpd = VPD(self.log, self.vpdToHDDS.keys())
 
-        # Add handler to available message handlers
-        self.addMsgHandler(CarrierCardDataRequest, self.handleMsg)
-
-    ## Handles incoming CarrierCardDataRequest messages
-    #
-    #  Receives TZMQ request and performs requested action
-    #  @param     self
-    #  @param     msg       TZMQ format message
-    #  @return    a ThalesZMQMessage object containing the response message
-    def handleMsg(self, msg):
-        response = CarrierCardDataResponse()
-
-        if msg.body.requestType == CarrierCardDataRequest.READ:
-            self.handleRead(response)
-        elif msg.body.requestType == CarrierCardDataRequest.WRITE:
-            self.handleWrite(msg.body, response)
-        elif msg.body.requestType == CarrierCardDataRequest.ERASE:
-            self.handleErase(response)
-        elif msg.body.requestType == CarrierCardDataRequest.WRITE_PROTECT:
-            self.handleWriteProtect(response)
-        else:
-            self.log.error("Unexpected Request Type %d" % msg.body.requestType)
-            response.success = False
-            response.error.error_code = ErrorMsg.FAILURE_INVALID_MESSAGE
-            response.error.description = "Invalid Request Type"
-
-        return ThalesZMQMessage(response)
-
-    ## Handles requests with requestType of READ
+    ## Read and parse the inventory area and return all values
     #  @param    self
-    #  @param    response    CarrierCardDataResponse object
-    def handleRead(self, response):
+    #  @return   dict of values indexed by HDDS key or None if read error occurred
+    def read(self):
         success = self.readAndParseVPD()
         if not success:
-            self.log.error("Failure reading VPD")
-            response.error.error_code = ErrorMsg.FAILURE_READ_FAILED
-            response.error.description = "Read VPD from EEPROM failed"
-            return
+            self.log.error("Failure reading VPD data")
+            return None
 
-        response.success = True
-        response.writeProtected = self.getWriteProtectFlag()
+        # Build a new dict indexed by HDDS key instead of VPD key
+        values = {}
         for key, value in self.vpd.vpdEntries.items():
-            kv = response.values.add()
-            kv.key = self.vpdToHDDS[key]
-            kv.value = value
+            hddsKey = self.vpdToHDDS[key]
+            values[hddsKey] = value
+        return values
 
-    ## Handles requests with requestType of WRITE
+    ## Update values in the inventory area
     #  @param    self
-    #  @param    request     Message body with request details
-    #  @param    response    CarrierCardDataResponse object
-    def handleWrite(self, request, response):
+    #  @param    values     dict of values to update
+    #  @return   True if success, False if failure
+    def update(self, values):
         # Check if write-protected
-        response.writeProtected = self.getWriteProtectFlag()
-        if response.writeProtected:
+        if self.getWriteProtectFlag():
             self.log.warning("Attempt to write to write-protected EEPROM")
-            response.success = False
-            response.error.error_code = ErrorMsg.FAILURE_WRITE_FAILED
-            response.error.description = "Cannot write: EEPROM is write-protected"
-            return
-
-        # Validate supplied entries
-        for kv in request.values:
-            if kv.key not in self.hddsToVPD:
-                self.log.warning("Attempt to write invalid key %s" % kv.key)
-                response.success = False
-                response.error.error_code = ErrorMsg.FAILURE_INVALID_KEY
-                response.error.description = "Invalid key: %s" % kv.key
-                return
-            elif len(kv.value) == 0 or len(kv.value) > self.lengthLimits[kv.key]:
-                self.log.warning("Attempt to write invalid value for key %s" % kv.key)
-                response.success = False
-                response.error.error_code = ErrorMsg.FAILURE_INVALID_VALUE
-                response.error.description = "Invalid value for key: %s" % kv.key
-                return
+            return False
 
         # Start by reading existing VPD, to which we'll add supplied values
         self.readAndParseVPD()
 
         # Update self.vpdEntries with new entries from request
-        for kv in request.values:
-            vpdKey = self.hddsToVPD[kv.key]
-            self.log.debug("Updating %s (%s) = \"%s\"" % (vpdKey, kv.key, kv.value))
-            self.vpd.vpdEntries[vpdKey] = kv.value
+        for key, value in values.items():
+            vpdKey = self.hddsToVPD[key]
+            self.log.debug("Updating %s (%s) = \"%s\"" % (vpdKey, key, value))
+            self.vpd.vpdEntries[vpdKey] = value
 
         # Build the updated VPD and write to EEPROM
-        response.success = self.writeVPD(self.vpd.buildVPD())
-        if not response.success:
+        success = self.writeVPD(self.vpd.buildVPD())
+        if not success:
             self.log.error("Failure writing VPD block")
-            response.error.error_code = ErrorMsg.FAILURE_WRITE_FAILED
-            response.error.description = "Write VPD block to EEPROM failed"
-            return
+            return False
 
         # Write the VPD pointer into EEPROM if necessary
-        response.success = self.writeVPDPointer()
-        if not response.success:
+        success = self.writeVPDPointer()
+        if not success:
             self.log.error("Failure writing VPD pointer")
-            response.error.error_code = ErrorMsg.FAILURE_WRITE_FAILED
-            response.error.description = "Write VPD pointer to EEPROM failed"
-            return
+            return False
 
-        # Return all current entries in response
-        for key, value in self.vpd.vpdEntries.items():
-            kv = response.values.add()
-            kv.key = self.vpdToHDDS[key]
-            kv.value = value
+        # Successful
+        return True
 
-    ## Handles requests with requestType of ERASE
+    ## Erase the inventory area
     #  @param    self
-    #  @param    response    CarrierCardDataResponse object
-    def handleErase(self, response):
+    #  @return   True if success, False if failure
+    def erase(self):
         # Check if write-protected
-        response.writeProtected = self.getWriteProtectFlag()
-        if response.writeProtected:
+        if self.getWriteProtectFlag():
             self.log.warning("Attempt to erase write-protected EEPROM")
-            response.success = False
-            response.error.error_code = ErrorMsg.FAILURE_WRITE_FAILED
-            response.error.description = "Cannot erase: EEPROM is write-protected"
-            return
+            return False
 
         # Write VPD area with all 0xff bytes
         vpd = bytearray()
         for i in range(0, 256):
             vpd.append(0xff)
-        response.success = self.writeVPD(vpd)
-        if not response.success:
+        success = self.writeVPD(vpd)
+        if not success:
             self.log.error("Failure writing VPD block")
-            response.error.error_code = ErrorMsg.FAILURE_WRITE_FAILED
-            response.error.description = "Write VPD block to EEPROM failed"
+            return False
 
-    ## Handles requests with requestType of WRITE_PROTECT
+        # Successful
+        return True
+
+    ## Write-protect the inventory area
     #  @param    self
-    #  @param    response    CarrierCardDataResponse object
-    def handleWriteProtect(self, response):
+    #  @return   tuple of success, error message
+    def writeProtect(self):
         if not self.enableWriteProtect:
             self.log.warning("Attempt to write-protect when WP function is disabled")
-            response.success = False
-            response.error.error_code = ErrorMsg.FAILURE_WRITE_PROTECT_DISABLED
-            response.error.description = "Write Protect function disabled"
-            return
+            return False
 
         # Check if already write-protected
-        response.writeProtected = self.getWriteProtectFlag()
-        if response.writeProtected:
+        if self.getWriteProtectFlag():
             self.log.info("Attempt to write-protect already write-protected EEPROM")
             # It's already in the state the user requested, so we'll consider this a success
-            response.success = True
-            return
+            return True
 
         # Sanity check: make sure that there is data programmed before we write-protect
         self.readAndParseVPD()
         # Arbitrary: check for programmed part number and serial number
         if "PN" not in self.vpd.vpdEntries or "SN" not in self.vpd.vpdEntries:
             self.log.warning("Attempt to write-protect when required data is missing")
-            response.success = False
-            response.error.error_code = ErrorMsg.FAILURE_INVALID_VALUE
-            response.error.description = "Write protect request refused: VPD not yet programmed"
-            return
+            return False
 
         # Go ahead and attempt to set the write-protect flag.  No turning back now!
-        response.success = self.setWriteProtectFlag()
-        if not response.success:
+        success = self.setWriteProtectFlag()
+        if not success:
             self.log.error("Error setting write protect flag")
-            response.error.error_code = ErrorMsg.FAILURE_WRITE_FAILED
-            response.error.description = "Write Protect failed"
-            return
+            return False
 
-        # Successful, so now we can set the writeProtected flag in the response
-        response.writeProtected = True
+        # Successful
         self.log.info("**** EEPROM is now write-protected ****")
+        return True
 
     ## Reads VPD from EEPROM (or test file) and updates self.vpdEntries
     #  @param  self
@@ -299,7 +217,7 @@ class CarrierCardData(Module):
     #  @return True if write was successful, False if not
     def writeVPD(self, vpd):
         if self.ethDevice == "TEST_FILE":
-            self.log.info("Writing VPD block to file /tmp/vpd.bin")
+            self.log.debug("Writing VPD block to file /tmp/vpd.bin")
             fh = open("/tmp/vpd.bin", "wb")
             fh.write(str(vpd))
             fh.close()
@@ -447,7 +365,7 @@ class CarrierCardData(Module):
 
     ## Cleans up test files
     #  @param     self
-    def terminate(self):
+    def cleanup(self):
         if self.ethDevice == "TEST_FILE":
             os.remove("/tmp/vpd.bin")
             os.remove("/tmp/word24.bin")
