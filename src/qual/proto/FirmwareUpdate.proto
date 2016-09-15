@@ -16,13 +16,7 @@ message FirmwareUpdateRequest {
 }
 
 message FirmwareUpdateResponse {
-	enum BIOSUpdateResultT {
-		ALL_FAILED = 0;
-		PRIMARY_PASSED = 1;
-		SECONDARY_PASSED = 2;
-		ALL_PASSED = 3;
-	}
-
-	required FirmwareCommandsT command = 1;
-	required BIOSUpdateResultT result = 2;
+	required bool success = 1;
+    optional FirmwareCommandsT component = 2;
+	optional string errorMessage = 3 [default = ""];
 }

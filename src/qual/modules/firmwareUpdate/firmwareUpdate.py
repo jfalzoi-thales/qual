@@ -36,13 +36,13 @@ class FirmwareUpdate(Module):
     #  @return    ThalesZMQMessage object
     def handler(self, msg):
         response = FirmwareUpdateResponse()
-        response.command = msg.body.command
 
         if msg.body.command in self.firmFuncs:
             self.firmFuncs[msg.body.command](response, msg.body.reboot)
         else:
+            response.success = False
+            response.errorMessage = "Unexpected Command %s" % msg.body.command
             self.log.error("Unexpected Command %s" % msg.body.command)
-            response.result = FirmwareUpdateResponse.ALL_FAILED
 
         return ThalesZMQMessage(response)
 
@@ -71,13 +71,19 @@ class FirmwareUpdate(Module):
             self.log.warning("Unable to set secondary BIOS to active.")
 
         if primary and secondary:
-            response.result = FirmwareUpdateResponse.ALL_PASSED
+            response.success = True
         elif primary:
-            response.result = FirmwareUpdateResponse.PRIMARY_PASSED
+            response.component = FW_BIOS
+            response.success = False
+            response.errorMessage = "Unable to properly program secondary BIOS."
         elif secondary:
-            response.result = FirmwareUpdateResponse.SECONDARY_PASSED
+            response.component = FW_BIOS
+            response.success = False
+            response.errorMessage = "Unable to properly program primary BIOS."
         else:
-            response.result = FirmwareUpdateResponse.ALL_FAILED
+            response.component = FW_BIOS
+            response.success = False
+            response.errorMessage = "Unable to properly program BIOS."
 
         if reboot: self.reboot.put("REBOOT")
 
@@ -86,8 +92,9 @@ class FirmwareUpdate(Module):
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
     def unimplemented(self, response, reboot):
+        response.success = False
+        response.errorMessage = "This message is not yet implemented."
         self.log.info("This message is not yet implemented.")
-        response.result = FirmwareUpdateResponse.ALL_FAILED
 
         if reboot: self.reboot.put("REBOOT")
 

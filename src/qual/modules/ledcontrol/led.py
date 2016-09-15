@@ -40,6 +40,7 @@ class Led(Module):
         if getResp.error == ResponseMessage.OK:
             ledResponse.success = True
         else:
+            ledResponse.errorMessage = 'GPIO Error code: %' % (getResp.error)
             ledResponse.success = False
 
         return ThalesZMQMessage(ledResponse)
