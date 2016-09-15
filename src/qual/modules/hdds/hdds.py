@@ -79,6 +79,12 @@ class HDDS(Module):
                         macGetKeys += self.macTypes
                     else:
                         macGetKeys.append(value.key)
+                elif value.key == "inventory.*":
+                    # Get carrier_card inventory using local function, get everything else from HDDS
+                    if inventoryGetKeys is None: inventoryGetKeys = []
+                    inventoryGetKeys.append("inventory.carrier_card.*")
+                    if hddsGetReq is None: hddsGetReq = GetReq()
+                    hddsGetReq.key.append(value.key)
                 elif value.key.startswith("inventory.carrier_card"):
                     if inventoryGetKeys is None: inventoryGetKeys = []
                     inventoryGetKeys.append(value.key)
@@ -211,7 +217,9 @@ class HDDS(Module):
             getResp.ParseFromString(HDDSResp.serializedBody)
 
             for value in getResp.values:
-                self.addResp(response, value.keyValue.key, value.keyValue.value, value.success)
+                # Blacklist inventory.carrier_card values from HDDS, we don't trust them
+                if not value.keyValue.key.startswith("inventory.carrier_card"):
+                    self.addResp(response, value.keyValue.key, value.keyValue.value, value.success)
         else:
             if HDDSResp.name == "ErrorMessage":
                 err = ErrorMessage()
