@@ -164,7 +164,7 @@ class HDDS(Module):
             if target.startswith("processor"):
                 self.nicMacGet(response, key, self.cpuEthernetDev)
             elif target.startswith("i350"):
-                self.nicMacGet(response, key, self.i350EthernetDev + target[-1])
+                self.nicMacGet(response, key, self.i350EthernetDev + str(int(target[-1]) - 1))
             else:
                 self.log.warning("Invalid or not yet supported key: %s" % key)
                 self.addResp(response, key)
@@ -175,12 +175,11 @@ class HDDS(Module):
     #  @param   key         Key of MAC address to be obtained
     #  @param   device      Device who's MAC address is being obtained
     def nicMacGet(self, response, key, device):
-        mac = check_output(["cat", "/sys/class/net/%s/address" % device])
-
-        if mac != "":
+        try:
+            mac = check_output(["cat", "/sys/class/net/%s/address" % device])
             self.addResp(response, key, mac, True)
-        else:
-            self.log.warning("Unable to retrieve MAC from: /sys/class/net/%s/address" % device)
+        except CalledProcessError as err:
+            self.log.warning("Unable to run %s" % err.cmd)
             self.addResp(response, key)
 
     ## Handles GET requests for I350 inventory keys
@@ -252,27 +251,30 @@ class HDDS(Module):
     #  @param     key       Key of MAC address to be set
     #  @param     mac       MAC address to be set
     def cpuMacSet(self, response, key, mac):
-        getActive = check_output(["mps_biostool", "get-active"])
+        bank = "0"
 
-        if getActive != "":
+        try:
+            getActive = check_output(["mps_biostool", "get-active"])
             bank = getActive[0]
-
-            try:
-                if bank == "2":
-                    bank = "0"
-                    check_call(["mps_biostool", "set-active", "0"])
-
-                check_call(["mps_biostool", "set-mac", mac])
-                check_call(["mps_biostool", "set-active", str(1 - int(bank))])
-                check_call(["mps_biostool", "set-mac", mac])
-                self.addResp(response, key, mac, True)
-            except CalledProcessError as err:
-                self.log.warning("Unable to run %s" % err.cmd)
-                self.addResp(response, key, mac)
-            finally:
-                call(["mps_biostool", "set-active", bank])
-        else:
+        except CalledProcessError:
             self.log.warning("Unable to get active BIOS bank.")
+
+        try:
+            if bank == "2":
+                bank = "0"
+                check_call(["mps_biostool", "set-active", "0"])
+
+            check_call(["mps_biostool", "set-mac", mac])
+            check_call(["mps_biostool", "set-active", str(1 - int(bank))])
+            check_call(["mps_biostool", "set-mac", mac])
+            self.addResp(response, key, mac, True)
+        except CalledProcessError as err:
+            self.log.warning("Unable to run %s" % err.cmd)
+            self.addResp(response, key, mac)
+        finally:
+            call(["mps_biostool", "set-active", bank])
+                
+
 
     ## Handles SET requests for inventory items
     #  @param     self
