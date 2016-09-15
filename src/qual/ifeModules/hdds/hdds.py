@@ -42,51 +42,73 @@ class IFEHDDS(Module):
     #  @return  ThalesZMQMessage object
     def handler(self, msg):
         response = HostDomainDeviceServiceResponse()
-        response.key = msg.body.key
 
         #  Handle GET requests that start with ife.voltage or ife.temperature
         if msg.body.requestType == HostDomainDeviceServiceRequest.GET:
-            if msg.body.key.startswith("ife.voltage"):
-                try:
-                    #  Output Example: LLS_VOLTAGE_SENSOR_ID_1 Chip=0x4d VCC[3P3VDC]=3.26
-                    output = subprocess.check_output(["voltsensor", str(self.volts[msg.body.key])]).rstrip()
+            keys = []
 
-                    if output.startswith("LLS_"):
-                        elements = output.split("=")
-                        response.value = elements[len(elements) - 1]
-                        response.success = True
+            for value in msg.body.values:
+                if value.key.endswith("*"):
+                    if len(value.key.split('.')) == 2:
+                        keys += self.volts.keys() + self.temps.keys()
+                    elif len(value.key.split('.')) == 3:
+                        if value.key.startswith("ife.voltage"):
+                            keys += self.volts.keys()
+                        elif value.key.startswith("ife.temperature"):
+                            keys += self.temps.keys()
+                        else:
+                            self.log.warning("Unknown key: %s" % value.key)
                     else:
-                        self.log.warning("Unexpected output: %s" % output)
-                        response.value = ""
-                        response.success = False
-                except:
-                    self.log.warning("Voltsensor command failed to complete.")
-                    response.value = ""
-                    response.success = False
-            elif msg.body.key.startswith("ife.temperature"):
-                try:
-                    #  Output Example: LLS_TEMPERATURE_SENSOR_ID_4 Chip=0x4d Internal Temp = 36.50 Celcius
-                    output = subprocess.check_output(["tempsensor", str(self.temps[msg.body.key])]).rstrip()
+                        self.log.warning("Unknown key: %s" % value.key)
+                else:
+                    keys.append(value.key)
 
-                    if output.startswith("LLS_"):
-                        elements = output.split()
-                        response.value = elements[len(elements) - 2]
-                        response.success = True
-                    else:
-                        self.log.warning("Unexpected output: %s" % output)
-                        response.value = ""
-                        response.success = False
-                except:
-                    self.log.warning("Tempsensor command failed to complete.")
-                    response.value = ""
-                    response.success = False
-            else:
-                self.log.warning("Unknown key %s" % msg.body.key)
-                response.value = ""
-                response.success = False
+            for key in keys:
+                if key.startswith("ife.voltage"):
+                    try:
+                        #  Output Example: LLS_VOLTAGE_SENSOR_ID_1 Chip=0x4d VCC[3P3VDC]=3.26
+                        output = subprocess.check_output(["voltsensor", str(self.volts[key])]).rstrip()
+
+                        if output.startswith("LLS_"):
+                            elements = output.split("=")
+                            self.addResp(response, key, elements[len(elements) - 1], True)
+                        else:
+                            self.log.warning("Unexpected output: %s" % output)
+                            self.addResp(response, key)
+                    except:
+                        self.log.warning("Voltsensor command failed to complete.")
+                        self.addResp(response, key)
+                elif key.startswith("ife.temperature"):
+                    try:
+                        #  Output Example: LLS_TEMPERATURE_SENSOR_ID_4 Chip=0x4d Internal Temp = 36.50 Celcius
+                        output = subprocess.check_output(["tempsensor", str(self.temps[key])]).rstrip()
+
+                        if output.startswith("LLS_"):
+                            elements = output.split()
+                            self.addResp(response, key, elements[len(elements) - 2], True)
+                        else:
+                            self.log.warning("Unexpected output: %s" % output)
+                            self.addResp(response, key)
+                    except:
+                        self.log.warning("Tempsensor command failed to complete.")
+                        self.addResp(response, key)
+                else:
+                    self.log.warning("Unknown key %s" % key)
+                    self.addResp(response, key)
         else:
             self.log.error("Unexpected Request Type %d" % msg.body.requestType)
-            response.value = ""
-            response.success = False
+            self.addResp(response)
 
         return ThalesZMQMessage(response)
+
+    ## Adds another set of values to the repeated property response field
+    #  @param   self
+    #  @param   response    A HostDomainDeviceServiceResponse object
+    #  @param   key         Key to be added to response, default empty
+    #  @param   value       Value of key to be added to response, default empty
+    #  @param   success     Success flag to be added to response, default False
+    def addResp(self, response, key="", value="", success=False):
+        respVal = response.values.add()
+        respVal.key = key
+        respVal.value = value
+        respVal.success = success

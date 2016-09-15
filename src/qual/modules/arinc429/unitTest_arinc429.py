@@ -3,6 +3,7 @@ from time import sleep
 
 import arinc429
 from qual.pb2.ARINC429_pb2 import ARINC429Request, ARINC429Response
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.logger import logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -136,6 +137,7 @@ class Test_ARINC429(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = logger.Logger(name='Test ARINC429')
         cls.log.info('++++ Setup before ARINC429 module unit tests ++++')

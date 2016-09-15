@@ -18,16 +18,16 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='OOF.proto',
   package='mpsqual',
-  serialized_pb=_b('\n\tOOF.proto\x12\x07mpsqual\"\x15\n\x13OutOfFactoryRequest\"\'\n\x14OutOfFactoryResponse\x12\x0f\n\x07success\x18\x01 \x02(\x08')
+  serialized_pb=_b('\n\tOOF.proto\x12\x07mpsqual\"\x11\n\x0fSSDEraseRequest\"#\n\x10SSDEraseResponse\x12\x0f\n\x07success\x18\x01 \x02(\x08')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 
 
 
-_OUTOFFACTORYREQUEST = _descriptor.Descriptor(
-  name='OutOfFactoryRequest',
-  full_name='mpsqual.OutOfFactoryRequest',
+_SSDERASEREQUEST = _descriptor.Descriptor(
+  name='SSDEraseRequest',
+  full_name='mpsqual.SSDEraseRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
@@ -44,19 +44,19 @@ _OUTOFFACTORYREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=22,
-  serialized_end=43,
+  serialized_end=39,
 )
 
 
-_OUTOFFACTORYRESPONSE = _descriptor.Descriptor(
-  name='OutOfFactoryResponse',
-  full_name='mpsqual.OutOfFactoryResponse',
+_SSDERASERESPONSE = _descriptor.Descriptor(
+  name='SSDEraseResponse',
+  full_name='mpsqual.SSDEraseResponse',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='success', full_name='mpsqual.OutOfFactoryResponse.success', index=0,
+      name='success', full_name='mpsqual.SSDEraseResponse.success', index=0,
       number=1, type=8, cpp_type=7, label=2,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
@@ -73,26 +73,26 @@ _OUTOFFACTORYRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=45,
-  serialized_end=84,
+  serialized_start=41,
+  serialized_end=76,
 )
 
-DESCRIPTOR.message_types_by_name['OutOfFactoryRequest'] = _OUTOFFACTORYREQUEST
-DESCRIPTOR.message_types_by_name['OutOfFactoryResponse'] = _OUTOFFACTORYRESPONSE
+DESCRIPTOR.message_types_by_name['SSDEraseRequest'] = _SSDERASEREQUEST
+DESCRIPTOR.message_types_by_name['SSDEraseResponse'] = _SSDERASERESPONSE
 
-OutOfFactoryRequest = _reflection.GeneratedProtocolMessageType('OutOfFactoryRequest', (_message.Message,), dict(
-  DESCRIPTOR = _OUTOFFACTORYREQUEST,
+SSDEraseRequest = _reflection.GeneratedProtocolMessageType('SSDEraseRequest', (_message.Message,), dict(
+  DESCRIPTOR = _SSDERASEREQUEST,
   __module__ = 'OOF_pb2'
-  # @@protoc_insertion_point(class_scope:mpsqual.OutOfFactoryRequest)
+  # @@protoc_insertion_point(class_scope:mpsqual.SSDEraseRequest)
   ))
-_sym_db.RegisterMessage(OutOfFactoryRequest)
+_sym_db.RegisterMessage(SSDEraseRequest)
 
-OutOfFactoryResponse = _reflection.GeneratedProtocolMessageType('OutOfFactoryResponse', (_message.Message,), dict(
-  DESCRIPTOR = _OUTOFFACTORYRESPONSE,
+SSDEraseResponse = _reflection.GeneratedProtocolMessageType('SSDEraseResponse', (_message.Message,), dict(
+  DESCRIPTOR = _SSDERASERESPONSE,
   __module__ = 'OOF_pb2'
-  # @@protoc_insertion_point(class_scope:mpsqual.OutOfFactoryResponse)
+  # @@protoc_insertion_point(class_scope:mpsqual.SSDEraseResponse)
   ))
-_sym_db.RegisterMessage(OutOfFactoryResponse)
+_sym_db.RegisterMessage(SSDEraseResponse)
 
 
 # @@protoc_insertion_point(module_scope)

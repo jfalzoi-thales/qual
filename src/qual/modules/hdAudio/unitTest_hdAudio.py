@@ -3,6 +3,7 @@ import unittest
 
 from hdAudio import HDAudio
 from qual.pb2.HDAudio_pb2 import HDAudioRequest, HDAudioResponse
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -72,6 +73,7 @@ class Test_HDAudio(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = Logger(name='Test HD Audio')
         cls.log.info('++++ Setup before HD Audio module unit tests ++++')

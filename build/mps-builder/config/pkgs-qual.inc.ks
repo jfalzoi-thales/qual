@@ -51,6 +51,8 @@ mps-tools
 mpsinst-tools
 libmps-utils
 
+memlockd
+
 # SEMA Driver
 libsema
 sema-driver

@@ -33,8 +33,7 @@ cd ${MPSBUILDDIR}
 git checkout -q --detach tags/${MPSBUILDTAG}
 
 # Build docker container if not available
-docker images | grep -q ^mps/mpsbuilder
-if [ "$?" != 0 ]; then
+if ! docker images | grep -q ^mps/mpsbuilder; then
     docker build -t mps/mpsbuilder:centos7 dockerfile/
 fi
 
