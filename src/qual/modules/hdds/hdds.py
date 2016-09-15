@@ -88,7 +88,7 @@ class HDDS(Module):
 
             if ifeGetReq is not None: self.ifeGet(response, ifeGetReq)
             if macGetKeys is not None: self.macGet(response, macGetKeys)
-            if inventoryGetKeys is not None: self.macGet(response, inventoryGetKeys)
+            if inventoryGetKeys is not None: self.inventoryGet(response, inventoryGetKeys)
             if hddsGetReq is not None: self.hddsGet(response, hddsGetReq)
         elif msg.body.requestType == HostDomainDeviceServiceRequest.SET:
             macSetPairs = None
