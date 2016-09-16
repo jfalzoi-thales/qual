@@ -127,7 +127,7 @@ cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
 cd ${QUALDIR}/
 echo "Please use your own Git credentials to log in. \(^^\) \(^^)/ (/^^)/"
 
-git fetch origin "$BRANCH"
+git fetch --tags origin "$BRANCH"
 git reset --hard FETCH_HEAD
 git clean -df
 rm -rf /tmp/tito
