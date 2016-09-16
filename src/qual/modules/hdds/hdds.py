@@ -68,8 +68,10 @@ class HDDS(Module):
 
             for value in msg.body.values:
                 if value.key.startswith("ife"):
-                    if ifeGetReq is None: ifeGetReq = HostDomainDeviceServiceRequest()
-                    ifeGetReq.requestType = HostDomainDeviceServiceRequest.GET
+                    if ifeGetReq is None:
+                        ifeGetReq = HostDomainDeviceServiceRequest()
+                        ifeGetReq.requestType = HostDomainDeviceServiceRequest.GET
+
                     ifeValue = ifeGetReq.values.add()
                     ifeValue.key = value.key
                 elif value.key.startswith("mac_address"):
@@ -143,12 +145,14 @@ class HDDS(Module):
     #  @param   ifeReq      A HostDomainDeviceServiceRequest object to be sent to the Guest VM QTA
     def ifeGet(self, response, ifeReq):
         # IFE get messages are handled by the QTA running on the IFE VM
-        ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(ifeReq)
+        ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(ThalesZMQMessage(ifeReq))
 
         if ifeVmQtaResponse.name == "HostDomainDeviceServiceResponse":
             deserializedResponse = HostDomainDeviceServiceResponse()
             deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
-            response.values = deserializedResponse.values
+
+            for value in deserializedResponse.values:
+                self.addResp(response, value.key, value.value, value.success)
         else:
             self.log.error("Unexpected response from IFE VM HDDS: %s" % ifeVmQtaResponse.name)
             self.addResp(response)
@@ -273,8 +277,6 @@ class HDDS(Module):
             self.addResp(response, key, mac)
         finally:
             call(["mps_biostool", "set-active", bank])
-                
-
 
     ## Handles SET requests for inventory items
     #  @param     self
