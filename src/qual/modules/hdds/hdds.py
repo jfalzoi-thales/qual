@@ -1,4 +1,5 @@
 from subprocess import call, check_call, check_output, CalledProcessError
+import os
 
 from common.pb2.ErrorMessage_pb2 import ErrorMessage
 from common.pb2.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp
@@ -16,7 +17,7 @@ class HDDS(Module):
     #  @param   self
     #  @param   config  Configuration for this module instance
     #  @param   deserialize     Flag to deserialize the responses when running unit test
-    def __init__(self, config=None, deserialize=False):
+    def __init__(self, config=None):
         #  Initialize parent class
         super(HDDS, self).__init__(config)
         ## Client connection to the Host Domain Device Service
@@ -177,7 +178,7 @@ class HDDS(Module):
     def nicMacGet(self, response, key, device):
         try:
             mac = check_output(["cat", "/sys/class/net/%s/address" % device])
-            self.addResp(response, key, mac, True)
+            self.addResp(response, key, mac.rstrip('\n'), True)
         except CalledProcessError as err:
             self.log.warning("Unable to run %s" % err.cmd)
             self.addResp(response, key)
@@ -237,10 +238,13 @@ class HDDS(Module):
     #  @param     macPairs  Dict containing pairs of keys and MAC address values to be set
     def macSet(self, response, macPairs):
         for key in macPairs:
+            # TODO: Validate that value looks like a MAC address
             target = key.split('.')[1]
 
             if target.startswith("processor"):
                 self.cpuMacSet(response, key, macPairs[key])
+            if target.startswith("i350_"):
+                self.i350MacSet(response, key, macPairs[key])
             else:
                 self.log.warning("Invalid or not yet supported key: %s" % key)
                 self.addResp(response, key, macPairs[key])
@@ -273,8 +277,33 @@ class HDDS(Module):
             self.addResp(response, key, mac)
         finally:
             call(["mps_biostool", "set-active", bank])
-                
 
+    ## Handles SET requests for I350 MAC key
+    #  @param     self
+    #  @param     response  HostDomainDeviceServiceResponse object
+    #  @param     key       Key of MAC address to be set
+    #  @param     mac       MAC address to be set
+    def i350MacSet(self, response, key, mac):
+        success = False
+        # Key is 1,2,3,4 but NIC index for eeupdate tool is 2,3,4,5
+        nicidx = int(key[-1]) + 1
+        # Write the MAC address to a file
+        macfile = "/tmp/i350_mac.txt"
+        if os.path.exists(macfile):
+            os.remove(macfile)
+        try:
+            with open(macfile, 'w') as macfileObj:
+                macfileObj.write(mac.replace(':', '') + '\n')
+        except IOError:
+            self.log.error("Unable to write file for %s", key)
+        else:
+            # Actually program the MAC address
+            success = (call(["eeupdate64e", "-nic=%d" % nicidx, "-a", macfile]) == 0)
+            if not success:
+                self.log.error("Error programming %s", key)
+            os.remove(macfile)
+
+        self.addResp(response, key, mac, success)
 
     ## Handles SET requests for inventory items
     #  @param     self
