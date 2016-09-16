@@ -19,7 +19,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='FirmwareUpdate.proto',
   package='mpsqual',
-  serialized_pb=_b('\n\x14\x46irmwareUpdate.proto\x12\x07mpsqual\"T\n\x15\x46irmwareUpdateRequest\x12+\n\x07\x63ommand\x18\x01 \x02(\x0e\x32\x1a.mpsqual.FirmwareCommandsT\x12\x0e\n\x06reboot\x18\x02 \x02(\x08\"p\n\x16\x46irmwareUpdateResponse\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12-\n\tcomponent\x18\x02 \x01(\x0e\x32\x1a.mpsqual.FirmwareCommandsT\x12\x16\n\x0c\x65rrorMessage\x18\x03 \x01(\t:\x00*\xad\x01\n\x11\x46irmwareCommandsT\x12\x0b\n\x07\x46W_BIOS\x10\x00\x12\x0b\n\x07\x46W_I350\x10\x01\x12\x18\n\x14\x46W_SWITCH_BOOTLOADER\x10\x02\x12\x16\n\x12\x46W_SWITCH_FIRMWARE\x10\x03\x12\x1b\n\x17\x46W_SWITCH_FIRMWARE_SWAP\x10\x04\x12\x14\n\x10\x46W_SWITCH_CONFIG\x10\x05\x12\x19\n\x15\x46W_SWITCH_CONFIG_SWAP\x10\x06')
+  serialized_pb=_b('\n\x14\x46irmwareUpdate.proto\x12\x07mpsqual\"T\n\x15\x46irmwareUpdateRequest\x12+\n\x07\x63ommand\x18\x01 \x02(\x0e\x32\x1a.mpsqual.FirmwareCommandsT\x12\x0e\n\x06reboot\x18\x02 \x02(\x08\"p\n\x16\x46irmwareUpdateResponse\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12-\n\tcomponent\x18\x02 \x01(\x0e\x32\x1a.mpsqual.FirmwareCommandsT\x12\x16\n\x0c\x65rrorMessage\x18\x03 \x01(\t:\x00*\xc7\x01\n\x11\x46irmwareCommandsT\x12\x0b\n\x07\x46W_BIOS\x10\x00\x12\x12\n\x0e\x46W_I350_EEPROM\x10\x01\x12\x11\n\rFW_I350_FLASH\x10\x02\x12\x18\n\x14\x46W_SWITCH_BOOTLOADER\x10\x03\x12\x16\n\x12\x46W_SWITCH_FIRMWARE\x10\x04\x12\x1b\n\x17\x46W_SWITCH_FIRMWARE_SWAP\x10\x05\x12\x14\n\x10\x46W_SWITCH_CONFIG\x10\x06\x12\x19\n\x15\x46W_SWITCH_CONFIG_SWAP\x10\x07')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -34,45 +34,50 @@ _FIRMWARECOMMANDST = _descriptor.EnumDescriptor(
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='FW_I350', index=1, number=1,
+      name='FW_I350_EEPROM', index=1, number=1,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='FW_SWITCH_BOOTLOADER', index=2, number=2,
+      name='FW_I350_FLASH', index=2, number=2,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='FW_SWITCH_FIRMWARE', index=3, number=3,
+      name='FW_SWITCH_BOOTLOADER', index=3, number=3,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='FW_SWITCH_FIRMWARE_SWAP', index=4, number=4,
+      name='FW_SWITCH_FIRMWARE', index=4, number=4,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='FW_SWITCH_CONFIG', index=5, number=5,
+      name='FW_SWITCH_FIRMWARE_SWAP', index=5, number=5,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='FW_SWITCH_CONFIG_SWAP', index=6, number=6,
+      name='FW_SWITCH_CONFIG', index=6, number=6,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='FW_SWITCH_CONFIG_SWAP', index=7, number=7,
       options=None,
       type=None),
   ],
   containing_type=None,
   options=None,
   serialized_start=234,
-  serialized_end=407,
+  serialized_end=433,
 )
 _sym_db.RegisterEnumDescriptor(_FIRMWARECOMMANDST)
 
 FirmwareCommandsT = enum_type_wrapper.EnumTypeWrapper(_FIRMWARECOMMANDST)
 FW_BIOS = 0
-FW_I350 = 1
-FW_SWITCH_BOOTLOADER = 2
-FW_SWITCH_FIRMWARE = 3
-FW_SWITCH_FIRMWARE_SWAP = 4
-FW_SWITCH_CONFIG = 5
-FW_SWITCH_CONFIG_SWAP = 6
+FW_I350_EEPROM = 1
+FW_I350_FLASH = 2
+FW_SWITCH_BOOTLOADER = 3
+FW_SWITCH_FIRMWARE = 4
+FW_SWITCH_FIRMWARE_SWAP = 5
+FW_SWITCH_CONFIG = 6
+FW_SWITCH_CONFIG_SWAP = 7
 
 
 
