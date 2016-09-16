@@ -324,11 +324,8 @@ class HDDS(Module):
             splitKey = key.split('.')
             section = splitKey[1]
             item = splitKey[2]
-            if item not in self.lengthLimits:
+            if item not in self.lengthLimits and key not in ("inventory.lru.name", "inventory.lru.weight", "inventory.lru.mod_dot_level"):
                 self.log.warning("Attempt to set invalid key %s" % key)
-                self.addResp(response, key, value)
-            elif len(value) > self.lengthLimits[item]:
-                self.log.warning("Attempt to set invalid value for key %s" % key)
                 self.addResp(response, key, value)
             elif section == "carrier_card":
                 i350Pairs[key] = value
