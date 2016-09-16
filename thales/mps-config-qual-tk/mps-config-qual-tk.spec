@@ -4,7 +4,7 @@
 Name: mps-config-qual-tk
 Summary: QUAL Specific configuration
 Version: 1.0.14
-Release: 2
+Release: 3
 Group: System Environment/Libraries
 URL: http://www.thalesgroup.com/
 Vendor: Thales Avionics, Inc.
@@ -26,7 +26,6 @@ QUAL Specific configuration.
 %install
 mkdir -p %{buildroot}/opt/config-update %{buildroot}/etc
 cp -R network-scripts %{buildroot}/opt/config-update/
-cp -R units %{buildroot}/opt/config-update/
 touch %{buildroot}/etc/mps-config-qual
 
 %files
@@ -35,7 +34,6 @@ touch %{buildroot}/etc/mps-config-qual
 
 %post
 cd /etc/sysconfig/network-scripts && mv -f /opt/config-update/network-scripts/* .
-cd %{_unitdir} && mv -f /opt/config-update/units/* .
 sed -i '/enable CPUEthernet.service/d' /usr/lib/systemd/system-preset/50-mps-drivers.preset
 sed -i -e 's|#$ModLoad imudp|$ModLoad imudp|g' -e 's|#$UDPServerRun 514|$UDPServerRun 514|g' /etc/rsyslog.conf
 sed -i -e 's|service_prvkey_file|#service_prvkey_file|g' -e 's|tcp://192.168.1.4:40001|tcp://*:40001|g' /thales/host/config/HDDS.conf

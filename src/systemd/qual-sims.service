@@ -6,8 +6,6 @@ Before=HDDS.service
 Type=oneshot
 ExecStart=/thales/host/appliances/qual-sims
 RemainAfterExit=yes
-Restart=always
-RestartSec=3s
 
 [Install]
 WantedBy=multi-user.target

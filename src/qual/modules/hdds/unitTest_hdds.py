@@ -108,7 +108,7 @@ class Test_HDDS(unittest.TestCase):
         cls.log = Logger(name='Test HDDS')
         cls.log.info('++++ Setup before HDDS module unit tests ++++')
         # Create the module
-        cls.module = hdds.HDDS(deserialize=True)
+        cls.module = hdds.HDDS()
         # Uncomment this if you want to see module debug messages
         #cls.module.log.setLevel("DEBUG")
 
