@@ -40,6 +40,7 @@ zip
 kmod-i2c-mcp2221
 kmod-e1000e
 kmod-igb
+kmod-iqvlinux
 
 # mps config, tools and libs
 mps-config
@@ -49,6 +50,8 @@ mps-keys
 mps-tools
 mpsinst-tools
 libmps-utils
+
+memlockd
 
 # SEMA Driver
 libsema
@@ -104,7 +107,6 @@ smartmontools
 
 # Development Tools
 less
-pciutils
 strace
 usbutils
 minicom
@@ -121,7 +123,10 @@ pmbw
 ethtool
 mps-guest-vm
 
-# NMS
+# ATP
+flashrom
+i350tools
+pciutils
 tftp
 tftp-server
 xinetd

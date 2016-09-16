@@ -34,10 +34,22 @@ buildqual () {
     cp ${QUALDIR}/build/mps-builder/config/pkgs-qual.inc.ks ${MPSBUILDDIR}/config/
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/dockerscripts/buildqual.script"
     cd ${MPSBUILDDIR}/bin/
+
     OLDQUALPXE=`ls -t1 livecd-mps-qual-*.tftpboot.tar.gz | head -1`
     TIMESTAMP=`echo ${OLDQUALPXE} | cut -f 4 -d '-'`
     NEWQUALPXE=livecd-mps-qual-${VERSION}-${TIMESTAMP}.tftpboot.tar.gz
+
+    OLDQUALUSBDISK=`ls -t1 livecd-mps-qual-*.usbdisk.img.gz | head -1`
+    TIMESTAMP=`echo ${OLDQUALUSBDISK} | cut -f 4 -d '-'`
+    NEWQUALUSBDISK=livecd-mps-qual-${VERSION}-${TIMESTAMP}.usbdisk.img.gz
+
+    OLDQUALUSBPART=`ls -t1 livecd-mps-qual-*.usbpart.img.gz | head -1`
+    TIMESTAMP=`echo ${OLDQUALUSBPART} | cut -f 4 -d '-'`
+    NEWQUALUSBPART=livecd-mps-qual-${VERSION}-${TIMESTAMP}.usbpart.img.gz
+
     sudo mv ${MPSBUILDDIR}/bin/${OLDQUALPXE} ${MPSBUILDDIR}/bin/${NEWQUALPXE}
+    sudo mv ${MPSBUILDDIR}/bin/${OLDQUALUSBDISK} ${MPSBUILDDIR}/bin/${NEWQUALUSBDISK}
+    sudo mv ${MPSBUILDDIR}/bin/${OLDQUALUSBPART} ${MPSBUILDDIR}/bin/${NEWQUALUSBPART}
 }
 
 # Build qual-sims pxe image
@@ -46,10 +58,22 @@ buildsims () {
     cp ${QUALDIR}/build/mps-builder/config/pkgs-qual-sims.inc.ks ${MPSBUILDDIR}/config/pkgs-qual.inc.ks
     sudo docker run --net=host --rm=true -u root --privileged=true -v ${MPSBUILDDIR}:/mnt/workspace -v /dev:/dev -t mps/mpsbuilder:centos7 /bin/bash "/mnt/workspace/dockerscripts/buildqual.script"
     cd ${MPSBUILDDIR}/bin/
+
     OLDSIMSPXE=`ls -t1 livecd-mps-qual-*.tftpboot.tar.gz | head -1`
     TIMESTAMP=`echo ${OLDSIMSPXE} | cut -f 4 -d '-'`
     NEWSIMSPXE=livecd-mps-qual-sims-${VERSION}-${TIMESTAMP}.tftpboot.tar.gz
+
+    OLDSIMSUSBDISK=`ls -t1 livecd-mps-qual-*.usbdisk.img.gz | head -1`
+    TIMESTAMP=`echo ${OLDSIMSUSBDISK} | cut -f 4 -d '-'`
+    NEWSIMSUSBDISK=livecd-mps-qual-sims-${VERSION}-${TIMESTAMP}.usbdisk.img.gz
+
+    OLDSIMSUSBPART=`ls -t1 livecd-mps-qual-*.usbpart.img.gz | head -1`
+    TIMESTAMP=`echo ${OLDSIMSUSBPART} | cut -f 4 -d '-'`
+    NEWSIMSUSBPART=livecd-mps-qual-sims-${VERSION}-${TIMESTAMP}.usbpart.img.gz
+
     sudo mv ${MPSBUILDDIR}/bin/${OLDSIMSPXE} ${MPSBUILDDIR}/bin/${NEWSIMSPXE}
+    sudo mv ${MPSBUILDDIR}/bin/${OLDSIMSUSBDISK} ${MPSBUILDDIR}/bin/${NEWSIMSUSBDISK}
+    sudo mv ${MPSBUILDDIR}/bin/${OLDSIMSUSBPART} ${MPSBUILDDIR}/bin/${NEWSIMSUSBPART}
 }
 
 # Builds qual-ife guest vm image
@@ -103,7 +127,7 @@ cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
 cd ${QUALDIR}/
 echo "Please use your own Git credentials to log in. \(^^\) \(^^)/ (/^^)/"
 
-git fetch origin "$BRANCH"
+git fetch --tags origin "$BRANCH"
 git reset --hard FETCH_HEAD
 git clean -df
 rm -rf /tmp/tito
@@ -150,10 +174,14 @@ esac
 
 if [ $BUILD != "SIMS" ]; then
     echo "Built qual PXE image: $NEWQUALPXE"
+    echo "Built qual USBDISK image: $NEWQUALUSBDISK"
+    echo "Built qual USBPART image: $NEWQUALUSBPART"
 fi
 
 if [ $BUILD != "QUAL" ]; then 
     echo "Built qual-sims PXE image: $NEWSIMSPXE"
+    echo "Built qual-sims USBDISK image: $NEWSIMSUSBDISK"
+    echo "Built qual-sims USBPART image: $NEWSIMSUSBPART"
 fi
 
 exit

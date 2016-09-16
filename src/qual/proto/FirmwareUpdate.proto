@@ -2,12 +2,13 @@ package mpsqual;
 
 enum FirmwareCommandsT {
     FW_BIOS = 0;
-    FW_I350	= 1;
-    FW_SWITCH_BOOTLOADER = 2;
-    FW_SWITCH_FIRMWARE = 3;
-    FW_SWITCH_FIRMWARE_SWAP = 4;
-    FW_SWITCH_CONFIG = 5;
-    FW_SWITCH_CONFIG_SWAP = 6;
+    FW_I350_EEPROM = 1;
+    FW_I350_FLASH = 2;
+    FW_SWITCH_BOOTLOADER = 3;
+    FW_SWITCH_FIRMWARE = 4;
+    FW_SWITCH_FIRMWARE_SWAP = 5;
+    FW_SWITCH_CONFIG = 6;
+    FW_SWITCH_CONFIG_SWAP = 7;
 }
 
 message FirmwareUpdateRequest {
@@ -16,13 +17,7 @@ message FirmwareUpdateRequest {
 }
 
 message FirmwareUpdateResponse {
-	enum BIOSUpdateResultT {
-		ALL_FAILED = 0;
-		PRIMARY_PASSED = 1;
-		SECONDARY_PASSED = 2;
-		ALL_PASSED = 3;
-	}
-
-	required FirmwareCommandsT command = 1;
-	required BIOSUpdateResultT result = 2;
+	required bool success = 1;
+    optional FirmwareCommandsT component = 2;
+	optional string errorMessage = 3 [default = ""];
 }

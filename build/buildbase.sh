@@ -33,13 +33,13 @@ cd ${MPSBUILDDIR}
 git checkout -q --detach tags/${MPSBUILDTAG}
 
 # Build docker container if not available
-docker images | grep -q ^mps/mpsbuilder
-if [ "$?" != 0 ]; then
+if ! docker images | grep -q ^mps/mpsbuilder; then
     docker build -t mps/mpsbuilder:centos7 dockerfile/
 fi
 
 echo "Applying mps-builder changes for Qual"
 cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
+cat ${MPSBUILDDIR}/config/package.tags.add >> ${MPSBUILDDIR}/config/package.tags
 
 echo
 echo "Entering docker for build; at root prompt below type:"

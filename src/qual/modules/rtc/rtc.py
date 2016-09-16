@@ -38,38 +38,8 @@ class Rtc(Module):
         # Request: RTC_SET
         elif rtcRequest.body.requestType == RTCRequest.RTC_SET:
             rtcResponse = self.rtcSet(rtcRequest.body.timeString)
-        # Request: SYSTEM_TO_RTC
-        elif rtcRequest.body.requestType == RTCRequest.SYSTEM_TO_RTC:
-            rtcResponse = self.rtcSet(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ'))
-        # Request: RTC_TO_SYSTEM
-        elif rtcRequest.body.requestType == RTCRequest.RTC_TO_SYSTEM:
-            response = self.rtcGet()
-            # succeeded???
-            if response.success:
-                # Set the system date time
-                if subprocess.call(['date', '-s', response.timeString], stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0:
-                    rtcResponse.success = True
-                    rtcResponse.timeString = response.timeString
-                else:
-                    self.log.error("Internal failure executing commnad 'date'")
-            else:
-                # Here the error was logged in rtcGet() function
-                rtcResponse = response
-        # Request: RTC_SYSTEM_SET
-        elif rtcRequest.body.requestType == RTCRequest.RTC_SYSTEM_SET:
-            # first set the RTC
-            rtcResponse = self.rtcSet(rtcRequest.body.timeString)
-            # Succeeded???
-            if rtcResponse.success:
-                # Set the system date time
-                if subprocess.call(['date', '-s', rtcRequest.body.timeString], stdout=DEVNULL, stderr=DEVNULL) == 0:
-                    pass
-                else:
-                    self.log.error("Internal failure executing commnad 'date'")
-                    rtcResponse.success = False
-                    rtcResponse.timeString = ''
-        # Request: UNKNOWN
         else:
+            rtcResponse.errorMessage = "Invalid RTC request: %d" % rtcRequest.body.requestType
             self.log.error("Invalid RTC request: %d" % rtcRequest.body.requestType)
 
         return ThalesZMQMessage(rtcResponse)
@@ -92,8 +62,10 @@ class Rtc(Module):
                 rtcResponse.success = True
                 rtcResponse.timeString = timeResponse.datetime
             else:
+                rtcResponse.errorMessage = "Error retrieving time from RTC: Error code %s" % timeResponse.error
                 self.log.error("Error retrieving time from RTC: Error code %s" % timeResponse.error)
         else:
+            rtcResponse.errorMessage = "Unexpected response from RTC: %s" % response.name
             self.log.error("Unexpected response from RTC: %s" % response.name)
 
         return rtcResponse
@@ -125,12 +97,16 @@ class Rtc(Module):
                         rtcResponse.success = True
                         rtcResponse.timeString = timeResponse.datetime
                     else:
+                        rtcResponse.errorMessage = "Error retrieving time from RTC: Error code %s" % timeResponse.error
                         self.log.error("Error retrieving time from RTC: Error code %s" % timeResponse.error)
                 else:
+                    rtcResponse.errorMessage = "Unexpected response from RTC: %s" % getTimeResponse.name
                     self.log.error("Unexpected response from RTC: %s" % getTimeResponse.name)
             else:
-                self.log.error("Unexpected response from RTC: %s" % timeResponse.name)
+                rtcResponse.errorMessage = "Error setting time on RTC: Error code %s" % timeResponse.error
+                self.log.error("Error setting time on RTC: Error code %s" % timeResponse.error)
         else:
+            rtcResponse.errorMessage = "Unexpected response from RTC: %s" % setTimeResponse.name
             self.log.error("Unexpected response from RTC: %s" % setTimeResponse.name)
 
         return rtcResponse

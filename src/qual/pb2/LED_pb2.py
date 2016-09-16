@@ -19,7 +19,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='LED.proto',
   package='',
-  serialized_pb=_b('\n\tLED.proto\"?\n\nLEDRequest\x12\x16\n\x03led\x18\x01 \x02(\x0e\x32\t.LEDDescT\x12\x19\n\x05state\x18\x02 \x02(\x0e\x32\n.LEDStateT\"\x1e\n\x0bLEDResponse\x12\x0f\n\x07success\x18\x01 \x02(\x08*E\n\x08LEDDescT\x12\x0c\n\x08LED_POST\x10\x00\x12\x14\n\x10LED_STATUS_GREEN\x10\x01\x12\x15\n\x11LED_STATUS_YELLOW\x10\x02*\"\n\tLEDStateT\x12\n\n\x06LS_OFF\x10\x00\x12\t\n\x05LS_ON\x10\x01')
+  serialized_pb=_b('\n\tLED.proto\"?\n\nLEDRequest\x12\x16\n\x03led\x18\x01 \x02(\x0e\x32\t.LEDDescT\x12\x19\n\x05state\x18\x02 \x02(\x0e\x32\n.LEDStateT\"6\n\x0bLEDResponse\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x16\n\x0c\x65rrorMessage\x18\x02 \x01(\t:\x00*E\n\x08LEDDescT\x12\x0c\n\x08LED_POST\x10\x00\x12\x14\n\x10LED_STATUS_GREEN\x10\x01\x12\x15\n\x11LED_STATUS_YELLOW\x10\x02*\"\n\tLEDStateT\x12\n\n\x06LS_OFF\x10\x00\x12\t\n\x05LS_ON\x10\x01')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -44,8 +44,8 @@ _LEDDESCT = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=110,
-  serialized_end=179,
+  serialized_start=134,
+  serialized_end=203,
 )
 _sym_db.RegisterEnumDescriptor(_LEDDESCT)
 
@@ -67,8 +67,8 @@ _LEDSTATET = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=181,
-  serialized_end=215,
+  serialized_start=205,
+  serialized_end=239,
 )
 _sym_db.RegisterEnumDescriptor(_LEDSTATET)
 
@@ -132,6 +132,13 @@ _LEDRESPONSE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='errorMessage', full_name='LEDResponse.errorMessage', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=True, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -144,7 +151,7 @@ _LEDRESPONSE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=78,
-  serialized_end=108,
+  serialized_end=132,
 )
 
 _LEDREQUEST.fields_by_name['led'].enum_type = _LEDDESCT
