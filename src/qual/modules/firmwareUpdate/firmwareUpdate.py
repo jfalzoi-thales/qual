@@ -55,16 +55,16 @@ class FirmwareUpdate(Module):
         primary = False
         secondary = False
 
-        if call(["mps-biostool.sh", "set-active", "primary"]) == 0:
-            if call(["mps-biostool.sh", "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
+        if call(["mps-biostool", "set-active", "primary"]) == 0:
+            if call(["mps-biostool", "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
                 primary = True
             else:
                 self.log.warning("Unable to properly program primary BIOS.")
         else:
             self.log.warning("Unable to set primary BIOS to active.")
 
-        if call(["mps-biostool.sh", "set-active", "secondary"]) == 0:
-            if call(["mps-biostool.sh", "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
+        if call(["mps-biostool", "set-active", "secondary"]) == 0:
+            if call(["mps-biostool", "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
                 secondary = True
             else:
                 self.log.warning("Unable to properly program secondary BIOS.")
