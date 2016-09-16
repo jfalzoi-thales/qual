@@ -45,7 +45,7 @@ kmod-iqvlinux
 # mps config, tools and libs
 mps-config
 #mps-config-qual
-#mps-config-qual-tk
+mps-config-qual-tk
 #mps-keys
 mps-tools
 mpsinst-tools
