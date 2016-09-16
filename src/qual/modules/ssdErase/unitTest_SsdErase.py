@@ -2,52 +2,52 @@ import unittest
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from qual.modules.outoffactory.outOfFactory import *
-from qual.pb2.OOF_pb2 import *
+from qual.modules.ssdErase.ssdErase import *
+from qual.pb2.SSDErase_pb2 import *
 
 
 # @cond doxygen_unittest
 
-## OOF Messages
-class OofMessages(ModuleMessages):
+## SSDErase Messages
+class SSDEraseMessages(ModuleMessages):
     @staticmethod
     def getMenuTitle():
-        return "Out Of Factory"
+        return "SSD Erase"
 
     @staticmethod
     def getMenuItems():
-        return [("Send Erase SSD", OofMessages.message_SSDErase)]
+        return [("Send Erase SSD", SSDEraseMessages.message_SSDErase)]
 
     @staticmethod
     def message_SSDErase():
         message = SSDEraseRequest()
         return message
 
-## Out Of Factory Unit Test
-class Test_Oof(unittest.TestCase):
+## SSDErase Unit Test
+class Test_SSDErase(unittest.TestCase):
     ## Static logger instance
     log = None
 
     ## Static module instance
     module = None
 
-    ## Setup for the Oof test cases
+    ## Setup for the SSDErase test cases
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
         # Create a logger so we can add details to a multi-step test case
-        cls.log = Logger(name='Out Of Factory')
-        cls.log.info('++++ Setup before OOF module unit tests ++++')
+        cls.log = Logger(name='SSD Erase')
+        cls.log.info('++++ Setup before SSDErase module unit tests ++++')
         # Create the module
-        cls.module = Oof()
+        cls.module = SSDErase()
         # Uncomment this if you don't want to see module debug messages
         # cls.module.log.setLevel(logger.INFO)
 
-    ## Teardown when done with OOF test cases
+    ## Teardown when done with SSDErase test cases
     # This is run only once when we're done with all test cases
     @classmethod
     def tearDownClass(cls):
-        cls.log.info("++++ Teardown after Out Of Factory module unit tests ++++")
+        cls.log.info("++++ Teardown after SSDErase module unit tests ++++")
         cls.module.terminate()
 
     ## Test setup
@@ -61,15 +61,15 @@ class Test_Oof(unittest.TestCase):
     ## Valid Test case: Send a SSDErase Request
     #  Asserts:
     #    success == True
-    def test_Oof(self):
+    def test_SSDErase(self):
         log = self.__class__.log
         module = self.__class__.module
 
         log.info("**** Test case: SSDErase Request message ****")
 
-        oofResponse = module.msgHandler(ThalesZMQMessage(OofMessages.message_SSDErase()))
+        SSDEraseResponse = module.msgHandler(ThalesZMQMessage(SSDEraseMessages.message_SSDErase()))
         # Asserts
-        self.assertTrue(oofResponse.body.success)
+        self.assertTrue(SSDEraseResponse.body.success)
 
         log.info("==== Test complete ====")
 

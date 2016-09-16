@@ -2,10 +2,11 @@ package mpsqual;
 
 message SSDEraseRequest
 {
-
+	required bool erase = 1;
 }
 
 message SSDEraseResponse
 {
 	required bool success = 1;
+	optional string errorMessage = 2 [default = ""];
 }

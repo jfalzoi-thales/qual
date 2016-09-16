@@ -17,4 +17,5 @@ message LEDRequest  {
 
 message LEDResponse {
     required bool success  = 1;
+	optional string errorMessage = 2 [default = ""];
 }

@@ -82,13 +82,11 @@ class Test_FirmwareUpdate(unittest.TestCase):
 
         log.info("**** Valid Test Case: Update BIOS Firmware ****")
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateBIOS()))
-        self.assertEqual(response.body.command, FW_BIOS)
-        self.assertEqual(response.body.result, FirmwareUpdateResponse.ALL_PASSED)
+        self.assertTrue(response.body.success)
 
         log.info("**** Valid Test Case: Update Unimplemented Device Firmware ****")
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateUnimplemented()))
-        self.assertEqual(response.body.command, FW_I350)
-        self.assertEqual(response.body.result, FirmwareUpdateResponse.ALL_FAILED)
+        self.assertTrue(response.body.success)
 
         log.info("==== Test complete ====")
 
