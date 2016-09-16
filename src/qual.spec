@@ -68,7 +68,7 @@ cp -r common/ %{buildroot}/thales/qual/src/
 cp -r tklabs_utils/ %{buildroot}/thales/qual/src/
 cp -r qual/ %{buildroot}/thales/qual/src/
 mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/mps-biostool.sh %{buildroot}/%{_bindir}/
-mv %{buildroot}/thales/qual/src/qual/modules/outoffactory/mpsinst-destroyraid.sh %{buildroot}/thales/host/appliances/mpsinst-destroyraid
+mv %{buildroot}/thales/qual/src/qual/modules/ssdErase/mpsinst-destroyraid.sh %{buildroot}/thales/host/appliances/mpsinst-destroyraid
 cp -r simulator/ %{buildroot}/thales/qual/src/
 mv %{buildroot}/thales/qual/src/simulator/arinc429/Arinc429Driver.conf %{buildroot}/thales/host/config/
 cp config/qual-mps.conf %{buildroot}/thales/qual/src/config/
