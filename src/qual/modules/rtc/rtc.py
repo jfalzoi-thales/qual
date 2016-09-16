@@ -100,11 +100,11 @@ class Rtc(Module):
                         rtcResponse.errorMessage = "Error retrieving time from RTC: Error code %s" % timeResponse.error
                         self.log.error("Error retrieving time from RTC: Error code %s" % timeResponse.error)
                 else:
-                    rtcResponse.errorMessage = "Unexpected response from RTC: %s" % setTimeResponse.name
+                    rtcResponse.errorMessage = "Unexpected response from RTC: %s" % getTimeResponse.name
                     self.log.error("Unexpected response from RTC: %s" % getTimeResponse.name)
             else:
-                rtcResponse.errorMessage = "Unexpected response from RTC: %s" % setTimeResponse.name
-                self.log.error("Unexpected response from RTC: %s" % timeResponse.name)
+                rtcResponse.errorMessage = "Error setting time on RTC: Error code %s" % timeResponse.error
+                self.log.error("Error setting time on RTC: Error code %s" % timeResponse.error)
         else:
             rtcResponse.errorMessage = "Unexpected response from RTC: %s" % setTimeResponse.name
             self.log.error("Unexpected response from RTC: %s" % setTimeResponse.name)
