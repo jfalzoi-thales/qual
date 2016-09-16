@@ -128,6 +128,7 @@ cd ${QUALDIR}/
 echo "Please use your own Git credentials to log in. \(^^\) \(^^)/ (/^^)/"
 
 git fetch --tags origin "$BRANCH"
+git checkout "$BRANCH"
 git reset --hard FETCH_HEAD
 git clean -df
 rm -rf /tmp/tito
