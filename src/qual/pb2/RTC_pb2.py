@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='RTC.proto',
   package='mpsqual',
-  serialized_pb=_b('\n\tRTC.proto\x12\x07mpsqual\"\xb9\x01\n\nRTCRequest\x12\x34\n\x0brequestType\x18\x01 \x02(\x0e\x32\x1f.mpsqual.RTCRequest.RTCRequestT\x12\x12\n\ntimeString\x18\x02 \x01(\t\"a\n\x0bRTCRequestT\x12\x0b\n\x07RTC_GET\x10\x00\x12\x0b\n\x07RTC_SET\x10\x01\x12\x12\n\x0eRTC_SYSTEM_SET\x10\x02\x12\x11\n\rRTC_TO_SYSTEM\x10\x03\x12\x11\n\rSYSTEM_TO_RTC\x10\x04\"2\n\x0bRTCResponse\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x12\n\ntimeString\x18\x02 \x02(\t')
+  serialized_pb=_b('\n\tRTC.proto\x12\x07mpsqual\"\x7f\n\nRTCRequest\x12\x34\n\x0brequestType\x18\x01 \x02(\x0e\x32\x1f.mpsqual.RTCRequest.RTCRequestT\x12\x12\n\ntimeString\x18\x02 \x01(\t\"\'\n\x0bRTCRequestT\x12\x0b\n\x07RTC_GET\x10\x00\x12\x0b\n\x07RTC_SET\x10\x01\"J\n\x0bRTCResponse\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x12\n\ntimeString\x18\x02 \x02(\t\x12\x16\n\x0c\x65rrorMessage\x18\x03 \x01(\t:\x00')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -38,23 +38,11 @@ _RTCREQUEST_RTCREQUESTT = _descriptor.EnumDescriptor(
       name='RTC_SET', index=1, number=1,
       options=None,
       type=None),
-    _descriptor.EnumValueDescriptor(
-      name='RTC_SYSTEM_SET', index=2, number=2,
-      options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='RTC_TO_SYSTEM', index=3, number=3,
-      options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='SYSTEM_TO_RTC', index=4, number=4,
-      options=None,
-      type=None),
   ],
   containing_type=None,
   options=None,
-  serialized_start=111,
-  serialized_end=208,
+  serialized_start=110,
+  serialized_end=149,
 )
 _sym_db.RegisterEnumDescriptor(_RTCREQUEST_RTCREQUESTT)
 
@@ -92,8 +80,8 @@ _RTCREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=23,
-  serialized_end=208,
+  serialized_start=22,
+  serialized_end=149,
 )
 
 
@@ -118,6 +106,13 @@ _RTCRESPONSE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='errorMessage', full_name='mpsqual.RTCResponse.errorMessage', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=True, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -129,8 +124,8 @@ _RTCRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=210,
-  serialized_end=260,
+  serialized_start=151,
+  serialized_end=225,
 )
 
 _RTCREQUEST.fields_by_name['requestType'].enum_type = _RTCREQUEST_RTCREQUESTT

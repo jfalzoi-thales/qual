@@ -6,9 +6,6 @@ message RTCRequest
     {
 		RTC_GET	   = 0;
 		RTC_SET	   = 1;
-		RTC_SYSTEM_SET = 2;
-		RTC_TO_SYSTEM  = 3;
-		SYSTEM_TO_RTC  = 4;
 	}
 
 	required RTCRequestT requestType = 1;
@@ -19,4 +16,5 @@ message RTCResponse
 {
 	required bool	success 	= 1;
 	required string	timeString 	= 2;
+	optional string errorMessage = 3 [default = ""];
 }

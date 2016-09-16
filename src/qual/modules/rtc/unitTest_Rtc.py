@@ -20,11 +20,8 @@ class RtcMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("RTC_GET"        , RtcMessages.message_RTC_GET),
-                ("RTC_SET"        , RtcMessages.message_RTC_SET),
-                ("RTC_SYSTEM_SET" , RtcMessages.message_RTC_SYSTEM_SET()),
-                ("RTC_TO_SYSTEM"  , RtcMessages.message_RTC_TO_SYSTEM()),
-                ("SYSTEM_TO_RTC"  , RtcMessages.message_SYSTEM_TO_RTC())]
+        return [("RTC GetTime" , RtcMessages.message_RTC_GET),
+                ("RTC SetTime" , RtcMessages.message_RTC_SET)]
 
     @staticmethod
     def message_RTC_GET():
@@ -36,25 +33,6 @@ class RtcMessages(ModuleMessages):
     def message_RTC_SET():
         message = RTCRequest()
         message.requestType = RTCRequest.RTC_SET
-        message.timeString = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ')
-        return message
-
-    @staticmethod
-    def message_SYSTEM_TO_RTC():
-        message = RTCRequest()
-        message.requestType = RTCRequest.SYSTEM_TO_RTC
-        return message
-
-    @staticmethod
-    def message_RTC_TO_SYSTEM():
-        message = RTCRequest()
-        message.requestType = RTCRequest.RTC_TO_SYSTEM
-        return message
-
-    @staticmethod
-    def message_RTC_SYSTEM_SET():
-        message = RTCRequest()
-        message.requestType = RTCRequest.RTC_SYSTEM_SET
         message.timeString = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ')
         return message
 
@@ -103,10 +81,12 @@ class Test_Rtc(unittest.TestCase):
         module = self.__class__.module
 
         log.info("**** Test case: RTC Request message RTC_GET ****")
+
         response = module.msgHandler(ThalesZMQMessage(RtcMessages.message_RTC_GET()))
         # Asserts
         self.assertTrue(response.body.success)
         self.assertTrue(isinstance(response.body.timeString, unicode))
+
         log.info("==== Test complete ====")
 
     ## Valid Test case: Send a RTC Request RTC_SET msg
@@ -118,57 +98,13 @@ class Test_Rtc(unittest.TestCase):
         module = self.__class__.module
 
         log.info("**** Test case: RTC Request message RTC_SET ****")
+
         response = module.msgHandler(ThalesZMQMessage(RtcMessages.message_RTC_SET()))
         # Asserts
         self.assertTrue(response.body.success)
         self.assertTrue(isinstance(response.body.timeString, unicode))
+
         log.info("==== Test complete ====")
-
-    ## Valid Test case: Send a RTC Request SYSTEM_TO_RTC msg
-    #  Asserts:
-    #    success == True
-    #    timeString is an unicode str
-    def test_Message_SYSTEM_TO_RTC(self):
-        log = self.__class__.log
-        module = self.__class__.module
-
-        log.info("**** Test case: RTC Request message SYSTEM_TO_RTC ****")
-        response = module.msgHandler(ThalesZMQMessage(RtcMessages.message_SYSTEM_TO_RTC()))
-        # Asserts
-        self.assertTrue(response.body.success)
-        self.assertTrue(isinstance(response.body.timeString, unicode))
-        log.info("==== Test complete ====")
-
-    ## Valid Test case: Send a RTC Request RTC_TO_SYSTEM msg
-    #  Asserts:
-    #    success == True
-    #    timeString is an unicode str
-    def test_Message_RTC_TO_SYSTEM(self):
-        log = self.__class__.log
-        module = self.__class__.module
-
-        log.info("**** Test case: RTC Request message RTC_TO_SYSTEM ****")
-        response = module.msgHandler(ThalesZMQMessage(RtcMessages.message_RTC_TO_SYSTEM()))
-        # Asserts
-        self.assertTrue(response.body.success)
-        self.assertTrue(isinstance(response.body.timeString, unicode))
-        log.info("==== Test complete ====")
-
-    ## Valid Test case: Send a RTC Request RTC_SYSTEM_SET msg
-    #  Asserts:
-    #    success == True
-    #    timeString is an unicode str
-    def test_Message_RTC_SYSTEM_SET(self):
-        log = self.__class__.log
-        module = self.__class__.module
-
-        log.info("**** Test case: RTC Request message RTC_TO_SYSTEM ****")
-        response = module.msgHandler(ThalesZMQMessage(RtcMessages.message_RTC_SYSTEM_SET()))
-        # Asserts
-        self.assertTrue(response.body.success)
-        log.info("==== Test complete ====")
-        self.assertTrue(isinstance(response.body.timeString, unicode))
-
 
 if __name__ == '__main__':
     unittest.main()

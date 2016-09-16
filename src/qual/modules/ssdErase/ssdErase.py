@@ -2,42 +2,43 @@ import subprocess
 import os
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from qual.pb2.OOF_pb2 import *
+from qual.pb2.SSDErase_pb2 import *
 
 ## Discard the output
 DEVNULL = open(os.devnull, 'wb')
 
-## OOF Module class
+## SSDErase Module class
 #
-class Oof(Module):
+class SSDErase(Module):
     ## Constructor
     def __init__(self, config=None):
         # Init the parent class
-        super(Oof, self).__init__(None)
+        super(SSDErase, self).__init__(None)
         # adding the message handler
         self.addMsgHandler(SSDEraseRequest, self.handlerMessage)
 
-    ## Called by base class when an OutOfFactoryRequest object is received from a client.
+    ## Called by base class when an SSDEraseRequest object is received from a client.
     #
-    #  @param: oofRequest
+    #  @param: SSDEraseRequest
     #  @type:  OutOfFactoryRequest obj
-    def handlerMessage(self,oofRequest):
+    def handlerMessage(self,ssdEraseRequest):
         # Create the empty response
-        oofResponse = SSDEraseResponse()
+        ssdEraseResponse = SSDEraseResponse()
         # Init with failure
-        oofResponse.success = False
-        # run the command, and catch the exception if it failed
-        try:
-            self.unmountIfMounted("/mnt/qual")
-            self.unmountIfMounted("/tsp-download")
-            self.runDestroyRaid()
-        except Exception:
-            # if an error, success is already False
-            pass
-        else:
-            oofResponse.success = True
+        ssdEraseResponse.success = True
+        if ssdEraseRequest.erase:
+            # run the command, and catch the exception if it failed
+            try:
+                self.unmountIfMounted("/mnt/qual")
+                self.unmountIfMounted("/tsp-download")
+                self.runDestroyRaid()
+            except Exception:
+                ssdEraseResponse.success = False
+                ssdEraseResponse.errorMessage = 'Unable to delete RAID volume'
+            else:
+                ssdEraseResponse.success = True
 
-        return ThalesZMQMessage(oofResponse)
+        return ThalesZMQMessage(ssdEraseResponse)
 
     ## Runs a command, and can raise an exception if the command fails
     #  @param   self
