@@ -60,9 +60,6 @@ cp scripts/qtemenu.sh %{buildroot}/thales/host/appliances/qtemenu
 cp scripts/hddsget.sh %{buildroot}/thales/host/appliances/hddsget
 cp scripts/hddsset.sh %{buildroot}/thales/host/appliances/hddsset
 cp scripts/installifesims.sh %{buildroot}/%{_bindir}/installifesims
-cp scripts/bootutil64e.sh %{buildroot}/%{_bindir}/bootutil64e
-cp scripts/eeupdate64e.sh %{buildroot}/%{_bindir}/eeupdate64e
-cp scripts/i350-flashtool.sh %{buildroot}/%{_bindir}/i350-flashtool
 cp scripts/genvmconfig.py %{buildroot}/thales/host/appliances/genvmconfig
 cp scripts/ifcfg-* %{buildroot}/etc/sysconfig/network-scripts/
 mv %{buildroot}/etc/sysconfig/network-scripts/ifcfg-ens6sk %{buildroot}/etc/sysconfig/network-scripts/ifcfg-ens6:sk
@@ -71,6 +68,9 @@ cp -r common/ %{buildroot}/thales/qual/src/
 cp -r tklabs_utils/ %{buildroot}/thales/qual/src/
 cp -r qual/ %{buildroot}/thales/qual/src/
 mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/mps-biostool.sh %{buildroot}/%{_bindir}/mps-biostool
+mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/bootutil64e.sh %{buildroot}/%{_bindir}/bootutil64e
+mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/eeupdate64e.sh %{buildroot}/%{_bindir}/eeupdate64e
+mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/i350-flashtool.sh %{buildroot}/%{_bindir}/i350-flashtool
 mv %{buildroot}/thales/qual/src/qual/modules/ssdErase/mpsinst-destroyraid.sh %{buildroot}/thales/host/appliances/mpsinst-destroyraid
 cp -r simulator/ %{buildroot}/thales/qual/src/
 mv %{buildroot}/thales/qual/src/simulator/arinc429/Arinc429Driver.conf %{buildroot}/thales/host/config/
