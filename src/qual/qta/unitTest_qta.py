@@ -20,7 +20,7 @@ class QTAClient(ThalesZMQClient):
         super(QTAClient, self).__init__("tcp://localhost:50001")
 
         # Set up a ClassFinder for GPB message classes
-        self.gpbClasses = ClassFinder(rootPath='qual.pb2',
+        self.gpbClasses = ClassFinder(rootPaths=['qual.pb2'],
                                       baseClass=Message)
         # Set up a logger
         self.log = Logger(name='Test QTA')

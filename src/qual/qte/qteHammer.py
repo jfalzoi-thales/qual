@@ -22,10 +22,10 @@ class QTEHammer(object):
         ## Logger implementation, based on standard python logger
         self.log = Logger(type(self).__name__)
         ## ClassFinder for module ModuleMessages classes
-        self.__modClass = ClassFinder(rootPath='qual.modules',
+        self.__modClass = ClassFinder(rootPaths=['qual.modules'],
                                      baseClass=ModuleMessages)
         ## ClassFinder for GPB message classes
-        self.__qualMessage = ClassFinder(rootPath='qual.pb2',
+        self.__qualMessage = ClassFinder(rootPaths=['qual.pb2','common.pb2'],
                                          baseClass=Message)
         ## List for storing threads
         self.threads = []

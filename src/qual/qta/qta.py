@@ -42,11 +42,11 @@ class QualTestApp(ConfigurableObject):
         self.__instances = {}
 
         ## All available classes in QUAL modules for QTA
-        self.__modClasses = ClassFinder(rootPath=self.moduleDir,
+        self.__modClasses = ClassFinder(rootPaths=[self.moduleDir],
                                         baseClass=Module)
 
         ## All available classes in GPB modules for QTA
-        self.__gpbClasses = ClassFinder(rootPath='qual.pb2',
+        self.__gpbClasses = ClassFinder(rootPaths=['qual.pb2','common.pb2'],
                                         baseClass=Message)
 
         ## Lock for access to handler
