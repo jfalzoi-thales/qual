@@ -19,7 +19,7 @@ from tklabs_utils.classFinder.classFinder import ClassFinder
 class JsonConversion(object):
 
     ## All available classes in GPB modules for QTA,
-    _knownGpbClasses = ClassFinder(rootPaths=['qual.pb2','common.pb2'], baseClass=Message)
+    _knownGpbClasses = ClassFinder(rootPaths=['qual.pb2'], baseClass=Message)
 
     ##Convert a GPB buffer object into a JSON object
     #@param cls This is a class method
