@@ -1,7 +1,7 @@
 import unittest
 
 import firmwareUpdate
-from qual.pb2.FirmwareUpdate_pb2 import FirmwareUpdateRequest, FirmwareUpdateResponse, FW_BIOS, FW_I350
+from qual.pb2.FirmwareUpdate_pb2 import FirmwareUpdateRequest, FW_BIOS, FW_I350_EEPROM
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -37,7 +37,7 @@ class FirmwareUpdateMessages(ModuleMessages):
     @staticmethod
     def updateUnimplemented():
         message = FirmwareUpdateRequest()
-        message.command = FW_I350
+        message.command = FW_I350_EEPROM
         message.reboot = False
         return message
 

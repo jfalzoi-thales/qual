@@ -26,7 +26,7 @@ class SSDErase(Module):
         ssdEraseResponse = SSDEraseResponse()
         # Init with failure
         ssdEraseResponse.success = True
-        if ssdEraseRequest.erase:
+        if ssdEraseRequest.body.erase:
             # run the command, and catch the exception if it failed
             try:
                 self.unmountIfMounted("/mnt/qual")
