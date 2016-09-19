@@ -69,7 +69,7 @@ class QTEMenu(object):
             print "---------------------------------------------------------\n"
             print "Sending ", msg.__class__.__name__
             response = self.client.sendRequest(ThalesZMQMessage(msg))
-            if (response.name == ""):
+            if response.name == "":
                 print "No response\n"
             else:
                 respClass = self.__qualMessage.getClassByName(response.name)
