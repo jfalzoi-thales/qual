@@ -23,7 +23,7 @@ class HDDS(Module):
         ## Client connection to the Host Domain Device Service
         self.hddsClient = ThalesZMQClient("tcp://localhost:40001", log=self.log, timeout=2000)
         ## Name of CPU Ethernet device
-        self.cpuEthernetDev = "eno1"
+        self.cpuEthernetDev = "enp0s31f6"
         ## Name of I350 Ethernet device
         self.i350EthernetDev = "ens1f"
         ## Address for communicating with QTA running on the IFE VM

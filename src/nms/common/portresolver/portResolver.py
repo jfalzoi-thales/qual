@@ -5,6 +5,7 @@ import ConfigParser
 conf_path = '/thales/host/config/system/system.conf'
 
 #  Dictionary with the statics port names
+#  TODO: Get non-switch port names from config file
 portNames = {
     'external.enet_1' :('Gi 1/14',True),
     'external.enet_2' :('Gi 1/9',True),
@@ -13,7 +14,7 @@ portNames = {
     'external.enet_5' :('Gi 1/12',True),
     'external.enet_6' :('Gi 1/8',True),
     'external.enet_7' :('Gi 1/11',True),
-    'external.enet_8' :('eno1',False),
+    'external.enet_8' :('enp0s31f6',False),
     'external.enet_9' :('Gi 1/7',True),
     'external.enet_10':('Gi 1/6',True),
     'external.enet_11':('Gi 1/5',True),
