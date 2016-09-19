@@ -17,10 +17,10 @@ class QTEMenu(object):
         super(QTEMenu, self).__init__()
 
         ## ClassFinder for module ModuleMessages classes
-        self.__modClass = ClassFinder(rootPath='qual.modules',
+        self.__modClass = ClassFinder(rootPaths=['qual.modules'],
                                      baseClass=ModuleMessages)
         ## ClassFinder for GPB message classes
-        self.__qualMessage = ClassFinder(rootPath='qual.pb2',
+        self.__qualMessage = ClassFinder(rootPaths=['qual.pb2','common.pb2'],
                                          baseClass=Message)
         ## Exit flag
         self.__exit = False
