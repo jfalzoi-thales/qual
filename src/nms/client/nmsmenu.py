@@ -16,10 +16,10 @@ class QTEMenu(object):
         super(QTEMenu, self).__init__()
 
         ## ClassFinder for module ModuleMessages classes
-        self.__modClass = ClassFinder(rootPath='nms.guest.modules' if useGuest else 'nms.host.modules',
+        self.__modClass = ClassFinder(rootPaths=['nms.guest.modules'] if useGuest else ['nms.host.modules'],
                                      baseClass=ModuleMessages)
         ## ClassFinder for GPB message classes
-        self.__qualMessage = ClassFinder(rootPath='nms.guest.pb2' if useGuest else 'nms.host.pb2',
+        self.__qualMessage = ClassFinder(rootPaths=['nms.guest.pb2'] if useGuest else ['nms.host.pb2'],
                                          baseClass=Message)
         ## Exit flag
         self.__exit = False

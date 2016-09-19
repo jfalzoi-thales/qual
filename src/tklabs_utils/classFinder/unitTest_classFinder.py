@@ -16,7 +16,7 @@ class TestStringMethods(unittest.TestCase):
 
         )
 
-        classFinder = ClassFinder(rootPath='common.gpb.python',
+        classFinder = ClassFinder(rootPaths=['common.gpb.python'],
                                   baseClass=Message)
 
         for className in classNames :

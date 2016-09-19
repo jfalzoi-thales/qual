@@ -33,9 +33,9 @@ class ModuleShell(object):
         ## Map of {<class>:<module instance>}
         self.__instances = {}
         ## All available module classes
-        self.__modClasses = ClassFinder(rootPath=self.moduleDir, baseClass=Module)
+        self.__modClasses = ClassFinder(rootPaths=[self.moduleDir], baseClass=Module)
         ## All available GPB message classes
-        self.__gpbClasses = ClassFinder(rootPath=self.messageDir, baseClass=Message)
+        self.__gpbClasses = ClassFinder(rootPaths=[self.messageDir], baseClass=Message)
         ## Lock for access to handler
         self.handlerLock = Lock()
 
