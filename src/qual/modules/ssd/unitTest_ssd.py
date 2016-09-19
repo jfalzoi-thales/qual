@@ -1,11 +1,12 @@
 import unittest
-
 from time import sleep
-from common.gpb.python.SSD_pb2 import SSDRequest, SSDResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
-from qual.modules.ssd.ssd import SSD
+
+from qual.pb2.SSD_pb2 import SSDRequest, SSDResponse
+from ssd import SSD
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 

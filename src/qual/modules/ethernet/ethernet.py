@@ -2,9 +2,10 @@ import subprocess
 import threading
 from time import sleep
 import netifaces
-from common.gpb.python.Ethernet_pb2 import EthernetRequest, EthernetResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.module.module import Module, ModuleException
+
+from qual.pb2.Ethernet_pb2 import EthernetRequest, EthernetResponse
+from tklabs_utils.module.module import Module, ModuleException
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 
 ## Ethernet Module Exception Class
