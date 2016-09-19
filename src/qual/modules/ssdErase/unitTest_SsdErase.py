@@ -21,6 +21,7 @@ class SSDEraseMessages(ModuleMessages):
     @staticmethod
     def message_SSDErase():
         message = SSDEraseRequest()
+        message.erase = True
         return message
 
 ## SSDErase Unit Test
