@@ -17,9 +17,9 @@ class LedControlMessages(ModuleMessages):
         return [("(ON, LED_POST)",        LedControlMessages.onPost),
                 ("(ON, STATUS_GREEN)",  LedControlMessages.onTestGreen),
                 ("(ON, STATUS_YELLOW)", LedControlMessages.onTestYellow),
-                ("(OFF,LED_POST)",        LedControlMessages.getTime),
-                ("(OFF,STATUS_GREEN)",  LedControlMessages.setTime),
-                ("(OFF,STATUS_YELLOW)", LedControlMessages.getTime)]
+                ("(OFF,LED_POST)",        LedControlMessages.offPost),
+                ("(OFF,STATUS_GREEN)",  LedControlMessages.offTestGreen),
+                ("(OFF,STATUS_YELLOW)", LedControlMessages.offTestYellow)]
 
     @staticmethod
     def onPost():
@@ -78,7 +78,8 @@ class Test_LedControl(unittest.TestCase):
         cls.log = Logger(name='LED Control')
         cls.log.info('++++ Setup before LED Control module unit tests ++++')
         # Create the module
-        cls.module = Led()
+        if cls.module is None:
+            cls.module = Led()
         # Uncomment this if you don't want to see module debug messages
         # cls.module.log.setLevel(logger.INFO)
 
@@ -89,14 +90,6 @@ class Test_LedControl(unittest.TestCase):
         cls.log.info("++++ Teardown after LED Control module unit tests ++++")
         cls.module.terminate()
 
-    ## Test setup
-    # This is run before each test case; we use it to make sure we
-    # start each test case with the module in a known state
-    def setUp(self):
-        log = self.__class__.log
-        module = self.__class__.module
-        log.info("==== Reset module state ====")
-
     ## Valid Test case:
     #
     def test_OnPost(self):
@@ -106,6 +99,7 @@ class Test_LedControl(unittest.TestCase):
         log.info("**** Test case: ON, LED_POST message ****")
         response = module.msgHandler(ThalesZMQMessage(LedControlMessages.onPost()))
         # Asserts
+        self.assertEqual(response.name, "LEDResponse")
         self.assertTrue(response.body.success)
         log.info("==== Test complete ====")
 
@@ -118,6 +112,7 @@ class Test_LedControl(unittest.TestCase):
         log.info("**** Test case: ON, LED_STATUS_GREEN message ****")
         response = module.msgHandler(ThalesZMQMessage(LedControlMessages.onTestGreen()))
         # Asserts
+        self.assertEqual(response.name, "LEDResponse")
         self.assertTrue(response.body.success)
         log.info("==== Test complete ====")
 
@@ -130,6 +125,7 @@ class Test_LedControl(unittest.TestCase):
         log.info("**** Test case: ON, LED_STATUS_YELLOW message ****")
         response = module.msgHandler(ThalesZMQMessage(LedControlMessages.onTestYellow()))
         # Asserts
+        self.assertEqual(response.name, "LEDResponse")
         self.assertTrue(response.body.success)
         log.info("==== Test complete ====")
 
@@ -142,6 +138,7 @@ class Test_LedControl(unittest.TestCase):
         log.info("**** Test case: OFF, LED_POST message ****")
         response = module.msgHandler(ThalesZMQMessage(LedControlMessages.offPost()))
         # Asserts
+        self.assertEqual(response.name, "LEDResponse")
         self.assertTrue(response.body.success)
         log.info("==== Test complete ====")
 
@@ -154,6 +151,7 @@ class Test_LedControl(unittest.TestCase):
         log.info("**** Test case: OFF, LED_STATUS_GREEN message ****")
         response = module.msgHandler(ThalesZMQMessage(LedControlMessages.offTestGreen()))
         # Asserts
+        self.assertEqual(response.name, "LEDResponse")
         self.assertTrue(response.body.success)
         log.info("==== Test complete ====")
 
@@ -166,6 +164,7 @@ class Test_LedControl(unittest.TestCase):
         log.info("**** Test case: OFF, LED_STATUS_YELLOW message ****")
         response = module.msgHandler(ThalesZMQMessage(LedControlMessages.offTestYellow()))
         # Asserts
+        self.assertEqual(response.name, "LEDResponse")
         self.assertTrue(response.body.success)
         log.info("==== Test complete ====")
 
