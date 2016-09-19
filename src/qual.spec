@@ -3,7 +3,7 @@
 #
 Name: qual
 Summary: An application used to drive MPS hardware
-Version: 1.59
+Version: 1.60
 Release: 1
 License: Proprietary
 Group: Applications/Engineering
