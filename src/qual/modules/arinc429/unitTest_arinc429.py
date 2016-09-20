@@ -340,7 +340,7 @@ class Test_ARINC429(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
 
-        numInputs = len(module.inputChans)
+        numInputs = 8
 
         log.info("**** Test case: Test use of the \"ALL\" parameter ****")
         log.info("==== Report on all inputs before connect ====")

@@ -524,7 +524,7 @@ class Test_GPIO(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
 
-        numInputs = len(module.inputPins)
+        numInputs = 19
 
         log.info("**** Test case: Test use of the \"ALL\" parameter ****")
         log.info("==== Report on all inputs before connect ====")
