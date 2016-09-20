@@ -1,11 +1,11 @@
 import argparse
+import sys
 import unittest
 from google.protobuf.message import Message
 
 from tklabs_utils.classFinder.classFinder import ClassFinder
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.tzmq.JsonZMQClient import JsonZMQClient
-from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 
 ## Class that provides a menu-driven QTE simulator
@@ -13,28 +13,48 @@ class QATest(object):
     ## Constructor
     # @param server  Host name or IP address of QTA
     # @param listModules Use JSON instead of GPB to communicate with QTA
-    def __init__(self, server="localhost", testMod=None):
+    def __init__(self, server, moduleNames):
         super(QATest, self).__init__()
         ConfigurableObject.setFilename("qual")
 
         ## ClassFinder for module unit test classes
-        self.__modClass = ClassFinder(rootPaths=['qual.modules'],
-                                     baseClass=unittest.TestCase)
+        self.moduleFinder = ClassFinder(rootPaths=['qual.modules'],
+                                        baseClass=unittest.TestCase)
 
-        if testMod is not None and "Test_" + testMod not in self.__modClass.classmap:
-            print "Module test '%s' not found." % testMod
-            testMod = None
+        ## ClassFinder for GPB message classes
+        self.messageFinder = ClassFinder(rootPaths=['qual.pb2', 'common.pb2'],
+                                         baseClass=Message)
 
-        if testMod is None:
+        # "Unsafe" tests - exclude from "all" list
+        unsafeTests = ["Test_FirmwareUpdate", "Test_SSDErase"]
+
+        # Build list of module test classes to run
+        testClasses = []
+        if "all" in moduleNames:
+            print "All tests requested."
+            for testClassName, testClass in self.moduleFinder.classmap.items():
+                if testClassName in unsafeTests:
+                    print "Skipping unsafe test '%s'" % testClassName.replace("Test_", "")
+                else:
+                    testClasses.append(testClass)
+        else:
+            for moduleName in moduleNames:
+                if "Test_" + moduleName in self.moduleFinder.classmap:
+                    testClasses.append(self.moduleFinder.classmap["Test_" + moduleName])
+                else:
+                    print "Module test '%s' not found." % moduleName
+
+        # If no valid module name specified on command line, print a menu
+        if len(testClasses) == 0:
             print
             print "Available module tests:"
             index = 1
             modList = []
-            for mod in sorted(self.__modClass.classmap):
+            for mod in sorted(self.moduleFinder.classmap):
                 print "\t%d - %s" % (index, mod.replace("Test_", ""))
                 modList.append(mod)
                 index += 1
-            while testMod is None:
+            while len(testClasses) == 0:
                 try:
                     selectedModule = int(raw_input("Test to run: "))
                 except ValueError:
@@ -46,11 +66,7 @@ class QATest(object):
                 if selectedModule < 1 or selectedModule > index:
                     print "Valid range is %d to %d." % (1, index)
                     continue
-                testMod = modList[selectedModule - 1]
-
-        ## ClassFinder for GPB message classes
-        self.__qualMessage = ClassFinder(rootPaths=['qual.pb2'],
-                                         baseClass=Message)
+                testClasses.append(self.moduleFinder.classmap[modList[selectedModule - 1]])
 
         # Construct address to connect to - use JSON port
         address = str.format('tcp://{}:{}', server, 50002)
@@ -59,22 +75,28 @@ class QATest(object):
         self.client = JsonZMQClient(address, timeout=7000)
         print "Opened connection to", address, "for JSON messaging"
 
+        # Build a test suite of all requested module tests
+        suite = unittest.TestSuite()
+        for testClass in testClasses:
+            testClass.module = self
+            suite.addTest(unittest.TestLoader().loadTestsFromTestCase(testClass))
+
         # Run class unit test suite
-        testClass = self.__modClass.classmap["Test_" + testMod]
-        testClass.module = self
-        suite = unittest.TestLoader().loadTestsFromTestCase(testClass)
+        print "----------------------------------------------------------------------"
+        sys.stdout.flush()
         unittest.TextTestRunner(verbosity=1).run(suite)
 
     ## Send a message to the QTA and return response
     def msgHandler(self, msg):
         response = self.client.sendRequest(msg)
-        # Deserialize response
+        # Deserialize response if necessary
         if response.name == "":
-            print "No response"
-        else:
-            respClass = self.__qualMessage.getClassByName(response.name)
+            print "No response to %s" % msg.name
+            sys.stdout.flush()
+        elif response.body is None:
+            respClass = self.messageFinder.getClassByName(response.name)
             if respClass is None:
-                print "Unexpected Value response"
+                print "Unexpected message type %s in response to %s" % (response.name, msg.name)
             else:
                 respMsg = respClass()
                 respMsg.ParseFromString(response.serializedBody)
@@ -94,14 +116,13 @@ def main():
                                type=str,
                                default="localhost",
                                help="Host name or IP address of server")
-    cmdParameters.add_argument('module',
+    cmdParameters.add_argument('modules',
                                nargs='*',
-                               help="Module to test; if not present a list of modules will be displayed")
+                               help="Modules to test; if not present a list of modules will be displayed")
     args = cmdParameters.parse_args()
 
     # Initialize and run the Qual/ATP Tester
-    testMod = args.module[0] if len(args.module) > 0 else None
-    QATest(args.server, testMod)
+    QATest(args.server, args.modules)
 
     # Return exit code for qatest wrapper script
     # TODO: Return unittest status
