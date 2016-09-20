@@ -16,7 +16,6 @@ class HDDS(Module):
     ## Constructor
     #  @param   self
     #  @param   config  Configuration for this module instance
-    #  @param   deserialize     Flag to deserialize the responses when running unit test
     def __init__(self, config=None):
         #  Initialize parent class
         super(HDDS, self).__init__(config)
@@ -30,7 +29,7 @@ class HDDS(Module):
         self.ifeVmQtaAddr = "tcp://localhost:50003"
         self.loadConfig(attributes=('ifeVmQtaAddr', 'cpuEthernetDev', 'i350EthernetDev'))
         ## Connection to QTA running on the IFE VM
-        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log)
+        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log, timeout=4000)
         ## Mac address types for handling wild cards
         self.macTypes = ["mac_address.processor",
                          "mac_address.i350_1",

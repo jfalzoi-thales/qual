@@ -58,9 +58,8 @@ class Test_RS232(unittest.TestCase):
         cls.log = Logger(name='Test RS-232')
         cls.log.info('++++ Setup before RS-232 module unit tests ++++')
         # Create the module
-        cls.module = Rs232()
-        # Uncomment this if you don't want to see module debug messages
-        # cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = Rs232()
 
     ## Teardown when done with RS-232 test cases
     # This is run only once when we're done with all test cases

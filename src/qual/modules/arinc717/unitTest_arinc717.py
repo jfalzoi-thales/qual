@@ -55,9 +55,8 @@ class Test_ARINC717(unittest.TestCase):
         cls.log = logger.Logger(name='Test ARINC 717')
         cls.log.info('++++ Setup before ARINC717 module unit tests ++++')
         # Create the module
-        cls.module = arinc717.ARINC717()
-        # Uncomment this if you don't want to see module debug messages
-        #cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = arinc717.ARINC717()
 
     ## Test case: RUN request
     # ICD defines RUN, STOP, and REPORT but RUN and STOP don't currently

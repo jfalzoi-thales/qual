@@ -60,9 +60,8 @@ class Test_Encoder(unittest.TestCase):
         cls.log = logger.Logger(name='Test Encoder')
         cls.log.info('++++ Setup before Encoder module unit tests ++++')
         #  Create the module
-        cls.module = encoder.Encoder(deserialize=True)
-        #  Uncomment this if you don't want to see module debug messages
-        #cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = encoder.Encoder()
 
     ## Teardown when done with Encoder test cases
     #  This is run only once when we're done with all test cases

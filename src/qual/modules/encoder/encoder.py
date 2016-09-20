@@ -9,7 +9,7 @@ class Encoder(Module):
     ## Constructor
     #  @param   self
     #  @param   config  Configuration for this module instance
-    def __init__(self, config = None, deserialize=False):
+    def __init__(self, config = None):
         #  Initializes parent class
         super(Encoder, self).__init__(config)
         ## Address for communicating with QTA running on the IFE VM
@@ -17,8 +17,6 @@ class Encoder(Module):
         self.loadConfig(attributes=('ifeVmQtaAddr',))
         ## Connection to QTA running on the IFE VM
         self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log, timeout=6000)
-        ## Flag for unit test to deserialize responses
-        self.deserialize = deserialize
         #  Add handler to available message handlers
         self.addMsgHandler(EncoderRequest, self.handler)
 
