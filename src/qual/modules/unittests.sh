@@ -28,4 +28,4 @@ while true ; do
 done
 
 export PYTHONPATH=`pwd`
-python -m unittest discover -s qual/modules -p "unitTest_*.py" 2>&1 | tee /tmp/unittests.txt
+python qual/qte/qaTest.py sanity 2>&1 | tee /tmp/unittests.txt
