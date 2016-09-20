@@ -59,9 +59,8 @@ class Test_ARINC485(unittest.TestCase):
         cls.log = logger.Logger(name='Test ARINC485')
         cls.log.info('++++ Setup before ARINC485 module unit tests ++++')
         #  Create the module
-        cls.module = arinc485.ARINC485()
-        #  Uncomment this if you don't want to see module debug messages
-        #cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = arinc485.ARINC485()
 
     ## Teardown when done with ARINC485 test cases
     #  This is run only once when we're done with all test cases

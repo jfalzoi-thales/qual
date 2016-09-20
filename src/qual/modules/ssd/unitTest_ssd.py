@@ -59,9 +59,8 @@ class Test_SSD(unittest.TestCase):
         cls.log = Logger(name='Test SSD')
         cls.log.info('++++ Setup before SSD module unit tests ++++')
         # Create the module
-        cls.module = SSD()
-        # Uncomment this if you don't want to see module debug messages
-        # cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = SSD()
 
     ## Teardown when done with SSD test cases
     # This is run only once when we're done with all test cases

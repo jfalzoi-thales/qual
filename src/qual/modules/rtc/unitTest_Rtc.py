@@ -53,9 +53,8 @@ class Test_Rtc(unittest.TestCase):
         cls.log = Logger(name='Test Real Time Clock')
         cls.log.info('++++ Setup before RTC module unit tests ++++')
         # Create the module
-        cls.module = Rtc()
-        # Uncomment this if you don't want to see module debug messages
-        # cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = Rtc()
 
     ## Teardown when done with RTC test cases
     # This is run only once when we're done with all test cases
@@ -63,14 +62,6 @@ class Test_Rtc(unittest.TestCase):
     def tearDownClass(cls):
         cls.log.info("++++ Teardown after Real Time Clock module unit tests ++++")
         cls.module.terminate()
-
-    ## Test setup
-    #  This is run before each test case; we use it to make sure we
-    #  start each test case with the module in a known state
-    def setUp(self):
-        log = self.__class__.log
-        module = self.__class__.module
-        log.info("==== Reset module state ====")
 
     ## Valid Test case: Send a RTC Request RTC_GET msg
     #  Asserts:

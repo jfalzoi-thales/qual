@@ -1,7 +1,11 @@
 import unittest
+
+from led import Led
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
-from qual.modules.ledcontrol.led import *
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from qual.pb2.LED_pb2 import *
 
 
 # @cond doxygen_unittest
@@ -74,14 +78,13 @@ class Test_LedControl(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = Logger(name='LED Control')
         cls.log.info('++++ Setup before LED Control module unit tests ++++')
         # Create the module
         if cls.module is None:
             cls.module = Led()
-        # Uncomment this if you don't want to see module debug messages
-        # cls.module.log.setLevel(logger.INFO)
 
     ## Teardown when done with LED Control test cases
     # This is run only once when we're done with all test cases

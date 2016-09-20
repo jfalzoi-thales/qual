@@ -58,9 +58,8 @@ class Test_RS485(unittest.TestCase):
         cls.log = Logger(name='Test RS-485')
         cls.log.info('++++ Setup before RS-485 module unit tests ++++')
         # Create the module
-        cls.module = Rs485()
-        # Uncomment this if you don't want to see module debug messages
-        # cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = Rs485()
 
     ## Teardown when done with RS-485 test cases
     # This is run only once when we're done with all test cases

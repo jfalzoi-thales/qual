@@ -2,6 +2,7 @@ import unittest
 
 import firmwareUpdate
 from qual.pb2.FirmwareUpdate_pb2 import FirmwareUpdateRequest, FW_BIOS, FW_I350_EEPROM
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -53,13 +54,13 @@ class Test_FirmwareUpdate(unittest.TestCase):
     #  This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         #  Create a logger so we can add details to a multi-step test case
         cls.log = Logger(name='Test FirmwareUpdate')
         cls.log.info('++++ Setup before FirmwareUpdate module unit tests ++++')
         #  Create the module
-        cls.module = firmwareUpdate.FirmwareUpdate()
-        #  Uncomment this if you want to see module debug messages
-        #cls.module.log.setLevel("DEBUG")
+        if cls.module is None:
+            cls.module = firmwareUpdate.FirmwareUpdate()
 
     ## Teardown when done with test cases
     #  This is run only once when we're done with all test cases

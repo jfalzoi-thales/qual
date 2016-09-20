@@ -9,8 +9,7 @@ class AnalogAudio(Module):
     ## Constructor
     #  @param   self
     #  @param   config          Configuration for this module instance
-    #  @param   deserialize     Flag to deserialize the responses when running unit test
-    def __init__(self, config=None, deserialize=False):
+    def __init__(self, config=None):
         #  Initializes parent class
         super(AnalogAudio, self).__init__(config)
         ## Address for communicating with QTA running on the IFE VM
@@ -18,8 +17,6 @@ class AnalogAudio(Module):
         self.loadConfig(attributes=('ifeVmQtaAddr',))
         ## Connection to QTA running on the IFE VM
         self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log, timeout=4000)
-        ## Flag for unit test to deserialize responses
-        self.deserialize = deserialize
         #  Add handler to available message handlers
         self.addMsgHandler(AnalogAudioRequest, self.handler)
 

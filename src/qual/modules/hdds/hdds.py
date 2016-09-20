@@ -16,7 +16,6 @@ class HDDS(Module):
     ## Constructor
     #  @param   self
     #  @param   config  Configuration for this module instance
-    #  @param   deserialize     Flag to deserialize the responses when running unit test
     def __init__(self, config=None):
         #  Initialize parent class
         super(HDDS, self).__init__(config)

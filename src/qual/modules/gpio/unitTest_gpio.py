@@ -201,9 +201,8 @@ class Test_GPIO(unittest.TestCase):
         cls.log = logger.Logger(name='Test GPIO')
         cls.log.info('++++ Setup before GPIO module unit tests ++++')
         # Create the module
-        cls.module = gpio.GPIO()
-        # Uncomment this if you don't want to see module debug messages
-        #cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = gpio.GPIO()
 
     ## Teardown when done with GPIO test cases
     # This is run only once when we're done with all test cases
