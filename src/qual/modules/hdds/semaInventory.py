@@ -19,6 +19,21 @@ class SEMAInventory(object):
         ## Temporary uncompressed file to work on
         self.uncompressedFile = "/tmp/SEMAflash.work"
 
+    ## Read values in the inventory area
+    #  @param    self
+    #  @param    values     dict of values indexed by HDDS key
+    def read(self, values):
+        # Read values from file
+        configParser = SafeConfigParser()
+        if os.path.exists(self.compressedFile):
+            if subprocess.call("gunzip -c %s > %s" % (self.compressedFile, self.uncompressedFile), shell=True) == 0:
+                configParser.read(self.uncompressedFile)
+
+                for section in configParser.sections():
+                    for option in configParser.options(section):
+                        hddsKey = "inventory.%s.%s" % (section, option)
+                        values[hddsKey] = configParser.get(section, option)
+
     ## Update values in the inventory area
     #  @param    self
     #  @param    values     dict of values to update
