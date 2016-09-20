@@ -30,8 +30,8 @@ class QATest(object):
 
         # Build list of module test classes to run
         testClasses = []
-        if "all" in moduleNames:
-            print "All tests requested."
+        if "sanity" in moduleNames:
+            print "Sanity check tests requested."
             for testClassName, testClass in self.moduleFinder.classmap.items():
                 if testClassName in unsafeTests:
                     print "Skipping unsafe test '%s'" % testClassName.replace("Test_", "")
