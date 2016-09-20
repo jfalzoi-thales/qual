@@ -80,7 +80,7 @@ class Test_LedControl(unittest.TestCase):
     def setUpClass(cls):
         ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
-        cls.log = Logger(name='LED Control')
+        cls.log = Logger(name='Test LED Control')
         cls.log.info('++++ Setup before LED Control module unit tests ++++')
         # Create the module
         if cls.module is None:
