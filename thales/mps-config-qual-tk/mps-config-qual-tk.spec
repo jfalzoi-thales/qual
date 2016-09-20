@@ -3,7 +3,7 @@
 #
 Name: mps-config-qual-tk
 Summary: QUAL Specific configuration
-Version: 1.0.11
+Version: 1.0.14
 Release: 3
 Group: System Environment/Libraries
 URL: http://www.thalesgroup.com/
@@ -11,8 +11,9 @@ Vendor: Thales Avionics, Inc.
 License: Proprietary
 Source: %{name}.tar.gz
 Requires: mps-config
-Requires: gpio-manager
-Requires: spi-manager
+Requires: selinux-policy
+Requires: rsyslog
+Requires: host-domain-device-service
 %{?systemd_requires}
 BuildRequires: systemd
 
@@ -24,7 +25,7 @@ QUAL Specific configuration.
 
 %install
 mkdir -p %{buildroot}/opt/config-update %{buildroot}/etc
-cp -R network-scripts udev-rules host-config %{buildroot}/opt/config-update/
+cp -R network-scripts %{buildroot}/opt/config-update/
 touch %{buildroot}/etc/mps-config-qual
 
 %files
@@ -33,5 +34,10 @@ touch %{buildroot}/etc/mps-config-qual
 
 %post
 cd /etc/sysconfig/network-scripts && mv -f /opt/config-update/network-scripts/* .
-cd /etc/udev/rules.d && mv -f /opt/config-update/udev-rules/* .
-cd /thales/host/config && mv -f /opt/config-update/host-config/* .
+sed -i '/enable CPUEthernet.service/d' /usr/lib/systemd/system-preset/50-mps-drivers.preset
+sed -i -e 's|#$ModLoad imudp|$ModLoad imudp|g' -e 's|#$UDPServerRun 514|$UDPServerRun 514|g' /etc/rsyslog.conf
+sed -i -e 's|service_prvkey_file|#service_prvkey_file|g' -e 's|tcp://192.168.1.4:40001|tcp://*:40001|g' /thales/host/config/HDDS.conf
+
+%posttrans
+ln -s ../default.xml /etc/libvirt/qemu/networks/autostart/default.xml
+sed -i 's|SELINUX=enforcing|SELINUX=permissive|g' /etc/selinux/config

@@ -1,7 +1,8 @@
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.gpb.python.Encoder_pb2 import EncoderRequest, EncoderResponse
-from common.module.module import Module
+from qual.pb2.Encoder_pb2 import EncoderRequest, EncoderResponse
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## Video Encoder Module Class
 class Encoder(Module):

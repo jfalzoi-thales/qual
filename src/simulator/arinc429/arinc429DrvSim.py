@@ -1,10 +1,11 @@
-
-import sys
 import os
-from common.logger import logger
-from common.tzmq.ThalesZMQServer import ThalesZMQServer
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.ARINC429Driver_pb2 import Request, Response
+import sys
+from ConfigParser import SafeConfigParser
+
+from common.pb2.ARINC429Driver_pb2 import Request, Response
+from tklabs_utils.logger import logger
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
 
 
 ## Input info container class
@@ -64,21 +65,38 @@ class ARINC429DriverSimulator(ThalesZMQServer):
         if self.introduceErrors:
             self.log.info("Error mode enabled: errors will be introduced every 10 words")
 
+        #  Parse channel names from Thales ARINC429 Driver configuration file
+        thalesArinc429Config = "/thales/host/config/Arinc429Driver.conf"
+
+        configParser = SafeConfigParser()
+        configParser.read(thalesArinc429Config)
+
+        if configParser.sections() == []:
+            self.log.warning("Missing or Empty Configuration File: %s" % thalesArinc429Config)
+
         # Dict of input channels with info for each one
-        self.inputChannels = {"rx00": InputInfo(),
-                              "rx01": InputInfo(),
-                              "rx10": InputInfo(),
-                              "rx11": InputInfo(),
-                              "rx20": InputInfo(),
-                              "rx21": InputInfo(),
-                              "rx30": InputInfo(),
-                              "rx31": InputInfo()}
+        self.inputChannels = {configParser.get("receiver0:ARINC429-1", "name"): InputInfo(),
+                              configParser.get("receiver1:ARINC429-1", "name"): InputInfo(),
+                              configParser.get("receiver0:ARINC429-2", "name"): InputInfo(),
+                              configParser.get("receiver1:ARINC429-2", "name"): InputInfo(),
+                              configParser.get("receiver0:ARINC429-3", "name"): InputInfo(),
+                              configParser.get("receiver1:ARINC429-3", "name"): InputInfo(),
+                              configParser.get("receiver0:ARINC429-4", "name"): InputInfo(),
+                              configParser.get("receiver1:ARINC429-4", "name"): InputInfo()}
 
         # Simulate ARINC 429 loopback by linking outputs to inputs
-        self.loopbackMap = {"tx00": ("rx00", "rx01"),
-                            "tx10": ("rx10", "rx11"),
-                            "tx20": ("rx20", "rx21"),
-                            "tx30": ("rx30", "rx31")}
+        self.loopbackMap = {configParser.get("transmitter0:ARINC429-1", "name"):
+                            (configParser.get("receiver0:ARINC429-1", "name"),
+                             configParser.get("receiver1:ARINC429-1", "name")),
+                            configParser.get("transmitter0:ARINC429-2", "name"):
+                            (configParser.get("receiver0:ARINC429-2", "name"),
+                             configParser.get("receiver1:ARINC429-2", "name")),
+                            configParser.get("transmitter0:ARINC429-3", "name"):
+                            (configParser.get("receiver0:ARINC429-3", "name"),
+                             configParser.get("receiver1:ARINC429-3", "name")),
+                            configParser.get("transmitter0:ARINC429-4", "name"):
+                            (configParser.get("receiver0:ARINC429-4", "name"),
+                             configParser.get("receiver1:ARINC429-4", "name"))}
 
     ## Called by base class when a request is received from a client.
     #

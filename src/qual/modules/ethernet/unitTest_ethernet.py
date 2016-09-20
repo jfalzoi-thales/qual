@@ -1,10 +1,13 @@
 import unittest
 from time import sleep
+
 import ethernet
-from common.gpb.python.Ethernet_pb2 import EthernetRequest, EthernetResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger import logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.Ethernet_pb2 import EthernetRequest, EthernetResponse
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.logger import logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 
@@ -35,7 +38,7 @@ class EthernetMessages(ModuleMessages):
         message = EthernetRequest()
         message.requestType = EthernetRequest.RUN
         message.local = "ENET_1"
-        message.remote = "10.10.42.21"
+        message.remote = "10.10.41.115"
         return message
 
     @staticmethod
@@ -64,7 +67,7 @@ class EthernetMessages(ModuleMessages):
         message = EthernetRequest()
         message.requestType = EthernetRequest.RUN
         message.local = "ENET_2"
-        message.remote = "10.10.42.240"
+        message.remote = "10.10.41.115"
         return message
 
     @staticmethod
@@ -109,6 +112,7 @@ class Test_Ethernet(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = logger.Logger(name='Test Ethernet')
         cls.log.info('++++ Setup before Ethernet module unit tests ++++')
