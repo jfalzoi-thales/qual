@@ -40,7 +40,6 @@ zip
 kmod-i2c-mcp2221
 kmod-e1000e
 kmod-igb
-kmod-iqvlinux
 
 # mps config, tools and libs
 mps-config
