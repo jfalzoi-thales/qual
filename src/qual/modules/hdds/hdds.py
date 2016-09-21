@@ -1,6 +1,7 @@
 import os
 from ConfigParser import SafeConfigParser
 from subprocess import call, check_call, check_output, CalledProcessError
+from paramiko import SSHClient, AutoAddPolicy
 
 from common.pb2.ErrorMessage_pb2 import ErrorMessage
 from common.pb2.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp
@@ -8,6 +9,7 @@ from qual.pb2.HDDS_pb2 import HostDomainDeviceServiceRequest, HostDomainDeviceSe
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from tklabs_utils.vtss.vtss import Vtss
 from i350Inventory import I350Inventory
 from semaInventory import SEMAInventory
 
@@ -26,11 +28,16 @@ class HDDS(Module):
         self.cpuEthernetDev = "enp0s31f6"
         ## Name of I350 Ethernet device
         self.i350EthernetDev = "ens1f"
+        # IP address of the device
+        self.switchAddress = "10.10.41.159"
         ## Address for communicating with QTA running on the IFE VM
         self.ifeVmQtaAddr = "tcp://localhost:50003"
-        self.loadConfig(attributes=('ifeVmQtaAddr', 'cpuEthernetDev', 'i350EthernetDev'))
+        self.loadConfig(attributes=('ifeVmQtaAddr', 'cpuEthernetDev', 'switchAddress', 'i350EthernetDev'))
         ## Connection to QTA running on the IFE VM
         self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log, timeout=4000)
+        ## SSH connection for programming switch MAC address
+        self.sshClient = SSHClient()
+        self.sshClient.set_missing_host_key_policy(AutoAddPolicy())
         ## Mac address types for handling wild cards
         self.macTypes = ["mac_address.processor",
                          "mac_address.i350_1",
@@ -70,8 +77,8 @@ class HDDS(Module):
         #  Split up the requests by key type and handle them
         if msg.body.requestType == HostDomainDeviceServiceRequest.GET:
             ifeGetReq = None
-            macGetKeys = None
-            inventoryGetKeys = None
+            macGetKeys = []
+            inventoryGetKeys = []
             hddsGetReq = None
 
             for value in msg.body.values:
@@ -83,20 +90,16 @@ class HDDS(Module):
                     ifeValue = ifeGetReq.values.add()
                     ifeValue.key = value.key
                 elif value.key.startswith("mac_address"):
-                    if macGetKeys is None: macGetKeys = []
-
                     if value.key.endswith("*"):
                         macGetKeys += self.macTypes
                     else:
                         macGetKeys.append(value.key)
                 elif value.key.startswith("inventory"):
-                    if inventoryGetKeys is None: inventoryGetKeys = []
-
                     if value.key.endswith("*"):
                         keyParts = value.key.split('.')
 
                         if len(keyParts) == 2:
-                            inventoryGetKeys += self.hddsKeys.keys()
+                            inventoryGetKeys += self.hddsKeys
                         elif len(keyParts) == 3:
                             for key in self.hddsKeys:
                                 if key.startswith("inventory.%s" % keyParts[1]):
@@ -114,37 +117,45 @@ class HDDS(Module):
                     hddsGetReq.key.append(value.key)
 
             if ifeGetReq is not None: self.ifeGet(response, ifeGetReq)
-            if macGetKeys is not None: self.macGet(response, macGetKeys)
-            if inventoryGetKeys is not None: self.inventoryGet(response, inventoryGetKeys)
+            if macGetKeys != []: self.macGet(response, macGetKeys)
+            if inventoryGetKeys != []: self.inventoryGet(response, inventoryGetKeys)
             if hddsGetReq is not None: self.hddsGet(response, hddsGetReq)
         elif msg.body.requestType == HostDomainDeviceServiceRequest.SET:
-            macSetPairs = None
-            inventoryPairs = None
+            macSetPairs = {}
+            inventoryPairs = {}
             hddsSetReq = None
 
             for value in msg.body.values:
                 if value.key.startswith("ife"):
                     self.log.warning("Attempted to set ife voltage or temperature.  Nothing to do.")
-                    self.addResp(response, value.key)
+                    self.addResp(response, value.key, value.value)
                 elif value.key.startswith("mac_address"):
-                    if macSetPairs is None: macSetPairs = {}
-                    macSetPairs[value.key] = value.value
-                elif value.key.startswith("inventory"):
-                    if inventoryPairs is None: inventoryPairs = {}
+                    hexes = value.value.split(':')
 
+                    try:
+                        if len(hexes) == 6:
+                            for hex in hexes:
+                                int(hex.upper(), 16)
+                        else: raise ValueError
+
+                        macSetPairs[value.key] = value.value
+                    except ValueError:
+                        self.log.warning("Invalid MAC Address: %s" % value.value)
+                        self.addResp(response, value.key, value.value)
+                elif value.key.startswith("inventory"):
                     if value.key in self.hddsKeys or self.hddsKeys == []:
                         inventoryPairs[value.key] = value.value
                     else:
                         self.log.warning("Attempted to set invalid key 3: %s" % value.key)
-                        self.addResp(response, value.key)
+                        self.addResp(response, value.key, value.value)
                 else:
                     if hddsSetReq is None: hddsSetReq = SetReq()
                     hddsValue = hddsSetReq.values.add()
                     hddsValue.key = value.key
                     hddsValue.value = value.value
 
-            if macSetPairs is not None: self.macSet(response, macSetPairs)
-            if inventoryPairs is not None: self.inventorySet(response, inventoryPairs)
+            if macSetPairs != {}: self.macSet(response, macSetPairs)
+            if inventoryPairs != {}: self.inventorySet(response, inventoryPairs)
             if hddsSetReq is not None: self.hddsSet(response, hddsSetReq)
         else:
             self.log.error("Unexpected Request Type %d" % msg.body.requestType)
@@ -189,10 +200,12 @@ class HDDS(Module):
         for key in macKeys:
             target = key.split('.')[1]
 
-            if target.startswith("processor"):
+            if target == "processor":
                 self.nicMacGet(response, key, self.cpuEthernetDev)
             elif target.startswith("i350"):
                 self.nicMacGet(response, key, self.i350EthernetDev + str(int(target[-1]) - 1))
+            elif target == "switch":
+                self.vtssMacGet(response, key)
             else:
                 self.log.warning("Invalid or not yet supported key: %s" % key)
                 self.addResp(response, key)
@@ -208,6 +221,19 @@ class HDDS(Module):
             self.addResp(response, key, mac.rstrip('\n'), True)
         except CalledProcessError as err:
             self.log.warning("Unable to run %s" % err.cmd)
+            self.addResp(response, key)
+
+    ## Handles GET requests for switch MAC key
+    #  @param   self
+    #  @param   response    A HostDomainDeviceServiceResponse object
+    #  @param   key         Key of MAC address to be obtained
+    def vtssMacGet(self, response, key):
+        vtss = Vtss(self.switchAddress)
+        mac = vtss.callMethod(["ip.status.interface.link.get"])
+        if mac != "":
+            self.addResp(response, key, mac, True)
+        else:
+            self.log.warning("Unable to retrieve switch MAC address.")
             self.addResp(response, key)
 
     ## Handles GET requests for I350 inventory keys
