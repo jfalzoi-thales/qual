@@ -26,7 +26,8 @@ class SEMAInventory(object):
         # Read values from file
         configParser = SafeConfigParser()
         if os.path.exists(self.compressedFile):
-            if subprocess.call("gunzip -c %s > %s" % (self.compressedFile, self.uncompressedFile), shell=True) == 0:
+            # gunzip returns 0 on success, 1 on failure, 2 on warning - running on MPS can return warning which is OK
+            if subprocess.call("gunzip -c %s > %s" % (self.compressedFile, self.uncompressedFile), shell=True) != 1:
                 configParser.read(self.uncompressedFile)
 
                 for section in configParser.sections():
@@ -42,7 +43,8 @@ class SEMAInventory(object):
         # Start by reading existing values, to which we'll add supplied values
         configParser = SafeConfigParser()
         if os.path.exists(self.compressedFile):
-            if subprocess.call("gunzip -c %s > %s" % (self.compressedFile, self.uncompressedFile), shell=True) == 0:
+            # gunzip returns 0 on success, 1 on failure, 2 on warning - running on MPS can return warning which is OK
+            if subprocess.call("gunzip -c %s > %s" % (self.compressedFile, self.uncompressedFile), shell=True) != 1:
                 configParser.read(self.uncompressedFile)
 
         # Update configParser with new entries from request
