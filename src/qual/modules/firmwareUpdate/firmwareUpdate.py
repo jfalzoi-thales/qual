@@ -154,12 +154,6 @@ class FirmwareUpdate(Module):
     #  @param   reboot      Reboot flag
     def configUpdate(self, response, reboot):
         try:
-            # Check if the TFTP server is running and has the requested file
-            tftpServer = tftpy.TftpClient(self.tftpServer, 69)
-            tftpServer.download(self.configPath, self.configPath)
-            # Erase the downloaded file from tftp server
-            os.remove(self.configPath)
-
             # Open the SSH connection
             switchClient = paramiko.SSHClient()
             switchClient.load_system_host_keys()
@@ -168,12 +162,31 @@ class FirmwareUpdate(Module):
             # Execute the command
             # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
             channel = switchClient.invoke_shell()
-            # channel.send("copy tftp://%s/%s flash:secondary-config\n" % (self.tftpServer, self.configPath))
-            channel.send("copy tftp://%s/%s flash:secondary-config\n" % ("10.10.42.10", self.configPath))
+            # Erase the secondary-config file just before transfer the updated
+            channel.send("delete flash:secondary-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # Send the requested file to the switch
+            channel.send("copy tftp://%s/%s flash:secondary-config\n" % (self.tftpServer, self.configPath))
             time.sleep(0.2)
             while channel.recv_ready():
                 output = channel.recv(1024)
-
+            # Check that the file was actually transferred
+            while True:
+                channel.send("dir\n")
+                while channel.recv_ready():
+                    output = channel.recv(1024)
+                # if the file is being transferring, wait for it to finish
+                if "operation is currently in progress" in output:
+                    continue
+                if 'secondary-config' not in output:
+                    # There was an error transferring the file
+                    response.success = False
+                    response.component = FW_SWITCH_CONFIG
+                    response.errorMessage = "Error transfering file %s to secondary-file" % (self.configPath)
+                    self.log.error("Error transfering file %s to secondary-file" % (self.configPath))
+                    return
+                break
             # Close the connection
             switchClient.close()
             # Fill the response
@@ -182,11 +195,6 @@ class FirmwareUpdate(Module):
 
             if reboot: self.reboot.put("REBOOT")
 
-        except tftpy.TftpShared.TftpException as e:
-            response.success = False
-            response.component = FW_SWITCH_CONFIG
-            response.errorMessage = "Error with TFTP server. Message: %s" % (e.message)
-            self.log.error("Error with TFTP server. Message: %s" % (e.message))
         except paramiko.ssh_exception.SSHException:
             response.success = False
             response.component = FW_SWITCH_CONFIG
@@ -214,24 +222,23 @@ class FirmwareUpdate(Module):
             # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
             channel = switchClient.invoke_shell()
 
-            # Check that we have the secondary config file in the switch
-            channel.send("dir\n")
-            time.sleep(0.2)
-            while channel.recv_ready():
-                output = channel.recv(1024)
-            # This error may happen
-            if "operation is currently in progress" in output:
-                response.success = False
-                response.component = FW_SWITCH_CONFIG_SWAP
-                response.errorMessage = "Load/Save operation is currently in progress."
-                self.log.error("Load/Save operation is currently in progress.")
+            while True:
+                # Check that we have the secondary config file in the switch
+                channel.send("dir\n")
+                time.sleep(0.2)
+                while channel.recv_ready():
+                    output = channel.recv(1024)
+                # This error may happen
+                if "operation is currently in progress" in output:
+                    continue
 
-            if "secondary-config" not in output:
-                response.success = False
-                response.component = FW_SWITCH_CONFIG_SWAP
-                response.errorMessage = "No Secondary file configuration present in the switch."
-                self.log.error("No Secondary file configuration present in the switch.")
-                return
+                if "secondary-config" not in output:
+                    response.success = False
+                    response.component = FW_SWITCH_CONFIG_SWAP
+                    response.errorMessage = "No Secondary file configuration present in the switch."
+                    self.log.error("No Secondary file configuration present in the switch.")
+                    return
+                break
 
             ## Swap the configurations
             # 1-save the secondary config in an aux file
