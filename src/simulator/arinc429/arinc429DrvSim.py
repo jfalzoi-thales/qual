@@ -71,32 +71,35 @@ class ARINC429DriverSimulator(ThalesZMQServer):
         configParser = SafeConfigParser()
         configParser.read(thalesArinc429Config)
 
-        if configParser.sections() == []:
+        self.inputChannels = {}
+        self.loopbackMap = {}
+
+        if configParser.sections() != []:
+            # Dict of input channels with info for each one
+            self.inputChannels = {configParser.get("receiver0:ARINC429-1", "name"): InputInfo(),
+                                  configParser.get("receiver1:ARINC429-1", "name"): InputInfo(),
+                                  configParser.get("receiver0:ARINC429-2", "name"): InputInfo(),
+                                  configParser.get("receiver1:ARINC429-2", "name"): InputInfo(),
+                                  configParser.get("receiver0:ARINC429-3", "name"): InputInfo(),
+                                  configParser.get("receiver1:ARINC429-3", "name"): InputInfo(),
+                                  configParser.get("receiver0:ARINC429-4", "name"): InputInfo(),
+                                  configParser.get("receiver1:ARINC429-4", "name"): InputInfo()}
+
+            # Simulate ARINC 429 loopback by linking outputs to inputs
+            self.loopbackMap = {configParser.get("transmitter0:ARINC429-1", "name"):
+                                (configParser.get("receiver0:ARINC429-1", "name"),
+                                 configParser.get("receiver1:ARINC429-1", "name")),
+                                configParser.get("transmitter0:ARINC429-2", "name"):
+                                (configParser.get("receiver0:ARINC429-2", "name"),
+                                 configParser.get("receiver1:ARINC429-2", "name")),
+                                configParser.get("transmitter0:ARINC429-3", "name"):
+                                (configParser.get("receiver0:ARINC429-3", "name"),
+                                 configParser.get("receiver1:ARINC429-3", "name")),
+                                configParser.get("transmitter0:ARINC429-4", "name"):
+                                (configParser.get("receiver0:ARINC429-4", "name"),
+                                 configParser.get("receiver1:ARINC429-4", "name"))}
+        else:
             self.log.warning("Missing or Empty Configuration File: %s" % thalesArinc429Config)
-
-        # Dict of input channels with info for each one
-        self.inputChannels = {configParser.get("receiver0:ARINC429-1", "name"): InputInfo(),
-                              configParser.get("receiver1:ARINC429-1", "name"): InputInfo(),
-                              configParser.get("receiver0:ARINC429-2", "name"): InputInfo(),
-                              configParser.get("receiver1:ARINC429-2", "name"): InputInfo(),
-                              configParser.get("receiver0:ARINC429-3", "name"): InputInfo(),
-                              configParser.get("receiver1:ARINC429-3", "name"): InputInfo(),
-                              configParser.get("receiver0:ARINC429-4", "name"): InputInfo(),
-                              configParser.get("receiver1:ARINC429-4", "name"): InputInfo()}
-
-        # Simulate ARINC 429 loopback by linking outputs to inputs
-        self.loopbackMap = {configParser.get("transmitter0:ARINC429-1", "name"):
-                            (configParser.get("receiver0:ARINC429-1", "name"),
-                             configParser.get("receiver1:ARINC429-1", "name")),
-                            configParser.get("transmitter0:ARINC429-2", "name"):
-                            (configParser.get("receiver0:ARINC429-2", "name"),
-                             configParser.get("receiver1:ARINC429-2", "name")),
-                            configParser.get("transmitter0:ARINC429-3", "name"):
-                            (configParser.get("receiver0:ARINC429-3", "name"),
-                             configParser.get("receiver1:ARINC429-3", "name")),
-                            configParser.get("transmitter0:ARINC429-4", "name"):
-                            (configParser.get("receiver0:ARINC429-4", "name"),
-                             configParser.get("receiver1:ARINC429-4", "name"))}
 
     ## Called by base class when a request is received from a client.
     #

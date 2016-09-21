@@ -74,8 +74,6 @@ class I350Inventory(ConfigurableObject):
             self.log.error("Failure reading VPD data")
             return None
 
-        # Build a new dict indexed by HDDS key instead of VPD key
-        values = {}
         for key, value in self.vpd.vpdEntries.items():
             hddsKey = self.vpdToHDDS[key]
             values[hddsKey] = value
