@@ -55,21 +55,22 @@ class FirmwareUpdate(Module):
         primary = False
         secondary = False
 
+        # TODO: Check that we are running on an MPS before calling tools that modify firmware
         if call(["mps-biostool", "set-active", "primary"]) == 0:
             if call(["mps-biostool", "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
                 primary = True
             else:
-                self.log.warning("Unable to properly program primary BIOS.")
+                self.log.error("Unable to properly program primary BIOS.")
         else:
-            self.log.warning("Unable to set primary BIOS to active.")
+            self.log.error("Unable to set primary BIOS to active.")
 
         if call(["mps-biostool", "set-active", "secondary"]) == 0:
             if call(["mps-biostool", "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
                 secondary = True
             else:
-                self.log.warning("Unable to properly program secondary BIOS.")
+                self.log.error("Unable to properly program secondary BIOS.")
         else:
-            self.log.warning("Unable to set secondary BIOS to active.")
+            self.log.error("Unable to set secondary BIOS to active.")
 
         if primary and secondary:
             response.success = True
@@ -93,16 +94,23 @@ class FirmwareUpdate(Module):
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
     def updateI350EEPROM(self, response, reboot):
-        success = False
+        response.success = True
 
-        if call(["eeupdate64e", "-nic=2", "-data", "%s/i350_mps.txt" % self.firmPath]) == 0:
-            success = True
-        else:
-            self.log.warning("Unable to program I350 EEPROM.")
+        # TODO: Check that we are running on an MPS before calling tools that modify firmware
+        if call(["eeupdate64e", "-nic=2", "-data", "%s/i350_mps.txt" % self.firmPath]) != 0:
+            self.log.error("Unable to program I350 EEPROM.")
+            response.component = FW_I350_EEPROM
+            response.success = False
+            response.errorMessage = "Unable to program I350 EEPROM."
 
-        # TODO: Enable flash
-
-        response.result = FirmwareUpdateResponse.ALL_PASSED if success else FirmwareUpdateResponse.ALL_FAILED
+        result = 0
+        for nicidx in range(2, 6):
+            result |= call(["bootutil64e", "-nic=%d" % nicidx, "-fe"])
+        if result != 0:
+            self.log.error("Unable to enable I350 flash.")
+            response.component = FW_I350_EEPROM
+            response.success = False
+            response.errorMessage = "Unable to enable I350 flash."
 
         if reboot: self.reboot.put("REBOOT")
 
@@ -111,14 +119,14 @@ class FirmwareUpdate(Module):
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
     def updateI350Flash(self, response, reboot):
-        success = False
+        response.success = True
 
-        if call(["i350-flashtool", "%s/i350_flash.bin" % self.firmPath]) == 0:
-            success = True
-        else:
-            self.log.warning("Unable to program I350 flash.")
-
-        response.result = FirmwareUpdateResponse.ALL_PASSED if success else FirmwareUpdateResponse.ALL_FAILED
+        # TODO: Check that we are running on an MPS before calling tools that modify firmware
+        if call(["i350-flashtool", "%s/i350_flash.bin" % self.firmPath]) != 0:
+            self.log.error("Unable to program I350 flash.")
+            response.component = FW_I350_FLASH
+            response.success = False
+            response.errorMessage = "Unable to program I350 flash."
 
         if reboot: self.reboot.put("REBOOT")
 
