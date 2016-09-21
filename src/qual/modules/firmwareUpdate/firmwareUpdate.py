@@ -1,10 +1,20 @@
+import os
+import time
+import paramiko
+import tftpy
 from time import sleep
 from Queue import Queue
 from subprocess import call
 
+from ipalib import output
+from pip._vendor.requests.packages.urllib3 import response
+
 from qual.pb2.FirmwareUpdate_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
+## Discard the output
+DEVNULL = open(os.devnull, 'wb')
 
 ## FirmwareUpdate Module
 class FirmwareUpdate(Module):
@@ -20,10 +30,21 @@ class FirmwareUpdate(Module):
                           FW_SWITCH_BOOTLOADER:     self.unimplemented,
                           FW_SWITCH_FIRMWARE:       self.unimplemented,
                           FW_SWITCH_FIRMWARE_SWAP:  self.unimplemented,
-                          FW_SWITCH_CONFIG:         self.unimplemented,
-                          FW_SWITCH_CONFIG_SWAP:    self.unimplemented}
+                          FW_SWITCH_CONFIG:         self.configUpdate,
+                          FW_SWITCH_CONFIG_SWAP:    self.configUpdateSwap}
         ## Location of firmware images
         self.firmPath = "/thales/qual/firmware"
+        ## location of switch configuration
+        self.configPath = "secondary-config"
+        ## TFTP server for configurations
+        self.tftpServer = "10.10.42.200"
+        ## Switch IP
+        self.switchAddress = '10.10.41.159'
+        ## User name for switch
+        self.switchUser = 'admin'
+        ## Password for switch
+        self.switchPassword = ''
+        self.loadConfig(attributes=('switchAddress','switchUser','switchPassword', 'tftpServer'))
         ## Queue for storing a reboot request
         self.reboot = Queue()
         #  Adds handler to available message handlers
@@ -59,17 +80,17 @@ class FirmwareUpdate(Module):
             if call(["mps-biostool", "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
                 primary = True
             else:
-                self.log.warning("Unable to properly program primary BIOS.")
+                self.log.error("Unable to properly program primary BIOS.")
         else:
-            self.log.warning("Unable to set primary BIOS to active.")
+            self.log.error("Unable to set primary BIOS to active.")
 
         if call(["mps-biostool", "set-active", "secondary"]) == 0:
             if call(["mps-biostool", "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
                 secondary = True
             else:
-                self.log.warning("Unable to properly program secondary BIOS.")
+                self.log.error("Unable to properly program secondary BIOS.")
         else:
-            self.log.warning("Unable to set secondary BIOS to active.")
+            self.log.error("Unable to set secondary BIOS to active.")
 
         if primary and secondary:
             response.success = True
@@ -98,7 +119,7 @@ class FirmwareUpdate(Module):
         if call(["eeupdate64e", "-nic=2", "-data", "%s/i350_mps.txt" % self.firmPath]) == 0:
             success = True
         else:
-            self.log.warning("Unable to program I350 EEPROM.")
+            self.log.error("Unable to program I350 EEPROM.")
 
         # TODO: Enable flash
 
@@ -116,11 +137,136 @@ class FirmwareUpdate(Module):
         if call(["i350-flashtool", "%s/i350_flash.bin" % self.firmPath]) == 0:
             success = True
         else:
-            self.log.warning("Unable to program I350 flash.")
+            self.log.error("Unable to program I350 flash.")
 
         response.result = FirmwareUpdateResponse.ALL_PASSED if success else FirmwareUpdateResponse.ALL_FAILED
 
         if reboot: self.reboot.put("REBOOT")
+
+    ## Attempts to load the configuration update into the
+    #  secondary config location
+    #
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def configUpdate(self, response, reboot):
+        try:
+            # Check if the TFTP server is running and has the requested file
+            tftpServer = tftpy.TftpClient(self.tftpServer, 69)
+            tftpServer.download(self.configPath, self.configPath)
+            # Erase the test file
+            os.remove(self.configPath)
+
+            # Open the SSH connection
+            switchClient = paramiko.SSHClient()
+            switchClient.load_system_host_keys()
+            switchClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            switchClient.connect(self.switchAddress, port=22,username=self.switchUser, password=self.switchPassword)
+            # Execute the command
+            # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
+            channel = switchClient.invoke_shell()
+            # channel.send("copy tftp://%s/%s flash:secondary-config\n" % (self.tftpServer, self.configPath))
+            channel.send("copy tftp://%s/%s flash:secondary-config\n" % ("10.10.42.10", self.configPath))
+            time.sleep(0.2)
+            while channel.recv_ready():
+                output = channel.recv(1024)
+
+            # Close the connection
+            switchClient.close()
+            # Fill the response
+            response.success = True
+            response.component = FW_SWITCH_CONFIG
+
+            if reboot: self.reboot.put("REBOOT")
+
+        except tftpy.TftpShared.TftpException as e:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG
+            response.errorMessage = "Error with TFTP server. Message: %s" % (e.message)
+            self.log.error("Error with TFTP server. Message: %s" % (e.message))
+        except paramiko.ssh_exception.SSHException:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG
+            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
+            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+        except Exception as e:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
+            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
+
+    ## Attempts to swap the configuration update into the
+    #  secondary config location
+    #
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def configUpdateSwap(self, response, reboot):
+        try:
+            # Open the SSH connection
+            switchClient = paramiko.SSHClient()
+            switchClient.load_system_host_keys()
+            switchClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            switchClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+            # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
+            channel = switchClient.invoke_shell()
+
+            # Check that we have the secondary config file in the switch
+            channel.send("dir\n")
+            time.sleep(0.2)
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # This error may happen
+            if "operation is currently in progress" in output:
+                response.success = False
+                response.component = FW_SWITCH_CONFIG_SWAP
+                response.errorMessage = "Load/Save operation is currently in progress."
+                self.log.error("Load/Save operation is currently in progress.")
+
+            if "secondary-config" not in output:
+                response.success = False
+                response.component = FW_SWITCH_CONFIG_SWAP
+                response.errorMessage = "No Secondary file configuration present in the switch."
+                self.log.error("No Secondary file configuration present in the switch.")
+                return
+
+            ## Swap the configurations
+            # 1-save the secondary config in an aux file
+            channel.send("copy flash:secondary-config flash:aux-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # 2-copy the startup-config in the secondary-config
+            channel.send("copy startup-config flash:secondary-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # 3-copy the saved secondary-config into the startup-config
+            channel.send("copy flash:aux-config startup-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # 4-erase the auxiliar file
+            time.sleep(0.2)
+            channel.send("delete flash:aux-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+
+            # Close the connection
+            switchClient.close()
+            # Fill the response
+            response.success = True
+            response.component = FW_SWITCH_CONFIG_SWAP
+
+            if reboot: self.reboot.put("REBOOT")
+
+        except paramiko.ssh_exception.SSHException as e:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG_SWAP
+            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
+            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+        except Exception as e:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG_SWAP
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
+            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
 
     ## Catches valid, unimplemented message command types.
     #  @param   self

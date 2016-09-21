@@ -1,7 +1,8 @@
 import unittest
+import time
 
 import firmwareUpdate
-from qual.pb2.FirmwareUpdate_pb2 import FirmwareUpdateRequest, FW_BIOS, FW_I350_EEPROM
+from qual.pb2.FirmwareUpdate_pb2 import FirmwareUpdateRequest, FW_BIOS, FW_I350_EEPROM, FW_SWITCH_CONFIG, FW_SWITCH_CONFIG_SWAP
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -18,6 +19,8 @@ class FirmwareUpdateMessages(ModuleMessages):
     def getMenuItems():
         return [("Update BIOS firmware",                        FirmwareUpdateMessages.updateBIOS),
                 ("Reboot after BIOS Update",                    FirmwareUpdateMessages.updateBIOSReboot),
+                ("Update Switch Config",                        FirmwareUpdateMessages.updateSwitchConfig),
+                ("Update Switch Config Swap",                   FirmwareUpdateMessages.updateSwitchConfigSwap),
                 ("Update firmware on unimplemented device",     FirmwareUpdateMessages.updateUnimplemented)]
 
     @staticmethod
@@ -40,6 +43,21 @@ class FirmwareUpdateMessages(ModuleMessages):
         message.command = FW_I350_EEPROM
         message.reboot = False
         return message
+
+    @staticmethod
+    def updateSwitchConfig():
+        message = FirmwareUpdateRequest()
+        message.command = FW_SWITCH_CONFIG
+        message.reboot = False
+        return message
+
+    @staticmethod
+    def updateSwitchConfigSwap():
+        message = FirmwareUpdateRequest()
+        message.command = FW_SWITCH_CONFIG_SWAP
+        message.reboot = False
+        return message
+
 
 ## FirmwareUpdate Unit Test
 class Test_FirmwareUpdate(unittest.TestCase):
@@ -76,6 +94,12 @@ class Test_FirmwareUpdate(unittest.TestCase):
     #       command   == FW_I350
     #       result    == FirmwareUpdateResponse.ALL_FAILED
     #       ---------------------
+    #       command   == FW_SWITCH_CONFIG
+    #       success   == True
+    #       ---------------------
+    #       command   == FW_SWITCH_CONFIG_SWAP
+    #       success   == True
+    #       ---------------------
     def test_all(self):
         log = self.__class__.log
         module = self.__class__.module
@@ -87,6 +111,21 @@ class Test_FirmwareUpdate(unittest.TestCase):
         log.info("**** Valid Test Case: Update Unimplemented Device Firmware ****")
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateUnimplemented()))
         self.assertTrue(response.body.success)
+
+        log.info("**** Valid Test Case: Update Switch Configuration ****")
+        response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateSwitchConfig()))
+        self.assertTrue(response.body.success)
+        self.assertEqual(response.body.component, FW_SWITCH_CONFIG)
+
+        # Need to set this delay, if not the switch returns:
+        #   "A load/save operation is currently in progress, please try again later."
+        time.sleep(30)
+        log.info("**** Valid Test Case: Update Switch Configuration Swap ****")
+        response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateSwitchConfigSwap()))
+        self.assertTrue(response.body.success)
+        self.assertEqual(response.body.component, FW_SWITCH_CONFIG_SWAP)
+
+
 
         log.info("==== Test complete ====")
 
