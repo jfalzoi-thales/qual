@@ -2,19 +2,14 @@ import os
 import time
 import paramiko
 import tftpy
+
 from time import sleep
 from Queue import Queue
 from subprocess import call
 
-from ipalib import output
-from pip._vendor.requests.packages.urllib3 import response
-
 from qual.pb2.FirmwareUpdate_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
-
-## Discard the output
-DEVNULL = open(os.devnull, 'wb')
 
 ## FirmwareUpdate Module
 class FirmwareUpdate(Module):
@@ -154,7 +149,7 @@ class FirmwareUpdate(Module):
             # Check if the TFTP server is running and has the requested file
             tftpServer = tftpy.TftpClient(self.tftpServer, 69)
             tftpServer.download(self.configPath, self.configPath)
-            # Erase the test file
+            # Erase the downloaded file from tftp server
             os.remove(self.configPath)
 
             # Open the SSH connection
