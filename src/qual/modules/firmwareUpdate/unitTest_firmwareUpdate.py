@@ -105,13 +105,13 @@ class Test_FirmwareUpdate(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
 
-        # log.info("**** Valid Test Case: Update BIOS Firmware ****")
-        # response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateBIOS()))
-        # self.assertTrue(response.body.success)
-        #
-        # log.info("**** Valid Test Case: Update Unimplemented Device Firmware ****")
-        # response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateUnimplemented()))
-        # self.assertTrue(response.body.success)
+        log.info("**** Valid Test Case: Update BIOS Firmware ****")
+        response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateBIOS()))
+        self.assertTrue(response.body.success)
+
+        log.info("**** Valid Test Case: Update Unimplemented Device Firmware ****")
+        response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateUnimplemented()))
+        self.assertTrue(response.body.success)
 
         log.info("**** Valid Test Case: Update Switch Configuration ****")
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateSwitchConfig()))
