@@ -78,9 +78,8 @@ class Test_HDAudio(unittest.TestCase):
         cls.log = Logger(name='Test HD Audio')
         cls.log.info('++++ Setup before HD Audio module unit tests ++++')
         # Create the module
-        cls.module = HDAudio()
-        # Uncomment this if you don't want to see module debug messages
-        # cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = HDAudio()
 
     ## Teardown when done with HDAudio test cases
     # This is run only once when we're done with all test cases

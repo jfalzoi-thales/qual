@@ -66,9 +66,8 @@ class Test_CPULoading(unittest.TestCase):
         cls.log = Logger(name='Test CPULoading')
         cls.log.info('++++ Setup before CPULoading module unit tests ++++')
         # Create the module
-        cls.module = cpuLoading.CPULoading()
-        # Uncomment this if you don't want to see module debug messages
-        # cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = cpuLoading.CPULoading()
 
     ## Teardown when done with CPULoading test cases
     # This is run only once when we're done with all test cases

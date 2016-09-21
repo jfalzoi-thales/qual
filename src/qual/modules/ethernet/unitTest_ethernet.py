@@ -117,9 +117,8 @@ class Test_Ethernet(unittest.TestCase):
         cls.log = logger.Logger(name='Test Ethernet')
         cls.log.info('++++ Setup before Ethernet module unit tests ++++')
         # Create the module
-        cls.module = ethernet.Ethernet()
-        # Uncomment this if you don't want to see module debug messages
-        #cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = ethernet.Ethernet()
 
     ## Teardown when done with Ethernet test cases
     # This is run only once when we're done with all test cases

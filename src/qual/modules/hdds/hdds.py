@@ -1,5 +1,6 @@
-from subprocess import call, check_call, check_output, CalledProcessError
 import os
+from ConfigParser import SafeConfigParser
+from subprocess import call, check_call, check_output, CalledProcessError
 
 from common.pb2.ErrorMessage_pb2 import ErrorMessage
 from common.pb2.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp
@@ -16,7 +17,6 @@ class HDDS(Module):
     ## Constructor
     #  @param   self
     #  @param   config  Configuration for this module instance
-    #  @param   deserialize     Flag to deserialize the responses when running unit test
     def __init__(self, config=None):
         #  Initialize parent class
         super(HDDS, self).__init__(config)
@@ -30,25 +30,32 @@ class HDDS(Module):
         self.ifeVmQtaAddr = "tcp://localhost:50003"
         self.loadConfig(attributes=('ifeVmQtaAddr', 'cpuEthernetDev', 'i350EthernetDev'))
         ## Connection to QTA running on the IFE VM
-        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log)
+        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log, timeout=4000)
         ## Mac address types for handling wild cards
         self.macTypes = ["mac_address.processor",
                          "mac_address.i350_1",
                          "mac_address.i350_2",
                          "mac_address.i350_3",
                          "mac_address.i350_4"]
-        ## Inventory item length limits
-        self.lengthLimits = {"part_number":        24,
-                             "serial_number":      24,
-                             "revision":           8,
-                             "manufacturer_pn":    24,
-                             "manufacturing_date": 8,
-                             "manufacturer_name":  24,
-                             "manufacturer_cage":  8}
         ## I350 inventory handler
         self.i350Inventory = I350Inventory(self.log)
         ## SEMA inventory handler
         self.semaInventory = SEMAInventory(self.log)
+
+        #  Parse key names from Thales Host Domain Device Service configuration file
+        thalesHDDSConfig = "/thales/host/config/HDDS.conv"
+        configParser = SafeConfigParser()
+        configParser.read(thalesHDDSConfig)
+        ## List of valid HDDS keys
+        self.hddsKeys = []
+
+        if configParser.sections() != []:
+            for option in configParser.options("hdds_host_convertions"):
+                if option.startswith("inventory"):
+                    self.hddsKeys.append(option)
+        else:
+            self.log.warning("Missing or Empty Configuration File: %s" % thalesHDDSConfig)
+
         #  Add handler to available message handlers
         self.addMsgHandler(HostDomainDeviceServiceRequest, self.handler)
 
@@ -82,15 +89,26 @@ class HDDS(Module):
                         macGetKeys += self.macTypes
                     else:
                         macGetKeys.append(value.key)
-                elif value.key == "inventory.*":
-                    # Get carrier_card inventory using local function, get everything else from HDDS
+                elif value.key.startswith("inventory"):
                     if inventoryGetKeys is None: inventoryGetKeys = []
-                    inventoryGetKeys.append("inventory.carrier_card.*")
-                    if hddsGetReq is None: hddsGetReq = GetReq()
-                    hddsGetReq.key.append(value.key)
-                elif value.key.startswith("inventory.carrier_card"):
-                    if inventoryGetKeys is None: inventoryGetKeys = []
-                    inventoryGetKeys.append(value.key)
+
+                    if value.key.endswith("*"):
+                        keyParts = value.key.split('.')
+
+                        if len(keyParts) == 2:
+                            inventoryGetKeys += self.hddsKeys.keys()
+                        elif len(keyParts) == 3:
+                            for key in self.hddsKeys:
+                                if key.startswith("inventory.%s" % keyParts[1]):
+                                    inventoryGetKeys.append(key)
+                        else:
+                            self.log.warning("Attempted to get invalid key 1: %s" % value.key)
+                            self.addResp(response, value.key)
+                    elif value.key in self.hddsKeys or self.hddsKeys == []:
+                        inventoryGetKeys.append(value.key)
+                    else:
+                        self.log.warning("Attempted to get invalid key 2: %s" % value.key)
+                        self.addResp(response, value.key)
                 else:
                     if hddsGetReq is None: hddsGetReq = GetReq()
                     hddsGetReq.key.append(value.key)
@@ -113,7 +131,12 @@ class HDDS(Module):
                     macSetPairs[value.key] = value.value
                 elif value.key.startswith("inventory"):
                     if inventoryPairs is None: inventoryPairs = {}
-                    inventoryPairs[value.key] = value.value
+
+                    if value.key in self.hddsKeys or self.hddsKeys == []:
+                        inventoryPairs[value.key] = value.value
+                    else:
+                        self.log.warning("Attempted to set invalid key 3: %s" % value.key)
+                        self.addResp(response, value.key)
                 else:
                     if hddsSetReq is None: hddsSetReq = SetReq()
                     hddsValue = hddsSetReq.values.add()
@@ -192,19 +215,17 @@ class HDDS(Module):
     #  @param     response      HostDomainDeviceServiceResponse object
     #  @param     inventoryKeys List of keys to get
     def inventoryGet(self, response, inventoryKeys):
-        i350Values = self.i350Inventory.read()
+        inventoryValues = {}
+        self.i350Inventory.read(inventoryValues)
+        self.semaInventory.read(inventoryValues)
 
         for key in inventoryKeys:
-            item = key.split('.')[2]
-            if item == '*':
-                for ikey, ivalue in i350Values.items():
-                    self.addResp(response, ikey, ivalue, True)
-            elif item in i350Values:
-                self.addResp(response, key, i350Values[key], True)
-            elif item in self.lengthLimits:
+            if key in inventoryValues:
+                self.addResp(response, key, inventoryValues[key], True)
+            elif key in self.hddsKeys:
                 self.addResp(response, key, "", True)
             else:
-                self.log.warning("Attempt to get invalid key: %s" % key)
+                self.log.warning("Attempted to get invalid key: %s" % key)
                 self.addResp(response, key)
 
     ## Handles GET requests for HDDS
@@ -321,13 +342,7 @@ class HDDS(Module):
         # and everything else (goes to SEMA flash)
         for key, value in inventoryPairs.items():
             # Key has form inventory.<section>.<item>
-            splitKey = key.split('.')
-            section = splitKey[1]
-            item = splitKey[2]
-            if item not in self.lengthLimits and key not in ("inventory.lru.name", "inventory.lru.weight", "inventory.lru.mod_dot_level"):
-                self.log.warning("Attempt to set invalid key %s" % key)
-                self.addResp(response, key, value)
-            elif section == "carrier_card":
+            if key.split('.')[1] == "carrier_card":
                 i350Pairs[key] = value
             else:
                 semaPairs[key] = value

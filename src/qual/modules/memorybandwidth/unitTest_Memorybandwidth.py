@@ -58,9 +58,8 @@ class Test_MemoryBandwidth(unittest.TestCase):
         cls.log = Logger(name='Test Memory Bandwidth')
         cls.log.info('++++ Setup before Memory Bandwidth module unit tests ++++')
         # Create the module
-        cls.module = MemoryBandwidth()
-        # Uncomment this if you don't want to see module debug messages
-        # cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = MemoryBandwidth()
 
     ## Teardown when done with Memory Bandwidth test cases
     # This is run only once when we're done with all test cases
