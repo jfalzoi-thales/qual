@@ -67,19 +67,16 @@ class I350Inventory(ConfigurableObject):
 
     ## Read and parse the inventory area and return all values
     #  @param    self
-    #  @return   dict of values indexed by HDDS key or None if read error occurred
-    def read(self):
+    #  @param    values  dict of values indexed by HDDS key or None if read error occurred
+    def read(self, values):
         success = self.readAndParseVPD()
         if not success:
             self.log.error("Failure reading VPD data")
             return None
 
-        # Build a new dict indexed by HDDS key instead of VPD key
-        values = {}
         for key, value in self.vpd.vpdEntries.items():
             hddsKey = self.vpdToHDDS[key]
             values[hddsKey] = value
-        return values
 
     ## Update values in the inventory area
     #  @param    self
@@ -96,9 +93,13 @@ class I350Inventory(ConfigurableObject):
 
         # Update self.vpdEntries with new entries from request
         for key, value in values.items():
-            vpdKey = self.hddsToVPD[key]
-            self.log.debug("Updating %s (%s) = \"%s\"" % (vpdKey, key, value))
-            self.vpd.vpdEntries[vpdKey] = value
+            if key in self.hddsToVPD:
+                vpdKey = self.hddsToVPD[key]
+                self.log.debug("Updating %s (%s) = \"%s\"" % (vpdKey, key, value))
+                self.vpd.vpdEntries[vpdKey] = value
+            else:
+                self.log.warning("Attempted to write invalid key: %s" % key)
+                return False
 
         # Build the updated VPD and write to EEPROM
         success = self.writeVPD(self.vpd.buildVPD())
