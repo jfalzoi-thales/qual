@@ -33,7 +33,7 @@ touch %{buildroot}/etc/mps-config-atp
 
 %files
 /opt/config-update/*
-/etc/mps-config-qual
+/etc/mps-config-*
 
 %post
 cd /etc/sysconfig/network-scripts && mv -f /opt/config-update/network-scripts/* .
