@@ -2,7 +2,7 @@ import unittest
 import time
 
 import firmwareUpdate
-from qual.pb2.FirmwareUpdate_pb2 import FirmwareUpdateRequest, FW_BIOS, FW_I350_EEPROM, FW_SWITCH_CONFIG, FW_SWITCH_CONFIG_SWAP, FW_SWITCH_FIRMWARE, FW_SWITCH_FIRMWARE_SWAP
+from qual.pb2.FirmwareUpdate_pb2 import *
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
@@ -18,11 +18,15 @@ class FirmwareUpdateMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Update BIOS firmware",                        FirmwareUpdateMessages.updateBIOS),
-                ("Reboot after BIOS Update",                    FirmwareUpdateMessages.updateBIOSReboot),
-                ("Update Switch Config",                        FirmwareUpdateMessages.updateSwitchConfig),
-                ("Update Switch Config Swap",                   FirmwareUpdateMessages.updateSwitchConfigSwap),
-                ("Update firmware on unimplemented device",     FirmwareUpdateMessages.updateUnimplemented)]
+        return [("Update BIOS",                        FirmwareUpdateMessages.updateBIOS),
+                ("Update BIOS and reboot",             FirmwareUpdateMessages.updateBIOSReboot),
+                ("Update I350 EEPROM",                 FirmwareUpdateMessages.updateI350EEPROM),
+                ("Update I350 Flash",                  FirmwareUpdateMessages.updateI350Flash),
+                ("Update Switch Boot Loader",          FirmwareUpdateMessages.switchBootloader),
+                ("Update Switch Firmware",             FirmwareUpdateMessages.switchFirmware),
+                ("Switch Firmware Swap",               FirmwareUpdateMessages.switchFirmwareSwap),
+                ("Update Switch Config",               FirmwareUpdateMessages.updateSwitchConfig),
+                ("Switch Config Swap",                 FirmwareUpdateMessages.updateSwitchConfigSwap)]
 
     @staticmethod
     def updateBIOS():
@@ -39,9 +43,37 @@ class FirmwareUpdateMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def updateUnimplemented():
+    def updateI350EEPROM():
         message = FirmwareUpdateRequest()
         message.command = FW_I350_EEPROM
+        message.reboot = False
+        return message
+
+    @staticmethod
+    def updateI350Flash():
+        message = FirmwareUpdateRequest()
+        message.command = FW_I350_FLASH
+        message.reboot = False
+        return message
+
+    @staticmethod
+    def switchBootloader():
+        message = FirmwareUpdateRequest()
+        message.command = FW_SWITCH_BOOTLOADER
+        message.reboot = False
+        return message
+
+    @staticmethod
+    def switchFirmware():
+        message = FirmwareUpdateRequest()
+        message.command = FW_SWITCH_FIRMWARE
+        message.reboot = False
+        return message
+
+    @staticmethod
+    def switchFirmwareSwap():
+        message = FirmwareUpdateRequest()
+        message.command = FW_SWITCH_FIRMWARE_SWAP
         message.reboot = False
         return message
 
@@ -56,20 +88,6 @@ class FirmwareUpdateMessages(ModuleMessages):
     def updateSwitchConfigSwap():
         message = FirmwareUpdateRequest()
         message.command = FW_SWITCH_CONFIG_SWAP
-        message.reboot = False
-        return message
-
-    @staticmethod
-    def switchFirmwareUpgrade():
-        message = FirmwareUpdateRequest()
-        message.command = FW_SWITCH_FIRMWARE
-        message.reboot = False
-        return message
-
-    @staticmethod
-    def switchFirmwareSwap():
-        message = FirmwareUpdateRequest()
-        message.command = FW_SWITCH_FIRMWARE_SWAP
         message.reboot = False
         return message
 
@@ -123,9 +141,22 @@ class Test_FirmwareUpdate(unittest.TestCase):
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateBIOS()))
         self.assertTrue(response.body.success)
 
-        log.info("**** Valid Test Case: Update Unimplemented Device Firmware ****")
-        response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateUnimplemented()))
+        log.info("**** Valid Test Case: Update I350 EEPROM ****")
+        response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateI350EEPROM()))
         self.assertTrue(response.body.success)
+
+        log.info("**** Valid Test Case: Update I350 Firmware ****")
+        response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateI350Flash()))
+        self.assertTrue(response.body.success)
+
+        # TODO: Uncomment below once we can securely upgrade and swap the switch firmware
+        # log.info("**** Valid Test Case: Upgrade Switch Firmware ****")
+        # response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.switchFirmware()))
+        # self.assertTrue(response.body.success)
+        #
+        # log.info("**** Valid Test Case: Swap Switch Firmware ****")
+        # response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.switchFirmwareSwap()))
+        # self.assertTrue(response.body.success)
 
         log.info("**** Valid Test Case: Update Switch Configuration ****")
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateSwitchConfig()))
@@ -134,15 +165,6 @@ class Test_FirmwareUpdate(unittest.TestCase):
         log.info("**** Valid Test Case: Update Switch Configuration Swap ****")
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateSwitchConfigSwap()))
         self.assertTrue(response.body.success)
-
-        # TODO: Uncomment below once we can securely upgrade and swap the switch firmware
-        # log.info("**** Valid Test Case: Upgrade Switch Firmware ****")
-        # response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.switchFirmwareUpgrade()))
-        # self.assertTrue(response.body.success)
-        #
-        # log.info("**** Valid Test Case: Swap Switch Firmware ****")
-        # response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.switchFirmwareSwap()))
-        # self.assertTrue(response.body.success)
 
         log.info("==== Test complete ====")
 
