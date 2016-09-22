@@ -21,8 +21,8 @@ class FirmwareUpdate(Module):
                           FW_I350_EEPROM:           self.updateI350EEPROM,
                           FW_I350_FLASH:            self.updateI350Flash,
                           FW_SWITCH_BOOTLOADER:     self.unimplemented,
-                          FW_SWITCH_FIRMWARE:       self.unimplemented,
-                          FW_SWITCH_FIRMWARE_SWAP:  self.unimplemented,
+                          FW_SWITCH_FIRMWARE:       self.firmwareUpgrade,
+                          FW_SWITCH_FIRMWARE_SWAP:  self.firmwareSwap,
                           FW_SWITCH_CONFIG:         self.configUpdate,
                           FW_SWITCH_CONFIG_SWAP:    self.configUpdateSwap}
         ## Location of firmware images
@@ -37,7 +37,7 @@ class FirmwareUpdate(Module):
         self.switchUser = 'admin'
         ## Password for switch
         self.switchPassword = ''
-        self.loadConfig(attributes=('switchAddress','switchUser','switchPassword', 'tftpServer'))
+        self.loadConfig(attributes=('firmPath','configPath','switchAddress','switchUser','switchPassword', 'tftpServer'))
         ## Queue for storing a reboot request
         self.reboot = Queue()
         #  Adds handler to available message handlers
@@ -270,6 +270,88 @@ class FirmwareUpdate(Module):
         except paramiko.ssh_exception.SSHException as e:
             response.success = False
             response.component = FW_SWITCH_CONFIG_SWAP
+            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
+            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+        except Exception as e:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG_SWAP
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
+            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
+
+    ## Attempts to load a firmware image into
+    #  the alternate location
+    #
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def firmwareUpgrade(self, response, reboot):
+        try:
+            output = ''
+            # Open the SSH connection
+            switchClient = paramiko.SSHClient()
+            switchClient.load_system_host_keys()
+            switchClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            switchClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+            # Execute the command
+            # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
+            channel = switchClient.invoke_shell()
+
+            # Copy the Firmware image into the switch
+            channel.send("firmware upgrade tftp://%s/%s flash:secondary-config\n" % (self.tftpServer, self.firmPath))
+
+            # TODO: Check operation result. Here we don't have a way to know if the firmware file was actually transferred, I'm going to wait until we test it on the MPS to see what is the switch reponse in case of success or failure
+
+            # Close the connection
+            switchClient.close()
+            # Fill the response
+            response.success = True
+
+            if reboot: self.reboot.put("REBOOT")
+
+        except paramiko.ssh_exception.SSHException:
+            response.success = False
+            response.component = FW_SWITCH_FIRMWARE
+            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
+            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+        except Exception as e:
+            response.success = False
+            response.component = FW_SWITCH_FIRMWARE
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
+            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
+
+    ## Attempts to swap the firmware between the primary
+    # location and the alternate location
+    #
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def firmwareSwap(self, response, reboot):
+        try:
+            output = ''
+            # Open the SSH connection
+            switchClient = paramiko.SSHClient()
+            switchClient.load_system_host_keys()
+            switchClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            switchClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+            # Execute the command
+            # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
+            channel = switchClient.invoke_shell()
+
+            # Copy the Firmware image into the switch
+            channel.send("firmware swap\n")
+
+            # TODO: Check operation result. Here we don't have a way to know if the switch swaped, I'm going to wait until we test it on the MPS to see what is the switch reponse in case of success or failure
+
+            # Close the connection
+            switchClient.close()
+            # Fill the response
+            response.success = True
+
+            if reboot: self.reboot.put("REBOOT")
+
+        except paramiko.ssh_exception.SSHException:
+            response.success = False
+            response.component = FW_SWITCH_FIRMWARE_SWAP
             response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
             self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
         except Exception as e:
