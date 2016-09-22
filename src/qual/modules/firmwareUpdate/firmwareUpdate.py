@@ -152,6 +152,7 @@ class FirmwareUpdate(Module):
     #  @param   reboot      Reboot flag
     def configUpdate(self, response, reboot):
         try:
+            output = ''
             # Open the SSH connection
             switchClient = paramiko.SSHClient()
             switchClient.load_system_host_keys()
@@ -212,6 +213,7 @@ class FirmwareUpdate(Module):
     #  @param   reboot      Reboot flag
     def configUpdateSwap(self, response, reboot):
         try:
+            output = ''
             # Open the SSH connection
             switchClient = paramiko.SSHClient()
             switchClient.load_system_host_keys()
