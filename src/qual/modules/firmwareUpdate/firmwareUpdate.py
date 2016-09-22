@@ -44,6 +44,8 @@ class FirmwareUpdate(Module):
         ## Password for switch
         self.switchPassword = ''
         self.loadConfig(attributes=('switchAddress','switchUser','switchPassword', 'tftpServer'))
+        ## BIOS tool command
+        self.biosTool = "/thales/host/appliances/mps-biostool"
         ## Connection to GPIO manager
         self.gpioMgrClient = ThalesZMQClient("ipc:///tmp/gpio-mgr.sock", log=self.log, msgParts=1)
         ## Queue for storing a reboot request
@@ -77,16 +79,16 @@ class FirmwareUpdate(Module):
         primary = False
         secondary = False
 
-        if call(["mps-biostool", "set-active", "primary"]) == 0:
-            if call(["mps-biostool", "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
+        if call([self.biosTool, "set-active", "primary"]) == 0:
+            if call([self.biosTool, "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
                 primary = True
             else:
                 self.log.error("Unable to properly program primary BIOS.")
         else:
             self.log.error("Unable to set primary BIOS to active.")
 
-        if call(["mps-biostool", "set-active", "secondary"]) == 0:
-            if call(["mps-biostool", "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
+        if call([self.biosTool, "set-active", "secondary"]) == 0:
+            if call([self.biosTool, "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
                 secondary = True
             else:
                 self.log.error("Unable to properly program secondary BIOS.")

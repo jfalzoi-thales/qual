@@ -41,6 +41,8 @@ class HDDS(Module):
         self.i350Inventory = I350Inventory(self.log)
         ## SEMA inventory handler
         self.semaInventory = SEMAInventory(self.log)
+        ## BIOS tool command
+        self.biosTool = "/thales/host/appliances/mps-biostool"
 
         #  Parse key names from Thales Host Domain Device Service configuration file
         thalesHDDSConfig = "/thales/host/config/HDDS.conv"
@@ -283,7 +285,7 @@ class HDDS(Module):
         bank = "0"
 
         try:
-            getActive = check_output(["mps-biostool", "get-active"])
+            getActive = check_output([self.biosTool, "get-active"])
             bank = getActive[0]
         except CalledProcessError:
             self.log.warning("Unable to get active BIOS bank.")
@@ -291,17 +293,17 @@ class HDDS(Module):
         try:
             if bank == "2":
                 bank = "0"
-                check_call(["mps-biostool", "set-active", "0"])
+                check_call([self.biosTool, "set-active", "0"])
 
-            check_call(["mps-biostool", "set-mac", mac])
-            check_call(["mps-biostool", "set-active", str(1 - int(bank))])
-            check_call(["mps-biostool", "set-mac", mac])
+            check_call([self.biosTool, "set-mac", mac])
+            check_call([self.biosTool, "set-active", str(1 - int(bank))])
+            check_call([self.biosTool, "set-mac", mac])
             self.addResp(response, key, mac, True)
         except CalledProcessError as err:
             self.log.warning("Unable to run %s" % err.cmd)
             self.addResp(response, key, mac)
         finally:
-            call(["mps-biostool", "set-active", bank])
+            call([self.biosTool, "set-active", bank])
 
     ## Handles SET requests for I350 MAC key
     #  @param     self
