@@ -17,6 +17,7 @@ Requires: protobuf-python
 Requires: tftp
 Requires: tftp-server
 Requires: xinetd
+Requires: python2-paramiko
 %{?systemd_requires}
 BuildRequires: systemd
 
