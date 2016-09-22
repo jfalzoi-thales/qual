@@ -2,7 +2,7 @@ import unittest
 import time
 
 import firmwareUpdate
-from qual.pb2.FirmwareUpdate_pb2 import FirmwareUpdateRequest, FW_BIOS, FW_I350_EEPROM, FW_SWITCH_CONFIG, FW_SWITCH_CONFIG_SWAP
+from qual.pb2.FirmwareUpdate_pb2 import FirmwareUpdateRequest, FW_BIOS, FW_I350_EEPROM, FW_SWITCH_CONFIG, FW_SWITCH_CONFIG_SWAP, FW_SWITCH_FIRMWARE, FW_SWITCH_FIRMWARE_SWAP
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
@@ -56,6 +56,20 @@ class FirmwareUpdateMessages(ModuleMessages):
     def updateSwitchConfigSwap():
         message = FirmwareUpdateRequest()
         message.command = FW_SWITCH_CONFIG_SWAP
+        message.reboot = False
+        return message
+
+    @staticmethod
+    def switchFirmwareUpgrade():
+        message = FirmwareUpdateRequest()
+        message.command = FW_SWITCH_FIRMWARE
+        message.reboot = False
+        return message
+
+    @staticmethod
+    def switchFirmwareSwap():
+        message = FirmwareUpdateRequest()
+        message.command = FW_SWITCH_FIRMWARE_SWAP
         message.reboot = False
         return message
 
@@ -116,12 +130,19 @@ class Test_FirmwareUpdate(unittest.TestCase):
         log.info("**** Valid Test Case: Update Switch Configuration ****")
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateSwitchConfig()))
         self.assertTrue(response.body.success)
-        self.assertEqual(response.body.component, FW_SWITCH_CONFIG)
 
         log.info("**** Valid Test Case: Update Switch Configuration Swap ****")
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateSwitchConfigSwap()))
         self.assertTrue(response.body.success)
-        self.assertEqual(response.body.component, FW_SWITCH_CONFIG_SWAP)
+
+        # TODO: Uncomment below once we can securely upgrade and swap the switch firmware
+        # log.info("**** Valid Test Case: Upgrade Switch Firmware ****")
+        # response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.switchFirmwareUpgrade()))
+        # self.assertTrue(response.body.success)
+        #
+        # log.info("**** Valid Test Case: Swap Switch Firmware ****")
+        # response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.switchFirmwareSwap()))
+        # self.assertTrue(response.body.success)
 
         log.info("==== Test complete ====")
 
