@@ -1,3 +1,6 @@
+import time
+import paramiko
+
 from time import sleep
 from Queue import Queue
 from subprocess import call
@@ -20,10 +23,21 @@ class FirmwareUpdate(Module):
                           FW_SWITCH_BOOTLOADER:     self.unimplemented,
                           FW_SWITCH_FIRMWARE:       self.unimplemented,
                           FW_SWITCH_FIRMWARE_SWAP:  self.unimplemented,
-                          FW_SWITCH_CONFIG:         self.unimplemented,
-                          FW_SWITCH_CONFIG_SWAP:    self.unimplemented}
+                          FW_SWITCH_CONFIG:         self.configUpdate,
+                          FW_SWITCH_CONFIG_SWAP:    self.configUpdateSwap}
         ## Location of firmware images
         self.firmPath = "/thales/qual/firmware"
+        ## location of switch configuration
+        self.configPath = "secondary-config"
+        ## TFTP server for configurations
+        self.tftpServer = "10.10.42.200"
+        ## Switch IP
+        self.switchAddress = '10.10.41.159'
+        ## User name for switch
+        self.switchUser = 'admin'
+        ## Password for switch
+        self.switchPassword = ''
+        self.loadConfig(attributes=('switchAddress','switchUser','switchPassword', 'tftpServer'))
         ## Queue for storing a reboot request
         self.reboot = Queue()
         #  Adds handler to available message handlers
@@ -129,6 +143,138 @@ class FirmwareUpdate(Module):
             response.errorMessage = "Unable to program I350 flash."
 
         if reboot: self.reboot.put("REBOOT")
+
+    ## Attempts to load the configuration update into the
+    #  secondary config location
+    #
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def configUpdate(self, response, reboot):
+        try:
+            # Open the SSH connection
+            switchClient = paramiko.SSHClient()
+            switchClient.load_system_host_keys()
+            switchClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            switchClient.connect(self.switchAddress, port=22,username=self.switchUser, password=self.switchPassword)
+            # Execute the command
+            # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
+            channel = switchClient.invoke_shell()
+            # Erase the secondary-config file just before transfer the updated
+            channel.send("delete flash:secondary-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # Send the requested file to the switch
+            channel.send("copy tftp://%s/%s flash:secondary-config\n" % (self.tftpServer, self.configPath))
+            time.sleep(0.2)
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # Check that the file was actually transferred
+            while True:
+                channel.send("dir\n")
+                while channel.recv_ready():
+                    output = channel.recv(1024)
+                # if the file is being transferring, wait for it to finish
+                if "operation is currently in progress" in output:
+                    time.sleep(0.2)
+                    continue
+                if 'secondary-config' not in output:
+                    # There was an error transferring the file
+                    response.success = False
+                    response.component = FW_SWITCH_CONFIG
+                    response.errorMessage = "Error transfering file %s to secondary-file" % (self.configPath)
+                    self.log.error("Error transfering file %s to secondary-file" % (self.configPath))
+                    return
+                break
+            # Close the connection
+            switchClient.close()
+            # Fill the response
+            response.success = True
+
+            if reboot: self.reboot.put("REBOOT")
+
+        except paramiko.ssh_exception.SSHException:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG
+            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
+            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+        except Exception as e:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
+            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
+
+    ## Attempts to swap the configuration update into the
+    #  secondary config location
+    #
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def configUpdateSwap(self, response, reboot):
+        try:
+            # Open the SSH connection
+            switchClient = paramiko.SSHClient()
+            switchClient.load_system_host_keys()
+            switchClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            switchClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+            # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
+            channel = switchClient.invoke_shell()
+
+            while True:
+                # Check that we have the secondary config file in the switch
+                channel.send("dir\n")
+                time.sleep(0.2)
+                while channel.recv_ready():
+                    output = channel.recv(1024)
+                # This error may happen
+                if "operation is currently in progress" in output:
+                    time.sleep(0.2)
+                    continue
+
+                if "secondary-config" not in output:
+                    response.success = False
+                    response.component = FW_SWITCH_CONFIG_SWAP
+                    response.errorMessage = "No Secondary file configuration present in the switch."
+                    self.log.error("No Secondary file configuration present in the switch.")
+                    return
+                break
+
+            ## Swap the configurations
+            # 1-save the secondary config in an aux file
+            channel.send("copy flash:secondary-config flash:aux-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # 2-copy the startup-config in the secondary-config
+            channel.send("copy startup-config flash:secondary-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # 3-copy the saved secondary-config into the startup-config
+            channel.send("copy flash:aux-config startup-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # 4-erase the auxiliar file
+            time.sleep(0.2)
+            channel.send("delete flash:aux-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+
+            # Close the connection
+            switchClient.close()
+            # Fill the response
+            response.success = True
+
+            if reboot: self.reboot.put("REBOOT")
+
+        except paramiko.ssh_exception.SSHException as e:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG_SWAP
+            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
+            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+        except Exception as e:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG_SWAP
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
+            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
 
     ## Catches valid, unimplemented message command types.
     #  @param   self
