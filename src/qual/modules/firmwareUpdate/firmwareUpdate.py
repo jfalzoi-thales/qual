@@ -176,6 +176,7 @@ class FirmwareUpdate(Module):
                     output = channel.recv(1024)
                 # if the file is being transferring, wait for it to finish
                 if "operation is currently in progress" in output:
+                    time.sleep(0.2)
                     continue
                 if 'secondary-config' not in output:
                     # There was an error transferring the file
@@ -184,7 +185,6 @@ class FirmwareUpdate(Module):
                     response.errorMessage = "Error transfering file %s to secondary-file" % (self.configPath)
                     self.log.error("Error transfering file %s to secondary-file" % (self.configPath))
                     return
-                time.sleep(0.2)
                 break
             # Close the connection
             switchClient.close()
@@ -228,6 +228,7 @@ class FirmwareUpdate(Module):
                     output = channel.recv(1024)
                 # This error may happen
                 if "operation is currently in progress" in output:
+                    time.sleep(0.2)
                     continue
 
                 if "secondary-config" not in output:
@@ -236,7 +237,6 @@ class FirmwareUpdate(Module):
                     response.errorMessage = "No Secondary file configuration present in the switch."
                     self.log.error("No Secondary file configuration present in the switch.")
                     return
-                time.sleep(0.2)
                 break
 
             ## Swap the configurations
