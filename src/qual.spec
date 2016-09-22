@@ -14,9 +14,6 @@ Requires: pyserial
 Requires: python-netifaces
 Requires: python-zmq
 Requires: protobuf-python
-Requires: tftp
-Requires: tftp-server
-Requires: xinetd
 Requires: python2-paramiko
 %{?systemd_requires}
 BuildRequires: systemd
@@ -139,7 +136,6 @@ echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BI
 %systemd_post qual.service
 %systemd_post qual-startvm.service
 mv -f /thales/qual/src/config/qual-mps.conf /thales/qual/src/config/qual.conf
-sed -i -e 's|-s|-c -s|g' -e 's|disable\([ \t]*\)= yes|disable\1= no|g' /etc/xinetd.d/tftp
 
 %post sims
 %systemd_post qual-sims.service

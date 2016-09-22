@@ -46,6 +46,7 @@ class GPIOManagerSimulator(ThalesZMQServer):
                      "INPUT_5_PIN_E7"    :False,
                      "PA_All_PIN_C8"     :False,
                      "RxLineSelect_717"  :False,
+                     "Reset_Vitesse7429" :True,
                      "Post_LED"          :False,
                      "Status_LED_Green"  :False,
                      "Status_LED_Yellow" :False}

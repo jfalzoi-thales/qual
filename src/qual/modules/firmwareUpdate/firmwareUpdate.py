@@ -1,12 +1,14 @@
 import time
+import os
 import paramiko
 
-from time import sleep
 from Queue import Queue
 from subprocess import call
 
+from common.pb2.GPIOManager_pb2 import RequestMessage, ResponseMessage
 from qual.pb2.FirmwareUpdate_pb2 import *
 from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 ## FirmwareUpdate Module
@@ -27,6 +29,10 @@ class FirmwareUpdate(Module):
                           FW_SWITCH_CONFIG_SWAP:    self.configUpdateSwap}
         ## Location of firmware images
         self.firmPath = "/thales/qual/firmware"
+        #  If not running on an MPS, point away from the directory containing MPS firmware
+        if not (os.path.exists("/dev/mps/pci-audio") and os.path.exists("/dev/mps/pci-cpu-ethernet")):
+            self.log.warning("Hardware does not appear to be an MPS; using test-firmware directory")
+            self.firmPath = "/thales/qual/test-firmware"
         ## location of switch configuration
         self.configPath = "secondary-config"
         ## TFTP server for configurations
@@ -37,7 +43,9 @@ class FirmwareUpdate(Module):
         self.switchUser = 'admin'
         ## Password for switch
         self.switchPassword = ''
-        self.loadConfig(attributes=('firmPath','configPath','switchAddress','switchUser','switchPassword', 'tftpServer'))
+        self.loadConfig(attributes=('switchAddress','switchUser','switchPassword', 'tftpServer'))
+        ## Connection to GPIO manager
+        self.gpioMgrClient = ThalesZMQClient("ipc:///tmp/gpio-mgr.sock", log=self.log, msgParts=1)
         ## Queue for storing a reboot request
         self.reboot = Queue()
         #  Adds handler to available message handlers
@@ -69,7 +77,6 @@ class FirmwareUpdate(Module):
         primary = False
         secondary = False
 
-        # TODO: Check that we are running on an MPS before calling tools that modify firmware
         if call(["mps-biostool", "set-active", "primary"]) == 0:
             if call(["mps-biostool", "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
                 primary = True
@@ -92,14 +99,17 @@ class FirmwareUpdate(Module):
             response.component = FW_BIOS
             response.success = False
             response.errorMessage = "Unable to properly program secondary BIOS."
+            return
         elif secondary:
             response.component = FW_BIOS
             response.success = False
             response.errorMessage = "Unable to properly program primary BIOS."
+            return
         else:
             response.component = FW_BIOS
             response.success = False
             response.errorMessage = "Unable to properly program BIOS."
+            return
 
         if reboot: self.reboot.put("REBOOT")
 
@@ -110,12 +120,12 @@ class FirmwareUpdate(Module):
     def updateI350EEPROM(self, response, reboot):
         response.success = True
 
-        # TODO: Check that we are running on an MPS before calling tools that modify firmware
-        if call(["eeupdate64e", "-nic=2", "-data", "%s/i350_mps.txt" % self.firmPath]) != 0:
+        if call(["eeupdate64e", "-nic=2", "-data", "%s/I350_mps.txt" % self.firmPath]) != 0:
             self.log.error("Unable to program I350 EEPROM.")
             response.component = FW_I350_EEPROM
             response.success = False
             response.errorMessage = "Unable to program I350 EEPROM."
+            return
 
         result = 0
         for nicidx in range(2, 6):
@@ -125,6 +135,7 @@ class FirmwareUpdate(Module):
             response.component = FW_I350_EEPROM
             response.success = False
             response.errorMessage = "Unable to enable I350 flash."
+            return
 
         if reboot: self.reboot.put("REBOOT")
 
@@ -135,12 +146,12 @@ class FirmwareUpdate(Module):
     def updateI350Flash(self, response, reboot):
         response.success = True
 
-        # TODO: Check that we are running on an MPS before calling tools that modify firmware
-        if call(["i350-flashtool", "%s/i350_flash.bin" % self.firmPath]) != 0:
+        if call(["i350-flashtool", "%s/1573_i350_flash.bin" % self.firmPath]) != 0:
             self.log.error("Unable to program I350 flash.")
             response.component = FW_I350_FLASH
             response.success = False
             response.errorMessage = "Unable to program I350 flash."
+            return
 
         if reboot: self.reboot.put("REBOOT")
 
@@ -376,10 +387,27 @@ class FirmwareUpdate(Module):
     def rebooter(self):
         msg = self.reboot.get(block=True)
 
-        sleep(.5)
+        time.sleep(.5)
 
         if msg == "REBOOT":
+            # Reboot the switch first by toggling its reset line low/high
+            self.gpioSet("Reset_Vitesse7429", 0)
+            time.sleep(.2)
+            self.gpioSet("Reset_Vitesse7429", 1)
+            # Now go ahead and reboot the CPU
             call(["shutdown", "-r", "now"])
+
+    ## Call GPIO manager to set the state of a GPIO line
+    #  @param   self
+    #  @param   pin    Name of the GPIO pin to set
+    #  @param   value  Value to which to set the pin (0 or 1)
+    def gpioSet(self, pin, value):
+        setReq = RequestMessage()
+        setReq.pin_name = pin
+        setReq.request_type = RequestMessage.SET
+        setReq.value = value
+        # We only use this for rebooting, so we won't bother looking at the response
+        self.gpioMgrClient.sendRequest(ThalesZMQMessage(setReq))
 
     ## Attempts to terminate module gracefully
     #  @param   self
