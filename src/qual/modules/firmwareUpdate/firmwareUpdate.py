@@ -308,7 +308,7 @@ class FirmwareUpdate(Module):
             channel = switchClient.invoke_shell()
 
             # Copy the Firmware image into the switch
-            channel.send("firmware upgrade tftp://%s/%s flash:secondary-config\n" % (self.tftpServer, self.firmPath))
+            channel.send("firmware upgrade tftp://%s/%s\n" % (self.tftpServer, "Thales-MPS.dat"))
 
             # TODO: Check operation result. Here we don't have a way to know if the firmware file was actually transferred, I'm going to wait until we test it on the MPS to see what is the switch reponse in case of success or failure
 
