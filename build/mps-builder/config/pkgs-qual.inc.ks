@@ -109,6 +109,7 @@ less
 strace
 usbutils
 minicom
+resize
 
 # Qual
 qual
@@ -125,6 +126,7 @@ mps-guest-vm
 # ATP
 flashrom
 i350tools
+mps-firmware
 pciutils
 tftp
 tftp-server
