@@ -1,7 +1,5 @@
-import os
 import time
 import paramiko
-import tftpy
 
 from time import sleep
 from Queue import Queue
@@ -186,12 +184,12 @@ class FirmwareUpdate(Module):
                     response.errorMessage = "Error transfering file %s to secondary-file" % (self.configPath)
                     self.log.error("Error transfering file %s to secondary-file" % (self.configPath))
                     return
+                time.sleep(0.2)
                 break
             # Close the connection
             switchClient.close()
             # Fill the response
             response.success = True
-            response.component = FW_SWITCH_CONFIG
 
             if reboot: self.reboot.put("REBOOT")
 
@@ -238,6 +236,7 @@ class FirmwareUpdate(Module):
                     response.errorMessage = "No Secondary file configuration present in the switch."
                     self.log.error("No Secondary file configuration present in the switch.")
                     return
+                time.sleep(0.2)
                 break
 
             ## Swap the configurations
@@ -263,7 +262,6 @@ class FirmwareUpdate(Module):
             switchClient.close()
             # Fill the response
             response.success = True
-            response.component = FW_SWITCH_CONFIG_SWAP
 
             if reboot: self.reboot.put("REBOOT")
 
