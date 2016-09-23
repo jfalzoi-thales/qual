@@ -33,8 +33,6 @@ class FirmwareUpdate(Module):
         if not (os.path.exists("/dev/mps/pci-audio") and os.path.exists("/dev/mps/pci-cpu-ethernet")):
             self.log.warning("Hardware does not appear to be an MPS; using test-firmware directory")
             self.firmPath = "/thales/qual/test-firmware"
-        ## location of switch configuration
-        self.configPath = "secondary-config"
         ## TFTP server for configurations
         self.tftpServer = "10.10.42.200"
         ## Switch IP
@@ -164,6 +162,7 @@ class FirmwareUpdate(Module):
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
     def configUpdate(self, response, reboot):
+        switchConfigFile = "startup-config"
         try:
             output = ''
             # Open the SSH connection
@@ -179,7 +178,7 @@ class FirmwareUpdate(Module):
             while channel.recv_ready():
                 output = channel.recv(1024)
             # Send the requested file to the switch
-            channel.send("copy tftp://%s/%s flash:secondary-config\n" % (self.tftpServer, self.configPath))
+            channel.send("copy tftp://%s/%s flash:secondary-config\n" % (self.tftpServer, switchConfigFile))
             time.sleep(0.2)
             while channel.recv_ready():
                 output = channel.recv(1024)
@@ -196,8 +195,8 @@ class FirmwareUpdate(Module):
                     # There was an error transferring the file
                     response.success = False
                     response.component = FW_SWITCH_CONFIG
-                    response.errorMessage = "Error transfering file %s to secondary-file" % (self.configPath)
-                    self.log.error("Error transfering file %s to secondary-file" % (self.configPath))
+                    response.errorMessage = "Error transfering file %s to secondary-file" % (switchConfigFile)
+                    self.log.error("Error transfering file %s to secondary-file" % (switchConfigFile))
                     return
                 break
             # Close the connection
