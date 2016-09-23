@@ -440,16 +440,16 @@ class HDDS(Module):
             else:
                 semaPairs[key] = value
 
-        # Update the I350 inventory area
-        if len(i350Pairs) > 0:
-            success = self.i350Inventory.update(i350Pairs)
-            for key, value in i350Pairs.items():
-                self.addResp(response, key, value, success)
-
         # Update the SEMA inventory area
         if len(semaPairs) > 0:
             success = self.semaInventory.update(semaPairs)
             for key, value in semaPairs.items():
+                self.addResp(response, key, value, success)
+
+        # Update the I350 inventory area
+        if len(i350Pairs) > 0:
+            success = self.i350Inventory.update(i350Pairs)
+            for key, value in i350Pairs.items():
                 self.addResp(response, key, value, success)
 
     ## Handles SET requests for HDDS
