@@ -121,8 +121,6 @@ if [ "$#" != 0 ]; then usage; fi
 
 set -e
 
-cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
-
 # Build main qual RPMs and copy into repo
 cd ${QUALDIR}/
 echo "Please use your own Git credentials to log in. \(^^\) \(^^)/ (/^^)/"
@@ -137,6 +135,8 @@ titoqual
 if [ "$TAG" == "YES" ]; then
     git push --tags origin "$BRANCH"
 fi
+
+cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
 
 sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/qual-*.rpm
 sudo mv /tmp/tito/x86_64/* ${MPSBUILDDIR}/repo/packages/x86_64/
