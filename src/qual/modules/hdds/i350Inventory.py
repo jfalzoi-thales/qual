@@ -41,11 +41,14 @@ class I350Inventory(ConfigurableObject):
             self.log.warning("Unable to access I350 device %s for carrier card inventory" % self.ethDevice)
             self.log.warning("Simulating I350 EEPROM using local file /tmp/vpd.bin")
             self.ethDevice = "TEST_FILE"
-            # Create our VPD test file
-            vpd = bytearray()
-            for i in range(0, 256):
-                vpd.append(0xff)
-            self.writeVPD(vpd)
+
+            if not os.path.isfile("/tmp/vpd.bin"):
+                # Create our VPD test file
+                vpd = bytearray()
+                for i in range(0, 256):
+                    vpd.append(0xff)
+                self.writeVPD(vpd)
+
             # Also create test files for the other words we read/write
             self.writeWord(0x5e, 0xffff)
             self.writeWord(0x24, 0x5c80)
@@ -362,12 +365,3 @@ class I350Inventory(ConfigurableObject):
             rc = ethtool.wait()
             self.log.debug("ethtool command returned: %d" % rc)
             return rc == 0
-
-
-    ## Cleans up test files
-    #  @param     self
-    def cleanup(self):
-        if self.ethDevice == "TEST_FILE":
-            os.remove("/tmp/vpd.bin")
-            os.remove("/tmp/word24.bin")
-            os.remove("/tmp/word5e.bin")

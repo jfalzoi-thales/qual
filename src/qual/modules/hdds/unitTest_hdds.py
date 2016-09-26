@@ -18,7 +18,7 @@ class HDDSMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Get all power supply values", HDDSMessages.getPSWC()),
+        return [("Get all power supply values", HDDSMessages.getPSWC),
                 ("Get GPIO pin", HDDSMessages.get),
                 ("Get GPIO pins", HDDSMessages.getMul),
                 ("Set GPIO pins", HDDSMessages.setMul),

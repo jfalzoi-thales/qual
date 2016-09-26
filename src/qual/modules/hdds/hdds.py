@@ -44,12 +44,12 @@ class HDDS(Module):
         self.sshClient = SSHClient()
         self.sshClient.set_missing_host_key_policy(AutoAddPolicy())
         ## Mac address types for handling wild cards
-        self.macTypes = ["mac_address.switch",
-                         "mac_address.processor",
-                         "mac_address.i350_1",
-                         "mac_address.i350_2",
-                         "mac_address.i350_3",
-                         "mac_address.i350_4"]
+        self.macKeys = ["mac_address.switch",
+                        "mac_address.processor",
+                        "mac_address.i350_1",
+                        "mac_address.i350_2",
+                        "mac_address.i350_3",
+                        "mac_address.i350_4"]
         ## I350 inventory handler
         self.i350Inventory = I350Inventory(self.log)
         ## SEMA inventory handler
@@ -62,12 +62,12 @@ class HDDS(Module):
         configParser = SafeConfigParser()
         configParser.read(thalesHDDSConfig)
         ## List of valid HDDS keys
-        self.hddsKeys = []
+        self.inventoryKeys = []
 
         if configParser.sections() != []:
             for option in configParser.options("hdds_host_convertions"):
                 if option.startswith("inventory"):
-                    self.hddsKeys.append(option)
+                    self.inventoryKeys.append(option)
         else:
             self.log.warning("Missing or Empty Configuration File: %s" % thalesHDDSConfig)
 
@@ -92,26 +92,29 @@ class HDDS(Module):
             for value in msg.body.values:
                 if value.key.startswith("mac_address"):
                     if value.key.endswith("*"):
-                        macGetKeys += self.macTypes
-                    else:
+                        macGetKeys += self.macKeys
+                    elif value.key in self.macKeys:
                         macGetKeys.append(value.key)
+                    else:
+                        self.log.warning("Attempted to get invalid mac address key: %s" % value.key)
+                        self.addResp(response, value.key)
                 elif value.key.startswith("inventory"):
                     if value.key.endswith("*"):
                         keyParts = value.key.split('.')
 
                         if len(keyParts) == 2:
-                            inventoryGetKeys += self.hddsKeys
+                            inventoryGetKeys += self.inventoryKeys
                         elif len(keyParts) == 3:
-                            for key in self.hddsKeys:
+                            for key in self.inventoryKeys:
                                 if key.startswith("inventory.%s" % keyParts[1]):
                                     inventoryGetKeys.append(key)
                         else:
-                            self.log.warning("Attempted to get invalid key 1: %s" % value.key)
+                            self.log.warning("Attempted to get invalid wildcard key: %s" % value.key)
                             self.addResp(response, value.key)
-                    elif value.key in self.hddsKeys or self.hddsKeys == []:
+                    elif value.key in self.inventoryKeys or self.inventoryKeys == []:
                         inventoryGetKeys.append(value.key)
                     else:
-                        self.log.warning("Attempted to get invalid key 2: %s" % value.key)
+                        self.log.warning("Attempted to get invalid inventory key: %s" % value.key)
                         self.addResp(response, value.key)
                 elif value.key.startswith("ife"):
                     if ifeGetReq is None:
@@ -124,10 +127,10 @@ class HDDS(Module):
                     if hddsGetReq is None: hddsGetReq = GetReq()
                     hddsGetReq.key.append(value.key)
 
-            if macGetKeys: self.macGet(response, macGetKeys)
-            if inventoryGetKeys: self.inventoryGet(response, inventoryGetKeys)
-            if ifeGetReq: self.ifeGet(response, ifeGetReq)
-            if hddsGetReq: self.hddsGet(response, hddsGetReq)
+            if macGetKeys:          self.macGet(response, macGetKeys)
+            if inventoryGetKeys:    self.inventoryGet(response, inventoryGetKeys)
+            if ifeGetReq:           self.ifeGet(response, ifeGetReq)
+            if hddsGetReq:          self.hddsGet(response, hddsGetReq)
         elif msg.body.requestType == HostDomainDeviceServiceRequest.SET:
             macSetPairs = {}
             inventoryPairs = {}
@@ -138,21 +141,25 @@ class HDDS(Module):
                     self.log.warning("Attempted to set ife voltage or temperature.  Nothing to do.")
                     self.addResp(response, value.key, value.value)
                 elif value.key.startswith("mac_address"):
-                    hex = value.value.replace(':','')
+                    if value.key in self.macKeys:
+                        hex = value.value.replace(':','')
 
-                    try: int(hex, 16)
-                    except ValueError: hex = ""
+                        try: int(hex, 16)
+                        except ValueError: hex = ""
 
-                    if len(hex) == 12:
-                        macSetPairs[value.key] = value.value
+                        if len(hex) == 12:
+                            macSetPairs[value.key] = value.value
+                        else:
+                            self.log.warning("Invalid MAC Address: %s" % value.value)
+                            self.addResp(response, value.key, value.value)
                     else:
-                        self.log.warning("Invalid MAC Address: %s" % value.value)
-                        self.addResp(response, value.key, value.value)
+                        self.log.warning("Attempted to set invalid mac address key: %s" % value.key)
+                        self.addResp(response, value.key)
                 elif value.key.startswith("inventory"):
-                    if value.key in self.hddsKeys or self.hddsKeys == []:
+                    if value.key in self.inventoryKeys or self.inventoryKeys == []:
                         inventoryPairs[value.key] = value.value
                     else:
-                        self.log.warning("Attempted to set invalid key 3: %s" % value.key)
+                        self.log.warning("Attempted to set invalid inventory key: %s" % value.key)
                         self.addResp(response, value.key, value.value)
                 else:
                     if hddsSetReq is None: hddsSetReq = SetReq()
@@ -160,9 +167,9 @@ class HDDS(Module):
                     hddsValue.key = value.key
                     hddsValue.value = value.value
 
-            if macSetPairs: self.macSet(response, macSetPairs)
-            if inventoryPairs: self.inventorySet(response, inventoryPairs)
-            if hddsSetReq: self.hddsSet(response, hddsSetReq)
+            if macSetPairs:     self.macSet(response, macSetPairs)
+            if inventoryPairs:  self.inventorySet(response, inventoryPairs)
+            if hddsSetReq:      self.hddsSet(response, hddsSetReq)
         else:
             self.log.error("Unexpected Request Type %d" % msg.body.requestType)
 
@@ -225,7 +232,7 @@ class HDDS(Module):
     #  @param   macKeys     A list of keys used for requesting MAC addresses
     def macGet(self, response, macKeys):
         for key in macKeys:
-            target = key.split('.')[1]
+            target = key.split('.')[-1]
 
             if target == "switch":
                 self.vtssMacGet(response, key)
@@ -234,7 +241,7 @@ class HDDS(Module):
             elif target.startswith("i350"):
                 self.nicMacGet(response, key, self.i350EthernetDev + str(int(target[-1]) - 1))
             else:
-                self.log.warning("Invalid or not yet supported key: %s" % key)
+                self.log.warning("Invalid or not yet supported mac address key: %s" % key)
                 self.addResp(response, key)
 
     ## Handles GET requests for switch MAC key
@@ -281,10 +288,10 @@ class HDDS(Module):
         for key in inventoryKeys:
             if key in inventoryValues:
                 self.addResp(response, key, inventoryValues[key], True)
-            elif key in self.hddsKeys:
+            elif key in self.inventoryKeys:
                 self.addResp(response, key, "", True)
             else:
-                self.log.warning("Attempted to get invalid key: %s" % key)
+                self.log.warning("Attempted to get unrecognized inventory key: %s" % key)
                 self.addResp(response, key)
 
     ## Handles GET requests for HDDS
@@ -322,7 +329,7 @@ class HDDS(Module):
     #  @param     macPairs  Dict containing pairs of keys and MAC address values to be set
     def macSet(self, response, macPairs):
         for key in macPairs:
-            target = key.split('.')[1]
+            target = key.split('.')[-1]
 
             if target == "switch":
                 self.vtssMacSet(response, key, macPairs[key])
@@ -433,16 +440,16 @@ class HDDS(Module):
             else:
                 semaPairs[key] = value
 
-        # Update the I350 inventory area
-        if len(i350Pairs) > 0:
-            success = self.i350Inventory.update(i350Pairs)
-            for key, value in i350Pairs.items():
-                self.addResp(response, key, value, success)
-
         # Update the SEMA inventory area
         if len(semaPairs) > 0:
             success = self.semaInventory.update(semaPairs)
             for key, value in semaPairs.items():
+                self.addResp(response, key, value, success)
+
+        # Update the I350 inventory area
+        if len(i350Pairs) > 0:
+            success = self.i350Inventory.update(i350Pairs)
+            for key, value in i350Pairs.items():
                 self.addResp(response, key, value, success)
 
     ## Handles SET requests for HDDS
