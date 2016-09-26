@@ -45,11 +45,11 @@ class HDDS(Module):
         self.sshClient.set_missing_host_key_policy(AutoAddPolicy())
         ## Mac address types for handling wild cards
         self.macKeys = ["mac_address.switch",
-                         "mac_address.processor",
-                         "mac_address.i350_1",
-                         "mac_address.i350_2",
-                         "mac_address.i350_3",
-                         "mac_address.i350_4"]
+                        "mac_address.processor",
+                        "mac_address.i350_1",
+                        "mac_address.i350_2",
+                        "mac_address.i350_3",
+                        "mac_address.i350_4"]
         ## I350 inventory handler
         self.i350Inventory = I350Inventory(self.log)
         ## SEMA inventory handler

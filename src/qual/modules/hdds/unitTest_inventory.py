@@ -132,11 +132,11 @@ class Test_Inventory(unittest.TestCase):
             self.assertEqual(value.value, valDict[value.key])
 
     ## Test Case:
-    #  Get original values,
-    #  Set test values,
-    #  Get test values,
-    #  Set original values,
-    #  Get original values
+    #  Get Original Values,
+    #  Set Test Values,
+    #  Get New Values,
+    #  Set Original Values,
+    #  Get Final Values
     def test_MultipleKeys(self):
         log = self.__class__.log
         module = self.__class__.module
@@ -144,30 +144,35 @@ class Test_Inventory(unittest.TestCase):
         testValDict = {"inventory.lru.serial_number": "MULTIPLE KEYS",
                        "inventory.carrier_card.serial_number": "MULTIPLE KEYS CC"}
 
-        log.info("**** Test Multiple Keys: Get original values, Set test values, Get test values, Set original values, Get original values ****")
+        log.info("**** Test Multiple Keys: Get Original Values, Set Test Values, Get New Values, Set Original Values, Get Final Values ****")
+        log.info("==== Get Original Values ====")
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getKeys()))
 
         for value in response.body.values:
             self.assertTrue(value.success)
             origValDict[value.key] = value.value
 
+        log.info("==== Set Test Values ====")
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.setKeys()))
         self.checkResp(response.body.values, testValDict)
 
+        log.info("==== Get New Values ====")
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getKeys()))
         self.checkResp(response.body.values, testValDict)
 
+        log.info("==== Set Original Values ====")
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.setKeys(origValDict)))
         self.checkResp(response.body.values, origValDict)
 
+        log.info("==== Get Final Values ====")
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getKeys(origValDict.keys())))
         self.checkResp(response.body.values, origValDict)
 
         log.info("==== Test Complete ====")
 
     ## Test Case:
-    #  Get all LRU keys,
-    #  Get all keys
+    #  Get All LRU Keys,
+    #  Get All Keys
     def test_WildCardKeys(self):
         log = self.__class__.log
         module = self.__class__.module
@@ -190,8 +195,8 @@ class Test_Inventory(unittest.TestCase):
         else:
             self.log.warning("Missing or Empty Configuration File: %s" % thalesHDDSConfig)
 
-        log.info("**** Test Wild Cards: Get all LRU keys, Get all keys ****")
-
+        log.info("**** Test Wild Cards: Get All LRU Keys, Get All Keys ****")
+        log.info("==== Get All LRU Keys ====")
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getAllLRUKeys()))
         self.assertEqual(len(response.body.values), len(lruKeys))
 
@@ -200,6 +205,7 @@ class Test_Inventory(unittest.TestCase):
             self.assertTrue(value.key.startswith("inventory.lru"))
             self.assertTrue(value.key in lruKeys)
 
+        log.info("==== Get All Keys ====")
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getAllKeys()))
         self.assertEqual(len(response.body.values), len(inventoryKeys))
 
@@ -211,33 +217,36 @@ class Test_Inventory(unittest.TestCase):
         log.info("==== Test Complete ====")
 
     ## Test Case:
-    #  Set bogus key,
-    #  Get bogus key,
-    #  Set all LRU keys,
-    #  Set all keys
+    #  Set Bogus Key,
+    #  Get Bogus Key,
+    #  Set All LRU Keys,
+    #  Set All Keys
     def test_FailureCases(self):
         log = self.__class__.log
         module = self.__class__.module
-        log.info("**** Test Failure Cases: Set bogus key, Get bogus key, Set all LRU keys, Set all keys ****")
-
+        log.info("**** Test Failure Cases: Set Bogus Key, Get Bogus Key, Set All LRU Keys, Set All Keys ****")
+        log.info("==== Set Bogus Key ====")
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.setBogusKey()))
 
         self.assertFalse(response.body.values[0].success)
         self.assertEqual(response.body.values[0].key, "inventory.bogus")
         self.assertEqual(response.body.values[0].value, "BOGUS")
 
+        log.info("==== Get Bogus Key ====")
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getBogusKey()))
 
         self.assertFalse(response.body.values[0].success)
         self.assertEqual(response.body.values[0].key, "inventory.bogus")
         self.assertFalse(response.body.values[0].value)
 
+        log.info("==== Set All LRU Keys ====")
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.setAllLRUKeys()))
 
         self.assertFalse(response.body.values[0].success)
         self.assertEqual(response.body.values[0].key, "inventory.lru.*")
         self.assertEqual(response.body.values[0].value, "ALL LRU KEYS")
 
+        log.info("==== Set All Keys ====")
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.setAllKeys()))
 
         self.assertFalse(response.body.values[0].success)
