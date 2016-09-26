@@ -1,4 +1,5 @@
 import unittest
+from ConfigParser import SafeConfigParser
 
 import hdds
 from qual.pb2.HDDS_pb2 import HostDomainDeviceServiceRequest
@@ -21,11 +22,7 @@ class InventoryMessages(ModuleMessages):
         return [("Get both types of valid keys",    InventoryMessages.getKeys),
                 ("Get all LRU keys",                InventoryMessages.getAllLRUKeys),
                 ("Get all keys",                    InventoryMessages.getAllKeys),
-                ("Get bogus key",                   InventoryMessages.getBogusKey),
-                ("Set both types of valid keys",    InventoryMessages.setKeys),
-                ("Set all LRU keys",                InventoryMessages.setAllLRUKeys),
-                ("Set all keys",                    InventoryMessages.setAllKeys),
-                ("Set bogus key",                   InventoryMessages.setBogusKey)]
+                ("Set both types of valid keys",    InventoryMessages.setKeys)]
 
     @staticmethod
     def getKeys(keyList=None):
@@ -56,14 +53,6 @@ class InventoryMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def getBogusKey():
-        message = HostDomainDeviceServiceRequest()
-        message.requestType = HostDomainDeviceServiceRequest.GET
-        value = message.values.add()
-        value.key = "inventory.bogus"
-        return message
-
-    @staticmethod
     def setKeys(valDict=None):
         values = valDict if valDict else {"inventory.lru.serial_number":            "MULTIPLE KEYS",
                                           "inventory.carrier_card.serial_number":   "MULTIPLE KEYS CC"}
@@ -78,30 +67,38 @@ class InventoryMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def setAllLRUKeys(val="ALL LRU KEYS"):
+    def getBogusKey():
         message = HostDomainDeviceServiceRequest()
-        message.requestType = HostDomainDeviceServiceRequest.SET
+        message.requestType = HostDomainDeviceServiceRequest.GET
         value = message.values.add()
-        value.key = "inventory.lru.*"
-        value.value = val
+        value.key = "inventory.bogus"
         return message
 
     @staticmethod
-    def setAllKeys(val="ALL KEYS"):
-        message = HostDomainDeviceServiceRequest()
-        message.requestType = HostDomainDeviceServiceRequest.SET
-        value = message.values.add()
-        value.key = "inventory.*"
-        value.value = val
-        return message
-
-    @staticmethod
-    def setBogusKey(val="BOGUS"):
+    def setBogusKey():
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.SET
         value = message.values.add()
         value.key = "inventory.bogus"
-        value.value = val
+        value.value = "BOGUS"
+        return message
+
+    @staticmethod
+    def setAllLRUKeys():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.SET
+        value = message.values.add()
+        value.key = "inventory.lru.*"
+        value.value = "ALL LRU KEYS"
+        return message
+
+    @staticmethod
+    def setAllKeys():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.SET
+        value = message.values.add()
+        value.key = "inventory.*"
+        value.value = "ALL KEYS"
         return message
 
 ## Inventory Unit Test
@@ -174,19 +171,42 @@ class Test_Inventory(unittest.TestCase):
     def test_WildCardKeys(self):
         log = self.__class__.log
         module = self.__class__.module
+
+        #  Parse key names from Thales Host Domain Device Service configuration file
+        thalesHDDSConfig = "/thales/host/config/HDDS.conv"
+        configParser = SafeConfigParser()
+        configParser.read(thalesHDDSConfig)
+        inventoryKeys = []
+        lruKeys = []
+
+        if configParser.sections() != []:
+            for option in configParser.options("hdds_host_convertions"):
+                if option.startswith("inventory"):
+                    inventoryKeys.append(option)
+
+            for key in inventoryKeys:
+                if key.startswith("inventory.lru"):
+                    lruKeys.append(key)
+        else:
+            self.log.warning("Missing or Empty Configuration File: %s" % thalesHDDSConfig)
+
         log.info("**** Test Wild Cards: Get all LRU keys, Get all keys ****")
 
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getAllLRUKeys()))
+        self.assertEqual(len(response.body.values), len(lruKeys))
 
         for value in response.body.values:
             self.assertTrue(value.success)
             self.assertTrue(value.key.startswith("inventory.lru"))
+            self.assertTrue(value.key in lruKeys)
 
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getAllKeys()))
+        self.assertEqual(len(response.body.values), len(inventoryKeys))
 
         for value in response.body.values:
             self.assertTrue(value.success)
             self.assertTrue(value.key.startswith("inventory"))
+            self.assertTrue(value.key in inventoryKeys)
 
         log.info("==== Test Complete ====")
 

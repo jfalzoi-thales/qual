@@ -44,7 +44,7 @@ class HDDS(Module):
         self.sshClient = SSHClient()
         self.sshClient.set_missing_host_key_policy(AutoAddPolicy())
         ## Mac address types for handling wild cards
-        self.macTypes = ["mac_address.switch",
+        self.macKeys = ["mac_address.switch",
                          "mac_address.processor",
                          "mac_address.i350_1",
                          "mac_address.i350_2",
@@ -92,8 +92,8 @@ class HDDS(Module):
             for value in msg.body.values:
                 if value.key.startswith("mac_address"):
                     if value.key.endswith("*"):
-                        macGetKeys += self.macTypes
-                    elif value.key in self.macTypes:
+                        macGetKeys += self.macKeys
+                    elif value.key in self.macKeys:
                         macGetKeys.append(value.key)
                     else:
                         self.log.warning("Attempted to get invalid mac address key: %s" % value.key)
@@ -141,7 +141,7 @@ class HDDS(Module):
                     self.log.warning("Attempted to set ife voltage or temperature.  Nothing to do.")
                     self.addResp(response, value.key, value.value)
                 elif value.key.startswith("mac_address"):
-                    if value.key in self.macTypes:
+                    if value.key in self.macKeys:
                         hex = value.value.replace(':','')
 
                         try: int(hex, 16)
