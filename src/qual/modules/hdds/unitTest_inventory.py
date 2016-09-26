@@ -18,23 +18,25 @@ class InventoryMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Get both types of valid keys",    InventoryMessages.getMultipleKeys),
+        return [("Get both types of valid keys",    InventoryMessages.getKeys),
                 ("Get all LRU keys",                InventoryMessages.getAllLRUKeys),
                 ("Get all keys",                    InventoryMessages.getAllKeys),
                 ("Get bogus key",                   InventoryMessages.getBogusKey),
-                ("Set both types of valid keys",    InventoryMessages.setMultipleKeys),
+                ("Set both types of valid keys",    InventoryMessages.setKeys),
                 ("Set all LRU keys",                InventoryMessages.setAllLRUKeys),
                 ("Set all keys",                    InventoryMessages.setAllKeys),
                 ("Set bogus key",                   InventoryMessages.setBogusKey)]
 
     @staticmethod
-    def getMultipleKeys():
+    def getKeys(keyList=None):
+        keys = keyList if keyList else ["inventory.lru.serial_number", "inventory.carrier_card.serial_number"]
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.GET
-        value = message.values.add()
-        value.key = "inventory.lru.serial_number"
-        value = message.values.add()
-        value.key = "inventory.carrier_card.serial_number"
+
+        for key in keys:
+            value = message.values.add()
+            value.key = key
+
         return message
 
     @staticmethod
@@ -62,15 +64,17 @@ class InventoryMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def setMultipleKeys(val="MULTIPLE KEYS", ccVal="MULTIPLE KEYS CC"):
+    def setKeys(valDict=None):
+        values = valDict if valDict else {"inventory.lru.serial_number":            "MULTIPLE KEYS",
+                                          "inventory.carrier_card.serial_number":   "MULTIPLE KEYS CC"}
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.SET
-        value = message.values.add()
-        value.key = "inventory.lru.serial_number"
-        value.value = val
-        value = message.values.add()
-        value.key = "inventory.carrier_card.serial_number"
-        value.value = ccVal
+
+        for key in values:
+            value = message.values.add()
+            value.key = key
+            value.value = values[key]
+
         return message
 
     @staticmethod
@@ -120,6 +124,16 @@ class Test_Inventory(unittest.TestCase):
         if cls.module is None:
             cls.module = hdds.HDDS()
 
+    ## Check response value against expected values
+    #  @param   self
+    #  @param   values      values returned in the response
+    #  @param   valDict     dictionary of expected keys and values
+    def checkResp(self, values, valDict):
+        for value in values:
+            self.assertTrue(value.success)
+            self.assertTrue(value.key in valDict)
+            self.assertEqual(value.value, valDict[value.key])
+
     ## Test Case:
     #  Get original values,
     #  Set test values,
@@ -129,52 +143,28 @@ class Test_Inventory(unittest.TestCase):
     def test_MultipleKeys(self):
         log = self.__class__.log
         module = self.__class__.module
+        origValDict = {}
+        testValDict = {"inventory.lru.serial_number": "MULTIPLE KEYS",
+                       "inventory.carrier_card.serial_number": "MULTIPLE KEYS CC"}
+
         log.info("**** Test Multiple Keys: Get original values, Set test values, Get test values, Set original values, Get original values ****")
+        response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getKeys()))
 
-        response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getMultipleKeys()))
-        originalVal = response.body.values[0].value
-        originalCCVal = response.body.values[1].value
+        for value in response.body.values:
+            self.assertTrue(value.success)
+            origValDict[value.key] = value.value
 
-        self.assertTrue(response.body.values[0].success)
-        self.assertEqual(response.body.values[0].key, "inventory.lru.serial_number")
-        self.assertTrue(response.body.values[1].success)
-        self.assertEqual(response.body.values[1].key, "inventory.carrier_card.serial_number")
+        response = module.msgHandler(ThalesZMQMessage(InventoryMessages.setKeys()))
+        self.checkResp(response.body.values, testValDict)
 
-        response = module.msgHandler(ThalesZMQMessage(InventoryMessages.setMultipleKeys()))
+        response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getKeys()))
+        self.checkResp(response.body.values, testValDict)
 
-        self.assertTrue(response.body.values[0].success)
-        self.assertEqual(response.body.values[0].key, "inventory.lru.serial_number")
-        self.assertEqual(response.body.values[0].value, "MULTIPLE KEYS")
-        self.assertTrue(response.body.values[1].success)
-        self.assertEqual(response.body.values[1].key, "inventory.carrier_card.serial_number")
-        self.assertEqual(response.body.values[1].value, "MULTIPLE KEYS CC")
+        response = module.msgHandler(ThalesZMQMessage(InventoryMessages.setKeys(origValDict)))
+        self.checkResp(response.body.values, origValDict)
 
-        response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getMultipleKeys()))
-
-        self.assertTrue(response.body.values[0].success)
-        self.assertEqual(response.body.values[0].key, "inventory.lru.serial_number")
-        self.assertEqual(response.body.values[0].value, "MULTIPLE KEYS")
-        self.assertTrue(response.body.values[1].success)
-        self.assertEqual(response.body.values[1].key, "inventory.carrier_card.serial_number")
-        self.assertEqual(response.body.values[1].value, "MULTIPLE KEYS CC")
-
-        response = module.msgHandler(ThalesZMQMessage(InventoryMessages.setMultipleKeys(originalVal, originalCCVal)))
-
-        self.assertTrue(response.body.values[0].success)
-        self.assertEqual(response.body.values[0].key, "inventory.lru.serial_number")
-        self.assertEqual(response.body.values[0].value, originalVal)
-        self.assertTrue(response.body.values[1].success)
-        self.assertEqual(response.body.values[1].key, "inventory.carrier_card.serial_number")
-        self.assertEqual(response.body.values[1].value, originalCCVal)
-
-        response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getMultipleKeys()))
-
-        self.assertTrue(response.body.values[0].success)
-        self.assertEqual(response.body.values[0].key, "inventory.lru.serial_number")
-        self.assertEqual(response.body.values[0].value, originalVal)
-        self.assertTrue(response.body.values[1].success)
-        self.assertEqual(response.body.values[1].key, "inventory.carrier_card.serial_number")
-        self.assertEqual(response.body.values[1].value, originalCCVal)
+        response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getKeys(origValDict.keys())))
+        self.checkResp(response.body.values, origValDict)
 
         log.info("==== Test Complete ====")
 

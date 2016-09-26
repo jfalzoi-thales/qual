@@ -51,12 +51,16 @@ class SEMAInventory(object):
         for key, value in values.items():
             # Key has form inventory.<section>.<item>
             splitKey = key.split('.')
-            section = splitKey[1]
-            item = splitKey[2]
-            if not configParser.has_section(section):
-                configParser.add_section(section)
-            self.log.debug("Updating %s.%s = \"%s\"" % (section, item, value))
-            configParser.set(section, item, value)
+            if len(splitKey) == 3:
+                section = splitKey[1]
+                item = splitKey[2]
+                if not configParser.has_section(section):
+                    configParser.add_section(section)
+                self.log.debug("Updating %s.%s = \"%s\"" % (section, item, value))
+                configParser.set(section, item, value)
+            else:
+                self.log.warning("Attempted to write invalid key: %s" % key)
+                return False
 
         # Write the file
         if os.path.exists(self.uncompressedFile):
