@@ -1,5 +1,4 @@
 import unittest
-import time
 
 import firmwareUpdate
 from qual.pb2.FirmwareUpdate_pb2 import *
@@ -22,11 +21,11 @@ class FirmwareUpdateMessages(ModuleMessages):
                 ("Update BIOS and reboot",             FirmwareUpdateMessages.updateBIOSReboot),
                 ("Update I350 EEPROM",                 FirmwareUpdateMessages.updateI350EEPROM),
                 ("Update I350 Flash",                  FirmwareUpdateMessages.updateI350Flash),
-                ("Update Switch Boot Loader",          FirmwareUpdateMessages.switchBootloader),
-                ("Update Switch Firmware",             FirmwareUpdateMessages.switchFirmware),
+                ("Update Switch Bootloader",           FirmwareUpdateMessages.updateSwitchBootloader),
+                ("Update Switch Firmware",             FirmwareUpdateMessages.updateSwitchFirmware),
                 ("Switch Firmware Swap",               FirmwareUpdateMessages.switchFirmwareSwap),
                 ("Update Switch Config",               FirmwareUpdateMessages.updateSwitchConfig),
-                ("Switch Config Swap",                 FirmwareUpdateMessages.updateSwitchConfigSwap)]
+                ("Switch Config Swap",                 FirmwareUpdateMessages.switchConfigSwap)]
 
     @staticmethod
     def updateBIOS():
@@ -57,14 +56,14 @@ class FirmwareUpdateMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def switchBootloader():
+    def updateSwitchBootloader():
         message = FirmwareUpdateRequest()
         message.command = FW_SWITCH_BOOTLOADER
         message.reboot = False
         return message
 
     @staticmethod
-    def switchFirmware():
+    def updateSwitchFirmware():
         message = FirmwareUpdateRequest()
         message.command = FW_SWITCH_FIRMWARE
         message.reboot = False
@@ -85,7 +84,7 @@ class FirmwareUpdateMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def updateSwitchConfigSwap():
+    def switchConfigSwap():
         message = FirmwareUpdateRequest()
         message.command = FW_SWITCH_CONFIG_SWAP
         message.reboot = False
@@ -93,7 +92,7 @@ class FirmwareUpdateMessages(ModuleMessages):
 
 
 ## FirmwareUpdate Unit Test
-class Test_FirmwareUpdate(unittest.TestCase):
+class Test_FirmwareUpdate_BIOS(unittest.TestCase):
     ## Static logger instance
     log = None
 
@@ -107,7 +106,6 @@ class Test_FirmwareUpdate(unittest.TestCase):
         ConfigurableObject.setFilename("qual")
         #  Create a logger so we can add details to a multi-step test case
         cls.log = Logger(name='Test FirmwareUpdate')
-        cls.log.info('++++ Setup before FirmwareUpdate module unit tests ++++')
         #  Create the module
         if cls.module is None:
             cls.module = firmwareUpdate.FirmwareUpdate()
@@ -116,56 +114,260 @@ class Test_FirmwareUpdate(unittest.TestCase):
     #  This is run only once when we're done with all test cases
     @classmethod
     def tearDownClass(cls):
-        cls.log.info("++++ Teardown after unit tests ++++")
         cls.module.terminate()
 
-    ## Valid Test Case: Update BIOS firmware and update unimplemented device firmware
-    #  Asserts:
-    #       command   == FW_BIOS
-    #       result    == FirmwareUpdateResponse.ALL_PASSED
-    #       ---------------------
-    #       command   == FW_I350
-    #       result    == FirmwareUpdateResponse.ALL_FAILED
-    #       ---------------------
-    #       command   == FW_SWITCH_CONFIG
-    #       success   == True
-    #       ---------------------
-    #       command   == FW_SWITCH_CONFIG_SWAP
-    #       success   == True
-    #       ---------------------
-    def test_all(self):
+    ## Valid Test Case: Update BIOS firmware
+    def test_BIOS(self):
         log = self.__class__.log
         module = self.__class__.module
-
         log.info("**** Valid Test Case: Update BIOS Firmware ****")
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateBIOS()))
         self.assertTrue(response.body.success)
+        log.info("==== Test complete ====")
 
+
+## FirmwareUpdate Unit Test for I350 EEPROM
+class Test_FirmwareUpdate_I350EEPROM(unittest.TestCase):
+    ## Static logger instance
+    log = None
+
+    ## Static module instance
+    module = None
+
+    ## Setup for the FirmwareUpdate test cases
+    #  This is run only once before running any test cases
+    @classmethod
+    def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
+        #  Create a logger so we can add details to a multi-step test case
+        cls.log = Logger(name='Test FirmwareUpdate')
+        #  Create the module
+        if cls.module is None:
+            cls.module = firmwareUpdate.FirmwareUpdate()
+
+    ## Teardown when done with test cases
+    #  This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.module.terminate()
+
+    ## Valid Test Case: Update I350 EEPROM
+    def test_I350EEPROM(self):
+        log = self.__class__.log
+        module = self.__class__.module
         log.info("**** Valid Test Case: Update I350 EEPROM ****")
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateI350EEPROM()))
         self.assertTrue(response.body.success)
+        log.info("==== Test complete ====")
 
-        log.info("**** Valid Test Case: Update I350 Firmware ****")
+
+## FirmwareUpdate Unit Test for I350 Flash
+class Test_FirmwareUpdate_I350Flash(unittest.TestCase):
+    ## Static logger instance
+    log = None
+
+    ## Static module instance
+    module = None
+
+    ## Setup for the FirmwareUpdate test cases
+    #  This is run only once before running any test cases
+    @classmethod
+    def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
+        #  Create a logger so we can add details to a multi-step test case
+        cls.log = Logger(name='Test FirmwareUpdate')
+        #  Create the module
+        if cls.module is None:
+            cls.module = firmwareUpdate.FirmwareUpdate()
+
+    ## Teardown when done with test cases
+    #  This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.module.terminate()
+
+    ## Valid Test Case: Update I350 Flash
+    def test_I350Flash(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("**** Valid Test Case: Update I350 Flash ****")
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateI350Flash()))
         self.assertTrue(response.body.success)
+        log.info("==== Test complete ====")
 
-        # TODO: Uncomment below once we can securely upgrade and swap the switch firmware
-        # log.info("**** Valid Test Case: Upgrade Switch Firmware ****")
-        # response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.switchFirmware()))
-        # self.assertTrue(response.body.success)
-        #
-        # log.info("**** Valid Test Case: Swap Switch Firmware ****")
-        # response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.switchFirmwareSwap()))
-        # self.assertTrue(response.body.success)
 
+## FirmwareUpdate Unit Test for Switch Bootloader
+class Test_FirmwareUpdate_SwitchBootloader(unittest.TestCase):
+    ## Static logger instance
+    log = None
+
+    ## Static module instance
+    module = None
+
+    ## Setup for the FirmwareUpdate test cases
+    #  This is run only once before running any test cases
+    @classmethod
+    def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
+        #  Create a logger so we can add details to a multi-step test case
+        cls.log = Logger(name='Test FirmwareUpdate')
+        #  Create the module
+        if cls.module is None:
+            cls.module = firmwareUpdate.FirmwareUpdate()
+
+    ## Teardown when done with test cases
+    #  This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.module.terminate()
+
+    ## Valid Test Case: Update Switch Bootloader
+    def test_SwitchBootloader(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("**** Valid Test Case: Update Switch Bootloader ****")
+        response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateSwitchBootloader()))
+        self.assertTrue(response.body.success)
+        log.info("==== Test complete ====")
+
+
+## FirmwareUpdate Unit Test for Switch Firmware
+class Test_FirmwareUpdate_SwitchFirmware(unittest.TestCase):
+    ## Static logger instance
+    log = None
+
+    ## Static module instance
+    module = None
+
+    ## Setup for the FirmwareUpdate test cases
+    #  This is run only once before running any test cases
+    @classmethod
+    def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
+        #  Create a logger so we can add details to a multi-step test case
+        cls.log = Logger(name='Test FirmwareUpdate')
+        #  Create the module
+        if cls.module is None:
+            cls.module = firmwareUpdate.FirmwareUpdate()
+
+    ## Teardown when done with test cases
+    #  This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.module.terminate()
+
+    ## Valid Test Case: Update Switch Firmware
+    def test_SwitchFirmware(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("**** Valid Test Case: Update Switch Firmware ****")
+        response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateSwitchFirmware()))
+        self.assertTrue(response.body.success)
+        log.info("==== Test complete ====")
+
+
+## FirmwareUpdate Unit Test for Switch Firmware Swap
+class Test_FirmwareUpdate_SwitchFirmwareSwap(unittest.TestCase):
+    ## Static logger instance
+    log = None
+
+    ## Static module instance
+    module = None
+
+    ## Setup for the FirmwareUpdate test cases
+    #  This is run only once before running any test cases
+    @classmethod
+    def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
+        #  Create a logger so we can add details to a multi-step test case
+        cls.log = Logger(name='Test FirmwareUpdate')
+        #  Create the module
+        if cls.module is None:
+            cls.module = firmwareUpdate.FirmwareUpdate()
+
+    ## Teardown when done with test cases
+    #  This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.module.terminate()
+
+    ## Valid Test Case: Switch Firmware Swap
+    def test_SwitchFirmwareSwap(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("**** Valid Test Case: Switch Firmware Swap ****")
+        response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.switchFirmwareSwap()))
+        self.assertTrue(response.body.success)
+        log.info("==== Test complete ====")
+
+
+## FirmwareUpdate Unit Test for Switch Configuration
+class Test_FirmwareUpdate_SwitchConfiguration(unittest.TestCase):
+    ## Static logger instance
+    log = None
+
+    ## Static module instance
+    module = None
+
+    ## Setup for the FirmwareUpdate test cases
+    #  This is run only once before running any test cases
+    @classmethod
+    def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
+        #  Create a logger so we can add details to a multi-step test case
+        cls.log = Logger(name='Test FirmwareUpdate')
+        #  Create the module
+        if cls.module is None:
+            cls.module = firmwareUpdate.FirmwareUpdate()
+
+    ## Teardown when done with test cases
+    #  This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.module.terminate()
+
+    ## Valid Test Case: Update Switch Configuration
+    def test_SwitchConfiguration(self):
+        log = self.__class__.log
+        module = self.__class__.module
         log.info("**** Valid Test Case: Update Switch Configuration ****")
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateSwitchConfig()))
         self.assertTrue(response.body.success)
+        log.info("==== Test complete ====")
 
-        log.info("**** Valid Test Case: Update Switch Configuration Swap ****")
-        response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateSwitchConfigSwap()))
+
+## FirmwareUpdate Unit Test for Switch Configuration Swap
+class Test_FirmwareUpdate_SwitchConfigurationSwap(unittest.TestCase):
+    ## Static logger instance
+    log = None
+
+    ## Static module instance
+    module = None
+
+    ## Setup for the FirmwareUpdate test cases
+    #  This is run only once before running any test cases
+    @classmethod
+    def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
+        #  Create a logger so we can add details to a multi-step test case
+        cls.log = Logger(name='Test FirmwareUpdate')
+        #  Create the module
+        if cls.module is None:
+            cls.module = firmwareUpdate.FirmwareUpdate()
+
+    ## Teardown when done with test cases
+    #  This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.module.terminate()
+
+    ## Valid Test Case: Switch Configuration Swap
+    def test_SwitchConfigurationSwap(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("**** Valid Test Case: Switch Configuration Swap ****")
+        response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.switchConfigSwap()))
         self.assertTrue(response.body.success)
-
         log.info("==== Test complete ====")
 
 if __name__ == '__main__':

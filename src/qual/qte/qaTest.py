@@ -26,7 +26,7 @@ class QATest(object):
                                          baseClass=Message)
 
         # "Unsafe" tests - exclude from "all" list
-        unsafeTests = ["Test_FirmwareUpdate", "Test_SSDErase"]
+        unsafeTests = ["Test_FirmwareUpdate", "Test_SSDErase", "Test_MacAddress"]
 
         # Build list of module test classes to run
         testClasses = []
@@ -72,7 +72,7 @@ class QATest(object):
         address = str.format('tcp://{}:{}', server, 50002)
 
         ## Client connection to QTA
-        self.client = JsonZMQClient(address, timeout=7000)
+        self.client = JsonZMQClient(address, timeout=15000)
         print "Opened connection to", address, "for JSON messaging"
 
         # Build a test suite of all requested module tests
