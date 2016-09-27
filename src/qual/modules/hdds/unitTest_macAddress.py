@@ -18,9 +18,7 @@ class MacAddressMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Get both types of valid keys",    MacAddressMessages.getMacs),
-                ("Get all keys",                    MacAddressMessages.getAllMacs),
-                ("Set both types of valid keys",    MacAddressMessages.setMacs)]
+        return [("Get all MAC addresses",       MacAddressMessages.getAllMacs),]
 
     @staticmethod
     def getMacs(keyList=None):
@@ -49,12 +47,12 @@ class MacAddressMessages(ModuleMessages):
 
     @staticmethod
     def setMacs(valDict=None):
-        values = valDict if valDict else {"mac_address.switch":     "00:00:00:00:00:00",
-                                          "mac_address.processor":  "00:00:00:00:01:00",
-                                          "mac_address.i350_1":     "00:00:00:00:02:00",
-                                          "mac_address.i350_2":     "00:00:00:00:02:01",
-                                          "mac_address.i350_3":     "00:00:00:00:02:02",
-                                          "mac_address.i350_4":     "00:00:00:00:02:03"}
+        values = valDict if valDict else {"mac_address.switch":     "00:40:00:00:00:00",
+                                          "mac_address.processor":  "00:40:00:00:01:00",
+                                          "mac_address.i350_1":     "00:40:00:00:02:00",
+                                          "mac_address.i350_2":     "00:40:00:00:02:01",
+                                          "mac_address.i350_3":     "00:40:00:00:02:02",
+                                          "mac_address.i350_4":     "00:40:00:00:02:03"}
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.SET
 
@@ -97,8 +95,9 @@ class MacAddressMessages(ModuleMessages):
         message.requestType = HostDomainDeviceServiceRequest.SET
         value = message.values.add()
         value.key = "mac_address.*"
-        value.value = "00:00:00:00:00:00"
+        value.value = "00:40:00:00:00:00"
         return message
+
 
 ## MacAddress Unit Test
 class Test_MacAddress(unittest.TestCase):
@@ -140,12 +139,12 @@ class Test_MacAddress(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
         origValDict = {}
-        testValDict = {"mac_address.switch":     "00:00:00:00:00:00",
-                       "mac_address.processor":  "00:00:00:00:01:00",
-                       "mac_address.i350_1":     "00:00:00:00:02:00",
-                       "mac_address.i350_2":     "00:00:00:00:02:01",
-                       "mac_address.i350_3":     "00:00:00:00:02:02",
-                       "mac_address.i350_4":     "00:00:00:00:02:03"}
+        testValDict = {"mac_address.switch":     "00:40:00:00:00:00",
+                       "mac_address.processor":  "00:40:00:00:01:00",
+                       "mac_address.i350_1":     "00:40:00:00:02:00",
+                       "mac_address.i350_2":     "00:40:00:00:02:01",
+                       "mac_address.i350_3":     "00:40:00:00:02:02",
+                       "mac_address.i350_4":     "00:40:00:00:02:03"}
 
         log.info("**** Test Multiple Keys: Get Original Macs, Set Test Macs, Get New Macs, Set Original Macs, Get Final Macs ****")
         log.info("==== Get Original Macs ====")
@@ -156,7 +155,7 @@ class Test_MacAddress(unittest.TestCase):
             origValDict[value.key] = value.value
 
         log.info("==== Set Test Macs ====")
-        response = module.msgHandler(ThalesZMQMessage(MacAddressMessages.setMacs()))
+        response = module.msgHandler(ThalesZMQMessage(MacAddressMessages.setMacs(testValDict)))
         self.checkResp(response.body.values, testValDict)
 
         log.info("==== Set Original Macs ====")
@@ -223,7 +222,7 @@ class Test_MacAddress(unittest.TestCase):
 
         self.assertFalse(response.body.values[0].success)
         self.assertEqual(response.body.values[0].key, "mac_address.*")
-        self.assertEqual(response.body.values[0].value, "00:00:00:00:00:00")
+        self.assertEqual(response.body.values[0].value, "00:40:00:00:00:00")
 
         log.info("==== Test Complete ====")
 
