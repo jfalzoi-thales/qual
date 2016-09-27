@@ -148,7 +148,7 @@ class Test_Ethernet(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
         params = self.__class__.params
-        runPort1Message = EthernetMessages.run(params["iperfaddr1"]) if "iperfaddr1" in params else EthernetMessages.run()
+        runPort1Message = EthernetMessages.run(params["iperf1"]) if "iperf1" in params else EthernetMessages.run()
 
         log.info("**** Test case: RUN message ****")
         response = module.msgHandler(ThalesZMQMessage(runPort1Message))
@@ -210,7 +210,7 @@ class Test_Ethernet(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
         params = self.__class__.params
-        runPort1Message = EthernetMessages.run(params["iperfaddr1"]) if "iperfaddr1" in params else EthernetMessages.run()
+        runPort1Message = EthernetMessages.run(params["iperf1"]) if "iperf1" in params else EthernetMessages.run()
 
         log.info("**** Test case: RUN, REPORT and STOP messages ****")
 
@@ -242,8 +242,8 @@ class Test_Ethernet(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
         params = self.__class__.params
-        runPort1Message = EthernetMessages.run(params["iperfaddr1"]) if "iperfaddr1" in params else EthernetMessages.run()
-        runPort8Message = EthernetMessages.runPort8(params["iperfaddr8"]) if "iperfaddr8" in params else EthernetMessages.runPort8()
+        runPort1Message = EthernetMessages.run(params["iperf1"]) if "iperf1" in params else EthernetMessages.run()
+        runPort8Message = EthernetMessages.runPort8(params["iperf8"]) if "iperf8" in params else EthernetMessages.runPort8()
 
         log.info("**** Test case: RUN, REPORT and STOP on multiple ports ****")
 
@@ -321,7 +321,7 @@ class Test_Ethernet(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
         params = self.__class__.params
-        runPort1Message = EthernetMessages.run(params["iperfaddr1"]) if "iperfaddr1" in params else EthernetMessages.run()
+        runPort1Message = EthernetMessages.run(params["iperf1"]) if "iperf1" in params else EthernetMessages.run()
 
         log.info("**** Test case: RUN, RUN and REPORT messages ****")
 
@@ -364,7 +364,7 @@ class Test_Ethernet(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
         params = self.__class__.params
-        runPort1Message = EthernetMessages.run(params["iperfaddr1"]) if "iperfaddr1" in params else EthernetMessages.run()
+        runPort1Message = EthernetMessages.run(params["iperf1"]) if "iperf1" in params else EthernetMessages.run()
 
         log.info("**** Test case: RUN, RUN (no remote) ****")
 
