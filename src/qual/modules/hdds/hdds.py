@@ -1,4 +1,5 @@
 import os
+import socket
 from ConfigParser import SafeConfigParser
 from subprocess import call, check_call, check_output, CalledProcessError
 from time import sleep
@@ -249,12 +250,11 @@ class HDDS(Module):
     #  @param   response    A HostDomainDeviceServiceResponse object
     #  @param   key         Key of MAC address to be obtained
     def vtssMacGet(self, response, key):
-        vtss = Vtss(self.switchAddress)
-        json = vtss.callMethod(["ip.status.interface.link.get"])
-
         try:
+            vtss = Vtss(self.switchAddress)
+            json = vtss.callMethod(["ip.status.interface.link.get"])
             mac = json["result"][0]["val"]["macAddress"]
-        except (KeyError, IndexError):
+        except (socket.error, KeyError, IndexError):
             mac = ""
 
         if mac:
