@@ -16,4 +16,4 @@ fi
 echo "PCI ADDR = $PCIADDR"
 echo "File     = $FILE"
 
-flashrom -p nicintel_spi:pci="$PCIADDR" -w $FILE
+flashrom_i350 -p nicintel_spi:pci="$PCIADDR" -w $FILE
