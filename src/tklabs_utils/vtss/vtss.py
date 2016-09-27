@@ -3,6 +3,7 @@ import json
 import httplib
 import base64
 import ssl
+import socket
 from exception_Vtss import MethodNotFoundException, WrongParamException
 
 ## Class to handle wrap the VTSS switch interface
@@ -40,8 +41,22 @@ class Vtss(object):
             ## Get the json specs
             auth = base64.b64encode(bytes('%s:%s' % (self.user, self.password,)).decode('utf-8'))
             header = {'Authorization': 'Basic %s' % auth}
-            http.request('GET', '/json_spec', headers=header)
-            resp = http.getresponse()
+
+            # Let's try first with a secure connection
+            try:
+                http.request('GET', '/json_spec', headers=header)
+                resp = http.getresponse()
+            except socket.error:
+                # Probably, HTTPS not enabled in the switch
+                # let's try with a non-secure connection
+                #  Init the connection
+                http = httplib.HTTPConnection(self.ip, 80)
+                try:
+                    http.request('GET', '/json_spec', headers=header)
+                    resp = http.getresponse()
+                except Exception as e:
+                    # well, now we really don't what happened
+                    raise e
 
             #  Get the json in a string representation
             data = resp.read()
@@ -147,8 +162,23 @@ class Vtss(object):
         ## Get the json specs
         auth = base64.b64encode(bytes('%s:%s' % (self.user, self.password,)).decode('utf-8'))
         header = {'Authorization': 'Basic %s' % auth, 'Content-type': 'application/json'}
-        http.request('POST',url='/json_rpc', body=post, headers=header)
-        resp = http.getresponse()
+
+        # Let's try first with a secure connection
+        try:
+            http.request('POST',url='/json_rpc', body=post, headers=header)
+            resp = http.getresponse()
+        except socket.error:
+            # Probably, HTTPS not enabled in the switch
+            # let's try with a non-secure connection
+            # Init the connection
+            http = httplib.HTTPConnection(self.ip, 80)
+            try:
+                http.request('POST',url='/json_rpc', body=post, headers=header)
+                resp = http.getresponse()
+            except Exception as e:
+                # well, now we really don't what happened
+                raise e
+
         rawResponse = resp.read()
 
         return json.loads(rawResponse)

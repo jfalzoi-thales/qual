@@ -53,6 +53,9 @@ cp -r qual/                         %{buildroot}/thales/qual/src/
 cp -r simulator/                    %{buildroot}/thales/qual/src/
 cp -r tklabs_utils/                 %{buildroot}/thales/qual/src/
 cp QTA qtemenu                      %{buildroot}/thales/qual/src/
+cp config/qual-mps.conf             %{buildroot}/thales/qual/src/config/
+cp config/qual-ife.conf             %{buildroot}/thales/qual/src/config/
+cp config/qual.conf                 %{buildroot}/thales/qual/src/config/qual-sims.conf
 cp scripts/qtemenu.sh               %{buildroot}/thales/host/appliances/qtemenu
 cp scripts/qatest.sh                %{buildroot}/thales/host/appliances/qatest
 cp scripts/hddsget.sh               %{buildroot}/thales/host/appliances/hddsget

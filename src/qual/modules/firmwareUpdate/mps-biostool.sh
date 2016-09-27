@@ -21,6 +21,10 @@ if [ $# == 2 ]; then
             echo "FAILURE - $0 $@" >> /tmp/biostool.log
             exit 1
         fi
+    elif [ $1 == "set-mac" ]; then
+        echo "Successfully programmed MAC Address: $2"
+        echo "SUCCESS - $0 $@" >> /tmp/biostool.log
+        exit 0
     fi
 fi
 
