@@ -26,14 +26,14 @@ class QATest(object):
                                          baseClass=Message)
 
         # "Unsafe" tests - exclude from "all" list
-        unsafeTests = ["Test_FirmwareUpdate", "Test_SSDErase", "Test_MacAddress"]
+        unsafeTests = ["Test_SSDErase", "Test_MacAddress"]
 
         # Build list of module test classes to run
         testClasses = []
         if "sanity" in moduleNames:
             print "Sanity check tests requested."
             for testClassName, testClass in self.moduleFinder.classmap.items():
-                if testClassName in unsafeTests:
+                if testClassName in unsafeTests or "FirmwareUpdate" in testClassName:
                     print "Skipping unsafe test '%s'" % testClassName.replace("Test_", "")
                 else:
                     testClasses.append(testClass)
