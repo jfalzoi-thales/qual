@@ -173,7 +173,7 @@ class Vtss(object):
             # Init the connection
             http = httplib.HTTPConnection(self.ip, 80)
             try:
-                http.request('GET', '/json_spec', headers=header)
+                http.request('POST',url='/json_rpc', body=post, headers=header)
                 resp = http.getresponse()
             except Exception as e:
                 # well, now we really don't what happened
