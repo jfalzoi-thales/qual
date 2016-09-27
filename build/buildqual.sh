@@ -9,10 +9,10 @@ BRANCH="dev/NMS"
 # Display buildqual command usage
 usage() {
     echo "Unrecognized parameter specified.  Accepted parameters are:
-                -t|--tag	- builds RPMs with a new tag
+                -t|--tag    - builds RPMs with a new tag
                 -b|--branch - builds images from specified branch
-                -s|--sims	- builds only qual-sims image
-                -a|--all 	- builds both qual and qual-sims images"
+                -s|--sims   - builds only qual-sims image
+                -a|--all    - builds both qual and qual-sims images"
     exit 1
 }
 

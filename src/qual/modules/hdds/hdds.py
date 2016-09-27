@@ -154,7 +154,7 @@ class HDDS(Module):
                             self.addResp(response, value.key, value.value)
                     else:
                         self.log.warning("Attempted to set invalid mac address key: %s" % value.key)
-                        self.addResp(response, value.key)
+                        self.addResp(response, value.key, value.value)
                 elif value.key.startswith("inventory"):
                     if value.key in self.inventoryKeys or self.inventoryKeys == []:
                         inventoryPairs[value.key] = value.value
