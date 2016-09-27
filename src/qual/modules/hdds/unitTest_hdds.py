@@ -62,19 +62,19 @@ class HDDSMessages(ModuleMessages):
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.SET
         value = message.values.add()
-        value.key = "external_pins.input.pin_a_d13"
+        value.key = "external_pins.output.pin_a_e15"
         value.value = "HIGH"
         value = message.values.add()
-        value.key = "external_pins.input.pin_a_b14"
+        value.key = "external_pins.output.pin_a_d14"
         value.value = "HIGH"
         value = message.values.add()
-        value.key = "external_pins.input.pin_a_b13"
+        value.key = "external_pins.output.pin_a_d15"
         value.value = "HIGH"
         value = message.values.add()
-        value.key = "external_pins.input.pin_a_c15"
+        value.key = "external_pins.output.pin_a_c14"
         value.value = "HIGH"
         value = message.values.add()
-        value.key = "external_pins.input.pin_a_a15"
+        value.key = "external_pins.output.pin_a_c13"
         value.value = "HIGH"
         return message
 
@@ -156,7 +156,7 @@ class Test_HDDS(unittest.TestCase):
     # Asserts:
     #       success == True
     #       key     == "power_supply.28V_monitor.*"
-    #       value   in ["28.375256","1.845365","38.375000","41.000000"]
+    #       value   != ""
     def test_getPSWC(self):
         log = self.__class__.log
         module = self.__class__.module
@@ -172,7 +172,7 @@ class Test_HDDS(unittest.TestCase):
         for propertyResponse in response.body.values:
             self.assertTrue(propertyResponse.success)
             self.assertTrue(propertyResponse.key in expectedResponses.keys())
-            self.assertEqual(propertyResponse.value, expectedResponses[propertyResponse.key])
+            self.assertNotEqual(propertyResponse.value, "")
         log.info("==== Test complete ====")
 
     ## Test case: Try to get an invalid key
@@ -231,13 +231,16 @@ class Test_HDDS(unittest.TestCase):
     ## Test case: Try to get a multiple values
     #  Asserts:
     #       success == True
-    #       key     == ["external_pins.input.pin_a_d13","external_pins.input.pin_a_b14","external_pins.input.pin_a_b13","external_pins.input.pin_a_c15","external_pins.input.pin_a_a15"]
+    #       key     == [in list]
     #       value   != ""
     def test_getMultiple(self):
         log = self.__class__.log
         module = self.__class__.module
-        keyList = ["external_pins.input.pin_a_d13","external_pins.input.pin_a_b14","external_pins.input.pin_a_b13",
-                   "external_pins.input.pin_a_c15","external_pins.input.pin_a_a15"]
+        keyList = ["external_pins.input.pin_a_d13",
+                   "external_pins.input.pin_a_b14",
+                   "external_pins.input.pin_a_b13",
+                   "external_pins.input.pin_a_c15",
+                   "external_pins.input.pin_a_a15"]
 
         log.info("**** Test case: Get multiple ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getMul()))
@@ -247,16 +250,19 @@ class Test_HDDS(unittest.TestCase):
             self.assertNotEqual(propertyResponse.value, "")
         log.info("==== Test complete ====")
 
-    ## Test case: Try to set a multuple values
+    ## Test case: Try to set a multiple values
     #  Asserts:
     #       success == True
-    #       key     == ["external_pins.input.pin_a_d13","external_pins.input.pin_a_b14","external_pins.input.pin_a_b13","external_pins.input.pin_a_c15","external_pins.input.pin_a_a15"]
-    #       value   ==              "HIGH",                     "HIGH",                             "HIGH",                             "HIGH",                     "HIGH",
+    #       key     == [in list]
+    #       value   == "HIGH"
     def test_setMultiple(self):
         log = self.__class__.log
         module = self.__class__.module
-        keyList = ["external_pins.input.pin_a_d13", "external_pins.input.pin_a_b14", "external_pins.input.pin_a_b13",
-                   "external_pins.input.pin_a_c15", "external_pins.input.pin_a_a15"]
+        keyList = ["external_pins.output.pin_a_e15",
+                   "external_pins.output.pin_a_d14",
+                   "external_pins.output.pin_a_d15",
+                   "external_pins.output.pin_a_c14",
+                   "external_pins.output.pin_a_c13"]
 
         log.info("**** Test case: Set value ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setMul()))
@@ -266,47 +272,51 @@ class Test_HDDS(unittest.TestCase):
             self.assertEqual(propertyResponse.value, "HIGH")
         log.info("==== Test complete ====")
 
-    ## Test case: Test temperature key requests:
+    ## Test case: Test get IFE temperature/voltage :
     #       success == True
-    #       key     == "external_pins.output.pin_a6"
-    #       value   == "HIGH"
-    def test_temp(self):
+    #       key     == [what was specified]
+    #       value   != ""
+    def test_getIFE(self):
         log = self.__class__.log
         module = self.__class__.module
 
-        log.info("**** Test case: Set temp****")
-        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setTemp()))
-        for propertyResponse in response.body.values:
-            self.assertFalse(propertyResponse.success)
-            self.assertEqual(propertyResponse.key, "ife.temperature.U15_TINT")
-            self.assertEqual(propertyResponse.value, "")
-
-        log.info("**** Test case: Get temp****")
+        log.info("**** Test case: Get temp ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getTemp()))
         for propertyResponse in response.body.values:
             self.assertTrue(propertyResponse.success)
             self.assertEqual(propertyResponse.key, "ife.temperature.U15_TINT")
             self.assertNotEqual(propertyResponse.value, "")
 
-        log.info("==== Test complete ====")
-
-    def test_volt(self):
-        log = self.__class__.log
-        module = self.__class__.module
-
-        log.info("**** Test case: Set volt****")
-        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setVolt()))
-        for propertyResponse in response.body.values:
-            self.assertFalse(propertyResponse.success)
-            self.assertEqual(propertyResponse.key, "ife.voltage.U130_3V3")
-            self.assertEqual(propertyResponse.value, "")
-
-        log.info("**** Test case: Get volt****")
+        log.info("**** Test case: Get volt ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getVolt()))
         for propertyResponse in response.body.values:
             self.assertTrue(propertyResponse.success)
             self.assertEqual(propertyResponse.key, "ife.voltage.U130_3V3")
             self.assertNotEqual(propertyResponse.value, "")
+
+        log.info("==== Test complete ====")
+
+    ## Test case: Test set IFE temperature/voltage :
+    #       success == False
+    #       key     == [what was specified]
+    #       value   == "HIGH"
+    def test_setIFE(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test case: Set temp ****")
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setTemp()))
+        for propertyResponse in response.body.values:
+            self.assertFalse(propertyResponse.success)
+            self.assertEqual(propertyResponse.key, "ife.temperature.U15_TINT")
+            self.assertEqual(propertyResponse.value, "HIGH")
+
+        log.info("**** Test case: Set volt ****")
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setVolt()))
+        for propertyResponse in response.body.values:
+            self.assertFalse(propertyResponse.success)
+            self.assertEqual(propertyResponse.key, "ife.voltage.U130_3V3")
+            self.assertEqual(propertyResponse.value, "HIGH")
 
         log.info("==== Test complete ====")
 

@@ -1,4 +1,5 @@
 import os
+import socket
 from ConfigParser import SafeConfigParser
 from subprocess import call, check_call, check_output, CalledProcessError
 from time import sleep
@@ -249,12 +250,11 @@ class HDDS(Module):
     #  @param   response    A HostDomainDeviceServiceResponse object
     #  @param   key         Key of MAC address to be obtained
     def vtssMacGet(self, response, key):
-        vtss = Vtss(self.switchAddress)
-        json = vtss.callMethod(["ip.status.interface.link.get"])
-
         try:
+            vtss = Vtss(self.switchAddress)
+            json = vtss.callMethod(["ip.status.interface.link.get"])
             mac = json["result"][0]["val"]["macAddress"]
-        except (KeyError, IndexError):
+        except (socket.error, KeyError, IndexError):
             mac = ""
 
         if mac:
@@ -308,9 +308,9 @@ class HDDS(Module):
             getResp.ParseFromString(HDDSResp.serializedBody)
 
             for value in getResp.values:
-                # Blacklist inventory.carrier_card values from HDDS, we don't trust them
-                if not value.keyValue.key.startswith("inventory.carrier_card"):
-                    self.addResp(response, value.keyValue.key, value.keyValue.value, value.success)
+                self.addResp(response, value.keyValue.key, value.keyValue.value, value.success)
+                if not value.success:
+                    self.log.warning("HDDS error for get %s: %s" % (value.keyValue.key, value.error.error_description))
         else:
             if HDDSResp.name == "ErrorMessage":
                 err = ErrorMessage()
@@ -467,6 +467,8 @@ class HDDS(Module):
 
             for value in setResp.values:
                 self.addResp(response, value.keyValue.key, value.keyValue.value, value.success)
+                if not value.success:
+                    self.log.warning("HDDS error for set %s: %s" % (value.keyValue.key, value.error.error_description))
         else:
             if HDDSResp.name == "ErrorMessage":
                 err = ErrorMessage()
