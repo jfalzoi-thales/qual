@@ -15,7 +15,7 @@ from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 class SSDMessages(ModuleMessages):
     @staticmethod
     def getMenuTitle():
-        return "SSD"
+        return "SSD Test"
 
     @staticmethod
     def getMenuItems():
