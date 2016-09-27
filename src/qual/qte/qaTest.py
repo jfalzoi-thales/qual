@@ -28,6 +28,14 @@ class QATest(object):
         # "Unsafe" tests - exclude from "all" list
         unsafeTests = ["Test_FirmwareUpdate", "Test_SSDErase", "Test_MacAddress"]
 
+        # Extract any parameters
+        params = {}
+        for arg in moduleNames:
+            if '=' in arg:
+                splitArg = arg.split('=')
+                if len(splitArg) > 1:
+                    params[splitArg[0]] = splitArg[1]
+
         # Build list of module test classes to run
         testClasses = []
         if "sanity" in moduleNames:
@@ -39,6 +47,8 @@ class QATest(object):
                     testClasses.append(testClass)
         else:
             for moduleName in moduleNames:
+                if '=' in moduleName:
+                    continue
                 if "Test_" + moduleName in self.moduleFinder.classmap:
                     testClasses.append(self.moduleFinder.classmap["Test_" + moduleName])
                 else:
@@ -79,6 +89,7 @@ class QATest(object):
         suite = unittest.TestSuite()
         for testClass in testClasses:
             testClass.module = self
+            testClass.params = params
             suite.addTest(unittest.TestLoader().loadTestsFromTestCase(testClass))
 
         # Run class unit test suite

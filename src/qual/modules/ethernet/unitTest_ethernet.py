@@ -34,11 +34,11 @@ class EthernetMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def run():
+    def run(ipaddr="10.10.41.115"):
         message = EthernetRequest()
         message.requestType = EthernetRequest.RUN
         message.local = "ENET_1"
-        message.remote = "10.10.41.115"
+        message.remote = ipaddr
         return message
 
     @staticmethod
@@ -63,11 +63,11 @@ class EthernetMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def runPort2():
+    def runPort2(ipaddr="10.10.41.115"):
         message = EthernetRequest()
         message.requestType = EthernetRequest.RUN
         message.local = "ENET_2"
-        message.remote = "10.10.41.115"
+        message.remote = ipaddr
         return message
 
     @staticmethod
@@ -85,11 +85,11 @@ class EthernetMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def runPort8():
+    def runPort8(ipaddr="10.10.42.21"):
         message = EthernetRequest()
         message.requestType = EthernetRequest.RUN
         message.local = "ENET_8"
-        message.remote = "10.10.42.21"
+        message.remote = ipaddr
         return message
 
     @staticmethod
@@ -107,6 +107,9 @@ class Test_Ethernet(unittest.TestCase):
 
     ## Static module instance
     module = None
+
+    ## Static params dict - used by qatest to pass in parameters
+    params = {}
 
     ## Setup for the Ethernet test cases
     # This is run only once before running any test cases
@@ -144,9 +147,11 @@ class Test_Ethernet(unittest.TestCase):
     def test_Run(self):
         log = self.__class__.log
         module = self.__class__.module
+        params = self.__class__.params
+        runPort1Message = EthernetMessages.run(params["iperfaddr1"]) if "iperfaddr1" in params else EthernetMessages.run()
 
         log.info("**** Test case: RUN message ****")
-        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
+        response = module.msgHandler(ThalesZMQMessage(runPort1Message))
         self.assertEqual(response.name, "EthernetResponse")
         self.assertEqual(response.body.state, EthernetResponse.RUNNING)
         self.assertEqual(response.body.local, "ENET_1")
@@ -204,10 +209,12 @@ class Test_Ethernet(unittest.TestCase):
     def test_RunReportStop(self):
         log = self.__class__.log
         module = self.__class__.module
+        params = self.__class__.params
+        runPort1Message = EthernetMessages.run(params["iperfaddr1"]) if "iperfaddr1" in params else EthernetMessages.run()
 
         log.info("**** Test case: RUN, REPORT and STOP messages ****")
 
-        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
+        response = module.msgHandler(ThalesZMQMessage(runPort1Message))
         self.assertEqual(response.name, "EthernetResponse")
         self.assertEqual(response.body.state, EthernetResponse.RUNNING)
         self.assertEqual(response.body.local, "ENET_1")
@@ -234,21 +241,24 @@ class Test_Ethernet(unittest.TestCase):
     def test_RunMultiple(self):
         log = self.__class__.log
         module = self.__class__.module
+        params = self.__class__.params
+        runPort1Message = EthernetMessages.run(params["iperfaddr1"]) if "iperfaddr1" in params else EthernetMessages.run()
+        runPort8Message = EthernetMessages.runPort8(params["iperfaddr8"]) if "iperfaddr8" in params else EthernetMessages.runPort8()
 
         log.info("**** Test case: RUN, REPORT and STOP on multiple ports ****")
 
         log.info("==== RUN port ENET_1 ====")
-        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
+        response = module.msgHandler(ThalesZMQMessage(runPort1Message))
         self.assertEqual(response.name, "EthernetResponse")
         self.assertEqual(response.body.state, EthernetResponse.RUNNING)
         self.assertEqual(response.body.local, "ENET_1")
         self.assertEqual(response.body.bandwidth, 0)
 
-        log.info("==== RUN port ENET_2 ====")
-        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.runPort2()))
+        log.info("==== RUN port ENET_8 ====")
+        response = module.msgHandler(ThalesZMQMessage(runPort8Message))
         self.assertEqual(response.name, "EthernetResponse")
         self.assertEqual(response.body.state, EthernetResponse.RUNNING)
-        self.assertEqual(response.body.local, "ENET_2")
+        self.assertEqual(response.body.local, "ENET_8")
         self.assertEqual(response.body.bandwidth, 0)
 
         log.info("==== Wait 4 seconds to accumulate statistics ====")
@@ -261,11 +271,11 @@ class Test_Ethernet(unittest.TestCase):
         self.assertEqual(response.body.local, "ENET_1")
         self.assertGreater(response.body.bandwidth, 0)
 
-        log.info("==== REPORT port ENET_2 ====")
-        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.reportPort2()))
+        log.info("==== REPORT port ENET_8 ====")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.reportPort8()))
         self.assertEqual(response.name, "EthernetResponse")
         self.assertEqual(response.body.state, EthernetResponse.RUNNING)
-        self.assertEqual(response.body.local, "ENET_2")
+        self.assertEqual(response.body.local, "ENET_8")
         self.assertGreater(response.body.bandwidth, 0)
 
         log.info("==== Stop port ENET_1 ====")
@@ -281,17 +291,17 @@ class Test_Ethernet(unittest.TestCase):
         self.assertEqual(response.body.state, EthernetResponse.STOPPED)
         self.assertEqual(response.body.local, "ENET_1")
 
-        log.info("==== REPORT port ENET_2 ====")
-        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.reportPort2()))
+        log.info("==== REPORT port ENET_8 ====")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.reportPort8()))
         self.assertEqual(response.name, "EthernetResponse")
         self.assertEqual(response.body.state, EthernetResponse.RUNNING)
-        self.assertEqual(response.body.local, "ENET_2")
+        self.assertEqual(response.body.local, "ENET_8")
 
-        log.info("==== Stop port ENET_2 ====")
-        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.stopPort2()))
+        log.info("==== Stop port ENET_8 ====")
+        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.stopPort8()))
         self.assertEqual(response.name, "EthernetResponse")
         self.assertEqual(response.body.state, EthernetResponse.STOPPED)
-        self.assertEqual(response.body.local, "ENET_2")
+        self.assertEqual(response.body.local, "ENET_8")
         log.info("==== Test complete ====")
 
     ## Valid Test case: Send a RUN, RUN and REPORT msgs
@@ -310,10 +320,12 @@ class Test_Ethernet(unittest.TestCase):
     def test_RunRunReport(self):
         log = self.__class__.log
         module = self.__class__.module
+        params = self.__class__.params
+        runPort1Message = EthernetMessages.run(params["iperfaddr1"]) if "iperfaddr1" in params else EthernetMessages.run()
 
         log.info("**** Test case: RUN, RUN and REPORT messages ****")
 
-        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
+        response = module.msgHandler(ThalesZMQMessage(runPort1Message))
         self.assertEqual(response.name, "EthernetResponse")
         self.assertEqual(response.body.state, EthernetResponse.RUNNING)
         self.assertEqual(response.body.local, "ENET_1")
@@ -322,7 +334,7 @@ class Test_Ethernet(unittest.TestCase):
         log.info("==== Wait 2 seconds to accumulate statistics ====")
         sleep(2)
 
-        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
+        response = module.msgHandler(ThalesZMQMessage(runPort1Message))
         self.assertEqual(response.name, "EthernetResponse")
         self.assertEqual(response.body.state, EthernetResponse.RUNNING)
         self.assertEqual(response.body.local, "ENET_1")
@@ -351,10 +363,12 @@ class Test_Ethernet(unittest.TestCase):
     def test_RunRunNoRemote(self):
         log = self.__class__.log
         module = self.__class__.module
+        params = self.__class__.params
+        runPort1Message = EthernetMessages.run(params["iperfaddr1"]) if "iperfaddr1" in params else EthernetMessages.run()
 
         log.info("**** Test case: RUN, RUN (no remote) ****")
 
-        response = module.msgHandler(ThalesZMQMessage(EthernetMessages.run()))
+        response = module.msgHandler(ThalesZMQMessage(runPort1Message))
         self.assertEqual(response.name, "EthernetResponse")
         self.assertEqual(response.body.state, EthernetResponse.RUNNING)
         self.assertEqual(response.body.local, "ENET_1")
