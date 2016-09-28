@@ -425,8 +425,12 @@ class HDDS(Module):
             # Actually program the MAC address
             call(["eeupdate64e", "-nic=%d" % nicidx, "-a", macfile])
 
-            if check_output(["eeupdate64e", "-nic=%d" % nicidx, "-mac_dump"]).splitlines()[-1] == i350mac:
-                success = True
+            try:
+                if check_output(["eeupdate64e", "-nic=%d" % nicidx, "-mac_dump"]).splitlines()[-1] == i350mac:
+                    success = True
+            except CalledProcessError as err:
+                self.log.warning("Unable to run %s" % err.cmd)
+                self.addResp(response, key, mac)
 
             if not success:
                 self.log.error("Error programming %s", key)
