@@ -413,16 +413,21 @@ class HDDS(Module):
         nicidx = int(key[-1]) + 1
         # Write the MAC address to a file
         macfile = "/tmp/i350_mac.txt"
+        i350mac = mac.replace(':', '')
         if os.path.exists(macfile):
             os.remove(macfile)
         try:
             with open(macfile, 'w') as macfileObj:
-                macfileObj.write(mac.replace(':', '') + '\n')
+                macfileObj.write(i350mac + '\n')
         except IOError:
             self.log.error("Unable to write file for %s", key)
         else:
             # Actually program the MAC address
-            success = (call(["eeupdate64e", "-nic=%d" % nicidx, "-a", macfile]) == 0)
+            call(["eeupdate64e", "-nic=%d" % nicidx, "-a", macfile])
+
+            if check_output(["eeupdate64e", "-nic=%d" % nicidx, "-mac_dump"]).splitlines()[-1] == i350mac:
+                success = True
+
             if not success:
                 self.log.error("Error programming %s", key)
             os.remove(macfile)
