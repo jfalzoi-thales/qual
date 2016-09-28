@@ -145,7 +145,8 @@ class HDDS(Module):
                     if value.key in self.macKeys:
                         hex = value.value.replace(':','')
 
-                        try: int(hex, 16)
+                        try:
+                            if int(hex, 16) == 0: hex = ""
                         except ValueError: hex = ""
 
                         if len(hex) == 12:
@@ -374,6 +375,7 @@ class HDDS(Module):
     #  @param     mac       MAC address to be set
     def cpuMacSet(self, response, key, mac):
         bank = "0"
+        success = True
 
         try:
             getActive = check_output([self.biosTool, "get-active"])
@@ -387,9 +389,13 @@ class HDDS(Module):
                 check_call([self.biosTool, "set-active", "0"])
 
             check_call([self.biosTool, "set-mac", mac])
+            if check_output([self.biosTool, "get-mac"]).rstrip() != mac: success = False
             check_call([self.biosTool, "set-active", str(1 - int(bank))])
             check_call([self.biosTool, "set-mac", mac])
-            self.addResp(response, key, mac, True)
+            if check_output([self.biosTool, "get-mac"]).rstrip() != mac: success = False
+
+            # TODO: Confirm that get-mac reports mac addresses in the proper format
+            self.addResp(response, key, mac, success)
         except CalledProcessError as err:
             self.log.warning("Unable to run %s" % err.cmd)
             self.addResp(response, key, mac)
