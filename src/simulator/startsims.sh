@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ ! -e common/tzmq/ThalesZMQServer.py ] || [ ! -e simulator/gpio/gpioMgrSim.py ]; then
+if [ ! -e tklabs_utils/tzmq/ThalesZMQServer.py ] || [ ! -e simulator/gpio/gpioMgrSim.py ]; then
     echo "Please run this script from the 'src' directory of the project"
     exit 1
 fi
@@ -12,10 +12,10 @@ python simulator/arinc717/arinc717DrvSim.py &
 python simulator/gpio/gpioMgrSim.py &
 python simulator/pwrsupp/pwrSuppMonSim.py &
 python simulator/sema/semaDrvSim.py &
+python simulator/rtc/rtcDrvSim.py &
 
-# Only start HDDS simulator if real HDDS is not running
-REALHDDS=`ps x | grep HDDS | grep -v grep`
-if [ -z "$REALHDDS" ]; then
+# Only start HDDS simulator if real HDDS is not installed
+if [ ! -f /thales/host/appliances/HDDS ]; then
     python simulator/hdds/hddsSim.py &
 fi
 

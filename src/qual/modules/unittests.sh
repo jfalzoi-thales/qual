@@ -18,7 +18,7 @@ while true ; do
     case "$1" in
         -i|--iperf) 
             IPADDR="$2"
-            sed -i.bak 's/10.10.42.231/'"$IPADDR"'/g' ${ETHPATH}/unitTest_ethernet.py
+            sed -i.bak 's/10.10.41.115/'"$IPADDR"'/g' ${ETHPATH}/unitTest_ethernet.py
             shift 2;;
         --)
             shift; break;;
@@ -28,4 +28,4 @@ while true ; do
 done
 
 export PYTHONPATH=`pwd`
-python -m unittest discover -s qual/modules -p "unitTest_*.py" 2>&1 | tee /tmp/unittests.txt
+python qual/qte/qaTest.py sanity 2>&1 | tee /tmp/unittests.txt

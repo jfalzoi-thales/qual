@@ -1,11 +1,11 @@
 import subprocess
-import os
 import time
 
-from common.gpb.python.CPULoading_pb2 import CPULoadingRequest, CPULoadingResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.module.module import Module, ModuleException
 from cpuLoader import CPULoader
+from qual.pb2.CPULoading_pb2 import CPULoadingRequest, CPULoadingResponse
+from tklabs_utils.module.module import Module, ModuleException
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## CPU Loading Module Exception Class
 class CPULoadingModuleException(ModuleException):
