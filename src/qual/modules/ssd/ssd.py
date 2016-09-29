@@ -74,11 +74,16 @@ class SSD(Module):
     #  @param     msg      TZMQ format message
     #  @return    response     A ThalesZMQMessage object
     def handlerMessage(self, msg):
-        # If raidFS is empty, we're disabled because SSD RAID is in use (requirement MPS-SRS-2334)
-        if not self.__raidFS:
+        # If raidFS is empty, we're disabled because SSD RAID is in use (requirement MPS-SRS-2334).
+        # If partition is not mounted, someone probably used the "SSD Erase" command.
+        # Either way, we can't do anything, so return an error message.
+        if not self.__raidFS or not self.checkIfMounted(self.__raidFS):
             errorMessage = ErrorMessage()
             errorMessage.error_code = 1010
-            errorMessage.error_description = "SSD test not available: SSD RAID in use"
+            if self.__raidFS:
+                errorMessage.error_description = "SSD test not available: partition removed"
+            else:
+                errorMessage.error_description = "SSD test not available: SSD RAID in use"
             return ThalesZMQMessage(errorMessage)
 
         response = SSDResponse()
@@ -86,12 +91,6 @@ class SSD(Module):
         if msg.body.requestType == SSDRequest.STOP:
             self.stop(response)
         elif msg.body.requestType == SSDRequest.RUN:
-            # Check if someone used the "SSD Erase" command, which would have unmounted our partition
-            if not self.checkIfMounted(self.__raidFS):
-                errorMessage = ErrorMessage()
-                errorMessage.error_code = 1010
-                errorMessage.error_description = "SSD test not available: partition removed"
-                return ThalesZMQMessage(errorMessage)
             self.start(response)
         elif msg.body.requestType == SSDRequest.REPORT:
             self.report(response)
