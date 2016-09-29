@@ -1,3 +1,4 @@
+import os
 import re
 import subprocess
 from time import sleep
@@ -5,6 +6,10 @@ from time import sleep
 from qual.pb2.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
+
+## Discard the output
+DEVNULL = open(os.devnull, 'wb')
 
 
 ## Memory Bandwidth Module Class
@@ -100,6 +105,7 @@ class MemoryBandwidth(Module):
     def runPmbw(self):
         self.subProcess = subprocess.Popen(["stdbuf", "-o", "L", "pmbw", self.maxallocmem, self.numthreads, self.mSize],
                                            stdout=subprocess.PIPE,
+                                           stderr=DEVNULL,
                                            bufsize=1)
         self.subProcess.wait()
         self.subProcess = None
