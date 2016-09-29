@@ -1,20 +1,10 @@
 import re
 import subprocess
+from time import sleep
 
 from qual.pb2.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
-from tklabs_utils.module.module import Module, ModuleException
+from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
-
-
-## Memory Bandwidth Module Exception Class
-class MemoryBandwidthModuleException(ModuleException):
-    ## Constructor
-    #  @param     self
-    #  @param     msg  Message text associated with this exception
-    def __init__(self, msg):
-        super(MemoryBandwidthModuleException, self).__init__()
-        ## Message text associated with this exception
-        self.msg = msg
 
 
 ## Memory Bandwidth Module Class
@@ -47,9 +37,6 @@ class MemoryBandwidth(Module):
         # thread that reads the PMBW output
         self.addThread(self.runMemBandwithTest)
 
-
-
-
     ## Handles incoming messages
     #
     #  Receives tzmq request and runs requested process
@@ -71,13 +58,12 @@ class MemoryBandwidth(Module):
             print "Unexpected request"
         return ThalesZMQMessage(response)
 
-
     ## Starts running PMBW tool and reading the output
     #
     #  @param     self
     #  @return    a MemoryBandwidth Response object
     def start(self):
-        super(MemoryBandwidth, self).startThread()
+        self.startThread()
         self.appState = MemoryBandwidthResponse.RUNNING
         status = MemoryBandwidthResponse()
         status.state = self.appState
@@ -99,7 +85,6 @@ class MemoryBandwidth(Module):
         self.bandwidth = 0
         return status
 
-
     ## Reports the last output of PMBW tool
     #
     #  @param     self
@@ -117,7 +102,8 @@ class MemoryBandwidth(Module):
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE,
                                            bufsize=1)
-        self.subProcess.wait()
+        self.subProcess.communicate()
+        self.subProcess = None
 
     ## Reads the PMBW tool
     #  @return    None
@@ -127,7 +113,8 @@ class MemoryBandwidth(Module):
             if line:
                 num = re.search('(?<=bandwidth=).+\t', line)
                 self.bandwidth = float(num.group(0))
-
+        else:
+            sleep(0.1)
 
     ## Stops background thread
     #  @param     self
