@@ -72,7 +72,7 @@ class ARINC717DriverSimulator(ThalesZMQServer):
 
                 # Toggle outOfSync flag each request
                 responseMsg.frame.out_of_sync = self.outOfSync
-                self.outOfSync = not self.outOfSync
+                #self.outOfSync = not self.outOfSync
 
             elif requestMsg.type == Request.GET_CONFIG:
                 # Get Config request - unsupported
