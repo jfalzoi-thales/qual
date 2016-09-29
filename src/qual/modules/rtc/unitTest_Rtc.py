@@ -1,6 +1,7 @@
 import time
 import unittest
 from datetime import datetime
+from threading import currentThread
 
 from rtc import Rtc
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
@@ -37,7 +38,7 @@ class RtcMessages(ModuleMessages):
         return message
 
 ## RTC Unit Test
-class Test_Rtc(unittest.TestCase):
+class Test_RTC(unittest.TestCase):
     ## Static logger instance
     log = None
 
@@ -96,6 +97,51 @@ class Test_Rtc(unittest.TestCase):
         self.assertTrue(isinstance(response.body.timeString, unicode))
 
         log.info("==== Test complete ====")
+
+    ## Valid Test case: Send a RTC Request RTC_SET msg
+    #  Asserts:
+    #    success == True
+    #    timeString is an unicode str
+    #
+    def test_Message_RTC_SetGetVerify(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        # First, let's save the current time
+        cTime = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ')
+
+        log.info("**** Test case: RTC sequence RTC_SET, RTC_GET ****")
+        log.info("==== Set the time according ====")
+        message = RTCRequest()
+        message.requestType = RTCRequest.RTC_SET
+        message.timeString = '1970-01-01 01:00:00'
+        response = module.msgHandler(ThalesZMQMessage(message))
+        # Asserts
+        self.assertTrue(response.body.success)
+        self.assertTrue(isinstance(response.body.timeString, unicode))
+
+        log.info("==== Get the time ====")
+        response = module.msgHandler(ThalesZMQMessage(RtcMessages.message_RTC_GET()))
+        # Asserts
+        self.assertTrue(response.body.success)
+        self.assertTrue(isinstance(response.body.timeString, unicode))
+        # Compare response with the time we sent with a reange of 2 seconds
+        timeSent = datetime.strptime('1970-01-01 01:00:00Z', '%Y-%m-%d %H:%M:%SZ')
+        timeSent = time.mktime(timeSent.timetuple())
+        timeResp = datetime.strptime(response.body.timeString, '%Y-%m-%d %H:%M:%SZ')
+        timeResp = time.mktime(timeResp.timetuple())
+        self.assertLessEqual(timeResp - timeSent - 3, 0)
+
+        log.info("==== Setting MPS the time to current time ====")
+        message = RTCRequest()
+        message.requestType = RTCRequest.RTC_SET
+        message.timeString = cTime
+        response = module.msgHandler(ThalesZMQMessage(message))
+        # Asserts
+        self.assertTrue(response.body.success)
+        self.assertTrue(isinstance(response.body.timeString, unicode))
+
+        log.info("**** Test complete ****")
 
 if __name__ == '__main__':
     unittest.main()
