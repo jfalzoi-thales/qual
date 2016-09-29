@@ -26,7 +26,12 @@ class InventoryMessages(ModuleMessages):
 
     @staticmethod
     def getKeys(keyList=None):
-        keys = keyList if keyList else ["inventory.lru.serial_number", "inventory.carrier_card.serial_number"]
+        keys = keyList if keyList else ["inventory.carrier_card.serial_number",
+                                        "inventory.lru.serial_number",
+                                        "inventory.power_supply.serial_number",
+                                        "inventory.processor_module.serial_number",
+                                        "inventory.arinc_board.serial_number",
+                                        "inventory.midplane.serial_number"]
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.GET
 
@@ -54,8 +59,12 @@ class InventoryMessages(ModuleMessages):
 
     @staticmethod
     def setKeys(valDict=None):
-        values = valDict if valDict else {"inventory.lru.serial_number":            "MULTIPLE KEYS",
-                                          "inventory.carrier_card.serial_number":   "MULTIPLE KEYS CC"}
+        values = valDict if valDict else {"inventory.carrier_card.serial_number":       "CARRIER_CARD",
+                                          "inventory.lru.serial_number":                "LRU",
+                                          "inventory.power_supply.serial_number":       "POWER_SUPPLY",
+                                          "inventory.processor_module.serial_number":   "PROCESSOR_MODULE",
+                                          "inventory.arinc_board.serial_number":        "ARINC_BOARD",
+                                          "inventory.midplane.serial_number":           "MIDPLANE"}
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.SET
 
@@ -107,6 +116,8 @@ class Test_Inventory(unittest.TestCase):
     log = None
     ## Static module instance
     module = None
+    ## Static list of keys
+    inventoryKeys = []
 
     ## Setup for the Inventory test cases
     #  This is run only once before running any test cases
@@ -120,6 +131,17 @@ class Test_Inventory(unittest.TestCase):
         #  Create the module
         if cls.module is None:
             cls.module = hdds.HDDS()
+
+        #  Parse key names from Thales Host Domain Device Service configuration file
+        thalesHDDSConfig = "/thales/host/config/HDDS.conv"
+        configParser = SafeConfigParser()
+        configParser.read(thalesHDDSConfig)
+
+        if configParser.sections() != []:
+            cls.inventoryKeys = [option for option in configParser.options("hdds_host_convertions") if
+                             option.startswith("inventory")]
+        else:
+            cls.log.warning("Missing or Empty Configuration File: %s" % thalesHDDSConfig)
 
     ## Check response value against expected values
     #  @param   self
@@ -140,11 +162,21 @@ class Test_Inventory(unittest.TestCase):
     def test_MultipleKeys(self):
         log = self.__class__.log
         module = self.__class__.module
+        inventoryKeys = self.__class__.inventoryKeys
         origValDict = {}
-        testValDict = {"inventory.lru.serial_number": "MULTIPLE KEYS",
-                       "inventory.carrier_card.serial_number": "MULTIPLE KEYS CC"}
+        testValDict = {"inventory.carrier_card.serial_number":       "CARRIER_CARD",
+                       "inventory.lru.serial_number":                "LRU",
+                       "inventory.power_supply.serial_number":       "POWER_SUPPLY",
+                       "inventory.processor_module.serial_number":   "PROCESSOR_MODULE",
+                       "inventory.arinc_board.serial_number":        "ARINC_BOARD",
+                       "inventory.midplane.serial_number":           "MIDPLANE"}
 
         log.info("**** Test Multiple Keys: Get Original Values, Set Test Values, Get New Values, Set Original Values, Get Final Values ****")
+
+        log.info("==== Check Serial Number Keys ====")
+        #  Assert that all serial_number keys are in config file
+        for key in testValDict: self.assertTrue(key in inventoryKeys)
+
         log.info("==== Get Original Values ====")
         response = module.msgHandler(ThalesZMQMessage(InventoryMessages.getKeys()))
 
@@ -176,24 +208,8 @@ class Test_Inventory(unittest.TestCase):
     def test_WildCardKeys(self):
         log = self.__class__.log
         module = self.__class__.module
-
-        #  Parse key names from Thales Host Domain Device Service configuration file
-        thalesHDDSConfig = "/thales/host/config/HDDS.conv"
-        configParser = SafeConfigParser()
-        configParser.read(thalesHDDSConfig)
-        inventoryKeys = []
-        lruKeys = []
-
-        if configParser.sections() != []:
-            for option in configParser.options("hdds_host_convertions"):
-                if option.startswith("inventory"):
-                    inventoryKeys.append(option)
-
-            for key in inventoryKeys:
-                if key.startswith("inventory.lru"):
-                    lruKeys.append(key)
-        else:
-            self.log.warning("Missing or Empty Configuration File: %s" % thalesHDDSConfig)
+        inventoryKeys = self.__class__.inventoryKeys
+        lruKeys = [key for key in inventoryKeys if key.startswith("inventory.lru")]
 
         log.info("**** Test Wild Cards: Get All LRU Keys, Get All Keys ****")
         log.info("==== Get All LRU Keys ====")
