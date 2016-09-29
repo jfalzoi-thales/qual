@@ -60,7 +60,7 @@ class SSD(Module):
             self.createFioConfig()
             #  Run FIO to create test file
             self.log.info("Creating FIO test files...")
-            self.runCommand('fio %s --runtime=0' % self.__fioConf,
+            self.runCommand('fio %s --runtime=0 > /tmp/fiosetup.log 2>&1' % self.__fioConf,
                             failText='Unable to create FIO test files')
 
         #  Adding the fio tool thread
