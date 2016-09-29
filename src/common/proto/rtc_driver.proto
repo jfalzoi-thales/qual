@@ -1,0 +1,24 @@
+syntax = "proto2";
+
+
+enum Error {
+	SUCCESS = 0;
+	INVALID_MESSAGE = 1;
+	INVALID_OPERATION = 2;
+	INVALID_SET_REQUEST = 3;
+	SPI_CONN_ERROR = 4;
+	RTC_ERROR = 5;
+}
+
+message GetTime {
+}
+
+message SetTime {
+	required string datetime = 2;
+}
+
+message TimeResponse {
+	required Error error = 1;
+	optional string datetime = 2;
+}
+

@@ -1,11 +1,13 @@
-import unittest
 import time
+import unittest
 
-from qual.modules.rs485.rs485 import Rs485
-from common.gpb.python.RS485_pb2 import RS485Request, RS485Response
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
+from rs485 import Rs485
+from qual.pb2.RS485_pb2 import RS485Request, RS485Response
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 
@@ -51,13 +53,13 @@ class Test_RS485(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = Logger(name='Test RS-485')
         cls.log.info('++++ Setup before RS-485 module unit tests ++++')
         # Create the module
-        cls.module = Rs485()
-        # Uncomment this if you don't want to see module debug messages
-        # cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = Rs485()
 
     ## Teardown when done with RS-485 test cases
     # This is run only once when we're done with all test cases
