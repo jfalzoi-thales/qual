@@ -75,6 +75,8 @@ class ARINC429(Module):
         self.connections = {}
         ## Lock for access to connections dict
         self.connectionsLock = threading.Lock()
+        ## Lock for access to driver
+        self.driverLock = threading.Lock()
         #  Ensure directory for communication with ARINC429 driver is present
         ipcdir = "/tmp/arinc/driver/429"
 
@@ -325,7 +327,9 @@ class ARINC429(Module):
         data.word = output
         data.timestamp = int(time() * 1000)
         #  Send a request and get the response
+        self.driverLock.acquire()
         response = self.driverClient.sendRequest(ThalesZMQMessage(txReq))
+        self.driverLock.release()
 
         #  Parse the response
         if response.name == self.driverClient.defaultResponseName:
@@ -348,7 +352,9 @@ class ARINC429(Module):
         rxReq.channelName = chanName
         rxReq.type = Request.RECEIVE_DATA
         #  Send a request and get the response
+        self.driverLock.acquire()
         response = self.driverClient.sendRequest(ThalesZMQMessage(rxReq))
+        self.driverLock.release()
 
         #  Parse the response
         if response.name == self.driverClient.defaultResponseName:
