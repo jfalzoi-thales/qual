@@ -120,6 +120,25 @@ class ARINC429Messages(ModuleMessages):
         message.source = "ARINC_429_BOGUS"
         return message
 
+    @staticmethod
+    def guiSetUp():
+        # MAP according to the requirements
+        list = [
+            ('ARINC_429_TX1', 'ARINC_429_RX1'),
+            ('ARINC_429_TX2', 'ARINC_429_RX2'),
+            ('ARINC_429_TX2', 'ARINC_429_RX3'),
+            ('ARINC_429_TX2', 'ARINC_429_RX4'),
+            ('ARINC_429_TX3', 'ARINC_429_RX5'),
+            ('ARINC_429_TX4', 'ARINC_429_RX6'),
+            ('ARINC_429_TX4', 'ARINC_429_RX7'),
+            ]
+        for connection in list:
+            message = ARINC429Request()
+            message.requestType = ARINC429Request.CONNECT
+            message.sink = connection[1]
+            message.source = connection[0]
+            yield message
+
     ## Constructor (not used)
     #  @param     self
     def __init__(self):
@@ -246,8 +265,8 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(len(response.body.status), 1)
         self.assertEqual(response.body.status[0].conState, ARINC429Response.CONNECTED)
         self.assertGreaterEqual(response.body.status[0].xmtCount, 0)
-        self.assertGreaterEqual(response.body.status[0].xmtCount, response.body.status[0].rcvCount)
-        self.assertGreaterEqual(response.body.status[0].errorCount, 0)
+        self.assertTrue(response.body.status[0].xmtCount - response.body.status[0].rcvCount in [0,1])
+        self.assertEqual(response.body.status[0].errorCount, 0)
         self.assertEqual(response.body.status[0].sink, "ARINC_429_RX1")
         self.assertEqual(response.body.status[0].source, "ARINC_429_TX1")
 
@@ -259,9 +278,9 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(response.name, "ARINC429Response")
         self.assertEqual(len(response.body.status), 1)
         self.assertEqual(response.body.status[0].conState, ARINC429Response.CONNECTED)
-        self.assertGreaterEqual(response.body.status[0].xmtCount, 0)
-        self.assertGreaterEqual(response.body.status[0].xmtCount, response.body.status[0].rcvCount)
-        self.assertGreaterEqual(response.body.status[0].errorCount, 0)
+        self.assertGreater(response.body.status[0].xmtCount, 0)
+        self.assertTrue(response.body.status[0].xmtCount - response.body.status[0].rcvCount in [0,1])
+        self.assertEqual(response.body.status[0].errorCount, 0)
         self.assertEqual(response.body.status[0].sink, "ARINC_429_RX1")
         self.assertEqual(response.body.status[0].source, "ARINC_429_TX1")
 
@@ -271,8 +290,8 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(len(response.body.status), 1)
         self.assertEqual(response.body.status[0].conState, ARINC429Response.DISCONNECTED)
         self.assertGreater(response.body.status[0].xmtCount, 0)
-        self.assertGreaterEqual(response.body.status[0].xmtCount, response.body.status[0].rcvCount)
-        self.assertGreaterEqual(response.body.status[0].errorCount, 0)
+        self.assertTrue(response.body.status[0].xmtCount - response.body.status[0].rcvCount in [0,1])
+        self.assertEqual(response.body.status[0].errorCount, 0)
         self.assertEqual(response.body.status[0].sink, "ARINC_429_RX1")
         self.assertEqual(response.body.status[0].source, "ARINC_429_TX1")
 
@@ -399,6 +418,57 @@ class Test_ARINC429(unittest.TestCase):
             self.assertEqual(ARINC429Stat.conState, ARINC429Response.DISCONNECTED)
             self.assertEqual(ARINC429Stat.source, "")
         log.info("==== Test complete ====")
+
+    ## Test case: Qual GUI set up
+    #  test map:
+    #       TX1 -> RX1
+    #       TX2 -> RX2, RX3, RX4
+    #       TX3 -> RX5
+    #       TX4 -> RX6, RX7
+    def test_QualGUISetUp(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        numInputs = 1
+
+        log.info("==== Report on all inputs before connect ====")
+        response = module.msgHandler(ThalesZMQMessage(ARINC429Messages.reportAll()))
+        self.assertEqual(response.name, "ARINC429Response")
+        self.assertEqual(len(response.body.status), 8)
+        for ARINC429Stat in response.body.status:
+            # All channels should be disconnected
+            self.assertEqual(ARINC429Stat.conState, ARINC429Response.DISCONNECTED)
+            self.assertEqual(ARINC429Stat.source, "")
+
+        log.info('**** Test case: Test use of the "Qual GUI Set Up" parameter ****')
+        for message in ARINC429Messages.guiSetUp():
+            log.info("==== %s -> %s ====" % (message.source[-3:], message.sink[-3:]))
+            response = module.msgHandler(ThalesZMQMessage(message))
+            self.assertEqual(response.name, "ARINC429Response")
+            self.assertEqual(len(response.body.status), numInputs)
+
+        log.info("==== Wait 20 seconds to accumulate statistics ====")
+        sleep(20)
+
+        log.info("==== Get report after 10 second ====")
+        response = module.msgHandler(ThalesZMQMessage(ARINC429Messages.reportAll()))
+        self.assertEqual(response.name, "ARINC429Response")
+        self.assertEqual(len(response.body.status), 8)
+        for connection in response.body.status[:-1]:
+            self.assertEqual(connection.conState, ARINC429Response.CONNECTED)
+            self.assertGreater(connection.xmtCount, 0)
+            self.assertTrue(connection.xmtCount - connection.rcvCount in [0,1])
+            self.assertEqual(connection.errorCount, 0)
+
+        log.info("==== Disconnect all connected ====")
+        response = module.msgHandler(ThalesZMQMessage(ARINC429Messages.disconnectAll()))
+        self.assertEqual(response.name, "ARINC429Response")
+        self.assertEqual(len(response.body.status), 8)
+        for connection in response.body.status[:-1]:
+            self.assertEqual(connection.conState, ARINC429Response.DISCONNECTED)
+            self.assertGreater(connection.xmtCount, 0)
+            self.assertTrue(connection.xmtCount - connection.rcvCount in [0,1])
+            self.assertEqual(connection.errorCount, 0)
 
 if __name__ == '__main__':
     unittest.main()

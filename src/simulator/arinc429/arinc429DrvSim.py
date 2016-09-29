@@ -86,18 +86,14 @@ class ARINC429DriverSimulator(ThalesZMQServer):
                                   configParser.get("receiver1:ARINC429-4", "name"): InputInfo()}
 
             # Simulate ARINC 429 loopback by linking outputs to inputs
-            self.loopbackMap = {configParser.get("transmitter0:ARINC429-1", "name"):
-                                (configParser.get("receiver0:ARINC429-1", "name"),
-                                 configParser.get("receiver1:ARINC429-1", "name")),
-                                configParser.get("transmitter0:ARINC429-2", "name"):
-                                (configParser.get("receiver0:ARINC429-2", "name"),
-                                 configParser.get("receiver1:ARINC429-2", "name")),
-                                configParser.get("transmitter0:ARINC429-3", "name"):
-                                (configParser.get("receiver0:ARINC429-3", "name"),
-                                 configParser.get("receiver1:ARINC429-3", "name")),
-                                configParser.get("transmitter0:ARINC429-4", "name"):
-                                (configParser.get("receiver0:ARINC429-4", "name"),
-                                 configParser.get("receiver1:ARINC429-4", "name"))}
+            self.loopbackMap = {
+                configParser.get("transmitter0:ARINC429-1", "name"): [configParser.get("receiver0:ARINC429-1", "name")],
+                configParser.get("transmitter0:ARINC429-2", "name"): [configParser.get("receiver1:ARINC429-1", "name"),
+                                                                      configParser.get("receiver0:ARINC429-2", "name"),
+                                                                      configParser.get("receiver1:ARINC429-2", "name")],
+                configParser.get("transmitter0:ARINC429-3", "name"): [configParser.get("receiver0:ARINC429-3", "name")],
+                configParser.get("transmitter0:ARINC429-4", "name"): [configParser.get("receiver1:ARINC429-3", "name"),
+                                                                      configParser.get("receiver0:ARINC429-4", "name")]}
         else:
             self.log.warning("Missing or Empty Configuration File: %s" % thalesArinc429Config)
 
