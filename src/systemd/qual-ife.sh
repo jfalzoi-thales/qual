@@ -45,5 +45,4 @@ fi
 
 # Start Qual Test Application
 cd /thales/qual/src/
-PYTHONPATH=`pwd` python qual/ifeGPIO/ifeGPIO.py &
 PYTHONPATH=`pwd` python qual/qta/qta.py

@@ -2,10 +2,12 @@ import unittest
 from time import sleep
 
 import gpio
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.GPIO_pb2 import GPIORequest, GPIOResponse
-from common.logger import logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.GPIO_pb2 import GPIORequest, GPIOResponse
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.logger import logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 
@@ -194,13 +196,13 @@ class Test_GPIO(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = logger.Logger(name='Test GPIO')
         cls.log.info('++++ Setup before GPIO module unit tests ++++')
         # Create the module
-        cls.module = gpio.GPIO()
-        # Uncomment this if you don't want to see module debug messages
-        #cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = gpio.GPIO()
 
     ## Teardown when done with GPIO test cases
     # This is run only once when we're done with all test cases
@@ -522,7 +524,7 @@ class Test_GPIO(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
 
-        numInputs = len(module.inputPins)
+        numInputs = 19
 
         log.info("**** Test case: Test use of the \"ALL\" parameter ****")
         log.info("==== Report on all inputs before connect ====")

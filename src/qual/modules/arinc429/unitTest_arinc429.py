@@ -2,10 +2,12 @@ import unittest
 from time import sleep
 
 import arinc429
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.ARINC429_pb2 import ARINC429Request, ARINC429Response
-from common.logger import logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.ARINC429_pb2 import ARINC429Request, ARINC429Response
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.logger import logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 
@@ -135,13 +137,13 @@ class Test_ARINC429(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = logger.Logger(name='Test ARINC429')
         cls.log.info('++++ Setup before ARINC429 module unit tests ++++')
         # Create the module
-        cls.module = arinc429.ARINC429()
-        # Uncomment this if you don't want to see module debug messages
-        #cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = arinc429.ARINC429()
 
     ## Teardown when done with ARINC429 test cases
     # This is run only once when we're done with all test cases
@@ -338,7 +340,7 @@ class Test_ARINC429(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
 
-        numInputs = len(module.inputChans)
+        numInputs = 8
 
         log.info("**** Test case: Test use of the \"ALL\" parameter ****")
         log.info("==== Report on all inputs before connect ====")

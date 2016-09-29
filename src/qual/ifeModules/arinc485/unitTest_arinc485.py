@@ -1,10 +1,12 @@
 import unittest
 from time import sleep
+
 import arinc485
-from common.gpb.python.ARINC485_pb2 import ARINC485Request, ARINC485Response
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger import logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.ARINC485_pb2 import ARINC485Request, ARINC485Response
+from tklabs_utils.logger import logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 
