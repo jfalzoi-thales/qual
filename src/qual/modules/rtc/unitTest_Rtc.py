@@ -1,7 +1,6 @@
 import time
 import unittest
 from datetime import datetime
-from threading import currentThread
 
 from rtc import Rtc
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
