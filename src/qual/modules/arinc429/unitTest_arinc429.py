@@ -265,8 +265,8 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(len(response.body.status), 1)
         self.assertEqual(response.body.status[0].conState, ARINC429Response.CONNECTED)
         self.assertGreaterEqual(response.body.status[0].xmtCount, 0)
-        self.assertGreaterEqual(response.body.status[0].xmtCount, response.body.status[0].rcvCount)
-        self.assertGreaterEqual(response.body.status[0].errorCount, 0)
+        self.assertTrue(response.body.status[0].xmtCount - response.body.status[0].rcvCount in [0,1])
+        self.assertEqual(response.body.status[0].errorCount, 0)
         self.assertEqual(response.body.status[0].sink, "ARINC_429_RX1")
         self.assertEqual(response.body.status[0].source, "ARINC_429_TX1")
 
@@ -278,9 +278,9 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(response.name, "ARINC429Response")
         self.assertEqual(len(response.body.status), 1)
         self.assertEqual(response.body.status[0].conState, ARINC429Response.CONNECTED)
-        self.assertGreaterEqual(response.body.status[0].xmtCount, 0)
-        self.assertGreaterEqual(response.body.status[0].xmtCount, response.body.status[0].rcvCount)
-        self.assertGreaterEqual(response.body.status[0].errorCount, 0)
+        self.assertGreater(response.body.status[0].xmtCount, 0)
+        self.assertTrue(response.body.status[0].xmtCount - response.body.status[0].rcvCount in [0,1])
+        self.assertEqual(response.body.status[0].errorCount, 0)
         self.assertEqual(response.body.status[0].sink, "ARINC_429_RX1")
         self.assertEqual(response.body.status[0].source, "ARINC_429_TX1")
 
@@ -290,8 +290,8 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(len(response.body.status), 1)
         self.assertEqual(response.body.status[0].conState, ARINC429Response.DISCONNECTED)
         self.assertGreater(response.body.status[0].xmtCount, 0)
-        self.assertGreaterEqual(response.body.status[0].xmtCount, response.body.status[0].rcvCount)
-        self.assertGreaterEqual(response.body.status[0].errorCount, 0)
+        self.assertTrue(response.body.status[0].xmtCount - response.body.status[0].rcvCount in [0,1])
+        self.assertEqual(response.body.status[0].errorCount, 0)
         self.assertEqual(response.body.status[0].sink, "ARINC_429_RX1")
         self.assertEqual(response.body.status[0].source, "ARINC_429_TX1")
 
@@ -457,8 +457,8 @@ class Test_ARINC429(unittest.TestCase):
         for connection in response.body.status[:-1]:
             self.assertEqual(connection.conState, ARINC429Response.CONNECTED)
             self.assertGreater(connection.xmtCount, 0)
-            self.assertGreaterEqual(connection.xmtCount, connection.rcvCount)
-            self.assertGreaterEqual(connection.errorCount, 0)
+            self.assertTrue(connection.xmtCount - connection.rcvCount in [0,1])
+            self.assertEqual(connection.errorCount, 0)
 
         log.info("==== Disconnect all connected ====")
         response = module.msgHandler(ThalesZMQMessage(ARINC429Messages.disconnectAll()))
@@ -467,7 +467,7 @@ class Test_ARINC429(unittest.TestCase):
         for connection in response.body.status[:-1]:
             self.assertEqual(connection.conState, ARINC429Response.DISCONNECTED)
             self.assertGreater(connection.xmtCount, 0)
-            self.assertGreaterEqual(connection.xmtCount, connection.rcvCount)
+            self.assertTrue(connection.xmtCount - connection.rcvCount in [0,1])
             self.assertEqual(connection.errorCount, 0)
 
 if __name__ == '__main__':
