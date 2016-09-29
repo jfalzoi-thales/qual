@@ -21,7 +21,7 @@ class Module(ConfigurableObject):
         self._running = False
         ## Stored configuration data, passed in by constructor
         self.config = config
-        ## Name of module.  Defaults to class name, may be overwritten by self.setName()
+        ## Name of module.  Defaults to class name, may be overridden by self.setName()
         self.name = type(self).__name__
         ## List of messasage handlers, populated by self.addMsgHandler()
         self.msgHandlers = []
@@ -46,10 +46,10 @@ class Module(ConfigurableObject):
         self.name = name
         return
 
-    ## Changes the name of the module.
+    ## Terminate the module.
     #
-    # Called to terminate the module.  Should be overwritten to perform
-    # any implementation-specific cleanup.  If overwritten, the superclass
+    # Called to terminate the module.  Should be overridden to perform
+    # any implementation-specific cleanup.  If overridden, the superclass
     # should be called.
     # @param     self
     def terminate(self):
@@ -103,7 +103,7 @@ class Module(ConfigurableObject):
         return cls.namedLocks[name]
 
 
-    #--------------Threading Funtions Below------------------
+    #--------------Threading Functions Below------------------
 
     ## Private function, calls the runMethod for each thread
     # @param self
@@ -152,15 +152,13 @@ class Module(ConfigurableObject):
         self._running = False
         timeout = datetime.datetime.now() + datetime.timedelta(seconds=5)
         for thread in self.threads:
-            while (thread.isAlive() == True):
+            while thread.isAlive():
                 sleep(0.1)
                 if datetime.datetime.now() > timeout:
-                    raise ModuleException('Thread %s did not terminate' % (self.name,))
+                    self.log.error('!!!!!!!!!!!!!!!!!!!!!! Thread %s did not terminate !!!!!!!!!!!!!!!!!!!!!!' % (self.name,))
+                    break
 
+        # If any threads do not die, they will be leaked.  C'est la vie...
         self.threads = []
 
-
         return
-
-
-

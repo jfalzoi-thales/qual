@@ -1,20 +1,15 @@
+import os
 import re
 import subprocess
+from time import sleep
 
 from qual.pb2.MemoryBandwidth_pb2 import MemoryBandwidthRequest, MemoryBandwidthResponse
-from tklabs_utils.module.module import Module, ModuleException
+from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 
-## Memory Bandwidth Module Exception Class
-class MemoryBandwidthModuleException(ModuleException):
-    ## Constructor
-    #  @param     self
-    #  @param     msg  Message text associated with this exception
-    def __init__(self, msg):
-        super(MemoryBandwidthModuleException, self).__init__()
-        ## Message text associated with this exception
-        self.msg = msg
+## Discard the output
+DEVNULL = open(os.devnull, 'wb')
 
 
 ## Memory Bandwidth Module Class
@@ -47,9 +42,6 @@ class MemoryBandwidth(Module):
         # thread that reads the PMBW output
         self.addThread(self.runMemBandwithTest)
 
-
-
-
     ## Handles incoming messages
     #
     #  Receives tzmq request and runs requested process
@@ -71,13 +63,12 @@ class MemoryBandwidth(Module):
             print "Unexpected request"
         return ThalesZMQMessage(response)
 
-
     ## Starts running PMBW tool and reading the output
     #
     #  @param     self
     #  @return    a MemoryBandwidth Response object
     def start(self):
-        super(MemoryBandwidth, self).startThread()
+        self.startThread()
         self.appState = MemoryBandwidthResponse.RUNNING
         status = MemoryBandwidthResponse()
         status.state = self.appState
@@ -90,7 +81,7 @@ class MemoryBandwidth(Module):
     #  @return    a MemoryBandwidth Response object
     def stop(self):
         self._running = False
-        subprocess.Popen(["pkill", "-9", "pmbw"])
+        subprocess.call(["pkill", "-9", "pmbw"])
         self.stopThread()
         self.appState = MemoryBandwidthResponse.STOPPED
         status = MemoryBandwidthResponse()
@@ -98,7 +89,6 @@ class MemoryBandwidth(Module):
         status.memoryBandWidth = self.bandwidth
         self.bandwidth = 0
         return status
-
 
     ## Reports the last output of PMBW tool
     #
@@ -115,9 +105,10 @@ class MemoryBandwidth(Module):
     def runPmbw(self):
         self.subProcess = subprocess.Popen(["stdbuf", "-o", "L", "pmbw", self.maxallocmem, self.numthreads, self.mSize],
                                            stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE,
+                                           stderr=DEVNULL,
                                            bufsize=1)
         self.subProcess.wait()
+        self.subProcess = None
 
     ## Reads the PMBW tool
     #  @return    None
@@ -127,13 +118,13 @@ class MemoryBandwidth(Module):
             if line:
                 num = re.search('(?<=bandwidth=).+\t', line)
                 self.bandwidth = float(num.group(0))
-
+        else:
+            sleep(0.1)
 
     ## Stops background thread
     #  @param     self
     def terminate(self):
         if self._running:
             self._running = False
-            stop = subprocess.Popen(["pkill", "-9", "pmbw"])
-            stop.wait()
+            subprocess.call(["pkill", "-9", "pmbw"])
             self.stopThread()
