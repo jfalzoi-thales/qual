@@ -44,7 +44,7 @@ class SSDErase(Module):
     #  @param   self
     def runDestroyRaid(self):
         self.log.debug('Running: mpsinst-destroyraid')
-        rc = subprocess.call('mpsinst-destroyraid 10 \"YES,CLEAR_MY_DISKS\" > /tmp/destroyraid.log 2>&1', shell=True)
+        rc = subprocess.call('/thales/host/appliances/mpsinst-destroyraid 10 \"YES,CLEAR_MY_DISKS\" > /tmp/destroyraid.log 2>&1', shell=True)
         self.log.debug("Command return code: %d" % rc)
         if rc != 0:
             self.log.error('Unable to delete RAID volume')
