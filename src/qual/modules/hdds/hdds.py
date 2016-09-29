@@ -66,9 +66,8 @@ class HDDS(Module):
         self.inventoryKeys = []
 
         if configParser.sections() != []:
-            for option in configParser.options("hdds_host_convertions"):
-                if option.startswith("inventory"):
-                    self.inventoryKeys.append(option)
+            self.inventoryKeys = [option for option in configParser.options("hdds_host_convertions") if
+                                  option.startswith("inventory")]
         else:
             self.log.warning("Missing or Empty Configuration File: %s" % thalesHDDSConfig)
 
