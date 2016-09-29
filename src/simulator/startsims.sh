@@ -7,7 +7,7 @@ fi
 
 export PYTHONPATH=`pwd`
 
-python simulator/arinc429/arinc429DrvSim.py -e &
+python simulator/arinc429/arinc429DrvSim.py &
 python simulator/arinc717/arinc717DrvSim.py &
 python simulator/gpio/gpioMgrSim.py &
 python simulator/pwrsupp/pwrSuppMonSim.py &

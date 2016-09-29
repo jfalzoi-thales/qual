@@ -28,8 +28,7 @@ class ARINC429Messages(ModuleMessages):
                 ("Connect all inputs to output 3", ARINC429Messages.connectInAllOut3),
                 ("Disconnect input 1",             ARINC429Messages.disconnectIn1),
                 ("Disconnect input 3",             ARINC429Messages.disconnectIn3),
-                ("Disconnect all inputs",          ARINC429Messages.disconnectAll),
-                ("Qual GUI set up",                ARINC429Messages.guiSetUp)]
+                ("Disconnect all inputs",          ARINC429Messages.disconnectAll)]
 
     @staticmethod
     def reportIn1():
@@ -443,11 +442,33 @@ class Test_ARINC429(unittest.TestCase):
 
         log.info('**** Test case: Test use of the "Qual GUI Set Up" parameter ****')
         for message in ARINC429Messages.guiSetUp():
-            sleep(3)
             log.info("==== %s -> %s ====" % (message.source[-3:], message.sink[-3:]))
             response = module.msgHandler(ThalesZMQMessage(message))
             self.assertEqual(response.name, "ARINC429Response")
             self.assertEqual(len(response.body.status), numInputs)
+
+        log.info("==== Wait 20 seconds to accumulate statistics ====")
+        sleep(20)
+
+        log.info("==== Get report after 10 second ====")
+        response = module.msgHandler(ThalesZMQMessage(ARINC429Messages.reportAll()))
+        self.assertEqual(response.name, "ARINC429Response")
+        self.assertEqual(len(response.body.status), 8)
+        for connection in response.body.status[:-1]:
+            self.assertEqual(connection.conState, ARINC429Response.CONNECTED)
+            self.assertGreater(connection.xmtCount, 0)
+            self.assertGreaterEqual(connection.xmtCount, connection.rcvCount)
+            self.assertGreaterEqual(connection.errorCount, 0)
+
+        log.info("==== Disconnect all connected ====")
+        response = module.msgHandler(ThalesZMQMessage(ARINC429Messages.disconnectAll()))
+        self.assertEqual(response.name, "ARINC429Response")
+        self.assertEqual(len(response.body.status), 8)
+        for connection in response.body.status[:-1]:
+            self.assertEqual(connection.conState, ARINC429Response.DISCONNECTED)
+            self.assertGreater(connection.xmtCount, 0)
+            self.assertGreaterEqual(connection.xmtCount, connection.rcvCount)
+            self.assertEqual(connection.errorCount, 0)
 
 if __name__ == '__main__':
     unittest.main()
