@@ -76,7 +76,7 @@ class MemoryBandwidth(Module):
     #  @return    a MemoryBandwidth Response object
     def stop(self):
         self._running = False
-        subprocess.Popen(["pkill", "-9", "pmbw"])
+        subprocess.call(["pkill", "-9", "pmbw"])
         self.stopThread()
         self.appState = MemoryBandwidthResponse.STOPPED
         status = MemoryBandwidthResponse()
@@ -100,9 +100,8 @@ class MemoryBandwidth(Module):
     def runPmbw(self):
         self.subProcess = subprocess.Popen(["stdbuf", "-o", "L", "pmbw", self.maxallocmem, self.numthreads, self.mSize],
                                            stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE,
                                            bufsize=1)
-        self.subProcess.communicate()
+        self.subProcess.wait()
         self.subProcess = None
 
     ## Reads the PMBW tool
@@ -121,6 +120,5 @@ class MemoryBandwidth(Module):
     def terminate(self):
         if self._running:
             self._running = False
-            stop = subprocess.Popen(["pkill", "-9", "pmbw"])
-            stop.wait()
+            subprocess.call(["pkill", "-9", "pmbw"])
             self.stopThread()
