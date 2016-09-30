@@ -1,21 +1,25 @@
 syntax = "proto2";
 
-enum LEDDescT {
+enum LEDDescT
+{
     LED_POST          = 0;
     LED_STATUS_GREEN  = 1;
     LED_STATUS_YELLOW = 2;
 }
 
-enum LEDStateT {
-    LS_OFF = 0;
-    LS_ON = 1;
+enum LEDStateT
+{
+    LED_OFF = 0;
+    LED_ON = 1;
 }
-message LEDRequest  {
+message LEDRequest
+{
     required LEDDescT  led = 1;
     required LEDStateT state = 2;
 }
 
-message LEDResponse {
+message LEDResponse
+{
     required bool success  = 1;
 	optional string errorMessage = 2 [default = ""];
 }
