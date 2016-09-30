@@ -51,10 +51,10 @@ class Led(Module):
     #  @return: (str State, str LED)
     def __stateLed(self, state, led):
         (strState, boolState,strLed) = ('UNKNOWN', False, 'UNKNOWN')
-        if state == LS_ON:
+        if state == LED_ON:
             strState = 'ON'
             boolState = True
-        if state == LS_OFF:
+        if state == LED_OFF:
             strState = 'OFF'
             boolState = False
         if led == LED_POST:
