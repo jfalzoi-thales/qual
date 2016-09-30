@@ -96,9 +96,9 @@ class ARINC717(Module):
                     #  turns every two characters in data into 16-bit data
                     for char in range(0, len(data), 2):
                         response.arinc717frame.append((ord(data[char]) << 8) | ord(data[char + 1]))
-                elif msg.body.requestType == ARINC717FrameRequest.RUN:
+                else:
                     self.log.error("Unexpected Response Name: %s" % driverResponse.name)
-                    self.running = False
+                    if msg.body.requestType == ARINC717FrameRequest.RUN: self.running = False
 
             if msg.body.requestType == ARINC717FrameRequest.STOP: self.running = False
         else:
