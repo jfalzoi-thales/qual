@@ -1,13 +1,15 @@
 import argparse
 from threading import Thread
 from time import sleep
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.JsonZMQClient import JsonZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.classFinder.classFinder import ClassFinder
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
 from google.protobuf.message import Message
+
+from tklabs_utils.classFinder.classFinder import ClassFinder
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.JsonZMQClient import JsonZMQClient
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## Class that gives the QTA a good hammering by sending many simultaneous messages
 class QTEHammer(object):
@@ -20,10 +22,10 @@ class QTEHammer(object):
         ## Logger implementation, based on standard python logger
         self.log = Logger(type(self).__name__)
         ## ClassFinder for module ModuleMessages classes
-        self.__modClass = ClassFinder(rootPath='qual.modules',
+        self.__modClass = ClassFinder(rootPaths=['qual.modules'],
                                      baseClass=ModuleMessages)
         ## ClassFinder for GPB message classes
-        self.__qualMessage = ClassFinder(rootPath='common.gpb.python',
+        self.__qualMessage = ClassFinder(rootPaths=['qual.pb2','common.pb2'],
                                          baseClass=Message)
         ## List for storing threads
         self.threads = []
