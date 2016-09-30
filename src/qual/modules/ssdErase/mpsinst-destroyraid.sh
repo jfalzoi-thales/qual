@@ -140,7 +140,8 @@ sync
 
 echo
 echo "Verifying RAID partitions are gone"
-if ls /dev/md* 2>/dev/null; then
-    echo "Still some partitions left!"
+RAIDS=`mdadm --detail --scan`
+if [ -n "$RAIDS" ]; then
+    echo "Still some RAID configuration left!"
     exit 1
 fi
