@@ -66,9 +66,8 @@ class HDDS(Module):
         self.inventoryKeys = []
 
         if configParser.sections() != []:
-            for option in configParser.options("hdds_host_convertions"):
-                if option.startswith("inventory"):
-                    self.inventoryKeys.append(option)
+            self.inventoryKeys = [option for option in configParser.options("hdds_host_convertions") if
+                                  option.startswith("inventory")]
         else:
             self.log.warning("Missing or Empty Configuration File: %s" % thalesHDDSConfig)
 
@@ -145,7 +144,8 @@ class HDDS(Module):
                     if value.key in self.macKeys:
                         hex = value.value.replace(':','')
 
-                        try: int(hex, 16)
+                        try:
+                            if int(hex, 16) == 0: hex = ""
                         except ValueError: hex = ""
 
                         if len(hex) == 12:
@@ -374,6 +374,7 @@ class HDDS(Module):
     #  @param     mac       MAC address to be set
     def cpuMacSet(self, response, key, mac):
         bank = "0"
+        success = True
 
         try:
             getActive = check_output([self.biosTool, "get-active"])
@@ -387,9 +388,13 @@ class HDDS(Module):
                 check_call([self.biosTool, "set-active", "0"])
 
             check_call([self.biosTool, "set-mac", mac])
+            if check_output([self.biosTool, "get-mac"]).rstrip() != mac: success = False
             check_call([self.biosTool, "set-active", str(1 - int(bank))])
             check_call([self.biosTool, "set-mac", mac])
-            self.addResp(response, key, mac, True)
+            if check_output([self.biosTool, "get-mac"]).rstrip() != mac: success = False
+
+            # TODO: Confirm that get-mac reports mac addresses in the proper format
+            self.addResp(response, key, mac, success)
         except CalledProcessError as err:
             self.log.warning("Unable to run %s" % err.cmd)
             self.addResp(response, key, mac)
@@ -407,16 +412,25 @@ class HDDS(Module):
         nicidx = int(key[-1]) + 1
         # Write the MAC address to a file
         macfile = "/tmp/i350_mac.txt"
+        i350mac = mac.replace(':', '')
         if os.path.exists(macfile):
             os.remove(macfile)
         try:
             with open(macfile, 'w') as macfileObj:
-                macfileObj.write(mac.replace(':', '') + '\n')
+                macfileObj.write(i350mac + '\n')
         except IOError:
             self.log.error("Unable to write file for %s", key)
         else:
             # Actually program the MAC address
-            success = (call(["eeupdate64e", "-nic=%d" % nicidx, "-a", macfile]) == 0)
+            call(["eeupdate64e", "-nic=%d" % nicidx, "-a", macfile])
+
+            try:
+                if check_output(["eeupdate64e", "-nic=%d" % nicidx, "-mac_dump"]).splitlines()[-1] == i350mac:
+                    success = True
+            except CalledProcessError as err:
+                self.log.warning("Unable to run %s" % err.cmd)
+                self.addResp(response, key, mac)
+
             if not success:
                 self.log.error("Error programming %s", key)
             os.remove(macfile)
