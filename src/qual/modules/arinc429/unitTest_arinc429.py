@@ -206,8 +206,7 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(len(response.body.status), 0)
         log.info("==== Test complete ====")
 
-    ## Test case: Try to reconnect a connected input channel
-    # Should return a ARINC429Response showing channel still connected to original output
+    ## Test case: Try to reconnect a connected input channel to a different output channel
     def test_reconnect(self):
         log = self.__class__.log
         module = self.__class__.module
@@ -235,7 +234,7 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(len(response.body.status), 1)
         self.assertEqual(response.body.status[0].conState, ARINC429Response.CONNECTED)
         self.assertEqual(response.body.status[0].sink, "ARINC_429_RX3")
-        self.assertEqual(response.body.status[0].source, "ARINC_429_TX1")
+        self.assertEqual(response.body.status[0].source, "ARINC_429_TX2")
         log.info("==== Test complete ====")
 
     ## Test case: Connect a linked input/output pair
