@@ -19,7 +19,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='LED.proto',
   package='',
-  serialized_pb=_b('\n\tLED.proto\"?\n\nLEDRequest\x12\x16\n\x03led\x18\x01 \x02(\x0e\x32\t.LEDDescT\x12\x19\n\x05state\x18\x02 \x02(\x0e\x32\n.LEDStateT\"6\n\x0bLEDResponse\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x16\n\x0c\x65rrorMessage\x18\x02 \x01(\t:\x00*E\n\x08LEDDescT\x12\x0c\n\x08LED_POST\x10\x00\x12\x14\n\x10LED_STATUS_GREEN\x10\x01\x12\x15\n\x11LED_STATUS_YELLOW\x10\x02*\"\n\tLEDStateT\x12\n\n\x06LS_OFF\x10\x00\x12\t\n\x05LS_ON\x10\x01')
+  serialized_pb=_b('\n\tLED.proto\"?\n\nLEDRequest\x12\x16\n\x03led\x18\x01 \x02(\x0e\x32\t.LEDDescT\x12\x19\n\x05state\x18\x02 \x02(\x0e\x32\n.LEDStateT\"6\n\x0bLEDResponse\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x16\n\x0c\x65rrorMessage\x18\x02 \x01(\t:\x00*E\n\x08LEDDescT\x12\x0c\n\x08LED_POST\x10\x00\x12\x14\n\x10LED_STATUS_GREEN\x10\x01\x12\x15\n\x11LED_STATUS_YELLOW\x10\x02*$\n\tLEDStateT\x12\x0b\n\x07LED_OFF\x10\x00\x12\n\n\x06LED_ON\x10\x01')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -57,18 +57,18 @@ _LEDSTATET = _descriptor.EnumDescriptor(
   file=DESCRIPTOR,
   values=[
     _descriptor.EnumValueDescriptor(
-      name='LS_OFF', index=0, number=0,
+      name='LED_OFF', index=0, number=0,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='LS_ON', index=1, number=1,
+      name='LED_ON', index=1, number=1,
       options=None,
       type=None),
   ],
   containing_type=None,
   options=None,
   serialized_start=205,
-  serialized_end=239,
+  serialized_end=241,
 )
 _sym_db.RegisterEnumDescriptor(_LEDSTATET)
 
@@ -76,8 +76,8 @@ LEDStateT = enum_type_wrapper.EnumTypeWrapper(_LEDSTATET)
 LED_POST = 0
 LED_STATUS_GREEN = 1
 LED_STATUS_YELLOW = 2
-LS_OFF = 0
-LS_ON = 1
+LED_OFF = 0
+LED_ON = 1
 
 
 

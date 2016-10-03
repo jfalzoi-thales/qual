@@ -28,6 +28,7 @@ class InventoryMessages(ModuleMessages):
     def getKeys(keyList=None):
         keys = keyList if keyList else ["inventory.carrier_card.serial_number",
                                         "inventory.lru.serial_number",
+                                        "inventory.ife.serial_number",
                                         "inventory.power_supply.serial_number",
                                         "inventory.processor_module.serial_number",
                                         "inventory.arinc_board.serial_number",
@@ -61,6 +62,7 @@ class InventoryMessages(ModuleMessages):
     def setKeys(valDict=None):
         values = valDict if valDict else {"inventory.carrier_card.serial_number":       "CARRIER_CARD",
                                           "inventory.lru.serial_number":                "LRU",
+                                          "inventory.ife.serial_number":                "IFE",
                                           "inventory.power_supply.serial_number":       "POWER_SUPPLY",
                                           "inventory.processor_module.serial_number":   "PROCESSOR_MODULE",
                                           "inventory.arinc_board.serial_number":        "ARINC_BOARD",
@@ -166,6 +168,7 @@ class Test_Inventory(unittest.TestCase):
         origValDict = {}
         testValDict = {"inventory.carrier_card.serial_number":       "CARRIER_CARD",
                        "inventory.lru.serial_number":                "LRU",
+                       "inventory.ife.serial_number":                "IFE",
                        "inventory.power_supply.serial_number":       "POWER_SUPPLY",
                        "inventory.processor_module.serial_number":   "PROCESSOR_MODULE",
                        "inventory.arinc_board.serial_number":        "ARINC_BOARD",

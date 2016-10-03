@@ -82,7 +82,7 @@ class QATest(object):
         address = str.format('tcp://{}:{}', server, 50002)
 
         ## Client connection to QTA
-        self.client = JsonZMQClient(address, timeout=15000)
+        self.client = JsonZMQClient(address, timeout=20000)
         print "Opened connection to", address, "for JSON messaging"
 
         # Build a test suite of all requested module tests

@@ -29,41 +29,41 @@ class LedControlMessages(ModuleMessages):
     def onPost():
         message = LEDRequest()
         message.led   = LED_POST
-        message.state = LS_ON
+        message.state = LED_ON
         return message
 
     @staticmethod
     def onTestGreen():
         message = LEDRequest()
         message.led   = LED_STATUS_GREEN
-        message.state = LS_ON
+        message.state = LED_ON
         return message
 
     @staticmethod
     def onTestYellow():
         message = LEDRequest()
         message.led   = LED_STATUS_YELLOW
-        message.state = LS_ON
+        message.state = LED_ON
         return message
     @staticmethod
     def offPost():
         message = LEDRequest()
         message.led   = LED_POST
-        message.state = LS_OFF
+        message.state = LED_OFF
         return message
 
     @staticmethod
     def offTestGreen():
         message = LEDRequest()
         message.led   = LED_STATUS_GREEN
-        message.state = LS_OFF
+        message.state = LED_OFF
         return message
 
     @staticmethod
     def offTestYellow():
         message = LEDRequest()
         message.led   = LED_STATUS_YELLOW
-        message.state = LS_OFF
+        message.state = LED_OFF
         return message
 
 ## LED Control Unit Test
