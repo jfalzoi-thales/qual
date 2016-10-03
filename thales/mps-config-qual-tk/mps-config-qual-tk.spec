@@ -3,8 +3,8 @@
 #
 Name: mps-config-qual-tk
 Summary: QUAL/ATP Specific configuration
-Version: 1.0.14
-Release: 4
+Version: 1.0.15
+Release: 1
 Group: System Environment/Libraries
 URL: http://www.thalesgroup.com/
 Vendor: Thales Avionics, Inc.
