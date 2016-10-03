@@ -33,7 +33,7 @@ class EncoderMessages(ModuleMessages):
     def run():
         message = EncoderRequest()
         message.requestType = EncoderRequest.RUN
-        message.sink = '10.10.10.10:8000'
+        message.sink = '192.168.1.108:52123'
         return message
 
     @staticmethod
@@ -78,6 +78,8 @@ class Test_Encoder(unittest.TestCase):
         module = self.__class__.module
         log.info("==== Reset module state ====")
         module.msgHandler(ThalesZMQMessage(EncoderMessages.stop()))
+        # Make sure the video is stopped
+        sleep(2)
 
     ## Valid Test case: Send a RUN, REPORT, STOP, and REPORT msgs
     #  Asserts:
@@ -101,17 +103,23 @@ class Test_Encoder(unittest.TestCase):
         self.assertEqual(response.body.streamActive, True)
 
         log.info("==== Wait 2 seconds ====")
-        sleep(2)
+        sleep(6)
 
         response = module.msgHandler(ThalesZMQMessage(EncoderMessages.report()))
         self.assertEqual(response.name, "EncoderResponse")
         self.assertEqual(response.body.state, EncoderResponse.RUNNING)
         self.assertEqual(response.body.streamActive, True)
 
+        log.info("==== Wait 2 seconds ====")
+        sleep(2)
+
         response = module.msgHandler(ThalesZMQMessage(EncoderMessages.stop()))
         self.assertEqual(response.name, "EncoderResponse")
         self.assertEqual(response.body.state, EncoderResponse.STOPPED)
         self.assertEqual(response.body.streamActive, False)
+
+        log.info("==== Wait 2 seconds ====")
+        sleep(2)
 
         response = module.msgHandler(ThalesZMQMessage(EncoderMessages.report()))
         self.assertEqual(response.name, "EncoderResponse")
