@@ -1,4 +1,5 @@
 import collections
+import os
 import threading
 from time import sleep
 
@@ -39,22 +40,14 @@ class GPIO(module.Module):
         self.addMsgHandler(GPIORequest, self.handler)
         ## Named tuple type to store pin info
         self.PinInfo = collections.namedtuple("PinInfo", "func name")
+
         ## Dict mapping GPIO output pins to handler and handler pin name
         self.outputPins = {"GP_KYLN_OUT1": self.PinInfo(self.gpioManagerSet, "OUTPUT_1_PIN_A6"),
                            "GP_KYLN_OUT2": self.PinInfo(self.gpioManagerSet, "OUTPUT_2_PIN_B6"),
                            "GP_KYLN_OUT3": self.PinInfo(self.gpioManagerSet, "OUTPUT_3_PIN_C6"),
                            "GP_KYLN_OUT4": self.PinInfo(self.gpioManagerSet, "OUTPUT_4_PIN_D6"),
                            "GP_KYLN_OUT5": self.PinInfo(self.gpioManagerSet, "OUTPUT_5_PIN_E6"),
-                           "GP_KYLN_OUT6": self.PinInfo(self.gpioManagerSet, "OUTPUT_6_PIN_E8"),
-                           "GP_KYLN_OUT7": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_01"),
-                           "GP_KYLN_OUT8": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_02"),
-                           "GP_KYLN_OUT9": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_03"),
-                           "VA_KYLN_OUT1": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT1"),
-                           "VA_KYLN_OUT2": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT2"),
-                           "VA_KYLN_OUT3": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT3"),
-                           "VA_KYLN_OUT4": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT4"),
-                           "VA_KYLN_OUT5": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT5"),
-                           "VA_KYLN_OUT6": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT6")}
+                           "GP_KYLN_OUT6": self.PinInfo(self.gpioManagerSet, "OUTPUT_6_PIN_E8")}
 
         ## Dict mapping GPIO input pins to handler and handler pin name
         self.inputPins = {"GP_KYLN_IN1": self.PinInfo(self.gpioManagerGet, "INPUT_1_PIN_A7"),
@@ -62,20 +55,34 @@ class GPIO(module.Module):
                           "GP_KYLN_IN3": self.PinInfo(self.gpioManagerGet, "INPUT_3_PIN_C7"),
                           "GP_KYLN_IN4": self.PinInfo(self.gpioManagerGet, "INPUT_4_PIN_D7"),
                           "GP_KYLN_IN5": self.PinInfo(self.gpioManagerGet, "INPUT_5_PIN_E7"),
-                          "PA_ALL_KYLN_IN": self.PinInfo(self.gpioManagerGet, "PA_All_PIN_C8"),
-                          "GP_KYLN_IN6": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_01"),
-                          "GP_KYLN_IN7": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_02"),
-                          "GP_KYLN_IN8": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_03"),
-                          "GP_KYLN_IN9": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_04"),
-                          "PA_KYLN_IN1": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN1"),
-                          "PA_KYLN_IN2": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN2"),
-                          "PA_KYLN_IN3": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN3"),
-                          "PA_KYLN_IN4": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN4"),
-                          "PA_KYLN_IN5": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN5"),
-                          "PA_KYLN_IN6": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN6"),
-                          "PA_KYLN_IN7": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN7"),
-                          "PA_KYLN_IN8": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN8"),
-                          "PA_MUTE_KYLN_IN": self.PinInfo(self.ifeVmQtaGet, "PA_MUTE")}
+                          "PA_ALL_KYLN_IN": self.PinInfo(self.gpioManagerGet, "PA_All_PIN_C8")}
+
+        #  If we are running on an MPSi, allow ife related keys
+        if os.path.isfile("/dev/mps/usb-mcp2221-ife"):
+            self.outputPins.update({"GP_KYLN_OUT7": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_01"),
+                                    "GP_KYLN_OUT8": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_02"),
+                                    "GP_KYLN_OUT9": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_03"),
+                                    "VA_KYLN_OUT1": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT1"),
+                                    "VA_KYLN_OUT2": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT2"),
+                                    "VA_KYLN_OUT3": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT3"),
+                                    "VA_KYLN_OUT4": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT4"),
+                                    "VA_KYLN_OUT5": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT5"),
+                                    "VA_KYLN_OUT6": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT6")})
+
+            self.inputPins.update({"GP_KYLN_IN6": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_01"),
+                                   "GP_KYLN_IN7": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_02"),
+                                   "GP_KYLN_IN8": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_03"),
+                                   "GP_KYLN_IN9": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_04"),
+                                   "PA_KYLN_IN1": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN1"),
+                                   "PA_KYLN_IN2": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN2"),
+                                   "PA_KYLN_IN3": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN3"),
+                                   "PA_KYLN_IN4": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN4"),
+                                   "PA_KYLN_IN5": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN5"),
+                                   "PA_KYLN_IN6": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN6"),
+                                   "PA_KYLN_IN7": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN7"),
+                                   "PA_KYLN_IN8": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN8"),
+                                   "PA_MUTE_KYLN_IN": self.PinInfo(self.ifeVmQtaGet, "PA_MUTE")})
+
         ## Dict of connections; key is input pin, value is a ConnectionInfo object
         self.connections = {}
         ## List of connections we're done with

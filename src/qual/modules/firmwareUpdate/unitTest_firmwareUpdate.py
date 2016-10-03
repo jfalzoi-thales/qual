@@ -13,7 +13,7 @@ from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 class FirmwareUpdateMessages(ModuleMessages):
     @staticmethod
     def getMenuTitle():
-        return "FirmwareUpdate"
+        return "Firmware Update"
 
     @staticmethod
     def getMenuItems():
