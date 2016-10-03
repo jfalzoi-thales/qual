@@ -14,7 +14,7 @@ from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 class MacAddressMessages(ModuleMessages):
     @staticmethod
     def getMenuTitle():
-        return "MacAddress"
+        return "MAC Addresses"
 
     @staticmethod
     def getMenuItems():

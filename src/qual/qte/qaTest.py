@@ -38,6 +38,7 @@ class QATest(object):
 
         # Build list of module test classes to run
         testClasses = []
+        testPattern = ""
         if "sanity" in moduleNames:
             print "Sanity check tests requested."
             for testClassName, testClass in self.moduleFinder.classmap.items():
@@ -53,17 +54,27 @@ class QATest(object):
                     testClasses.append(self.moduleFinder.classmap["Test_" + moduleName])
                 else:
                     print "Module test '%s' not found." % moduleName
+                    testPattern = moduleName
 
         # If no valid module name specified on command line, print a menu
         if len(testClasses) == 0:
             print
-            print "Available module tests:"
             index = 1
             modList = []
-            for mod in sorted(self.moduleFinder.classmap):
-                print "\t%d - %s" % (index, mod.replace("Test_", ""))
-                modList.append(mod)
-                index += 1
+            if testPattern:
+                patternMatches = [mod for mod in sorted(self.moduleFinder.classmap) if testPattern in mod]
+                if patternMatches:
+                    print "Available module tests matching '%s':" % testPattern
+                    for mod in patternMatches:
+                        print "\t%d - %s" % (index, mod.replace("Test_", ""))
+                        modList.append(mod)
+                        index += 1
+            if not modList:
+                print "Available module tests:"
+                for mod in sorted(self.moduleFinder.classmap):
+                    print "\t%d - %s" % (index, mod.replace("Test_", ""))
+                    modList.append(mod)
+                    index += 1
             while len(testClasses) == 0:
                 try:
                     selectedModule = int(raw_input("Test to run: "))
