@@ -179,8 +179,7 @@ class ARINC429(Module):
                 self.receive(self.inputChans[inputChan].name)
 
             self.connectionsLock.release()
-
-        elif str(request.sink) not in self.connections:
+        else:
             #  Get connections lock before modifying connections
             self.connectionsLock.acquire()
             self.connections[str(request.sink)] = ConnectionInfo(str(request.source))
