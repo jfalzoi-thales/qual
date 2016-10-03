@@ -25,6 +25,8 @@ else
     cd ${MPSBUILDDIR}
     git clean -qdf
     git checkout -q -- .
+    echo "Updating mps-builder; enter credentials if necessary"
+    git fetch --tags
 fi
 
 MPSBUILDTAG=`grep ^mps-builder ${QUALDIR}/build/package.tags | cut -f 2 -d ' ' -s`
