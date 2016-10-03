@@ -1,10 +1,12 @@
 import unittest
 from time import sleep
+
 import encoder
-from common.gpb.python.Encoder_pb2 import EncoderRequest, EncoderResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger import logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.Encoder_pb2 import EncoderRequest, EncoderResponse
+from tklabs_utils.logger import logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 

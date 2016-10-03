@@ -24,6 +24,5 @@ install -m755 encoder/videoEncoder.sh /usr/bin/videoEncoder.sh
 install -m755 hdds/tempsensor.sh /usr/bin/tempsensor
 install -m755 hdds/voltsensor.sh /usr/bin/voltsensor
 install -m755 analogAudio/pavaTest.sh /usr/bin/
-cd /thales/qual/src/qual/ifeGPIO
-install -m755 demo_binaryio.sh /usr/bin/demo_binaryio
-install -m755 fpga.sh /usr/bin/fpga
+install -m755 gpio/demo_binaryio.sh /usr/bin/demo_binaryio
+install -m755 gpio/fpga.sh /usr/bin/fpga
