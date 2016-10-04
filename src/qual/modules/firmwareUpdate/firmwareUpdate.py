@@ -309,15 +309,45 @@ class FirmwareUpdate(Module):
 
             # Copy the Firmware image into the switch
             channel.send("firmware upgrade tftp://%s/%s\n" % (self.tftpServer, "Thales-MPS.dat"))
-
-            # TODO: Check operation result. Here we don't have a way to know if the firmware file was actually transferred, I'm going to wait until we test it on the MPS to see what is the switch reponse in case of success or failure
-
-            # Close the connection
-            switchClient.close()
-            # Fill the response
-            response.success = True
-
-            if reboot: self.reboot.put("REBOOT")
+            # Make some checks here
+            while True:
+                time.sleep(0.2)
+                while channel.recv_ready():
+                    output = channel.recv(1024)
+                # if the tftp server is not active or wrong IP
+                if "Invalid IP address" in output:
+                    response.success = False
+                    response.component = FW_SWITCH_FIRMWARE
+                    response.errorMessage = "Switch unable to establish the connection with tftp server %s" % (self.tftpServer)
+                    self.log.error("Switch unable to establish the connection with tftp server %s" % (self.tftpServer))
+                    return
+                # if Thales-MPS.dat was not present on the tftp server
+                elif 'File not found' in output:
+                    response.success = False
+                    response.component = FW_SWITCH_FIRMWARE
+                    response.errorMessage = "Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % (self.tftpServer)
+                    self.log.error("Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % (self.tftpServer))
+                    return
+                # if Thales-MPS.dat was an invalid image
+                elif 'Error: Invalid image' in output:
+                    response.success = False
+                    response.component = FW_SWITCH_FIRMWARE
+                    response.errorMessage = "Invalid firmware image"
+                    self.log.error("Invalid firmware image")
+                    return
+                else:
+                    # Here we'll check if we are still connected to the switch,
+                    # If not, it means that the switch accepted the file and it's upgrading
+                    # otherwise, continue.......
+                    transport = switchClient.get_transport()
+                    if transport.is_active():
+                        continue
+                    else:
+                        # Fill the response
+                        response.success = True
+                        # reboot if requested
+                        if reboot: self.reboot.put("REBOOT")
+                        return
 
         except paramiko.ssh_exception.SSHException:
             response.success = False
