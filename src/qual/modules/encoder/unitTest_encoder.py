@@ -102,7 +102,7 @@ class Test_Encoder(unittest.TestCase):
         self.assertEqual(response.body.state, EncoderResponse.RUNNING)
         self.assertEqual(response.body.streamActive, True)
 
-        log.info("==== Wait 8 seconds ====")
+        log.info("==== Waiting 8 seconds for encoder to start ====")
         sleep(8)
 
         response = module.msgHandler(ThalesZMQMessage(EncoderMessages.report()))
