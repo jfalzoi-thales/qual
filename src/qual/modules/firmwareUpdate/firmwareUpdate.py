@@ -309,8 +309,12 @@ class FirmwareUpdate(Module):
 
             # Copy the Firmware image into the switch
             channel.send("firmware upgrade tftp://%s/%s\n" % (self.tftpServer, "Thales-MPS.dat"))
+            # Get the starting time of the upgrade operation
+            startTime = time.clock()
+            # It should end in less than 8 minutes
+            endTime = startTime + 480
             # Make some checks here
-            while True:
+            while endTime > time.time():
                 time.sleep(0.2)
                 while channel.recv_ready():
                     output = channel.recv(1024)
@@ -348,6 +352,11 @@ class FirmwareUpdate(Module):
                         # reboot if requested
                         if reboot: self.reboot.put("REBOOT")
                         return
+            # If get here, it is because the switch was not able to upgrade
+            response.success = False
+            response.component = FW_SWITCH_FIRMWARE
+            response.errorMessage = "FATAL! Firmware upgrade timeout."
+            self.log.error("FATAL! Firmware upgrade timeout.")
 
         except paramiko.ssh_exception.SSHException:
             response.success = False
