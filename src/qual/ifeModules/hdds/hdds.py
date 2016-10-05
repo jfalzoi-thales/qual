@@ -93,7 +93,7 @@ class IFEHDDS(Module):
                 if value.key in self.ifeInventoryKeys:
                     inventorySetPairs[value.key] = value.value
                 else:
-                    self.log.warning("Attempted to get unrecognized IFE inventory key: %s" % value.key)
+                    self.log.warning("Attempted to set unrecognized IFE inventory key: %s" % value.key)
                     self.addResp(response, value.key)
 
             if inventorySetPairs: self.inventorySet(response, inventorySetPairs)

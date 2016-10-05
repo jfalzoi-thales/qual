@@ -466,7 +466,7 @@ class HDDS(Module):
             ifeValue.key = key
             ifeValue.value = value
 
-        # IFE get messages are handled by the QTA running on the IFE VM
+        # IFE set messages are handled by the QTA running on the IFE VM
         ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(ThalesZMQMessage(ifeReq))
 
         if ifeVmQtaResponse.name == "HostDomainDeviceServiceResponse":
