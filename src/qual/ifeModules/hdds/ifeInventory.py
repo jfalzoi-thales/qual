@@ -99,9 +99,14 @@ class IFEInventory(object):
             if byte == 0xFF:
                 endCnt += 1
             else:
-                bytes.append(byte)
+                endCnt = 0
 
-            if endCnt == 4: break
+            bytes.append(byte)
+
+            #  Four consecutive 0xFF values means EOF
+            if endCnt == 4:
+                del bytes[-4:]
+                break
 
         if bytes:
             if os.path.exists(self.compressedFile):
@@ -118,8 +123,6 @@ class IFEInventory(object):
     #  @param    self
     #  @return   True if success, False if failure
     def writeEEPROM(self):
-        addr = 0x00
-
         try:
             with open(self.compressedFile, 'rb') as inventoryFile:
                 data = inventoryFile.read()
@@ -129,10 +132,13 @@ class IFEInventory(object):
 
         bytes = bytearray(data)
 
+        addr = 0x00
+
         for byte in bytes:
             call(["eeprom", hex(addr), hex(byte)])
             addr += 0x01
 
+        #  Four 0xFF values denote EOF
         for i in range(0, 4):
             call(["eeprom", hex(addr), "0xFF"])
             addr += 0x01
