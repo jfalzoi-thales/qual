@@ -310,7 +310,7 @@ class FirmwareUpdate(Module):
             # Copy the Firmware image into the switch
             channel.send("firmware upgrade tftp://%s/%s\n" % (self.tftpServer, "Thales-MPS.dat"))
             # Get the starting time of the upgrade operation
-            startTime = time.clock()
+            startTime = time.time()
             # It should end in less than 8 minutes
             endTime = startTime + 480
             # Make some checks here
