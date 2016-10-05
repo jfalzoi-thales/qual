@@ -344,18 +344,18 @@ class HDDS(Module):
     #  @param     response  HostDomainDeviceServiceResponse object
     #  @param     macPairs  Dict containing pairs of keys and MAC address values to be set
     def macSet(self, response, macPairs):
-        for key in macPairs:
+        for key, value in macPairs.items():
             target = key.split('.')[-1]
 
             if target == "switch":
-                self.vtssMacSet(response, key, macPairs[key])
+                self.vtssMacSet(response, key, value)
             elif target == "processor":
-                self.cpuMacSet(response, key, macPairs[key])
+                self.cpuMacSet(response, key, value)
             elif target.startswith("i350_"):
-                self.i350MacSet(response, key, macPairs[key])
+                self.i350MacSet(response, key, value)
             else:
                 self.log.warning("Invalid or not yet supported key: %s" % key)
-                self.addResp(response, key, macPairs[key])
+                self.addResp(response, key, value)
 
 
     ## Handles SET requests for vtss MAC key
@@ -461,10 +461,10 @@ class HDDS(Module):
         ifeReq = HostDomainDeviceServiceRequest()
         ifeReq.requestType = HostDomainDeviceServiceRequest.SET
 
-        for key in ifePairs:
-            value = ifeReq.values.add()
-            value.key = key
-            value.value = ifePairs[key]
+        for key, value in ifePairs.items():
+            ifeValue = ifeReq.values.add()
+            ifeValue.key = key
+            ifeValue.value = value
 
         # IFE get messages are handled by the QTA running on the IFE VM
         ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(ThalesZMQMessage(ifeReq))
@@ -515,10 +515,10 @@ class HDDS(Module):
     def hddsSet(self, response, hddsPairs):
         hddsReq = SetReq()
 
-        for key in hddsPairs:
-            value = hddsReq.values.add()
-            value.key = key
-            value.value = hddsPairs[key]
+        for key, value in hddsPairs.items():
+            hddsValue = hddsReq.values.add()
+            hddsValue.key = key
+            hddsValue.value = value
 
         #  Just pass through to the actual HDDS service
         HDDSResp = self.hddsClient.sendRequest(ThalesZMQMessage(hddsReq))

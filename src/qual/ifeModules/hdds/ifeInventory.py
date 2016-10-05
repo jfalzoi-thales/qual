@@ -87,21 +87,20 @@ class IFEInventory(object):
         addr = 0x00
         bytes = bytearray()
 
-        while True:
+        while addr <= 0xFF:
             try:
                 byte = int(check_output(["eeprom", hex(addr)]).rstrip(), 16)
             except CalledProcessError:
                 self.log.error("Unable to read inventory data from EEPROM")
                 byte = 0xFF
 
+            bytes.append(byte)
             addr += 0x01
 
             if byte == 0xFF:
                 endCnt += 1
             else:
                 endCnt = 0
-
-            bytes.append(byte)
 
             #  Four consecutive 0xFF values means EOF
             if endCnt == 4:
