@@ -7,7 +7,12 @@ if [ ! -d "$EEPROM" ]; then
 fi
 
 if [ $# == 1 ]; then
-    cat "$EEPROM/$1"
+    if [ -f "$EEPROM" ]; then
+        cat "$EEPROM/$1"
+    else
+        echo "0xFF"
+    fi
+
     exit 0
 elif [ $# == 2 ]; then
     echo "$2" > "$EEPROM/$1"

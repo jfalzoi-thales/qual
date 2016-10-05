@@ -89,7 +89,7 @@ class IFEInventory(object):
 
         while True:
             try:
-                byte = ord(check_output(["eeprom", hex(addr)]).rstrip())
+                byte = int(check_output(["eeprom", hex(addr)]).rstrip(), 16)
             except CalledProcessError:
                 self.log.error("Unable to read inventory data from EEPROM")
                 byte = 0xFF

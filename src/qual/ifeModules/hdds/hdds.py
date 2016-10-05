@@ -174,5 +174,5 @@ class IFEHDDS(Module):
     def inventorySet(self, response, inventoryPairs):
         success = self.ifeInventory.update(inventoryPairs)
 
-        for key, value in inventoryPairs:
+        for key, value in inventoryPairs.items():
             self.addResp(response, key, value, success)
