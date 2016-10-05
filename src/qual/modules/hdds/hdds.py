@@ -57,7 +57,8 @@ class HDDS(Module):
         self.semaInventory = SEMAInventory(self.log)
         ## BIOS tool command
         self.biosTool = "/thales/host/appliances/mps-biostool"
-
+        ## Flag to detect if running on MPSi
+        self.ife = os.path.isfile("/dev/mps/usb-mcp2221-ife")
         #  Parse key names from Thales Host Domain Device Service configuration file
         thalesHDDSConfig = "/thales/host/config/HDDS.conv"
         configParser = SafeConfigParser()
@@ -86,61 +87,63 @@ class HDDS(Module):
         if msg.body.requestType == HostDomainDeviceServiceRequest.GET:
             macGetKeys = []
             inventoryGetKeys = []
-            ifeGetReq = None
-            hddsGetReq = None
+            ifeGetKeys = []
+            hddsGetKeys = []
 
             for value in msg.body.values:
                 if value.key.startswith("mac_address"):
-                    if value.key.endswith("*"):
-                        macGetKeys += self.macKeys
+                    if value.key[-1] == "*":
+                        macGetKeys.append(self.macKeys)
                     elif value.key in self.macKeys:
                         macGetKeys.append(value.key)
                     else:
                         self.log.warning("Attempted to get invalid mac address key: %s" % value.key)
                         self.addResp(response, value.key)
                 elif value.key.startswith("inventory"):
-                    if value.key.endswith("*"):
+                    if value.key[-1] == "*":
                         keyParts = value.key.split('.')
 
                         if len(keyParts) == 2:
-                            inventoryGetKeys += self.inventoryKeys
+                            for key in self.inventoryKeys:
+                                if self.ife and key.startswith("inventory.ife"):
+                                    ifeGetKeys.append(key)
+                                else:
+                                    inventoryGetKeys.append(key)
                         elif len(keyParts) == 3:
                             for key in self.inventoryKeys:
                                 if key.startswith("inventory.%s" % keyParts[1]):
-                                    inventoryGetKeys.append(key)
+                                    if self.ife and keyParts[1] == "ife":
+                                        ifeGetKeys.append(key)
+                                    else:
+                                        inventoryGetKeys.append(key)
                         else:
                             self.log.warning("Attempted to get invalid wildcard key: %s" % value.key)
                             self.addResp(response, value.key)
                     elif value.key in self.inventoryKeys or self.inventoryKeys == []:
-                        inventoryGetKeys.append(value.key)
+                        if self.ife and value.key.startswith("inventory.ife"):
+                            ifeGetKeys.append(value.key)
+                        else:
+                            inventoryGetKeys.append(value.key)
                     else:
                         self.log.warning("Attempted to get invalid inventory key: %s" % value.key)
                         self.addResp(response, value.key)
                 elif value.key.startswith("ife"):
-                    if ifeGetReq is None:
-                        ifeGetReq = HostDomainDeviceServiceRequest()
-                        ifeGetReq.requestType = HostDomainDeviceServiceRequest.GET
-
-                    ifeValue = ifeGetReq.values.add()
-                    ifeValue.key = value.key
+                    ifeGetKeys.append(value.key)
                 else:
-                    if hddsGetReq is None: hddsGetReq = GetReq()
-                    hddsGetReq.key.append(value.key)
+                    hddsGetKeys.append(value.key)
 
             if macGetKeys:          self.macGet(response, macGetKeys)
             if inventoryGetKeys:    self.inventoryGet(response, inventoryGetKeys)
-            if ifeGetReq:           self.ifeGet(response, ifeGetReq)
-            if hddsGetReq:          self.hddsGet(response, hddsGetReq)
+            if ifeGetKeys:          self.ifeGet(response, ifeGetKeys)
+            if hddsGetKeys:         self.hddsGet(response, hddsGetKeys)
         elif msg.body.requestType == HostDomainDeviceServiceRequest.SET:
             macSetPairs = {}
-            inventoryPairs = {}
-            hddsSetReq = None
+            inventorySetPairs = {}
+            ifeSetPairs = {}
+            hddsSetPairs = {}
 
             for value in msg.body.values:
-                if value.key.startswith("ife"):
-                    self.log.warning("Attempted to set ife voltage or temperature.  Nothing to do.")
-                    self.addResp(response, value.key, value.value)
-                elif value.key.startswith("mac_address"):
+                if value.key.startswith("mac_address"):
                     if value.key in self.macKeys:
                         hex = value.value.replace(':','')
 
@@ -158,19 +161,23 @@ class HDDS(Module):
                         self.addResp(response, value.key, value.value)
                 elif value.key.startswith("inventory"):
                     if value.key in self.inventoryKeys or self.inventoryKeys == []:
-                        inventoryPairs[value.key] = value.value
+                        if self.ife and value.key.startswith("inventory.ife"):
+                            ifeSetPairs[value.key] = value.value
+                        else:
+                            inventorySetPairs[value.key] = value.value
                     else:
                         self.log.warning("Attempted to set invalid inventory key: %s" % value.key)
                         self.addResp(response, value.key, value.value)
+                elif value.key.startswith("ife"):
+                    self.log.warning("Attempted to set ife voltage or temperature.  Nothing to do.")
+                    self.addResp(response, value.key, value.value)
                 else:
-                    if hddsSetReq is None: hddsSetReq = SetReq()
-                    hddsValue = hddsSetReq.values.add()
-                    hddsValue.key = value.key
-                    hddsValue.value = value.value
+                    hddsSetPairs[value.key] = value.value
 
-            if macSetPairs:     self.macSet(response, macSetPairs)
-            if inventoryPairs:  self.inventorySet(response, inventoryPairs)
-            if hddsSetReq:      self.hddsSet(response, hddsSetReq)
+            if macSetPairs:         self.macSet(response, macSetPairs)
+            if inventorySetPairs:   self.inventorySet(response, inventorySetPairs)
+            if ifeSetPairs:         self.ifeSet(response, ifeSetPairs)
+            if hddsSetPairs:        self.hddsSet(response, hddsSetPairs)
         else:
             self.log.error("Unexpected Request Type %d" % msg.body.requestType)
 
@@ -212,8 +219,15 @@ class HDDS(Module):
     ## Handles GET requests for IFE keys
     #  @param   self
     #  @param   response    A HostDomainDeviceServiceResponse object
-    #  @param   ifeReq      A HostDomainDeviceServiceRequest object to be sent to the Guest VM QTA
-    def ifeGet(self, response, ifeReq):
+    #  @param   ifeKeys     A list of keys to be sent to the Guest VM QTA
+    def ifeGet(self, response, ifeKeys):
+        ifeReq = HostDomainDeviceServiceRequest()
+        ifeReq.requestType = HostDomainDeviceServiceRequest.GET
+
+        for key in ifeKeys:
+            value = ifeReq.values.add()
+            value.key = key
+
         # IFE get messages are handled by the QTA running on the IFE VM
         ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(ThalesZMQMessage(ifeReq))
 
@@ -297,8 +311,10 @@ class HDDS(Module):
     ## Handles GET requests for HDDS
     #  @param     self
     #  @param     response  HostDomainDeviceServiceResponse object
-    #  @param     hddsReq   HostDomainDeviceServiceRequest object
-    def hddsGet(self, response, hddsReq):
+    #  @param     hddsKeys  List of keys to be sent to the HDDS
+    def hddsGet(self, response, hddsKeys):
+        hddsReq = GetReq()
+        hddsReq.key.append(hddsKeys)
         #  Just pass through to the actual HDDS service
         HDDSResp = self.hddsClient.sendRequest(ThalesZMQMessage(hddsReq))
 
@@ -328,18 +344,18 @@ class HDDS(Module):
     #  @param     response  HostDomainDeviceServiceResponse object
     #  @param     macPairs  Dict containing pairs of keys and MAC address values to be set
     def macSet(self, response, macPairs):
-        for key in macPairs:
+        for key, value in macPairs.items():
             target = key.split('.')[-1]
 
             if target == "switch":
-                self.vtssMacSet(response, key, macPairs[key])
+                self.vtssMacSet(response, key, value)
             elif target == "processor":
-                self.cpuMacSet(response, key, macPairs[key])
+                self.cpuMacSet(response, key, value)
             elif target.startswith("i350_"):
-                self.i350MacSet(response, key, macPairs[key])
+                self.i350MacSet(response, key, value)
             else:
                 self.log.warning("Invalid or not yet supported key: %s" % key)
-                self.addResp(response, key, macPairs[key])
+                self.addResp(response, key, value)
 
 
     ## Handles SET requests for vtss MAC key
@@ -437,17 +453,43 @@ class HDDS(Module):
 
         self.addResp(response, key, mac, success)
 
+    ## Handles SET requests for IFE keys
+    #  @param   self
+    #  @param   response    A HostDomainDeviceServiceResponse object
+    #  @param   ifePairs    Dict of key value pairs to be sent to the Guest VM QTA
+    def ifeSet(self, response, ifePairs):
+        ifeReq = HostDomainDeviceServiceRequest()
+        ifeReq.requestType = HostDomainDeviceServiceRequest.SET
+
+        for key, value in ifePairs.items():
+            ifeValue = ifeReq.values.add()
+            ifeValue.key = key
+            ifeValue.value = value
+
+        # IFE set messages are handled by the QTA running on the IFE VM
+        ifeVmQtaResponse = self.ifeVmQtaClient.sendRequest(ThalesZMQMessage(ifeReq))
+
+        if ifeVmQtaResponse.name == "HostDomainDeviceServiceResponse":
+            deserializedResponse = HostDomainDeviceServiceResponse()
+            deserializedResponse.ParseFromString(ifeVmQtaResponse.serializedBody)
+
+            for value in deserializedResponse.values:
+                self.addResp(response, value.key, value.value, value.success)
+        else:
+            self.log.error("Unexpected response from IFE VM HDDS: %s" % ifeVmQtaResponse.name)
+            self.addResp(response)
+
     ## Handles SET requests for inventory items
     #  @param     self
-    #  @param     response       HostDomainDeviceServiceResponse object
-    #  @param     inventoryPairs Dict of inventory items
-    def inventorySet(self, response, inventoryPairs):
+    #  @param     response          HostDomainDeviceServiceResponse object
+    #  @param     inventorySetPairs Dict of inventory items
+    def inventorySet(self, response, inventorySetPairs):
         i350Pairs = {}
         semaPairs = {}
 
         # Validate keys/values and devide between carrier card (goes to I350)
         # and everything else (goes to SEMA flash)
-        for key, value in inventoryPairs.items():
+        for key, value in inventorySetPairs.items():
             # Key has form inventory.<section>.<item>
             if key.split('.')[1] == "carrier_card":
                 i350Pairs[key] = value
@@ -468,9 +510,16 @@ class HDDS(Module):
 
     ## Handles SET requests for HDDS
     #  @param     self
-    #  @param     response  HostDomainDeviceServiceResponse object
-    #  @param     hddsReq   HostDomainDeviceServiceRequest object
-    def hddsSet(self, response, hddsReq):
+    #  @param     response      HostDomainDeviceServiceResponse object
+    #  @param     hddsPairs     A Dict of key value pairs to be set by the HDDS
+    def hddsSet(self, response, hddsPairs):
+        hddsReq = SetReq()
+
+        for key, value in hddsPairs.items():
+            hddsValue = hddsReq.values.add()
+            hddsValue.key = key
+            hddsValue.value = value
+
         #  Just pass through to the actual HDDS service
         HDDSResp = self.hddsClient.sendRequest(ThalesZMQMessage(hddsReq))
 
