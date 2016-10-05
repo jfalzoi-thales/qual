@@ -6,13 +6,21 @@ message HostDomainDeviceServiceRequest {
         SET = 1;
     }
 
-    required RequestTypeT requestType = 1 [default = GET];
-    required string key = 2;
-    optional string value = 3;
+    message PropertyReq {
+        required string key = 1;
+        optional string value = 2;
+    }
+
+    required RequestTypeT requestType = 1;
+    repeated PropertyReq values = 2;
 }
 
 message HostDomainDeviceServiceResponse {
-    required bool success = 1;
-    required string key = 2;
-    required string value = 3;
+    message PropertyResp {
+        required bool success = 1;
+        required string key = 2;
+        required string value = 3;
+    }
+
+    repeated PropertyResp values = 1;
 }

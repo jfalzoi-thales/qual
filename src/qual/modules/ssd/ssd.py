@@ -2,6 +2,7 @@ import os
 import subprocess
 from time import sleep
 
+from common.pb2.ErrorMessage_pb2 import ErrorMessage
 from qual.pb2.SSD_pb2 import SSDRequest, SSDResponse
 from ssd_Exception import SSDModuleException
 from tklabs_utils.module.module import Module
@@ -21,7 +22,7 @@ class SSD(Module):
         ## RAID device
         self.__raidDev = "/dev/md/raid_unprotected_0"
         ## RAID filesystem mount point
-        self.__raidFS = "/mnt/qual"
+        self.__raidFS = ""
         ## Location of FIO config file
         self.__fioConf = "/tmp/fio-qual.fio"
         ## Whether or not to format the RAID at startup
@@ -33,22 +34,35 @@ class SSD(Module):
         self.readBandwidth = 0.0
         self.writeBandwidth = 0.0
 
-        if self.formatRAID:
-            #  Check if fio files already exist on the system.  If they do, initialization is probably complete already
-            if not os.path.isfile("%s/READ.0.0" % self.__raidFS) or not os.path.isfile("%s/WRITE.0.0" % self.__raidFS):
-                self.initFS()
-            else:
-                self.log.info("It appears that initialization has already been completed on this system.  Skipping.")
+        # If TSP Download or Qual test filesystem is present, use instead of formatting RAID
+        tspDownloadFS = "/tsp-download"
+        qualTestFS    = "/mnt/qual"
+        if self.checkIfMounted(tspDownloadFS):
+            self.log.info("Using TSP download partition for SSD test")
+            self.__raidFS = tspDownloadFS
+            self.runCommand('rm -rf %s/*' % tspDownloadFS,
+                            failText='Unable to clean up TSP download directory')
+        elif self.checkIfMounted(qualTestFS):
+            self.log.info("Using existing %s filesystem for SSD test", qualTestFS)
+            self.__raidFS = qualTestFS
         else:
-            #  Just check that mount point dir exists - allows us to test on any disk
-            if not os.path.exists(self.__raidFS):
-                raise SSDModuleException("Filesystem test dir %s not found" % self.__raidFS)
+            # If LVM volumes exist, we don't want to mess with the RAID
+            output = subprocess.check_output('lvs || true', shell=True)
+            if output:
+                self.log.warning("RAID appears to be in use; disabling SSD test")
+            else:
+                # Go ahead and format the RAID
+                self.__raidFS = qualTestFS
+                self.initFS()
 
-        #  Create the FIO config file
-        self.createFioConfig()
-        #  Run FIO to create test file
-        self.log.info('Creating FIO test file...')
-        subprocess.Popen(['fio', self.__fioConf, '--runtime=0'], stdout=DEVNULL).communicate()
+        if self.__raidFS:
+            #  Create the FIO config file
+            self.createFioConfig()
+            #  Run FIO to create test file
+            self.log.info("Creating FIO test files...")
+            self.runCommand('fio %s --runtime=0 > /tmp/fiosetup.log 2>&1' % self.__fioConf,
+                            failText='Unable to create FIO test files')
+
         #  Adding the fio tool thread
         self.addThread(self.runTool)
         #  Adding the message handler
@@ -60,6 +74,18 @@ class SSD(Module):
     #  @param     msg      TZMQ format message
     #  @return    response     A ThalesZMQMessage object
     def handlerMessage(self, msg):
+        # If raidFS is empty, we're disabled because SSD RAID is in use (requirement MPS-SRS-2334).
+        # If partition is not mounted, someone probably used the "SSD Erase" command.
+        # Either way, we can't do anything, so return an error message.
+        if not self.__raidFS or not self.checkIfMounted(self.__raidFS):
+            errorMessage = ErrorMessage()
+            errorMessage.error_code = 1010
+            if self.__raidFS:
+                errorMessage.error_description = "SSD test not available: partition removed"
+            else:
+                errorMessage.error_description = "SSD test not available: SSD RAID in use"
+            return ThalesZMQMessage(errorMessage)
+
         response = SSDResponse()
 
         if msg.body.requestType == SSDRequest.STOP:
@@ -77,7 +103,7 @@ class SSD(Module):
     #  @param     self
     #  @param     response  An SSDResponse object
     def start(self, response):
-        subprocess.Popen(['pkill', '-9', 'fio']).communicate()
+        subprocess.call(['pkill', '-9', 'fio'])
 
         if not self._running:
             self.startThread()
@@ -89,7 +115,7 @@ class SSD(Module):
     #  @param     response  An SSDResponse object
     def stop(self, response):
         self._running = False
-        subprocess.Popen(['pkill', '-9', 'fio']).communicate()
+        subprocess.call(['pkill', '-9', 'fio'])
         #  Sleep to allow process to die
         sleep(.5)
         self.stopThread()
@@ -111,7 +137,7 @@ class SSD(Module):
         self.log.info('Initializing the SSD file system, this may take some time...')
 
         # Unmount the filesystem if mounted
-        if self.checkIfMounted(self.__raidFS, True):
+        if self.checkIfMounted(self.__raidFS):
             self.log.info("Unmounting existing RAID volume")
             self.runCommand('umount %s' % self.__raidFS)
 
@@ -222,7 +248,7 @@ class SSD(Module):
     #  @param   mounted   Expect filesystem to be mounted or not
     #  @param   failText  Text to include in exception; if not provided, exception will not be raised
     #  @return  True if mounted, False if not
-    def checkIfMounted(self, fs, mounted, failText=''):
+    def checkIfMounted(self, fs, mounted=True, failText=''):
         self.log.debug("Checking if filesystem %s %s mounted" % (fs, "is" if mounted else "is not"))
         cmd = 'mount | fgrep %s || true' % fs
         #self.log.debug(cmd)
@@ -240,7 +266,7 @@ class SSD(Module):
     def createFioConfig(self):
         f = open(self.__fioConf, mode='w')
         f.write('[global]\n')
-        f.write('size=1000M\n')
+        f.write('size=960M\n')
         f.write('ioengine=libaio\n')
         f.write('iodepth=4\n')
         f.write('bs=1M\n')
@@ -278,5 +304,5 @@ class SSD(Module):
     def terminate(self):
         if self._running:
             self._running = False
-            subprocess.Popen(['pkill', '-9', 'fio']).communicate()
+            subprocess.call(['pkill', '-9', 'fio'])
             self.stopThread()

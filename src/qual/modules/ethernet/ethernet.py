@@ -48,8 +48,8 @@ class Ethernet(Module):
         ## Speed at which to send traffic in Mbits per second (0 for unlimited)
         self.bandwidthSpeed = 0
         ## Ethernet device to use for local port ENET_8
-        self.port8Device = "eno1"
-        self.loadConfig(attributes=('bandwidthSpeed', 'port8Device'))
+        self.cpuEthernetDev = "enp0s31f6"
+        self.loadConfig(attributes=('bandwidthSpeed', 'cpuEthernetDev'))
         ## Dict of connections; key is local port, value is a ConnectionInfo object
         self.connections = {}
         ## Lock for access to connections dict
@@ -87,20 +87,20 @@ class Ethernet(Module):
     def startiperf(self, connection):
         #  'stdbuf -o L' modifies iperf3 to allow easily accessed line buffered output
         cmd = ["stdbuf", "-o", "L", "iperf3", "-c", connection.server, "-b", "%sM" % str(self.bandwidthSpeed), "-f", "m", "-t", "86400"]
-        # Port ENET_8 is connected directly to interface eno1 on the MPS so
+        # Port ENET_8 is connected directly to interface enp0s31f6 on the MPS so
         # if ENET_8 is specified, bind to the address of that port if possible.
         if connection.localPort == "ENET_8":
-            if self.port8Device in netifaces.interfaces():
-                ifaddrs = netifaces.ifaddresses(self.port8Device)
+            if self.cpuEthernetDev in netifaces.interfaces():
+                ifaddrs = netifaces.ifaddresses(self.cpuEthernetDev)
                 if netifaces.AF_INET in ifaddrs:
                     for ipcfg in ifaddrs[netifaces.AF_INET]:
                         if "addr" in ipcfg:
                             cmd += ["-B", ipcfg["addr"]]
                             break
                 else:
-                    self.log.warning("Interface %s does not have IP address", self.port8Device)
+                    self.log.warning("Interface %s does not have IP address", self.cpuEthernetDev)
             else:
-                self.log.warning("Interface %s not present", self.port8Device)
+                self.log.warning("Interface %s not present", self.cpuEthernetDev)
 
         self.log.debug("Starting: %s" % " ".join(cmd))
         connection.iperf = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=1)

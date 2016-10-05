@@ -7,15 +7,15 @@ fi
 
 export PYTHONPATH=`pwd`
 
-python simulator/arinc429/arinc429DrvSim.py -e &
+python simulator/arinc429/arinc429DrvSim.py &
 python simulator/arinc717/arinc717DrvSim.py &
 python simulator/gpio/gpioMgrSim.py &
 python simulator/pwrsupp/pwrSuppMonSim.py &
 python simulator/sema/semaDrvSim.py &
+python simulator/rtc/rtcDrvSim.py &
 
-# Only start HDDS simulator if real HDDS is not running
-REALHDDS=`ps x | grep HDDS | grep -v grep`
-if [ -z "$REALHDDS" ]; then
+# Only start HDDS simulator if real HDDS is not installed
+if [ ! -f /thales/host/appliances/HDDS ]; then
     python simulator/hdds/hddsSim.py &
 fi
 

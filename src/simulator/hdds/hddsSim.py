@@ -42,6 +42,9 @@ class HDDSSimulator(ThalesZMQServer):
                            "external_pins.output.pin_a_c14":  "LOW",
                            "external_pins.output.pin_a_c13":  "LOW",
                            "external_pins.output.pin_a_a13":  "LOW",
+                           "inventory.lru.serial_number":          "12345",
+                           "inventory.midplane.serial_number":     "54321",
+                           "inventory.carrier_card.serial_number": "99999",
                            "power_supply.28V_monitor.voltage":              "28.375256",
                            "power_supply.28V_monitor.current":              "1.845365",
                            "power_supply.28V_monitor.external_temperature": "38.375000",
@@ -79,17 +82,27 @@ class HDDSSimulator(ThalesZMQServer):
 
         # Loop through the key requests
         for key in getReq.key:
-            # Currently we do not support wildcards, only exact matches
-            valueResp = getResp.values.add()
-            valueResp.keyValue.key = key
 
-            if key in self.properties:
+            if key.endswith('*'):
+                key = key.rstrip('*')
+                for k, v in self.properties.items():
+                    if k.startswith(key):
+                        valueResp = getResp.values.add()
+                        valueResp.success = True
+                        valueResp.keyValue.key = k
+                        valueResp.keyValue.value = v
+                # TODO: If wildcard didn't match anything, send failure response
+            elif key in self.properties:
                 # print "Get request:", key
+                valueResp = getResp.values.add()
                 valueResp.success = True
+                valueResp.keyValue.key = key
                 valueResp.keyValue.value = self.properties[key]
             else:
                 print "Get request for unknown key:", key
+                valueResp = getResp.values.add()
                 valueResp.success = False
+                valueResp.keyValue.key = key
                 valueResp.keyValue.value = ""
                 valueResp.error.error_code = FAILURE_INVALID_KEY
                 valueResp.error.error_description = "Invalid/unsupported key in HDDS_GET message"

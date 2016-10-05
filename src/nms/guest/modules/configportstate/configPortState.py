@@ -15,10 +15,10 @@ class PortStateConfig(Module):
         # Constructor of the parent class
         super(PortStateConfig, self).__init__(config)
         # IP address of the device
-        self.ip = "10.10.41.159"
+        self.switchAddress = "10.10.41.159"
         # path to the spec file
-        self.spec_file_path = '../../../spec-file'
-        #self.loadConfig(attributes=('vtssip'))
+        self.spec_file_path = '/tmp'
+        self.loadConfig(attributes=('switchAddress',))
         # adding the message handler
         self.addMsgHandler(ConfigPortStateReq, self.hdlrMsg)
 
@@ -57,7 +57,7 @@ class PortStateConfig(Module):
 
         #  Create the Vtss object with the relative path where
         #  we'll always place the spec file to avoid multiple downloas
-        vtss = Vtss(switchIP=self.ip, specFile='mps-vtss-spec-rpc.spec')
+        vtss = Vtss(switchIP=self.switchAddress, specFile='mps-vtss-spec-rpc.spec')
 
         #  Try to download the spec file if it doesn't exits
         vtss.downloadSpecFiles(path=self.spec_file_path)
@@ -112,8 +112,7 @@ class PortStateConfig(Module):
             #  Set the port name in the response
             bpduPortState.namedPort = configPortState.namedPort
             #  Set the current port state
-            jsonPortState = vtss.callMethod(request=["mstp.status.interface.get", "%s" % (switchPortName[0],), 0])
-            bpduPortState.state = self.resolveState(jsonPortState['result']['PortState'])
+            bpduPortState.state = DISABLED
             #  Success is False
             bpduPortState.success = False
             #  Eror 1003: Port name does not exist in this setup
@@ -123,8 +122,7 @@ class PortStateConfig(Module):
             #  Set the port name in the response
             bpduPortState.namedPort = configPortState.namedPort
             #  Set the current port state
-            jsonPortState = vtss.callMethod(request=["mstp.status.interface.get", "%s" % (switchPortName[0],), 0])
-            bpduPortState.state = self.resolveState(jsonPortState['result']['PortState'])
+            bpduPortState.state = DISABLED
             #  Success is False
             bpduPortState.success = False
             #  Eror 1001: Port is not supported in this setup

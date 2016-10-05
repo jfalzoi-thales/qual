@@ -17,10 +17,10 @@ class QTEMenu(object):
         super(QTEMenu, self).__init__()
 
         ## ClassFinder for module ModuleMessages classes
-        self.__modClass = ClassFinder(rootPath='qual.modules',
+        self.__modClass = ClassFinder(rootPaths=['qual.modules'],
                                      baseClass=ModuleMessages)
         ## ClassFinder for GPB message classes
-        self.__qualMessage = ClassFinder(rootPath='qual.pb2',
+        self.__qualMessage = ClassFinder(rootPaths=['qual.pb2','common.pb2'],
                                          baseClass=Message)
         ## Exit flag
         self.__exit = False
@@ -30,11 +30,11 @@ class QTEMenu(object):
 
         if useJson:
             ## Client connection to QTA
-            self.client = JsonZMQClient(address, timeout=7000)
+            self.client = JsonZMQClient(address, timeout=20000)
             print "Opened connection to", address, "for JSON messaging"
         else:
             ## Client connection to QTA
-            self.client = ThalesZMQClient(address, timeout=7000)
+            self.client = ThalesZMQClient(address, timeout=20000)
             print "Opened connection to", address, "for GPB messaging"
 
     ## Print a menu of actions for a particular module
@@ -69,7 +69,7 @@ class QTEMenu(object):
             print "---------------------------------------------------------\n"
             print "Sending ", msg.__class__.__name__
             response = self.client.sendRequest(ThalesZMQMessage(msg))
-            if (response.name == ""):
+            if response.name == "":
                 print "No response\n"
             else:
                 respClass = self.__qualMessage.getClassByName(response.name)
