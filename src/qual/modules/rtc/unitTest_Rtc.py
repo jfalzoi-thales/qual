@@ -113,7 +113,7 @@ class Test_RTC(unittest.TestCase):
         log.info("==== Set the time according ====")
         message = RTCRequest()
         message.requestType = RTCRequest.RTC_SET
-        message.timeString = '1970-01-01 01:00:00'
+        message.timeString = '1970-01-01 01:00:00Z'
         response = module.msgHandler(ThalesZMQMessage(message))
         # Asserts
         self.assertTrue(response.body.success)
