@@ -279,7 +279,7 @@ class Test_GPIO(unittest.TestCase):
 
     ## Test case: Try to connect an invalid input pin
     # Should return an empty GPIOResponse
-    def test_invalidInput(self):
+    def ftest_invalidInput(self):
         log = self.__class__.log
         module = self.__class__.module
 
@@ -292,7 +292,7 @@ class Test_GPIO(unittest.TestCase):
 
     # Test case: Try to connect an invalid output pin
     # Should return an empty GPIOResponse
-    def test_invalidOutput(self):
+    def ftest_invalidOutput(self):
         log = self.__class__.log
         module = self.__class__.module
 
@@ -305,7 +305,7 @@ class Test_GPIO(unittest.TestCase):
 
     ## Test case: Try to reconnect a connected input pin
     # Should return a GPIOResponse showing pin still connected to original output
-    def test_reconnect(self):
+    def ftest_reconnect(self):
         log = self.__class__.log
         module = self.__class__.module
 
@@ -346,7 +346,7 @@ class Test_GPIO(unittest.TestCase):
     # verify that the report indicates 2-3 matches and 0 mismatches.
     # It also verifies that the report is cleared when read back
     # after a disconnect.
-    def test_linkedPair(self):
+    def ftest_linkedPair(self):
         log = self.__class__.log
         module = self.__class__.module
 
@@ -408,7 +408,7 @@ class Test_GPIO(unittest.TestCase):
     ## Test case: Connect an IFE card input/output pair
     # This test case will connect two IFE card pins, wait 5 seconds, then
     # verify that the report indicates 2-3 matches and 0 mismatches.
-    def test_ifeCardPair(self):
+    def ftest_ifeCardPair(self):
         ife = self.__class__.ife
         log = self.__class__.log
         module = self.__class__.module
@@ -465,7 +465,7 @@ class Test_GPIO(unittest.TestCase):
     ## Test case: Connect an IFE PAVA input/output pair
     # This test case will connect two IFE PAVA pins, wait 5 seconds, then
     # verify that the report indicates 2-3 matches and 0 mismatches.
-    def test_ifePAVAPair(self):
+    def ftest_ifePAVAPair(self):
         ife = self.__class__.ife
         log = self.__class__.log
         module = self.__class__.module
@@ -520,7 +520,7 @@ class Test_GPIO(unittest.TestCase):
             log.info("IFE functionality not enabled on this device")
 
     ## Test case: Report on PA Mute
-    def test_ifePAMute(self):
+    def ftest_ifePAMute(self):
         ife = self.__class__.ife
         log = self.__class__.log
         module = self.__class__.module
@@ -541,7 +541,7 @@ class Test_GPIO(unittest.TestCase):
     ## Test case: Connect an unlinked input/output pair
     # This test case will connect an "unlinked" pair, wait 5 seconds, then
     # verify that the report indicates 0 matches and 2-3 mismatches.
-    def test_unlinkedPair(self):
+    def ftest_unlinkedPair(self):
         log = self.__class__.log
         module = self.__class__.module
 
@@ -583,7 +583,7 @@ class Test_GPIO(unittest.TestCase):
     ## Test case: Use of the "ALL" parameter
     # Tests CONNECT, DISCONNECT, and REPORT messages with the input
     # pin specified as "ALL" perform the correct actions.
-    def test_allparam(self):
+    def ftest_allparam(self):
         ife = self.__class__.ife
         log = self.__class__.log
         module = self.__class__.module
@@ -675,11 +675,7 @@ class Test_GPIO(unittest.TestCase):
                    "GP_KYLN_IN2": "GP_KYLN_OUT2",
                    "GP_KYLN_IN3": "GP_KYLN_OUT3",
                    "GP_KYLN_IN4": "GP_KYLN_OUT4",
-                   "GP_KYLN_IN5": "GP_KYLN_OUT5",
-                   "GP_KYLN_IN6": "GP_KYLN_OUT7",
-                   "GP_KYLN_IN7": "GP_KYLN_OUT7",
-                   "GP_KYLN_IN8": "GP_KYLN_OUT8",
-                   "GP_KYLN_IN9": "GP_KYLN_OUT9"}
+                   "GP_KYLN_IN5": "GP_KYLN_OUT5"}
 
         log.info("**** Test case: Test Mapping Defined by Test Equipment ****")
         log.info("==== Connect Mapped Channels ====")
@@ -702,11 +698,18 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.name, "GPIOResponse")
 
         for gpioStat in response.body.status:
-            self.assertEqual(gpioStat.conState, GPIOResponse.CONNECTED)
-            self.assertGreater(gpioStat.matchCount, 0)
-            self.assertEqual(gpioStat.mismatchCount, 0)
-            self.assertTrue(gpioStat.gpIn in map)
-            self.assertEqual(gpioStat.gpOut, map[gpioStat.gpIn])
+            if gpioStat.gpIn not in ["PA_ALL_KYLN_IN", "PA_MUTE_KYLN_IN"]:
+                self.assertEqual(gpioStat.conState, GPIOResponse.CONNECTED)
+                self.assertGreater(gpioStat.matchCount, 0)
+                self.assertEqual(gpioStat.mismatchCount, 0)
+                self.assertTrue(gpioStat.gpIn in map)
+                self.assertEqual(gpioStat.gpOut, map[gpioStat.gpIn])
+            else:
+                self.assertEqual(gpioStat.conState, GPIOResponse.DISCONNECTED)
+                self.assertEqual(gpioStat.matchCount, 0)
+                self.assertEqual(gpioStat.mismatchCount, 0)
+                self.assertTrue(gpioStat.gpIn in ["PA_ALL_KYLN_IN", "PA_MUTE_KYLN_IN"])
+                self.assertEqual(gpioStat.gpOut, "")
 
         log.info("==== Swap GP_KYLN_OUT5 Pin For GP_KYLN_OUT6 ====")
         messages = GPIOMessages.swapPins()
@@ -729,7 +732,7 @@ class Test_GPIO(unittest.TestCase):
         log.info("==== Wait 5 Seconds to Accumulate Statistics ====")
         sleep(5)
 
-        log.info("==== Get Report on GP_KYLN_IN1 ====")
+        log.info("==== Get Report on GP_KYLN_IN5 ====")
         response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn5()))
         self.assertEqual(response.name, "GPIOResponse")
         self.assertEqual(len(response.body.status), 1)
@@ -744,18 +747,22 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.name, "GPIOResponse")
 
         for gpioStat in response.body.status:
-            # All pins just got disconnected from output 3
             self.assertEqual(gpioStat.conState, GPIOResponse.DISCONNECTED)
-            self.assertEqual(gpioStat.gpOut, "GP_KYLN_OUT3")
-            self.assertGreater(gpioStat.matchCount, 0)
             self.assertEqual(gpioStat.mismatchCount, 0)
 
-            if (gpioStat.gpIn == "GP_KYLN_IN5"):
-                self.assertEqual(gpioStat.gpIn, "GP_KYLN_IN5")
-                self.assertEqual(gpioStat.gpOut, "GP_KYLN_OUT6")
+            if gpioStat.gpIn not in ["PA_ALL_KYLN_IN", "PA_MUTE_KYLN_IN"]:
+                self.assertGreater(gpioStat.matchCount, 0)
+
+                if (gpioStat.gpIn == "GP_KYLN_IN5"):
+                    self.assertEqual(gpioStat.gpIn, "GP_KYLN_IN5")
+                    self.assertEqual(gpioStat.gpOut, "GP_KYLN_OUT6")
+                else:
+                    self.assertTrue(gpioStat.gpIn in map)
+                    self.assertEqual(gpioStat.gpOut, map[gpioStat.gpIn])
             else:
-                self.assertTrue(gpioStat.gpIn in map)
-                self.assertEqual(gpioStat.gpOut, map[gpioStat.gpIn])
+                self.assertEqual(gpioStat.matchCount, 0)
+                self.assertTrue(gpioStat.gpIn in ["PA_ALL_KYLN_IN", "PA_MUTE_KYLN_IN"])
+                self.assertEqual(gpioStat.gpOut, "")
 
 if __name__ == '__main__':
     unittest.main()
