@@ -33,7 +33,7 @@ class RtcMessages(ModuleMessages):
     def message_RTC_SET():
         message = RTCRequest()
         message.requestType = RTCRequest.RTC_SET
-        message.timeString = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ')
+        message.timeString = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         return message
 
 ## RTC Unit Test
@@ -107,13 +107,13 @@ class Test_RTC(unittest.TestCase):
         module = self.__class__.module
 
         # First, let's save the current time
-        cTime = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ')
+        cTime = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
         log.info("**** Test case: RTC sequence RTC_SET, RTC_GET ****")
         log.info("==== Set the time according ====")
         message = RTCRequest()
         message.requestType = RTCRequest.RTC_SET
-        message.timeString = '1970-01-01 01:00:00'
+        message.timeString = '2000-01-01T01:01:01Z'
         response = module.msgHandler(ThalesZMQMessage(message))
         # Asserts
         self.assertTrue(response.body.success)
@@ -125,9 +125,9 @@ class Test_RTC(unittest.TestCase):
         self.assertTrue(response.body.success)
         self.assertTrue(isinstance(response.body.timeString, unicode))
         # Compare response with the time we sent with a reange of 2 seconds
-        timeSent = datetime.strptime('1970-01-01 01:00:00Z', '%Y-%m-%d %H:%M:%SZ')
+        timeSent = datetime.strptime('2000-01-01T01:01:01Z', '%Y-%m-%dT%H:%M:%SZ')
         timeSent = time.mktime(timeSent.timetuple())
-        timeResp = datetime.strptime(response.body.timeString, '%Y-%m-%d %H:%M:%SZ')
+        timeResp = datetime.strptime(response.body.timeString, '%Y-%m-%dT%H:%M:%SZ')
         timeResp = time.mktime(timeResp.timetuple())
         self.assertLessEqual(timeResp - timeSent - 3, 0)
 

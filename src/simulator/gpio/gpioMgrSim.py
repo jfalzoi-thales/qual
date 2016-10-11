@@ -57,7 +57,7 @@ class GPIOManagerSimulator(ThalesZMQServer):
                             "OUTPUT_3_PIN_C6": "INPUT_3_PIN_C7",
                             "OUTPUT_4_PIN_D6": "INPUT_4_PIN_D7",
                             "OUTPUT_5_PIN_E6": "INPUT_5_PIN_E7",
-                            "OUTPUT_6_PIN_E8": "PA_All_PIN_C8"}
+                            "OUTPUT_6_PIN_E8": "INPUT_5_PIN_E7"}
 
     ## Called by base class when a request is received from a client.
     #

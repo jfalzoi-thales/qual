@@ -16,7 +16,9 @@ class RTCDriverSimulator(ThalesZMQServer):
         # Accoding to "MPS Network Configuration" document.
         super(RTCDriverSimulator, self).__init__('ipc:///tmp/rtc-drv.sock', msgParts=2)
         # Date-Time pattern.
-        self.dateTimePattern = '%Y-%m-%d %H:%M:%SZ'
+        self.dateTimePattern = '%Y-%m-%dT%H:%M:%SZ'
+        # Variable tu simulate the current time
+        self.currentTime = datetime.utcnow().strftime(self.dateTimePattern)
 
     ## Called by base class when a request is received from a client.
     #
@@ -44,7 +46,7 @@ class RTCDriverSimulator(ThalesZMQServer):
         response = TimeResponse()
         # Error code 0: Success
         response.error = SUCCESS
-        response.datetime = datetime.utcnow().strftime(self.dateTimePattern)
+        response.datetime = self.currentTime
         print "Response:\n\tSuccess: %d\n\tDatetime: %s" % (response.error, response.datetime)
 
         # Send response back to client
@@ -62,6 +64,8 @@ class RTCDriverSimulator(ThalesZMQServer):
         # Parse request
         set_req = SetTime()
         set_req.ParseFromString(request.serializedBody)
+        # update the virtual current time
+        self.currentTime = set_req.datetime
         response.error = SUCCESS
 
         print "Response:\n\tSuccess: %d" % (response.error)

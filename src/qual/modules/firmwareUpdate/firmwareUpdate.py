@@ -3,13 +3,16 @@ import os
 import paramiko
 
 from Queue import Queue
-from subprocess import call
+from subprocess import call, Popen
 
 from common.pb2.GPIOManager_pb2 import RequestMessage, ResponseMessage
 from qual.pb2.FirmwareUpdate_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
+## Discard the output
+DEVNULL = open(os.devnull, 'wb')
 
 ## FirmwareUpdate Module
 class FirmwareUpdate(Module):
@@ -20,6 +23,7 @@ class FirmwareUpdate(Module):
         super(FirmwareUpdate, self).__init__(config)
         ## Dict for storing Firmware Commands and their handlers
         self.firmFuncs = {FW_BIOS:                  self.updateBIOS,
+                          FW_BMC:                   self.updateBMC,
                           FW_I350_EEPROM:           self.updateI350EEPROM,
                           FW_I350_FLASH:            self.updateI350Flash,
                           FW_SWITCH_BOOTLOADER:     self.unimplemented,
@@ -110,6 +114,33 @@ class FirmwareUpdate(Module):
             response.success = False
             response.errorMessage = "Unable to properly program BIOS."
             return
+
+        if reboot: self.reboot.put("REBOOT")
+
+    ## Attempts to  replace Adlink BMC Firmware using the SEMA interface.
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def updateBMC(self, response, reboot):
+        # System restart delay in seconds after end of update.
+        # This should be modify appropriately, but for now let's use 1 second
+        delay = '1'
+        # File to install
+        bmcFile = 'ESL1v9.bin'
+        # Subprocess obj
+        sema = Popen(['sema', '%s/%s' % (self.firmPath, bmcFile), delay], stdout=DEVNULL)
+        # Wait until the BMC is updated
+        sema.wait()
+        # Success???
+        if sema.returncode != 0:
+            # ERROR!!!
+            response.success = False
+            response.component = FW_BMC
+            response.errorMessage = "SEMA failed. Error code %d" % (sema.returncode)
+            self.log.error("SEMA failed. Error code %d" % (sema.returncode))
+        else:
+            # SUCCESS!!!
+            response.success = True
 
         if reboot: self.reboot.put("REBOOT")
 
@@ -310,15 +341,54 @@ class FirmwareUpdate(Module):
 
             # Copy the Firmware image into the switch
             channel.send("firmware upgrade tftp://%s/%s\n" % (self.tftpServer, "Thales-MPS.dat"))
-
-            # TODO: Check operation result. Here we don't have a way to know if the firmware file was actually transferred, I'm going to wait until we test it on the MPS to see what is the switch reponse in case of success or failure
-
-            # Close the connection
-            switchClient.close()
-            # Fill the response
-            response.success = True
-
-            if reboot: self.reboot.put("REBOOT")
+            # Get the starting time of the upgrade operation
+            startTime = time.time()
+            # It should end in less than 8 minutes
+            endTime = startTime + 480
+            # Make some checks here
+            while endTime > time.time():
+                time.sleep(0.2)
+                while channel.recv_ready():
+                    output = channel.recv(1024)
+                # if the tftp server is not active or wrong IP
+                if "Invalid IP address" in output:
+                    response.success = False
+                    response.component = FW_SWITCH_FIRMWARE
+                    response.errorMessage = "Switch unable to establish the connection with tftp server %s" % (self.tftpServer)
+                    self.log.error("Switch unable to establish the connection with tftp server %s" % (self.tftpServer))
+                    return
+                # if Thales-MPS.dat was not present on the tftp server
+                elif 'File not found' in output:
+                    response.success = False
+                    response.component = FW_SWITCH_FIRMWARE
+                    response.errorMessage = "Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % (self.tftpServer)
+                    self.log.error("Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % (self.tftpServer))
+                    return
+                # if Thales-MPS.dat was an invalid image
+                elif 'Error: Invalid image' in output:
+                    response.success = False
+                    response.component = FW_SWITCH_FIRMWARE
+                    response.errorMessage = "Invalid firmware image"
+                    self.log.error("Invalid firmware image")
+                    return
+                else:
+                    # Here we'll check if we are still connected to the switch,
+                    # If not, it means that the switch accepted the file and it's upgrading
+                    # otherwise, continue.......
+                    transport = switchClient.get_transport()
+                    if transport.is_active():
+                        continue
+                    else:
+                        # Fill the response
+                        response.success = True
+                        # reboot if requested
+                        if reboot: self.reboot.put("REBOOT")
+                        return
+            # If get here, it is because the switch was not able to upgrade
+            response.success = False
+            response.component = FW_SWITCH_FIRMWARE
+            response.errorMessage = "FATAL! Firmware upgrade timeout."
+            self.log.error("FATAL! Firmware upgrade timeout.")
 
         except paramiko.ssh_exception.SSHException:
             response.success = False
