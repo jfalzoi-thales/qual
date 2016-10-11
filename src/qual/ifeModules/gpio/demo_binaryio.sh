@@ -13,13 +13,13 @@ fi
 if [ "$1" = "getDiscreteInput" ]; then
     case $2 in
         LLS_IN_GP_KL_01)
-            OUT_PIN=GPIO_MGR_OUTPUT_6
-            ;;
-        LLS_IN_GP_KL_02)
             OUT_PIN=LLS_OUT_GP_KL_01
             ;;
-        LLS_IN_GP_KL_03)
+        LLS_IN_GP_KL_02)
             OUT_PIN=LLS_OUT_GP_KL_02
+            ;;
+        LLS_IN_GP_KL_03)
+            OUT_PIN=LLS_OUT_GP_KL_03
             ;;
         LLS_IN_GP_KL_04)
             OUT_PIN=LLS_OUT_GP_KL_03
