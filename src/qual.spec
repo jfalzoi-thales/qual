@@ -75,6 +75,7 @@ mv %{buildroot}/thales/qual/src/qual/modules/ssdErase/mpsinst-destroyraid.sh    
 mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/bootutil64e.sh      %{buildroot}/%{_bindir}/bootutil64e
 mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/eeupdate64e.sh      %{buildroot}/%{_bindir}/eeupdate64e
 mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/i350-flashtool.sh   %{buildroot}/%{_bindir}/i350-flashtool
+mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/sema.sh             %{buildroot}/%{_bindir}/sema
 mv %{buildroot}/etc/sysconfig/network-scripts/ifcfg-ens6sk                      %{buildroot}/etc/sysconfig/network-scripts/ifcfg-ens6:sk
 echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BIOS.firmware
 
