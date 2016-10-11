@@ -138,7 +138,7 @@ class FirmwareUpdate(Module):
         # Wait until the BMC is updated
         sema.wait()
         # Success???
-        if sema.returncode <= 0:
+        if sema.returncode != 0:
             # ERROR!!!
             response.success = False
             response.component = FW_BMC
