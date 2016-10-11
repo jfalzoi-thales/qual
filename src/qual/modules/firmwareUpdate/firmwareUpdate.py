@@ -120,11 +120,6 @@ class FirmwareUpdate(Module):
 
         if reboot: self.reboot.put("REBOOT")
 
-        ## Attempts to  replace Adlink BMC Firmware
-        #  @param   self
-        #  @param   response    FirmwareUpdateResponse object
-        #  @param   reboot      Reboot flag
-
     ## Attempts to  replace Adlink BMC Firmware using the SEMA interface.
     #  @param   self
     #  @param   response    FirmwareUpdateResponse object
