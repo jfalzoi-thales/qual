@@ -48,41 +48,70 @@ class PortInfo(Module):
 
         if msg.body != None:
             for key in msg.body.portInfoKey:
-                keyParts = key.split(".")
+                keyParts = key.rsplit('.', 1)
+                port = resolvePort(keyParts[0])
 
-                if self.checkKey(response, keyParts):
-                    if "*" in keyParts:
+                if self.checkKey(response, keyParts, port):
+                    if "*" in key:
                         self.wild(response, keyParts)
                     else:
                         self.ethCache = {}
-                        name = '.'.join(keyParts[:-1])
-                        port = resolvePort(name)
 
                         if port[1]:
-                            self.outside(response, name, keyParts[-1], port[0])
+                            self.outside(response, keyParts, port[0])
                         else:
-                            self.inside(response, name, keyParts[-1], port[0])
+                            self.inside(response, keyParts, port[0])
         else:
             self.wild(response, ["*"])
 
         return ThalesZMQMessage(response)
 
+    ## Adds another set of values to the repeated values response field
+    #  @param   self
+    #  @param   response    A PortInfoResp object
+    #  @param   success     Success flag to be added to response, default False
+    #  @param   key         Key to be added to response, default empty
+    #  @param   value       Value of key to be added to response, default empty
+    #  @param   errCode     Error code for optional ErrorMessage field
+    def addResp(self, response, success=False, key="", value="",  errCode=None):
+        respVal = response.values.add()
+        respVal.success = success
+        respVal.keyValue.key = key
+        respVal.keyValue.value = value
+
+        if errCode:
+            if errCode == 1001:
+                msg = "Port is not supported in this setup"
+            elif errCode == 1002:
+                msg = "Port is not active"
+            elif errCode == 1003:
+                msg = "Port name does not exist in this setup"
+            elif errCode == 1004:
+                msg = "Invalid Message Received"
+            elif errCode == 1005:
+                msg = "Error Processing Message"
+            else:
+                msg = "Unrecognized Error Code"
+
+            respVal.error.error_code = errCode
+            respVal.error.error_description = msg
+
     ## Constructor
     #  @param     self
     #  @param     config  Configuration for this module instance
-    def checkKey(self, response, keyParts):
+    def checkKey(self, response, keyParts, port):
         errcode = 1004
 
         if keyParts[-1] in self.insidePortFuncs.keys() + self.outsidePortFuncs.keys() + ["*"]:
-            if resolvePort('.'.join(keyParts[:-1])) != None:
-                return True
-            elif keyParts[0] == "*":
+            if port != None or keyParts[0] == "*":
                 return True
             else:
                 errcode = 1003
 
         self.log.warning("Incorrect key format: %s" % '.'.join(keyParts))
-        response.add()
+        self.addResp(response, )
+
+        esponse.add()
         response.values.keyValue.key = '.'.join(keyParts)
         self.error(response, errcode)
 
@@ -260,24 +289,3 @@ class PortInfo(Module):
     #  @param     config  Configuration for this module instance
     def unsupported(self, response, port, field):
         self.error(response, 1001)
-
-    ## Constructor
-    #  @param     self
-    #  @param     config  Configuration for this module instance
-    def error(self, response, code):
-        response.success = False
-        response.values.keyValue.value = ""
-        response.values.error.error_code = code
-
-        if code == 1001:
-            response.values.error.error_description = "Port is not supported in this setup"
-        elif code == 1002:
-            response.values.error.error_description = "Port is not active"
-        elif code == 1003:
-            response.values.error.error_description = "Port name does not exist in this setup"
-        elif code == 1004:
-            response.values.error.error_description = "Invalid Message Received"
-        elif code == 1005:
-            response.values.error.error_description = "Error Processing Message"
-        else:
-            response.values.error.error_description = "Unrecognized Error Code"
