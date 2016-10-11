@@ -134,7 +134,7 @@ class FirmwareUpdate(Module):
         # This should be modify appropriately, but for now let's use 30 secounds
         delay = '30'
         # Subprocess obj
-        sema = Popen(['sema', '%s/%s' % (self.firmPath, self.bmcPath), delay], stdout=DEVNULL, stderr=DEVNULL)
+        sema = Popen(['sema', '%s/%s' % (self.firmPath, self.bmcPath), delay], stdout=DEVNULL)
         # Wait until the BMC is updated
         sema.wait()
         # Success???
@@ -143,7 +143,12 @@ class FirmwareUpdate(Module):
             response.success = False
             response.component = FW_BMC
             response.errorMessage = "SEMA failed. Error code %d" % (sema.returncode)
-            self.log.error("SEMA failed. Error code %d" % (sema.returncode))
+            # Log the error message as a single string
+            errMsg = ''
+            errLines = sema.stderr.readlines()
+            for line in errLines:
+                errMsg += ' ' + line
+            self.log.error("SEMA failed. Error code %d. Error message: %s" % (sema.returncode, errMsg))
         else:
             # SUCCESS!!!
             response.success = True
