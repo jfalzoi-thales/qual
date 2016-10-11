@@ -5,5 +5,5 @@ if [ $# == 2 ]; then
     exit 0
 else
     echo "FAILURE! $0 $@" >> /tmp/i350tools.log
-    exit -1
+    exit 1
 fi
