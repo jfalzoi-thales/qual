@@ -90,6 +90,13 @@ class FirmwareUpdateMessages(ModuleMessages):
         message.reboot = False
         return message
 
+    @staticmethod
+    def updateBMC():
+        message = FirmwareUpdateRequest()
+        message.command = FW_BMC
+        message.reboot = False
+        return message
+
 
 ## FirmwareUpdate Unit Test
 class Test_FirmwareUpdate_BIOS(unittest.TestCase):
@@ -122,6 +129,40 @@ class Test_FirmwareUpdate_BIOS(unittest.TestCase):
         module = self.__class__.module
         log.info("**** Valid Test Case: Update BIOS Firmware ****")
         response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateBIOS()))
+        self.assertTrue(response.body.success)
+        log.info("==== Test complete ====")
+
+## FirmwareUpdate Unit Test for Board Management Chip (BMC) firmware
+class Test_FirmwareUpdate_BMC(unittest.TestCase):
+    ## Static logger instance
+    log = None
+
+    ## Static module instance
+    module = None
+
+    ## Setup for the FirmwareUpdate test cases
+    #  This is run only once before running any test cases
+    @classmethod
+    def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
+        #  Create a logger so we can add details to a multi-step test case
+        cls.log = Logger(name='Test FirmwareUpdate')
+        #  Create the module
+        if cls.module is None:
+            cls.module = firmwareUpdate.FirmwareUpdate()
+
+    ## Teardown when done with test cases
+    #  This is run only once when we're done with all test cases
+    @classmethod
+    def tearDownClass(cls):
+        cls.module.terminate()
+
+    ## Valid Test Case: Update Board Management Chip (BMC) firmware.
+    def test_BMC(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("**** Valid Test Case: Update Board Management Chip (BMC) firmware ****")
+        response = module.msgHandler(ThalesZMQMessage(FirmwareUpdateMessages.updateBMC()))
         self.assertTrue(response.body.success)
         log.info("==== Test complete ====")
 
