@@ -45,9 +45,6 @@ class FirmwareUpdate(Module):
         self.switchUser = 'admin'
         ## Password for switch
         self.switchPassword = ''
-        ## Board Management Chip (BMC) file location.
-        # TODO: need to update with the correct file name and probably add it to the config file to be able to change the file location.
-        self.bmcPath = 'bmcFile.bmc'
         self.loadConfig(attributes=('switchAddress','switchUser','switchPassword', 'tftpServer'))
         ## BIOS tool command
         self.biosTool = "/thales/host/appliances/mps-biostool"
@@ -126,10 +123,12 @@ class FirmwareUpdate(Module):
     #  @param   reboot      Reboot flag
     def updateBMC(self, response, reboot):
         # System restart delay in seconds after end of update.
-        # This should be modify appropriately, but for now let's use 30 secounds
-        delay = '30'
+        # This should be modify appropriately, but for now let's use 1 second
+        delay = '1'
+        # File to install
+        bmcFile = 'ESL1v9.bin'
         # Subprocess obj
-        sema = Popen(['sema', '%s/%s' % (self.firmPath, self.bmcPath), delay], stdout=DEVNULL)
+        sema = Popen(['sema', '%s/%s' % (self.firmPath, bmcFile), delay], stdout=DEVNULL)
         # Wait until the BMC is updated
         sema.wait()
         # Success???
@@ -138,12 +137,7 @@ class FirmwareUpdate(Module):
             response.success = False
             response.component = FW_BMC
             response.errorMessage = "SEMA failed. Error code %d" % (sema.returncode)
-            # Log the error message as a single string
-            errMsg = ''
-            errLines = sema.stderr.readlines()
-            for line in errLines:
-                errMsg += ' ' + line
-            self.log.error("SEMA failed. Error code %d. Error message: %s" % (sema.returncode, errMsg))
+            self.log.error("SEMA failed. Error code %d" % (sema.returncode))
         else:
             # SUCCESS!!!
             response.success = True
