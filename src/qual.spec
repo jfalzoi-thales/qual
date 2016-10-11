@@ -113,6 +113,7 @@ echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BI
 %attr(0755,root,root) %{_bindir}/bootutil64e
 %attr(0755,root,root) %{_bindir}/eeupdate64e
 %attr(0755,root,root) %{_bindir}/i350-flashtool
+%attr(0755,root,root) %{_bindir}/sema
 %attr(0644,root,root) %{_unitdir}/qual-sims.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-sims-service.preset
 
