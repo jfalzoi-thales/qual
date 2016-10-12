@@ -3,7 +3,7 @@
 #
 Name: qual
 Summary: An application used to drive MPS hardware
-Version: 1.63
+Version: 1.65
 Release: 1
 License: Proprietary
 Group: Applications/Engineering
@@ -75,6 +75,7 @@ mv %{buildroot}/thales/qual/src/qual/modules/ssdErase/mpsinst-destroyraid.sh    
 mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/bootutil64e.sh      %{buildroot}/%{_bindir}/bootutil64e
 mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/eeupdate64e.sh      %{buildroot}/%{_bindir}/eeupdate64e
 mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/i350-flashtool.sh   %{buildroot}/%{_bindir}/i350-flashtool
+mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/sema.sh             %{buildroot}/%{_bindir}/sema
 mv %{buildroot}/etc/sysconfig/network-scripts/ifcfg-ens6sk                      %{buildroot}/etc/sysconfig/network-scripts/ifcfg-ens6:sk
 echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BIOS.firmware
 
@@ -112,6 +113,7 @@ echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BI
 %attr(0755,root,root) %{_bindir}/bootutil64e
 %attr(0755,root,root) %{_bindir}/eeupdate64e
 %attr(0755,root,root) %{_bindir}/i350-flashtool
+%attr(0755,root,root) %{_bindir}/sema
 %attr(0644,root,root) %{_unitdir}/qual-sims.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-sims-service.preset
 

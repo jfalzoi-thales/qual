@@ -3,13 +3,16 @@ import os
 import paramiko
 
 from Queue import Queue
-from subprocess import call
+from subprocess import call, Popen
 
 from common.pb2.GPIOManager_pb2 import RequestMessage, ResponseMessage
 from qual.pb2.FirmwareUpdate_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
+## Discard the output
+DEVNULL = open(os.devnull, 'wb')
 
 ## FirmwareUpdate Module
 class FirmwareUpdate(Module):
@@ -20,6 +23,7 @@ class FirmwareUpdate(Module):
         super(FirmwareUpdate, self).__init__(config)
         ## Dict for storing Firmware Commands and their handlers
         self.firmFuncs = {FW_BIOS:                  self.updateBIOS,
+                          FW_BMC:                   self.updateBMC,
                           FW_I350_EEPROM:           self.updateI350EEPROM,
                           FW_I350_FLASH:            self.updateI350Flash,
                           FW_SWITCH_BOOTLOADER:     self.unimplemented,
@@ -110,6 +114,33 @@ class FirmwareUpdate(Module):
             response.success = False
             response.errorMessage = "Unable to properly program BIOS."
             return
+
+        if reboot: self.reboot.put("REBOOT")
+
+    ## Attempts to  replace Adlink BMC Firmware using the SEMA interface.
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def updateBMC(self, response, reboot):
+        # System restart delay in seconds after end of update.
+        # This should be modify appropriately, but for now let's use 1 second
+        delay = '1'
+        # File to install
+        bmcFile = 'ESL1v9.bin'
+        # Subprocess obj
+        sema = Popen(['sema', '%s/%s' % (self.firmPath, bmcFile), delay], stdout=DEVNULL)
+        # Wait until the BMC is updated
+        sema.wait()
+        # Success???
+        if sema.returncode != 0:
+            # ERROR!!!
+            response.success = False
+            response.component = FW_BMC
+            response.errorMessage = "SEMA failed. Error code %d" % (sema.returncode)
+            self.log.error("SEMA failed. Error code %d" % (sema.returncode))
+        else:
+            # SUCCESS!!!
+            response.success = True
 
         if reboot: self.reboot.put("REBOOT")
 

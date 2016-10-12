@@ -314,7 +314,7 @@ class HDDS(Module):
     #  @param     hddsKeys  List of keys to be sent to the HDDS
     def hddsGet(self, response, hddsKeys):
         hddsReq = GetReq()
-        hddsReq.key.append(hddsKeys)
+        hddsReq.key.extend(hddsKeys)
         #  Just pass through to the actual HDDS service
         HDDSResp = self.hddsClient.sendRequest(ThalesZMQMessage(hddsReq))
 
