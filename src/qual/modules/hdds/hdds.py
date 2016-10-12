@@ -93,7 +93,7 @@ class HDDS(Module):
             for value in msg.body.values:
                 if value.key.startswith("mac_address"):
                     if value.key[-1] == "*":
-                        macGetKeys.append(self.macKeys)
+                        macGetKeys.extend(self.macKeys)
                     elif value.key in self.macKeys:
                         macGetKeys.append(value.key)
                     else:
@@ -441,7 +441,7 @@ class HDDS(Module):
             call(["eeupdate64e", "-nic=%d" % nicidx, "-a", macfile])
 
             try:
-                if check_output(["eeupdate64e", "-nic=%d" % nicidx, "-mac_dump"]).splitlines()[-1] == i350mac:
+                if i350mac in check_output(["eeupdate64e", "-nic=%d" % nicidx, "-mac_dump"]).splitlines()[-1]:
                     success = True
             except CalledProcessError as err:
                 self.log.warning("Unable to run %s" % err.cmd)
