@@ -49,12 +49,14 @@ rm_log() {
 clone_package() {
 	PKG=$1
 	# Override package we want to get from tklabs instead of mapcollab repo
-	if [ $PKG = "kmod-igb" ]; then
-		GIT_URL=https://repo-tav.tklabs.com:8201/scm/qual
-	fi
 	if [ ! -d $MPSSRC/$PKG ]; then
 		buildenv_log_verbose $PKG "Clonning $PKG to $MPSSRC/$PKG..."
-		logged_exec $MPSTMP/$PKG.log git clone $GIT_URL/$PKG.git $MPSSRC/$PKG || exit 1
+		if [ $PKG = "kmod-igb" ]; then
+			ALT_GIT_URL=https://repo-tav.tklabs.com:8102/scm/qual
+			logged_exec $MPSTMP/$PKG.log git clone $ALT_GIT_URL/$PKG.git $MPSSRC/$PKG || exit 1
+		else
+			logged_exec $MPSTMP/$PKG.log git clone $GIT_URL/$PKG.git $MPSSRC/$PKG || exit 1
+		fi
 	elif [ -d $MPSSRC/$PKG/.git ] && [ "$OFFLINE" != "1" ]; then
 		buildenv_log_verbose $PKG "Updating $PKG..."
 		pushd $MPSSRC/$PKG >/dev/null
