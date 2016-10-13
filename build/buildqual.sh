@@ -16,6 +16,18 @@ usage() {
     exit 1
 }
 
+# Handle tito tag and build for tklabs_utils
+titoutils() {
+    echo "Building tklabs_utils RPMs! ('-')"
+    cd ${QUALDIR}/src/tklabs_utils
+    tito init
+
+    if [ "$TAG" == "YES" ]; then tito tag; fi
+
+    UTILSVERSION=`cat ${QUALDIR}/.tito/packages/tklabs_utils | cut -f 1 -d ' '`
+    tito build --rpm --tag=nms-${UTILSVERSION} --offline
+}
+
 # Handle tito tag and build for nms
 titonms() {
     echo "Building nms RPMs! ( '-')"
@@ -142,6 +154,7 @@ git checkout "$BRANCH"
 git reset --hard FETCH_HEAD
 git clean -df
 rm -rf /tmp/tito
+titoutils
 titonms
 titoqual
 
