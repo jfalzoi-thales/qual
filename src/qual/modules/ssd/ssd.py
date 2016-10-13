@@ -2,10 +2,10 @@ import os
 import subprocess
 from time import sleep
 
+from common.pb2.ErrorMessage_pb2 import ErrorMessage
 from qual.pb2.SSD_pb2 import SSDRequest, SSDResponse
 from ssd_Exception import SSDModuleException
 from tklabs_utils.module.module import Module
-from tklabs_utils.pb2.ErrorMessage_pb2 import ErrorMessage
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 ## Discard the output
