@@ -1,7 +1,6 @@
 import zmq
-
-from common.pb2.ErrorMessage_pb2 import ErrorMessage
 from tklabs_utils.logger.logger import Logger
+from tklabs_utils.pb2.ErrorMessage_pb2 import ErrorMessage
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 
