@@ -22,8 +22,7 @@ class PortInfoMessages(ModuleMessages):
                 ("Get Multiple Keys",       PortInfoMessages.getMultiple),
                 ("Get All Keys",            PortInfoMessages.getAll),
                 ("Get All Speed",           PortInfoMessages.getAllSpeed),
-                ("Get All Stats",           PortInfoMessages.getAllStats),
-                ("Get Bogus Key",           PortInfoMessages.getBogus)]
+                ("Get All Stats",           PortInfoMessages.getAllStats)]
 
     @staticmethod
     def getSingle():
