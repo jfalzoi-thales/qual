@@ -1,0 +1,20 @@
+package mpsqual;
+
+message RTCRequest
+{
+	enum RTCRequestT
+    {
+		RTC_GET	   = 0;
+		RTC_SET	   = 1;
+	}
+
+	required RTCRequestT requestType = 1;
+	optional string		 timeString  = 2;
+}
+
+message RTCResponse
+{
+	required bool	success 	= 1;
+	required string	timeString 	= 2;
+	optional string errorMessage = 3 [default = ""];
+}
