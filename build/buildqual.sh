@@ -16,6 +16,18 @@ usage() {
     exit 1
 }
 
+# Handle tito tag and build for nms
+titonms() {
+    echo "Building nms RPMs! ( '-')"
+    cd ${QUALDIR}/src/nms
+    tito init
+
+    if [ "$TAG" == "YES" ]; then tito tag; fi
+
+    NMSVERSION=`cat ${QUALDIR}/.tito/packages/nms | cut -f 1 -d ' '`
+    tito build --rpm --tag=nms-${NMSVERSION} --offline
+}
+
 # Handle tito tag and build for qual
 titoqual () {
     echo "Building qual RPMs! ('-' )"
@@ -130,6 +142,7 @@ git checkout "$BRANCH"
 git reset --hard FETCH_HEAD
 git clean -df
 rm -rf /tmp/tito
+titonms
 titoqual
 
 if [ "$TAG" == "YES" ]; then
