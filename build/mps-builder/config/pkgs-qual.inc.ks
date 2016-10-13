@@ -111,6 +111,7 @@ resize
 
 # NMS
 nms
+tklabs_utils
 
 # Qual
 qual
