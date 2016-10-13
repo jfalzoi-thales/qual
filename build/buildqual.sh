@@ -25,7 +25,7 @@ titoutils() {
     if [ "$TAG" == "YES" ]; then tito tag; fi
 
     UTILSVERSION=`cat ${QUALDIR}/.tito/packages/tklabs_utils | cut -f 1 -d ' '`
-    tito build --rpm --tag=nms-${UTILSVERSION} --offline
+    tito build --rpm --tag=tklabs_utils-${UTILSVERSION} --offline
 }
 
 # Handle tito tag and build for nms
