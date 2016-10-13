@@ -5,7 +5,7 @@
 
 Summary: Network Management Appliance
 Name: nms
-Version: 1.0.3
+Version: 1.0.0
 Release: 1
 Group: System Environment/Libraries
 URL: https://repo-tav.tklabs.com:8102/
@@ -79,12 +79,4 @@ sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
 %exclude %{appdir}/systemd
 
 %changelog
-* Thu Oct 13 2016 Christopher Wallace <cwallace@tklabs.com> 1.0.3-1
-- 
-
-* Thu Oct 13 2016 Christopher Wallace <cwallace@tklabs.com> 1.0.2-1
-- 
-
-* Thu Oct 13 2016 Christopher Wallace <cwallace@tklabs.com> 1.0.1-1
-- new package built with tito
 
