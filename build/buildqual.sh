@@ -164,6 +164,8 @@ fi
 
 cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
 
+sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/nms-*.rpm
+sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/tklabs_utils-*.rpm
 sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/qual-*.rpm
 sudo mv /tmp/tito/x86_64/* ${MPSBUILDDIR}/repo/packages/x86_64/
 
