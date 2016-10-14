@@ -58,6 +58,7 @@ pciutils
 strace
 usbutils
 minicom
+resize
 
 # Qual
 qual-ife

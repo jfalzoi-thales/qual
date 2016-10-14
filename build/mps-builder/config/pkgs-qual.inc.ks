@@ -126,10 +126,13 @@ ethtool
 mps-guest-vm
 
 # ATP
+afulnx
+amidewrap
 flashrom
 i350tools
 mps-firmware
 pciutils
+scewrap
 tftp
 tftp-server
 xinetd
