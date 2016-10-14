@@ -3,17 +3,17 @@ import socket
 from ConfigParser import SafeConfigParser
 from subprocess import call, check_call, check_output, CalledProcessError
 from time import sleep
-from paramiko import SSHClient, AutoAddPolicy, SSHException
 
 from common.pb2.ErrorMessage_pb2 import ErrorMessage
 from common.pb2.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp
+from i350Inventory import I350Inventory
+from paramiko import SSHClient, AutoAddPolicy, SSHException
 from qual.pb2.HDDS_pb2 import HostDomainDeviceServiceRequest, HostDomainDeviceServiceResponse
+from semaInventory import SEMAInventory
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from tklabs_utils.vtss.vtss import Vtss
-from i350Inventory import I350Inventory
-from semaInventory import SEMAInventory
 
 
 ## HDDS Module

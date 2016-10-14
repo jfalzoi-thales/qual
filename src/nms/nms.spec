@@ -34,13 +34,11 @@ Network Management Service handles switch and internal communication and configu
 
 %install
 mkdir -p %{buildroot}/%{appdir}/ %{buildroot}/%{THALES_CONF_DIR}/ %{buildroot}/%{_unitdir}/ %{buildroot}/usr/lib/systemd/system-preset/
-cp -rav * %{buildroot}/%{appdir}/
-cp -rav config/*.conf %{buildroot}/%{THALES_CONF_DIR}/
-cp -rav systemd/*.service %{buildroot}/%{_unitdir}/
-cp -rav systemd/*.preset %{buildroot}/usr/lib/systemd/system-preset/
-ln -s %{appdir}/scripts/GNMS %{buildroot}/%{THALES_BIN_DIR}/GNMS
-ln -s %{appdir}/scripts/HNMS %{buildroot}/%{THALES_BIN_DIR}/HNMS
-ln -s %{appdir}/scripts/nmsmenu %{buildroot}/%{THALES_BIN_DIR}/nmsmenu
+cp -ra * %{buildroot}/%{appdir}/
+cp config/*.conf %{buildroot}/%{THALES_CONF_DIR}/
+cp systemd/*.service %{buildroot}/%{_unitdir}/
+cp systemd/*.preset %{buildroot}/usr/lib/systemd/system-preset/
+cp scripts/* %{buildroot}/%{THALES_BIN_DIR}/
 sed -i -re 's|__THALES_BIN_DIR__|%{THALES_BIN_DIR}|g' \
     -e 's|__THALES_CONF_DIR__|%{THALES_CONF_DIR}|g' \
     -e 's|__THALES_DATA_DIR__|%{THALES_DATA_DIR}|g' \
@@ -66,9 +64,6 @@ sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
 %attr(0755,root,root) %{THALES_BIN_DIR}/GNMS
 %attr(0755,root,root) %{THALES_BIN_DIR}/HNMS
 %attr(0755,root,root) %{THALES_BIN_DIR}/nmsmenu
-%attr(0755,root,root) %{appdir}/scripts/GNMS
-%attr(0755,root,root) %{appdir}/scripts/HNMS
-%attr(0755,root,root) %{appdir}/scripts/nmsmenu
 %{appdir}/*
 %{THALES_CONF_DIR}/*
 %{_unitdir}/*
@@ -77,6 +72,7 @@ sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
 %exclude %{appdir}/proto
 %exclude %{appdir}/config
 %exclude %{appdir}/systemd
+%exclude %{appdir}/scripts
 
 %changelog
 * Thu Oct 13 2016 Christopher Wallace <cwallace@tklabs.com> 1.0.1-1

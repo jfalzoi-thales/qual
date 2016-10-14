@@ -2,10 +2,10 @@ import collections
 from subprocess import check_output, CalledProcessError
 
 from nms.common.portresolver.portResolver import resolvePort, portNames
-from nms.guest.pb2.nms_guest_api_pb2 import PortInfoReq, PortInfoResp
+from nms.guest.pb2.nms_guest_api_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
-
+from tklabs_utils.vtss.vtss import Vtss
 
 ## PortInfo Module
 class PortInfo(Module):
@@ -23,16 +23,16 @@ class PortInfo(Module):
                                 "flow_control":         self.keyInfo(self.runEthtoola, 0),
                                 "MTU":                  self.keyInfo(self.getIpLinkData, "mtu"),
                                 "link":                 self.keyInfo(self.getEthData, "Link detected"),
-                                "vlan_id":              self.keyInfo(self.runFakeVlan, 1337),
+                                "vlan_id":              self.keyInfo(self.tempFunc, 0),
                                 "BPDU_state":           self.keyInfo(self.unsupported, 0)}
         ## Dict containing possible keys and their functions for external ports
-        self.outsidePortFuncs = {"shutdown":            self.keyInfo(self.tempFunc, 0),
-                                 "speed":               self.keyInfo(self.tempFunc, 0),
-                                 "configured_speed":    self.keyInfo(self.tempFunc, 0),
-                                 "flow_control":        self.keyInfo(self.tempFunc, 0),
-                                 "MTU":                 self.keyInfo(self.tempFunc, 0),
-                                 "link":                self.keyInfo(self.tempFunc, 0),
-                                 "vlan_id":             self.keyInfo(self.tempFunc, 0),
+        self.outsidePortFuncs = {"shutdown":            self.keyInfo(self.getPortInfo, "Shutdown"),
+                                 "speed":               self.keyInfo(self.getPortInfo, "Speed"),
+                                 "configured_speed":    self.keyInfo(self.getPortInfo, "Configured_Speed"),
+                                 "flow_control":        self.keyInfo(self.getPortInfo, "FC"),
+                                 "MTU":                 self.keyInfo(self.getPortInfo, "MTU"),
+                                 "link":                self.keyInfo(self.getPortInfo, "Link"),
+                                 "vlan_id":             self.keyInfo(self.getVlan,     "AccessVlan"),
                                  "BPDU_state":          self.keyInfo(self.tempFunc, 0)}
         ## Dict containing error codes and descriptions defined by ICD
         self.errors = {1001: "Port is not supported in this setup",
@@ -44,6 +44,12 @@ class PortInfo(Module):
         self.ethCache = {}
         ## Dict for storing relevant output from IpLinkShow calls
         self.ipLinkCache = {}
+        ## IP address of the device
+        self.switchAddress = "10.10.41.159"
+        # Load config file
+        self.loadConfig(attributes=('switchAddress'))
+        ## Object to call the RPC
+        self.vtss = Vtss(switchIP=self.switchAddress)
         #  Adds handler to available message handlers
         self.addMsgHandler(PortInfoReq, self.handler)
 
@@ -274,9 +280,65 @@ class PortInfo(Module):
     #  @param   key       Requested key
     #  @param   port      Port name for function calls
     #  @param   field     Field to retrieve from cache
-    def runFakeVlan(self, response, key, port, field):
-        self.log.info("Running fake VLAN! \o/")
-        self.addResp(response, True, key, "YAY SUCCESS")
+    def getVlan(self, response, key, port, field):
+        try:
+            # Response from the switch
+            jsonResp = self.vtss.callMethod(['vlan.config.interface.get', port])
+            if jsonResp["error"] == None:
+                self.addResp(response, True, key, jsonResp[field])
+            else:
+                self.log.error("Unable to get the VLanId from the switch")
+                self.addResp(response, key=key, errCode=1005)
+        except Exception:
+            self.log.error("Unable to connect to the switch")
+            self.addResp(response, key=key, errCode=1005)
+
+    ## Handles external port key requests
+    #  @param   self
+    #  @param   response  PortInfoResp object
+    #  @param   key       Requested key
+    #  @param   port      Port name for function calls
+    #  @param   field     Field to retrieve from cache
+    def getPortInfo(self, response, key, port, field):
+        tmpField = field
+        # in order to use only this function we'll handle all kinf of RPC here
+        call = ''
+        if tmpField == 'Shutdown':
+            call = 'port.config.get'
+        elif tmpField == 'Configured_Speed':
+            call = 'port.config.get'
+            tmpField = 'Speed'
+        elif tmpField == 'Speed':
+            call = 'port.status.get'
+        elif tmpField == 'Link':
+            call = 'port.status.get'
+        elif tmpField == 'FC':
+            call = 'port.config.get'
+        elif tmpField == 'MTU':
+            call = 'port.config.get'
+        try:
+            # Response from the switch
+            jsonResp = self.vtss.callMethod([call, port])
+            if jsonResp["error"] == None:
+                # Case for port configured_speed
+                if tmpField == 'Speed':
+                    value = jsonResp[tmpField].upper()
+                # Case Flow Control
+                elif tmpField == "FC":
+                    value = True if jsonResp[tmpField] == "on" else False
+                # Case Link
+                elif tmpField == 'Link':
+                    value = 'LINK_UP' if jsonResp[tmpField] else 'LINK_DOWN'
+                # All aother cases, we can pass the same value in the JSON message
+                else:
+                    value = jsonResp[tmpField]
+                self.addResp(response, True, key, value)
+            else:
+                self.log.error('Unable to get "%s" port information from the switch.'%(field))
+                self.addResp(response, key=key, errCode=1005)
+        except Exception:
+            self.log.error("Unable to connect to the switch")
+            self.addResp(response, key=key, errCode=1005)
 
     ## Handles unsupported key requests
     #  @param   self
