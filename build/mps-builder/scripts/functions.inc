@@ -369,7 +369,6 @@ install_image_build_deps() {
 			baseurl=file://$PATH_PACKAGE_REPO
 			enabled=0
 			gpgcheck=0
-			exclude=syslinux-*
 		EOF
 		yum clean all
 		yum --enablerepo="mps-builder-local-packages" install -y $DEPS_TO_INSTALL
