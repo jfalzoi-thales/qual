@@ -1,4 +1,4 @@
-from common.pb2.MessageHeader_pb2 import MessageHeader
+from tklabs_utils.pb2.common_nm_pb2 import MessageHeader
 
 
 ## Encapsulates a message as defined by the "Thales Common Network Messaging" document.

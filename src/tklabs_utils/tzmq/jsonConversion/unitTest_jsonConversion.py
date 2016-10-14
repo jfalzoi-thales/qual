@@ -1,5 +1,6 @@
 import unittest
 
+# @TODO Fix these imports intuitively
 from common.pb2.PowerInfo_pb2 import PowerInfo
 from qual.pb2.CPULoading_pb2 import CPULoadingRequest
 from qual.pb2.HDAudio_pb2 import HDAudioRequest
