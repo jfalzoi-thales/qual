@@ -23,7 +23,7 @@ class PortInfo(Module):
                                 "flow_control":         self.keyInfo(self.runEthtoola, 0),
                                 "MTU":                  self.keyInfo(self.getIpLinkData, "mtu"),
                                 "link":                 self.keyInfo(self.getEthData, "Link detected"),
-                                "vlan_id":              self.keyInfo(self.getVlan, "AccessVlan"),
+                                "vlan_id":              self.keyInfo(self.tempFunc, 0),
                                 "BPDU_state":           self.keyInfo(self.unsupported, 0)}
         ## Dict containing possible keys and their functions for external ports
         self.outsidePortFuncs = {"shutdown":            self.keyInfo(self.getPortInfo, "Shutdown"),
