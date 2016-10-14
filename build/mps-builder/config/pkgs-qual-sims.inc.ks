@@ -108,6 +108,7 @@ strace
 usbutils
 minicom
 resize
+tcpdump
 
 # NMS
 nms
