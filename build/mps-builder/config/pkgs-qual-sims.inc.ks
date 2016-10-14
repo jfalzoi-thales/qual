@@ -126,7 +126,7 @@ ethtool
 mps-guest-vm
 
 # ATP
-#afulnx
+#afuwrap
 #amidewrap
 #flashrom
 #i350tools
