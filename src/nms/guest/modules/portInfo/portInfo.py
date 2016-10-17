@@ -26,14 +26,14 @@ class PortInfo(Module):
                                 "vlan_id":              self.keyInfo(self.tempFunc, 0),
                                 "BPDU_state":           self.keyInfo(self.unsupported, 0)}
         ## Dict containing possible keys and their functions for external ports
-        self.outsidePortFuncs = {"shutdown":            self.keyInfo(self.getPortInfo, "Shutdown"),
-                                 "speed":               self.keyInfo(self.getPortInfo, "Speed"),
-                                 "configured_speed":    self.keyInfo(self.getPortInfo, "Configured_Speed"),
-                                 "flow_control":        self.keyInfo(self.getPortInfo, "FC"),
-                                 "MTU":                 self.keyInfo(self.getPortInfo, "MTU"),
-                                 "link":                self.keyInfo(self.getPortInfo, "Link"),
-                                 "vlan_id":             self.keyInfo(self.getVlan,     "AccessVlan"),
-                                 "BPDU_state":          self.keyInfo(self.tempFunc, 0)}
+        self.outsidePortFuncs = {"shutdown":            self.keyInfo(self.getPortConfigInfo, "Shutdown"),
+                                 "speed":               self.keyInfo(self.getPortStatusInfo, "Speed"),
+                                 "configured_speed":    self.keyInfo(self.getPortConfigInfo, "Speed"),
+                                 "flow_control":        self.keyInfo(self.getPortConfigInfo, "FC"),
+                                 "MTU":                 self.keyInfo(self.getPortConfigInfo, "MTU"),
+                                 "link":                self.keyInfo(self.getPortStatusInfo, "Link"),
+                                 "vlan_id":             self.keyInfo(self.getVlan          , "AccessVlan"),
+                                 "BPDU_state":          self.keyInfo(self.tempFunc         ,  0)}
         ## Dict containing error codes and descriptions defined by ICD
         self.errors = {1001: "Port is not supported in this setup",
                        1002: "Port is not active",
@@ -44,6 +44,10 @@ class PortInfo(Module):
         self.ethCache = {}
         ## Dict for storing relevant output from IpLinkShow calls
         self.ipLinkCache = {}
+        ## Dict for storing relevant output from VTSS RPC
+        self.configCache = {}
+        ## Dict for storing relevant output from VTSS RPC
+        self.statusCache = {}
         ## IP address of the device
         self.switchAddress = "10.10.41.159"
         # Load config file
@@ -71,7 +75,9 @@ class PortInfo(Module):
 
                     if port:
                         self.ethCache = {}
-                        self.ipLinkCache ={}
+                        self.ipLinkCache = {}
+                        self.configCache = {}
+                        self.statusCache = {}
 
                         if port[1]:
                             self.callFunc(response, key, keyParts[-1], port[0])
@@ -113,6 +119,8 @@ class PortInfo(Module):
     def wild(self, response, key, keyParts):
         self.ethCache = {}
         self.ipLinkCache = {}
+        self.configCache = {}
+        self.statusCache = {}
 
         if keyParts[0] == "*":
             for name in portNames:
@@ -299,46 +307,68 @@ class PortInfo(Module):
     #  @param   key       Requested key
     #  @param   port      Port name for function calls
     #  @param   field     Field to retrieve from cache
-    def getPortInfo(self, response, key, port, field):
-        tmpField = field
-        # in order to use only this function we'll handle all kinf of RPC here
-        call = ''
-        if tmpField == 'Shutdown':
-            call = 'port.config.get'
-        elif tmpField == 'Configured_Speed':
-            call = 'port.config.get'
-            tmpField = 'Speed'
-        elif tmpField == 'Speed':
-            call = 'port.status.get'
-        elif tmpField == 'Link':
-            call = 'port.status.get'
-        elif tmpField == 'FC':
-            call = 'port.config.get'
-        elif tmpField == 'MTU':
-            call = 'port.config.get'
+    def getPortConfigInfo(self, response, key, port, field):
+        # first check if we have the requested value in cache
+        if field in self.configCache.keys():
+            # we have it!!!
+            # Add the response
+            self.addResp(response, True, key, self.configCache[field])
+            return
+        # Remote Procedure Call
+        call = 'port.config.get'
         try:
             # Response from the switch
             jsonResp = self.vtss.callMethod([call, port])
             if jsonResp["error"] == None:
-                # Case for port configured_speed
-                if tmpField == 'Speed':
-                    value = jsonResp[tmpField].upper()
-                # Case Flow Control
-                elif tmpField == "FC":
-                    value = True if jsonResp[tmpField] == "on" else False
-                # Case Link
-                elif tmpField == 'Link':
-                    value = 'LINK_UP' if jsonResp[tmpField] else 'LINK_DOWN'
-                # All aother cases, we can pass the same value in the JSON message
-                else:
-                    value = jsonResp[tmpField]
-                self.addResp(response, True, key, value)
+                # fill the cache with the received values from the switch
+                self.configCache['Shutdown'] = jsonResp['Shutdown']
+                self.configCache['Speed'] = jsonResp['Speed'].upper()
+                self.configCache['FC'] = True if jsonResp['FC'] == "on" else False
+                self.configCache['MTC'] = jsonResp['MTC']
+
+                # Add the response
+                self.addResp(response, True, key, jsonResp[field])
             else:
-                self.log.error('Unable to get "%s" port information from the switch.'%(field))
+                self.log.error('Unable to get "%s" port information from the switch.' % (field))
                 self.addResp(response, key=key, errCode=1005)
+                self.configCache = {}
         except Exception:
             self.log.error("Unable to connect to the switch")
             self.addResp(response, key=key, errCode=1005)
+            self.configCache = {}
+
+    ## Handles external port key requests
+    #  @param   self
+    #  @param   response  PortInfoResp object
+    #  @param   key       Requested key
+    #  @param   port      Port name for function calls
+    #  @param   field     Field to retrieve from cache
+    def getPortStatusInfo(self, response, key, port, field):
+        # first check if we have the requested value in cache
+        if field in self.statusCache.keys():
+            # we have it!!!
+            # Add the response
+            self.addResp(response, True, key, self.statusCache[field])
+            return
+        call = 'port.status.get'
+        try:
+            # Response from the switch
+            jsonResp = self.vtss.callMethod([call, port])
+            if jsonResp["error"] == None:
+                # fill the cache with the received values from the switch
+                self.statusCache['Speed'] = jsonResp['Speed'].upper()
+                self.statusCache['Link'] = 'LINK_UP' if jsonResp['Link'] else 'LINK_DOWN'
+
+                # Add the response
+                self.addResp(response, True, key, jsonResp[field])
+            else:
+                self.log.error('Unable to get "%s" port information from the switch.' % (field))
+                self.addResp(response, key=key, errCode=1005)
+                self.statusCache = {}
+        except Exception:
+            self.log.error("Unable to connect to the switch")
+            self.addResp(response, key=key, errCode=1005)
+            self.statusCache = {}
 
     ## Handles unsupported key requests
     #  @param   self
