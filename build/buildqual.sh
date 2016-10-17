@@ -16,6 +16,30 @@ usage() {
     exit 1
 }
 
+# Handle tito tag and build for tklabs_utils
+titoutils() {
+    echo "Building tklabs_utils RPMs! ('-')"
+    cd ${QUALDIR}/src/tklabs_utils
+    tito init
+
+    if [ "$TAG" == "YES" ]; then tito tag; fi
+
+    UTILSVERSION=`cat ${QUALDIR}/.tito/packages/tklabs_utils | cut -f 1 -d ' '`
+    tito build --rpm --tag=tklabs_utils-${UTILSVERSION} --offline
+}
+
+# Handle tito tag and build for nms
+titonms() {
+    echo "Building nms RPMs! ( '-')"
+    cd ${QUALDIR}/src/nms
+    tito init
+
+    if [ "$TAG" == "YES" ]; then tito tag; fi
+
+    NMSVERSION=`cat ${QUALDIR}/.tito/packages/nms | cut -f 1 -d ' '`
+    tito build --rpm --tag=nms-${NMSVERSION} --offline
+}
+
 # Handle tito tag and build for qual
 titoqual () {
     echo "Building qual RPMs! ('-' )"
@@ -130,6 +154,8 @@ git checkout "$BRANCH"
 git reset --hard FETCH_HEAD
 git clean -df
 rm -rf /tmp/tito
+titoutils
+titonms
 titoqual
 
 if [ "$TAG" == "YES" ]; then
@@ -138,6 +164,8 @@ fi
 
 cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
 
+sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/nms-*.rpm
+sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/tklabs_utils-*.rpm
 sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/qual-*.rpm
 sudo mv /tmp/tito/x86_64/* ${MPSBUILDDIR}/repo/packages/x86_64/
 

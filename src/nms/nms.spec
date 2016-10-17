@@ -75,4 +75,3 @@ sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
 %exclude %{appdir}/scripts
 
 %changelog
-

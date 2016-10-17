@@ -87,8 +87,6 @@ memlockd
 
 # Higher level services
 host-domain-device-service
-fake-nms
-
 
 # TPM packages
 #trousers
@@ -110,6 +108,11 @@ strace
 usbutils
 minicom
 resize
+tcpdump
+
+# NMS
+nms
+tklabs_utils
 
 # Qual
 qual
@@ -124,10 +127,13 @@ ethtool
 mps-guest-vm
 
 # ATP
+#afuwrap
+#amidewrap
 #flashrom
 #i350tools
 #mps-firmware
 pciutils
+#scewrap
 tftp
 tftp-server
 xinetd

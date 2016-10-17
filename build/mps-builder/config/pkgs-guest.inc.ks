@@ -58,6 +58,8 @@ pciutils
 strace
 usbutils
 minicom
+resize
+tcpdump
 
 # Qual
 qual-ife
