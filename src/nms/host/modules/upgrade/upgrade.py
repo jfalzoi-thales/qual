@@ -1,0 +1,453 @@
+import time
+import os
+from subprocess import call, Popen
+
+from nms.host.pb2.nms_host_api_pb2 import UpgradeReq, UpgradeResp, SWITCH, I350
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
+## Discard the output
+DEVNULL = open(os.devnull, 'wb')
+
+## FirmwareUpdate Module
+class Upgrade(Module):
+    ## Constructor
+    #  @param     self
+    #  @param     config  Configuration for this module instance
+    def __init__(self, config = None):
+        super(Upgrade, self).__init__(config)
+        #  Adds handler to available message handlers
+        self.addMsgHandler(UpgradeReq, self.handler)
+
+    ## Handles incoming tzmq messages
+    #  @param     self
+    #  @param     msg   tzmq format message
+    #  @return    ThalesZMQMessage object
+    def handler(self, msg):
+        response = UpgradeResp()
+
+        if msg.body.target == I350:
+
+        elif msg.body.target == SWITCH:
+
+        else:
+            response.success = False
+            response.errorMessage = "Unexpected Command %s" % msg.body.command
+            self.log.error("Unexpected Command %s" % msg.body.command)
+
+        return ThalesZMQMessage(response)
+
+    ## Attempts to upgrade the BIOS firmware using image included with QUAL
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def updateBIOS(self, response, reboot):
+        primary = False
+        secondary = False
+
+        if call([self.biosTool, "set-active", "primary"]) == 0:
+            if call([self.biosTool, "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
+                primary = True
+            else:
+                self.log.error("Unable to properly program primary BIOS.")
+        else:
+            self.log.error("Unable to set primary BIOS to active.")
+
+        if call([self.biosTool, "set-active", "secondary"]) == 0:
+            if call([self.biosTool, "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
+                secondary = True
+            else:
+                self.log.error("Unable to properly program secondary BIOS.")
+        else:
+            self.log.error("Unable to set secondary BIOS to active.")
+
+        if primary and secondary:
+            response.success = True
+        elif primary:
+            response.component = FW_BIOS
+            response.success = False
+            response.errorMessage = "Unable to properly program secondary BIOS."
+            return
+        elif secondary:
+            response.component = FW_BIOS
+            response.success = False
+            response.errorMessage = "Unable to properly program primary BIOS."
+            return
+        else:
+            response.component = FW_BIOS
+            response.success = False
+            response.errorMessage = "Unable to properly program BIOS."
+            return
+
+        if reboot: self.reboot.put("REBOOT")
+
+    ## Attempts to  replace Adlink BMC Firmware using the SEMA interface.
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def updateBMC(self, response, reboot):
+        # System restart delay in seconds after end of update.
+        # This should be modify appropriately, but for now let's use 1 second
+        delay = '1'
+        # File to install
+        bmcFile = 'ESL1v9.bin'
+        # Subprocess obj
+        sema = Popen(['sema', '%s/%s' % (self.firmPath, bmcFile), delay], stdout=DEVNULL)
+        # Wait until the BMC is updated
+        sema.wait()
+        # Success???
+        if sema.returncode != 0:
+            # ERROR!!!
+            response.success = False
+            response.component = FW_BMC
+            response.errorMessage = "SEMA failed. Error code %d" % (sema.returncode)
+            self.log.error("SEMA failed. Error code %d" % (sema.returncode))
+        else:
+            # SUCCESS!!!
+            response.success = True
+
+        if reboot: self.reboot.put("REBOOT")
+
+    ## Attempts to upgrade the I350 EEPROM using image included with QUAL
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def updateI350EEPROM(self, response, reboot):
+        response.success = True
+
+        if call(["eeupdate64e", "-nic=2", "-data", "%s/I350_mps.txt" % self.firmPath]) != 0:
+            self.log.error("Unable to program I350 EEPROM.")
+            response.component = FW_I350_EEPROM
+            response.success = False
+            response.errorMessage = "Unable to program I350 EEPROM."
+            return
+
+        result = 0
+        for nicidx in range(2, 6):
+            result |= call(["bootutil64e", "-nic=%d" % nicidx, "-fe"])
+        if result != 0:
+            self.log.error("Unable to enable I350 flash.")
+            response.component = FW_I350_EEPROM
+            response.success = False
+            response.errorMessage = "Unable to enable I350 flash."
+            return
+
+        if reboot: self.reboot.put("REBOOT")
+
+    ## Attempts to upgrade the I350 Flash using image included with QUAL
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def updateI350Flash(self, response, reboot):
+        response.success = True
+
+        if call(["i350-flashtool", "%s/1573_i350_flash.bin" % self.firmPath]) != 0:
+            self.log.error("Unable to program I350 flash.")
+            response.component = FW_I350_FLASH
+            response.success = False
+            response.errorMessage = "Unable to program I350 flash."
+            return
+
+        if reboot: self.reboot.put("REBOOT")
+
+    ## Attempts to load the configuration update into the
+    #  secondary config location
+    #
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def configUpdate(self, response, reboot):
+        switchConfigFile = "startup-config"
+        try:
+            output = ''
+            # Open the SSH connection
+            switchClient = paramiko.SSHClient()
+            switchClient.load_system_host_keys()
+            switchClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            switchClient.connect(self.switchAddress, port=22,username=self.switchUser, password=self.switchPassword)
+            # Execute the command
+            # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
+            channel = switchClient.invoke_shell()
+            # Erase the secondary-config file just before transfer the updated
+            channel.send("delete flash:secondary-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # Send the requested file to the switch
+            channel.send("copy tftp://%s/%s flash:secondary-config\n" % (self.tftpServer, switchConfigFile))
+            time.sleep(0.2)
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # Check that the file was actually transferred
+            while True:
+                channel.send("dir\n")
+                while channel.recv_ready():
+                    output = channel.recv(1024)
+                # if the file is being transferring, wait for it to finish
+                if "operation is currently in progress" in output:
+                    time.sleep(0.2)
+                    continue
+                if 'secondary-config' not in output:
+                    # There was an error transferring the file
+                    response.success = False
+                    response.component = FW_SWITCH_CONFIG
+                    response.errorMessage = "Error transfering file %s to secondary-file" % (switchConfigFile)
+                    self.log.error("Error transfering file %s to secondary-file" % (switchConfigFile))
+                    return
+                break
+            # Close the connection
+            switchClient.close()
+            # Fill the response
+            response.success = True
+
+            if reboot: self.reboot.put("REBOOT")
+
+        except paramiko.ssh_exception.SSHException:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG
+            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
+            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+        except Exception as e:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
+            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
+
+    ## Attempts to swap the configuration update into the
+    #  secondary config location
+    #
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def configUpdateSwap(self, response, reboot):
+        try:
+            output = ''
+            # Open the SSH connection
+            switchClient = paramiko.SSHClient()
+            switchClient.load_system_host_keys()
+            switchClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            switchClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+            # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
+            channel = switchClient.invoke_shell()
+
+            while True:
+                # Check that we have the secondary config file in the switch
+                channel.send("dir\n")
+                time.sleep(0.2)
+                while channel.recv_ready():
+                    output = channel.recv(1024)
+                # This error may happen
+                if "operation is currently in progress" in output:
+                    time.sleep(0.2)
+                    continue
+
+                if "secondary-config" not in output:
+                    response.success = False
+                    response.component = FW_SWITCH_CONFIG_SWAP
+                    response.errorMessage = "No Secondary file configuration present in the switch."
+                    self.log.error("No Secondary file configuration present in the switch.")
+                    return
+                break
+
+            ## Swap the configurations
+            # 1-save the secondary config in an aux file
+            channel.send("copy flash:secondary-config flash:aux-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # 2-copy the startup-config in the secondary-config
+            channel.send("copy startup-config flash:secondary-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # 3-copy the saved secondary-config into the startup-config
+            channel.send("copy flash:aux-config startup-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+            # 4-erase the auxiliar file
+            time.sleep(0.2)
+            channel.send("delete flash:aux-config\n")
+            while channel.recv_ready():
+                output = channel.recv(1024)
+
+            # Close the connection
+            switchClient.close()
+            # Fill the response
+            response.success = True
+
+            if reboot: self.reboot.put("REBOOT")
+
+        except paramiko.ssh_exception.SSHException as e:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG_SWAP
+            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
+            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+        except Exception as e:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG_SWAP
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
+            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
+
+    ## Attempts to load a firmware image into
+    #  the alternate location
+    #
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def firmwareUpgrade(self, response, reboot):
+        try:
+            output = ''
+            # Open the SSH connection
+            switchClient = paramiko.SSHClient()
+            switchClient.load_system_host_keys()
+            switchClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            switchClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+            # Execute the command
+            # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
+            channel = switchClient.invoke_shell()
+
+            # Copy the Firmware image into the switch
+            channel.send("firmware upgrade tftp://%s/%s\n" % (self.tftpServer, "Thales-MPS.dat"))
+            # Get the starting time of the upgrade operation
+            startTime = time.time()
+            # It should end in less than 8 minutes
+            endTime = startTime + 480
+            # Make some checks here
+            while endTime > time.time():
+                time.sleep(0.2)
+                while channel.recv_ready():
+                    output = channel.recv(1024)
+                # if the tftp server is not active or wrong IP
+                if "Invalid IP address" in output:
+                    response.success = False
+                    response.component = FW_SWITCH_FIRMWARE
+                    response.errorMessage = "Switch unable to establish the connection with tftp server %s" % (self.tftpServer)
+                    self.log.error("Switch unable to establish the connection with tftp server %s" % (self.tftpServer))
+                    return
+                # if Thales-MPS.dat was not present on the tftp server
+                elif 'File not found' in output:
+                    response.success = False
+                    response.component = FW_SWITCH_FIRMWARE
+                    response.errorMessage = "Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % (self.tftpServer)
+                    self.log.error("Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % (self.tftpServer))
+                    return
+                # if Thales-MPS.dat was an invalid image
+                elif 'Error: Invalid image' in output:
+                    response.success = False
+                    response.component = FW_SWITCH_FIRMWARE
+                    response.errorMessage = "Invalid firmware image"
+                    self.log.error("Invalid firmware image")
+                    return
+                else:
+                    # Here we'll check if we are still connected to the switch,
+                    # If not, it means that the switch accepted the file and it's upgrading
+                    # otherwise, continue.......
+                    transport = switchClient.get_transport()
+                    if transport.is_active():
+                        continue
+                    else:
+                        # Fill the response
+                        response.success = True
+                        # reboot if requested
+                        if reboot: self.reboot.put("REBOOT")
+                        return
+            # If get here, it is because the switch was not able to upgrade
+            response.success = False
+            response.component = FW_SWITCH_FIRMWARE
+            response.errorMessage = "FATAL! Firmware upgrade timeout."
+            self.log.error("FATAL! Firmware upgrade timeout.")
+
+        except paramiko.ssh_exception.SSHException:
+            response.success = False
+            response.component = FW_SWITCH_FIRMWARE
+            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
+            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+        except Exception as e:
+            response.success = False
+            response.component = FW_SWITCH_FIRMWARE
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
+            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
+
+    ## Attempts to swap the firmware between the primary
+    # location and the alternate location
+    #
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def firmwareSwap(self, response, reboot):
+        try:
+            output = ''
+            # Open the SSH connection
+            switchClient = paramiko.SSHClient()
+            switchClient.load_system_host_keys()
+            switchClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            switchClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+            # Execute the command
+            # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
+            channel = switchClient.invoke_shell()
+
+            # Copy the Firmware image into the switch
+            channel.send("firmware swap\n")
+
+            # TODO: Check operation result. Here we don't have a way to know if the switch swaped, I'm going to wait until we test it on the MPS to see what is the switch reponse in case of success or failure
+
+            # Close the connection
+            switchClient.close()
+            # Fill the response
+            response.success = True
+
+            if reboot: self.reboot.put("REBOOT")
+
+        except paramiko.ssh_exception.SSHException:
+            response.success = False
+            response.component = FW_SWITCH_FIRMWARE_SWAP
+            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
+            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+        except Exception as e:
+            response.success = False
+            response.component = FW_SWITCH_CONFIG_SWAP
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
+            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
+
+    ## Catches valid, unimplemented message command types.
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def unimplemented(self, response, reboot):
+        response.success = False
+        response.errorMessage = "This message is not yet implemented."
+        self.log.info("This message is not yet implemented.")
+
+        if reboot: self.reboot.put("REBOOT")
+
+    ## Waits for a reboot command, then attempts to reboot the system
+    #  @param   self
+    def rebooter(self):
+        msg = self.reboot.get(block=True)
+
+        time.sleep(.5)
+
+        if msg == "REBOOT":
+            # Reboot the switch first by toggling its reset line low/high
+            self.gpioSet("Reset_Vitesse7429", 0)
+            time.sleep(.2)
+            self.gpioSet("Reset_Vitesse7429", 1)
+            # Now go ahead and reboot the CPU
+            call(["shutdown", "-r", "now"])
+
+    ## Call GPIO manager to set the state of a GPIO line
+    #  @param   self
+    #  @param   pin    Name of the GPIO pin to set
+    #  @param   value  Value to which to set the pin (0 or 1)
+    def gpioSet(self, pin, value):
+        setReq = RequestMessage()
+        setReq.pin_name = pin
+        setReq.request_type = RequestMessage.SET
+        setReq.value = value
+        # We only use this for rebooting, so we won't bother looking at the response
+        self.gpioMgrClient.sendRequest(ThalesZMQMessage(setReq))
+
+    ## Attempts to terminate module gracefully
+    #  @param   self
+    def terminate(self):
+        self._running = False
+        self.reboot.put("EXIT")
+        self.stopThread()
