@@ -6,7 +6,7 @@
 set -e
 
 git config --global credential.helper 'cache --timeout=7200'
-yum -y install libiscsi-devel librados2-devel librbd1-devel glusterfs-api-devel glusterfs-devel
+yum -y install libiscsi-devel librados2-devel librbd1-devel glusterfs-api-devel glusterfs-devel dmidecode
 
 cd /mnt/workspace
 ./build.sh kernel
