@@ -1,3 +1,5 @@
+from systemd.daemon import notify as sd_notify
+
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.module.moduleshell import ModuleShell
 from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
@@ -45,9 +47,11 @@ def main():
     gnms = GNMS()
     gpbListener = GnmsGpbListener(gnms)
 
+    sd_notify('READY=1')
     # Start the GPB listener running - function will only return on KeyboardInterrupt
     gpbListener.run()
 
+    sd_notify('STOPPING=1')
     # Terminate moduleShell so we can exit cleanly
     gnms.moduleShell.terminate()
 

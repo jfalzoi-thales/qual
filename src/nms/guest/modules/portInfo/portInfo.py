@@ -179,7 +179,7 @@ class PortInfo(Module):
             for line in out:
                 data += line.strip().split()
 
-            while count < len(data):
+            while (len(data) - count) > 1:
                 self.ipLinkCache[data[count]] = data[count + 1]
                 count += 2
         except CalledProcessError as err:
