@@ -1,3 +1,4 @@
+import os
 from systemd.daemon import notify as sd_notify
 
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
@@ -22,21 +23,39 @@ class HNMS(ConfigurableObject):
         self.loadConfig(attributes=('serviceAddress','switchAddress'))
         ## Module shell that will contain the modules
         self.moduleShell = ModuleShell(name="HNMS", moduleDir="nms.host.modules", messageDir="nms.host.pb2")
-        self.moduleShell.log.info("Switch info: %s" % self.getSwitchInfo())
+        switchInfo = self.getSwitchInfo()
+        self.moduleShell.log.info("Switch Firmware: %s" % switchInfo[0])
+        self.moduleShell.log.info("Config: %s" % switchInfo[1])
 
     ## Get the info from the Vitesse Ethernet Switch
     #
     def getSwitchInfo(self):
         # In case we can't get the info, "not found" will be logged
-        info = "Not found."
+        firmwareInfo = "Not found."
         vtss = Vtss(switchIP=self.switchAddress)
         # Get the info from the switch
         jsonResp = vtss.callMethod(['firmware.status.switch.get'])
         # If no error, update the info
         if jsonResp['error'] == None:
-            info = jsonResp['result'][0]['val']['Version']
+            firmwareInfo = jsonResp['result'][0]['val']['Version']
 
-        return info
+        # Get the config info
+        configInfo = "Not found"
+        # Save the startup-config file
+        jsonResp = vtss.callMethod(['icfg.control.copy.set','{"Argument1":{"Copy":true,"SourceConfigType":"2","SourceConfigFile":"flash:startup-config","DestinationConfigType":"3","DestinationConfigFile":"tftp://192.168.1.122/tmp-startup-config","Merge":false}}'])
+        # If no error from the RPC, check if the file was actually copied
+        if jsonResp['error'] == None:
+            # If the file exist
+            if os.path.exists('/thales/qual/firmware/tmp-startup-config'):
+                # Read the file, and the config info is the line after the line "end"
+                configFile = open('/thales/qual/firmware/tmp-startup-config')
+                lines = configFile.readlines()
+                # read the file backwards for optimization
+                for index,line in reversed(list(enumerate(lines))):
+                    if 'end' in line:
+                        configInfo = lines[index+1]
+
+        return (firmwareInfo, configInfo)
 
 
 ## Class to set up a listener for GPB messages and hand them off to the HNMS class
