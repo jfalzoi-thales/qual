@@ -372,8 +372,8 @@ class FirmwareUpdate(Module):
                     self.log.error("Invalid firmware image")
                     return
                 # if Firmware image is up to date
-                elif 'Error: Flash is already updated with this image.with this image' in output:
-                    response.success = True                    
+                elif 'Error: Flash is already updated with this image' in output:
+                    response.success = True
                     # reboot if requested
                     if reboot: self.reboot.put("REBOOT")
                     return
