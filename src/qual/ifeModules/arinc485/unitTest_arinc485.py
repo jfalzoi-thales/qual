@@ -1,10 +1,12 @@
 import unittest
 from time import sleep
+
 import arinc485
-from common.gpb.python.ARINC485_pb2 import ARINC485Request, ARINC485Response
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger import logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.ARINC485_pb2 import ARINC485Request, ARINC485Response
+from tklabs_utils.logger import logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 
@@ -76,6 +78,9 @@ class Test_ARINC485(unittest.TestCase):
         module.msgHandler(ThalesZMQMessage(ARINC485Messages.stop()))
 
     ## Valid Test case: Send a RUN, REPORT, STOP, and REPORT msgs
+    # Map:
+    #       RX    -> TX1, TX2, TX3, TX4
+    #       RX not-> TX5
     #  Asserts:
     #       appState == RUNNING
     #       ---------------------
@@ -107,11 +112,11 @@ class Test_ARINC485(unittest.TestCase):
         self.assertEqual(response.body.state, ARINC485Response.RUNNING)
 
         for stats in response.body.statistics:
-            if stats.channel in ["Slave1", "Slave3", "Slave4"]:
+            if stats.channel in ["Slave1", "Slave2", "Slave3", "Slave4"]:
                 self.assertEqual(stats.missed, 0)
                 self.assertGreater(stats.received, 0)
 
-            if stats.channel in ["Slave2", "Slave5"]:
+            if stats.channel in ["Slave5"]:
                 self.assertGreater(stats.missed, 0)
                 self.assertEqual(stats.received, 0)
 
@@ -120,11 +125,11 @@ class Test_ARINC485(unittest.TestCase):
         self.assertEqual(response.body.state, ARINC485Response.STOPPED)
 
         for stats in response.body.statistics:
-            if stats.channel in ["Slave1", "Slave3", "Slave4"]:
+            if stats.channel in ["Slave1", "Slave2", "Slave3", "Slave4"]:
                 self.assertEqual(stats.missed, 0)
                 self.assertGreater(stats.received, 0)
 
-            if stats.channel in ["Slave2", "Slave5"]:
+            if stats.channel in ["Slave5"]:
                 self.assertGreater(stats.missed, 0)
                 self.assertEqual(stats.received, 0)
 
