@@ -371,6 +371,12 @@ class FirmwareUpdate(Module):
                     response.errorMessage = "Invalid firmware image"
                     self.log.error("Invalid firmware image")
                     return
+                # if Firmware image is up to date
+                elif 'Error: Flash is already updated with this image.with this image' in output:
+                    response.success = True                    
+                    # reboot if requested
+                    if reboot: self.reboot.put("REBOOT")
+                    return
                 else:
                     # Here we'll check if we are still connected to the switch,
                     # If not, it means that the switch accepted the file and it's upgrading
