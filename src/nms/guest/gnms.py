@@ -12,7 +12,7 @@ class GNMS(ConfigurableObject):
     # @param self
     def __init__(self):
         # Init the superclass
-        super(GNMS, self).__init__()
+        super(GNMS, self).__init__("server_config")
         ## Address to use for GPB listener
         self.service_address = "tcp://*:40006"
         ## Location of keys file, used if provided by the config file
