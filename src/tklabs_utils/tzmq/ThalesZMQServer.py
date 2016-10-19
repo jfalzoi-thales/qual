@@ -1,5 +1,6 @@
 import zmq
 
+from mps_utils.mps_zmq_curve_socket import MPSZMQCurveSocket as MPSSock
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.pb2.common_nm_pb2 import ErrorMessage
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -17,7 +18,8 @@ class ThalesZMQServer(object):
     # @param msgParts      Number of message parts for both request and response
     # @param requestParts  Number of message parts for request
     # @param responseParts Number of message parts for response
-    def __init__(self, address, msgParts=3, requestParts=0, responseParts=0, allowNoBody=False):
+    def __init__(self, address, msgParts=3, requestParts=0, responseParts=0, allowNoBody=False, authKeyFile="",
+                 pubKeysDir=""):
         ## Logger implementation, based on standard python logger
         self.log = Logger(type(self).__name__)
         ## ZMQ address for socket to bind to
@@ -28,13 +30,22 @@ class ThalesZMQServer(object):
         self.responseParts = responseParts if responseParts > 0 else msgParts
         ## Whether to allow messages with no body
         self.allowNoBody = allowNoBody
+        ## File containing authentication keys for ZMQ messages
+        self.authKeyFile = authKeyFile
         ## Default request name, used for single-part messages
         self.defaultRequestName = "Request"
         ## ZMQ context
         self.zcontext = zmq.Context.instance()
-        ## ZMQ socket
-        self.zsocket = self.zcontext.socket(zmq.REP)
-        self.zsocket.bind(self.address)
+
+        #  If authentication file provided, set up socket for authentication
+        if self.authKeyFile:
+            self.log.info("Using ZMQ CURVE authentication")
+            self.zsocket = MPSSock(self.authKeyFile, self.zcontext)
+            self.zsocket.listen(self.address, pubKeysDir, allow_nonlocal_bind=True)
+        else:
+            ## ZMQ socket
+            self.zsocket = self.zcontext.socket(zmq.REP)
+            self.zsocket.bind(self.address)
 
     ## Starts up a loop that handles requests.
     #
