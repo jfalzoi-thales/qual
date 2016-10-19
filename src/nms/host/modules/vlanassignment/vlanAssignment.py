@@ -18,9 +18,6 @@ class VlanAssignment(Module):
         self.pfNames = ["i350_pf_1", "i350_pf_2", "i350_pf_3", "i350_pf_4"]
         ## List of virtual function names for validating the port name
         self.vfNames = ["vf1", "vf2", "vf3", "vf4", "vf5", "vf6", "vf7"]
-        ## IP address of the device
-        self.switchAddress = "10.10.41.159"
-        self.loadConfig(attributes=('switchAddress'))
         # adding the message handler
         self.addMsgHandler(VLANAssignReq, self.hdlrMsg)
 
