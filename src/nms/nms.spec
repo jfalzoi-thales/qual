@@ -17,7 +17,7 @@ Requires: python(abi) = 2.7
 Requires: python-zmq
 Requires: protobuf-python
 Requires: tklabs_utils
-Requires: ethtool
+Requires: i350-tools
 %{?systemd_requires}
 BuildRequires: systemd
 
