@@ -56,6 +56,7 @@ class Vtss(object):
                     resp = http.getresponse()
                 except Exception as e:
                     # well, now we really don't what happened
+                    e.message = 'Unable to perform GET request to the switch'
                     raise e
 
             #  Get the json in a string representation

@@ -22,7 +22,12 @@ class HNMS(ConfigurableObject):
         self.loadConfig(attributes=('serviceAddress','switchAddress'))
         ## Module shell that will contain the modules
         self.moduleShell = ModuleShell(name="HNMS", moduleDir="nms.host.modules", messageDir="nms.host.pb2")
-        self.moduleShell.log.info("Switch info: %s" % self.getSwitchInfo())
+        # TODO: We nedd to find the reason this is not raising an exception
+        # try:
+        #     self.moduleShell.log.info("Switch info: %s" % self.getSwitchInfo())
+        # except Exception:
+        #     # Something went wrong talking to the switch
+        #     pass
 
     ## Get the info from the Vitesse Ethernet Switch
     #
