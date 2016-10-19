@@ -14,9 +14,13 @@ class GNMS(ConfigurableObject):
         # Init the superclass
         super(GNMS, self).__init__()
         ## Address to use for GPB listener
-        self.serviceAddress = "tcp://*:40006"
+        self.service_address = "tcp://*:40006"
+        ## Location of keys file, used if provided by the config file
+        self.service_prvkey_file = ""
+        ## Directory containing public authentication keys
+        self.client_pubkeys_dir = ""
         #  Read config file and update specified instance variables
-        self.loadConfig(attributes=('serviceAddress',))
+        self.loadConfig(attributes=('service_address', 'service_prvkey_file', 'client_pubkeys_dir'))
         ## Module shell that will contain the modules
         self.moduleShell = ModuleShell(name="GNMS", moduleDir="nms.guest.modules", messageDir="nms.guest.pb2")
 
@@ -29,7 +33,7 @@ class GnmsGpbListener(ThalesZMQServer):
         ## GNMS instance we will be linked to
         self.gnms = gnms
         # Init the superclass
-        super(GnmsGpbListener, self).__init__(address=gnms.serviceAddress, allowNoBody=True)
+        super(GnmsGpbListener, self).__init__(address=gnms.service_address, allowNoBody=True, authKeyFile=gnms.service_prvkey_file, pubKeysDir=gnms.client_pubkeys_dir)
 
     ## Called by base class when a request is received from a client.
     #
