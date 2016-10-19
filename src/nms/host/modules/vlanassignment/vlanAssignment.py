@@ -69,7 +69,7 @@ class VlanAssignment(Module):
                     if len(parts) != 2 or parts[0] not in self.pfNames or parts[1] not in self.vfNames:
                         self.setResp(response, False, ERROR_PROCESSING_MESSAGE, "Invalid port name %s" % port)
                         break
-                    vfs.add(parts[1][-1])
+                    vfs.add(int(parts[1][-1]) - 1)
 
         if response.success:
             # Build list of pairs to send to I350 driver.
@@ -81,8 +81,8 @@ class VlanAssignment(Module):
                 vlanConf.append("1 %u" % vlan)
 
             for vf in vfs:
-                self.log.info("Configuring vf%s: %s" % (vf, " ".join(vlanConf)))
-                procPath = "/proc/driver/igb/vf%svlans" % vf
+                self.log.info("Configuring vf%d: %s" % (vf, " ".join(vlanConf)))
+                procPath = "/proc/driver/igb/vf%dvlans" % vf
                 if not os.path.exists(procPath):
                     self.setResp(response, False, VLAN_ASSIGNMENT_FAILED, "I350 driver does not support VF config")
                     break
@@ -98,14 +98,14 @@ class VlanAssignment(Module):
                     lines = readback.splitlines()
                     # Must be same number of lines and each line in vlanConf must be in the read back list
                     if len(lines) != len(vlanConf):
-                        self.setResp(response, False, VLAN_ASSIGNMENT_FAILED, "I350 driver error configuring VF %s" % vf)
+                        self.setResp(response, False, VLAN_ASSIGNMENT_FAILED, "I350 driver error configuring VF %d" % vf)
                     else:
                         for confLine in vlanConf:
                             if confLine not in lines:
-                                self.setResp(response, False, VLAN_ASSIGNMENT_FAILED, "I350 driver error configuring VF %s" % vf)
+                                self.setResp(response, False, VLAN_ASSIGNMENT_FAILED, "I350 driver error configuring VF %d" % vf)
                                 break
 
                     if not response.success:
-                        self.log.error("Read back vf%s: %s" % (vf, " ".join(lines)))
+                        self.log.error("Read back vf%d: %s" % (vf, " ".join(lines)))
 
         return ThalesZMQMessage(response)
