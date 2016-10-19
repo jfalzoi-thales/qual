@@ -11,6 +11,9 @@ elif [ $# == 3 ]; then
         cat $3 > /tmp/i350mac_"${1: -1}"
         echo "SUCCESS! $0 $@" >> /tmp/i350tools.log
         exit 0
+    elif [ $2 == "-data" ]; then
+        echo "SUCCESS! $0 $@" >> /tmp/i350tools.log
+        exit 0
     fi
 fi
 

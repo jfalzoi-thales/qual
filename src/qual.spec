@@ -15,6 +15,7 @@ Requires: python-netifaces
 Requires: python-zmq
 Requires: protobuf-python
 Requires: python2-paramiko
+Requires: ethtool
 %{?systemd_requires}
 BuildRequires: systemd
 
