@@ -1,5 +1,4 @@
 import unittest
-import time
 from nms.host.pb2.nms_host_api_pb2 import *
 from nms.host.modules.vlanassignment.vlanAssignment import VlanAssignment
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -17,19 +16,78 @@ class VlanAssignmentMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Send BLOCKING", VlanAssignmentMessages.send_1portName_1ExtVlan_1IntVlan)]
+        return [("Set VF1 int 301 ext 127", VlanAssignmentMessages.configVFExtVlanIntVlan),
+                ("Set VF1 int 301",         VlanAssignmentMessages.configVFIntVlan),
+                ("Set VF1 none",            VlanAssignmentMessages.configVFNoVlans),
+                ("Set PF int 301",          VlanAssignmentMessages.configPFIntVlan)]
 
     @staticmethod
-    def send_1portName_1ExtVlan_1IntVlan():
+    def configPFIntVlan():
         message = VLANAssignReq()
-        message.port_name.append('internal.switch_2')
-        message.external_vlans.append(1)
-        message.internal_vlans.append(2)
+        message.port_name.append('i350_pf_1')
+        message.port_name.append('i350_pf_2')
+        message.port_name.append('i350_pf_3')
+        message.port_name.append('i350_pf_4')
+        message.internal_vlans.append(301)
         return message
 
     @staticmethod
-    def send_0portName_0ExtVlan_0IntVlan():
+    def configVFExtVlanIntVlan():
         message = VLANAssignReq()
+        message.port_name.append('i350_pf_1_vf1')
+        message.port_name.append('i350_pf_2_vf1')
+        message.port_name.append('i350_pf_3_vf1')
+        message.port_name.append('i350_pf_4_vf1')
+        message.external_vlans.append(127)
+        message.internal_vlans.append(301)
+        return message
+
+    @staticmethod
+    def configVFIntVlan():
+        message = VLANAssignReq()
+        message.port_name.append('i350_pf_1_vf1')
+        message.port_name.append('i350_pf_2_vf1')
+        message.port_name.append('i350_pf_3_vf1')
+        message.port_name.append('i350_pf_4_vf1')
+        message.internal_vlans.append(301)
+        return message
+
+    @staticmethod
+    def configVFNoVlans():
+        message = VLANAssignReq()
+        message.port_name.append('i350_pf_1_vf1')
+        message.port_name.append('i350_pf_2_vf1')
+        message.port_name.append('i350_pf_3_vf1')
+        message.port_name.append('i350_pf_4_vf1')
+        return message
+
+    @staticmethod
+    def configNoPort():
+        message = VLANAssignReq()
+        return message
+
+    @staticmethod
+    def configBadPort1():
+        message = VLANAssignReq()
+        message.port_name.append('i351_pf_1_vf1')
+        return message
+
+    @staticmethod
+    def configBadPort2():
+        message = VLANAssignReq()
+        message.port_name.append('i350_pf_5_vf1')
+        return message
+
+    @staticmethod
+    def configBadPort3():
+        message = VLANAssignReq()
+        message.port_name.append('i350_pf_1_vf8')
+        return message
+
+    @staticmethod
+    def configBadPort4():
+        message = VLANAssignReq()
+        message.port_name.append('i350_pf_1_vf1_vf1')
         return message
 
 ## VLAN Assignment Unit Test
@@ -64,37 +122,79 @@ class Test_VlanAssig(unittest.TestCase):
     # start each test case with the module in a known state
     def setUp(self):
         log = self.__class__.log
-        module = self.__class__.module
         log.info("==== Reset module state ====")
 
     ## Valid Test case
     #
-    #   Send a 1portName_1ExtVlan_1IntVlan Message
-    def test_1portName_1ExtVlan_1IntVlan(self):
+    #   Send a sequence of valid messages
+    def test_validSequence(self):
         log = self.__class__.log
         module = self.__class__.module
 
-        log.info("**** Test case: 1portName_1ExtVlan_1IntVlan message ****")
-        response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.send_1portName_1ExtVlan_1IntVlan()))
+        log.info("**** Test case: Valid VF message sequence ****")
 
-        # Asserts
+        response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.configVFIntVlan()))
+        self.assertEqual(response.name, "VLANAssignResp")
+        self.assertEqual(response.body.success, True)
+
+        response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.configVFExtVlanIntVlan()))
+        self.assertEqual(response.name, "VLANAssignResp")
+        self.assertEqual(response.body.success, True)
+
+        response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.configVFIntVlan()))
+        self.assertEqual(response.name, "VLANAssignResp")
+        self.assertEqual(response.body.success, True)
+
+        response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.configVFNoVlans()))
+        self.assertEqual(response.name, "VLANAssignResp")
         self.assertEqual(response.body.success, True)
 
         log.info("==== Test complete ====")
 
     ## Fail Test case
     #
-    #   Send a 0portName_0ExtVlan_0IntVlan Message
-    def test_0portName_0ExtVlan_0IntVlan(self):
+    #   Send a noPort message
+    def test_noPort(self):
         log = self.__class__.log
         module = self.__class__.module
 
-        log.info("**** Test case: 1portName_1ExtVlan_1IntVlan message ****")
-        response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.send_0portName_0ExtVlan_0IntVlan()))
+        log.info("**** Test case: no port_name in message ****")
 
-        # Asserts
+        response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.configNoPort()))
+        self.assertEqual(response.name, "VLANAssignResp")
         self.assertEqual(response.body.success, False)
-        self.assertEqual(response.body.error.error_code, 1002)
+        self.assertEqual(response.body.error.error_code, ERROR_PROCESSING_MESSAGE)
+
+        log.info("==== Test complete ====")
+
+    ## Fail Test case
+    #
+    #   Send badPort messages
+    def test_badPort(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test cases: Various bad port names ****")
+
+        response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.configBadPort1()))
+        self.assertEqual(response.name, "VLANAssignResp")
+        self.assertEqual(response.body.success, False)
+        self.assertEqual(response.body.error.error_code, ERROR_PROCESSING_MESSAGE)
+
+        response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.configBadPort2()))
+        self.assertEqual(response.name, "VLANAssignResp")
+        self.assertEqual(response.body.success, False)
+        self.assertEqual(response.body.error.error_code, ERROR_PROCESSING_MESSAGE)
+
+        response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.configBadPort3()))
+        self.assertEqual(response.name, "VLANAssignResp")
+        self.assertEqual(response.body.success, False)
+        self.assertEqual(response.body.error.error_code, ERROR_PROCESSING_MESSAGE)
+
+        response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.configBadPort4()))
+        self.assertEqual(response.name, "VLANAssignResp")
+        self.assertEqual(response.body.success, False)
+        self.assertEqual(response.body.error.error_code, ERROR_PROCESSING_MESSAGE)
 
         log.info("==== Test complete ====")
 
