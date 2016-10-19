@@ -29,7 +29,7 @@ class Upgrade(Module):
         elif msg.body.target == SWITCH:
             self.addResp(response, errCode=1003, errDesc="SWITCH specified as upgrade target")
         else:
-            self.addResp(response, errCode=1002, errDesc="Unexpected Command %s" % msg.body.command)
+            self.addResp(response, errCode=1002, errDesc="Unexpected Target %s" % msg.body.target)
 
         return ThalesZMQMessage(response)
 
