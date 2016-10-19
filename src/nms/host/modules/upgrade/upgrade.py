@@ -53,15 +53,7 @@ class Upgrade(Module):
     #  @param   path        Path to upgrade image
     def upgradeI350EEPROM(self, response, path):
         if call(["eeupdate64e", "-nic=2", "-data", "%s" % path]) == 0:
-            result = 0
-
-            for nicidx in range(2, 6):
-                result |= call(["bootutil64e", "-nic=%d" % nicidx, "-fe"])
-
-            if result != 0:
-                self.addResp(response, errCode=1002, errDesc="Unable to enable I350 flash.")
-            else:
-                self.addResp(response, True)
+            self.addResp(response, True)
         else:
             self.addResp(response, errCode=1002, errDesc="Unable to program I350 EEPROM.")
 
