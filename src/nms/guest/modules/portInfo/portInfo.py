@@ -129,25 +129,25 @@ class PortInfo(Module):
                 if port[1]:
                     if keyParts[-1] == "*":
                         for stat in self.outsidePortFuncs:
-                            self.callFunc(response, key, stat, port[0])
+                            self.callFunc(response, name + '.' + stat, stat, port[0])
                     else:
-                        self.callFunc(response, key, keyParts[-1], port[0])
+                        self.callFunc(response, name + '.' + keyParts[-1], keyParts[-1], port[0])
                 else:
                     if keyParts[-1] == "*":
                         for stat in self.insidePortFuncs:
-                            self.callFunc(response, key, stat, port[0], False)
+                            self.callFunc(response, name + '.' + stat, stat, port[0], False)
                     else:
-                        self.callFunc(response, key, keyParts[-1], port[0], False)
+                        self.callFunc(response, name + '.' + keyParts[-1], keyParts[-1], port[0], False)
         else:
             name = keyParts[0]
             port = resolvePort(name)
 
             if port[1]:
                 for stat in self.outsidePortFuncs:
-                    self.callFunc(response, key, stat, port[0])
+                    self.callFunc(response, name + '.' + stat, stat, port[0])
             else:
                 for stat in self.insidePortFuncs:
-                    self.callFunc(response, key, stat, port[0], False)
+                    self.callFunc(response, name + '.' + stat, stat, port[0], False)
 
     ## Calls appropriate function with specified parameters
     #  @param   self
