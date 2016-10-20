@@ -24,6 +24,7 @@ Summary: An application that simulates MPS hardware peripherals
 Group: Development/Tools
 Requires: %{name} = %{version}
 Requires: mps-config
+Requires: i350-tools
 
 %package ife
 Summary: An application that uses a VM to communicate with the MPS IFE card
