@@ -2,8 +2,10 @@
 
 QUALDIR=~/qual
 MPSBUILDDIR=~/mps-builder
+
 BUILD="QUAL"
 TAG="NO"
+NMS="NO"
 BRANCH="dev/NMS"
 
 # Display buildqual command usage
@@ -12,31 +14,46 @@ usage() {
                 -t|--tag    - builds RPMs with a new tag
                 -b|--branch - builds images from specified branch
                 -s|--sims   - builds only qual-sims image
+                -n|--nms    - builds nms and tklabs_utils rpms from Thales Github repo
                 -a|--all    - builds both qual and qual-sims images"
     exit 1
 }
 
 # Handle tito tag and build for tklabs_utils
 titoutils() {
-    echo "Building tklabs_utils RPMs! ('-')"
-    cd ${QUALDIR}/src/tklabs_utils
-    tito init
+    if [ "NMS" == "YES" ]; then
+        echo "Building tklabs_utils RPMs from Thales Github repos! \('-')/"
+        cd
+        git clone https://github.com/mapcollab/tklabs-tklabs_utils.git
+        cd tklabs-tklabs_utils
+        tito init
+        UTILSVERSION=`cat .tito/packages/tklabs_utils | cut -f 1 -d ' '`
+    else
+        echo "Building tklabs_utils RPMs from QUAL tree! ('-')"
+        cd ${QUALDIR}/src/tklabs_utils
+        if [ "$TAG" == "YES" ]; then tito tag; fi
+        UTILSVERSION=`cat ${QUALDIR}/.tito/packages/tklabs_utils | cut -f 1 -d ' '`
+    fi
 
-    if [ "$TAG" == "YES" ]; then tito tag; fi
-
-    UTILSVERSION=`cat ${QUALDIR}/.tito/packages/tklabs_utils | cut -f 1 -d ' '`
     tito build --rpm --tag=tklabs_utils-${UTILSVERSION} --offline
 }
 
 # Handle tito tag and build for nms
 titonms() {
-    echo "Building nms RPMs! ( '-')"
-    cd ${QUALDIR}/src/nms
-    tito init
+    if [ "NMS" == "YES" ]; then
+        echo "Building nms RPMs from Thales Github repos! (/'-')/"
+        cd
+        git clone https://github.com/mapcollab/tklabs-nms.git
+        cd tklabs-nms
+        tito init
+        NMSVERSION=`cat .tito/packages/nms | cut -f 1 -d ' '`
+    else
+        echo "Building nms RPMs from QUAL tree! ( '-')"
+        cd ${QUALDIR}/src/nms
+        if [ "$TAG" == "YES" ]; then tito tag; fi
+        NMSVERSION=`cat ${QUALDIR}/.tito/packages/nms | cut -f 1 -d ' '`
+    fi
 
-    if [ "$TAG" == "YES" ]; then tito tag; fi
-
-    NMSVERSION=`cat ${QUALDIR}/.tito/packages/nms | cut -f 1 -d ' '`
     tito build --rpm --tag=nms-${NMSVERSION} --offline
 }
 
@@ -117,8 +134,9 @@ buildife () {
 # if tag,	    build RPMs with a new tag
 # if branch     build images from specified branch
 # if sims,	    build only sims image
+# if nms,       build nms and tklabs_utils rpms from Thales Github repo
 # if all,	    build both
-TEMP=`getopt -o tb:sa --long tag,branch:,sims,all -n 'buildqual.sh' -- "$@" 2>/dev/null`
+TEMP=`getopt -o tb:sna --long tag,branch:,sims,nms,all -n 'buildqual.sh' -- "$@" 2>/dev/null`
 if [ "$?" != 0 ]; then usage; fi
 eval set -- "$TEMP"
 
@@ -132,6 +150,9 @@ while true ; do
             shift 2;;
         -s|--sims)
             BUILD="SIMS"
+            shift;;
+        -n|--nms)
+            NMS="YES"
             shift;;
         -a|--all)
             BUILD="ALL"
@@ -154,6 +175,7 @@ git checkout "$BRANCH"
 git reset --hard FETCH_HEAD
 git clean -df
 rm -rf /tmp/tito
+tito init
 titoutils
 titonms
 titoqual
