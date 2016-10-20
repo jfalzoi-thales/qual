@@ -21,13 +21,13 @@ usage() {
 
 # Handle tito tag and build for tklabs_utils
 titoutils() {
-    if [ "NMS" == "YES" ]; then
+    if [ "$NMS" == "YES" ]; then
         echo "Building tklabs_utils RPMs from Thales Github repos! \('-')/"
         cd
         git clone https://github.com/mapcollab/tklabs-tklabs_utils.git
         cd tklabs-tklabs_utils
         tito init
-        UTILSVERSION=`cat .tito/packages/tklabs_utils | cut -f 1 -d ' '`
+        UTILSVERSION=`cat .tito/packages/tklabs_utils | cut -whif 1 -d ' '`
     else
         echo "Building tklabs_utils RPMs from QUAL tree! ('-')"
         cd ${QUALDIR}/src/tklabs_utils
@@ -40,7 +40,7 @@ titoutils() {
 
 # Handle tito tag and build for nms
 titonms() {
-    if [ "NMS" == "YES" ]; then
+    if [ "$NMS" == "YES" ]; then
         echo "Building nms RPMs from Thales Github repos! (/'-')/"
         cd
         git clone https://github.com/mapcollab/tklabs-nms.git

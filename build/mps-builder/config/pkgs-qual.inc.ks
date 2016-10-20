@@ -113,6 +113,7 @@ tcpdump
 # NMS
 nms
 tklabs_utils
+i350-tools
 
 # Qual
 qual
