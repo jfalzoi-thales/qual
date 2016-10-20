@@ -131,7 +131,6 @@ mps-guest-vm
 afuwrap
 amidewrap
 flashrom
-i350tools
 mps-firmware
 pciutils
 scewrap
