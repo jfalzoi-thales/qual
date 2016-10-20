@@ -1,5 +1,7 @@
 #!/bin/bash
 
+UTILSDIR=~/tklabs-tklabs_utils
+NMSDIR=~/tklabs-nms
 QUALDIR=~/qual
 MPSBUILDDIR=~/mps-builder
 
@@ -23,10 +25,18 @@ usage() {
 titoutils() {
     if [ "$NMS" == "YES" ]; then
         echo "Building tklabs_utils RPMs from Thales Github repos! \('-')/"
-        cd
-        git clone https://github.com/mapcollab/tklabs-tklabs_utils.git
-        cd tklabs-tklabs_utils
-        tito init
+
+        if [ ! -d ${UTILSDIR} ]; then
+            cd
+            git clone https://github.com/mapcollab/tklabs-tklabs_utils.git
+            cd ${UTILSDIR}/
+        else
+            cd ${UTILSDIR}/
+            git fetch origin master
+            git reset --hard FETCH_HEAD
+            git clean -df
+        fi
+
         UTILSVERSION=`cat .tito/packages/tklabs_utils | cut -whif 1 -d ' '`
     else
         echo "Building tklabs_utils RPMs from QUAL tree! ('-')"
@@ -42,10 +52,18 @@ titoutils() {
 titonms() {
     if [ "$NMS" == "YES" ]; then
         echo "Building nms RPMs from Thales Github repos! (/'-')/"
-        cd
-        git clone https://github.com/mapcollab/tklabs-nms.git
-        cd tklabs-nms
-        tito init
+
+        if [ ! -d ${NMSDIR} ]; then
+            cd
+            git clone https://github.com/mapcollab/tklabs-nms.git
+            cd ${NMSDIR}/
+        else
+            cd ${NMSDIR}/
+            git fetch origin master
+            git reset --hard FETCH_HEAD
+            git clean -df
+        fi
+
         NMSVERSION=`cat .tito/packages/nms | cut -f 1 -d ' '`
     else
         echo "Building nms RPMs from QUAL tree! ( '-')"
