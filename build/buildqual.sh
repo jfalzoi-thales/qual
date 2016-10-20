@@ -37,7 +37,7 @@ titoutils() {
             git clean -df
         fi
 
-        UTILSVERSION=`cat .tito/packages/tklabs_utils | cut -whif 1 -d ' '`
+        UTILSVERSION=`cat .tito/packages/tklabs_utils | cut -f 1 -d ' '`
     else
         echo "Building tklabs_utils RPMs from QUAL tree! ('-')"
         cd ${QUALDIR}/src/tklabs_utils
