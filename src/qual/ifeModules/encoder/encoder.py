@@ -1,10 +1,13 @@
 import subprocess
-import serial
 from time import sleep
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.Encoder_pb2 import EncoderRequest, EncoderResponse
-from common.module.module import Module
+
+import serial
+
+from qual.pb2.Encoder_pb2 import EncoderRequest, EncoderResponse
 from qual.ifeModules.encoder.encoder_Exception import EncoderModuleSerialException
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## Video Encoder Module Class
 class IFEEncoder(Module):
