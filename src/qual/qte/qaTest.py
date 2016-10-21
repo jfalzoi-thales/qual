@@ -111,7 +111,7 @@ class QATest(object):
     ## Send a message to the QTA and return response
     def msgHandler(self, msg):
         # Update timeout for FirmwareUpdateRequest
-        if msg.__class__.__name__ == 'FirmwareUpdateRequest':
+        if msg.name == 'FirmwareUpdateRequest':
             timeout = 480000
         else:
             timeout = 20000
