@@ -4,7 +4,7 @@
 Name: mps-firmware
 Summary: MPS Firmware files for ATP
 Version: 1.0
-Release: 2
+Release: 3
 License: Proprietary
 Group: Applications/Engineering
 URL: https://repo-tav.tklabs.com:8102/
