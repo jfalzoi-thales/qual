@@ -69,7 +69,7 @@ class QTEMenu(object):
             print "---------------------------------------------------------\n"
             print "Sending ", msg.__class__.__name__
             # Update timeout for FirmwareUpdateRequest
-            if msg.__class__.__name__ == 'FirmwareUpdateRequest':
+            if msg.name == 'FirmwareUpdateRequest':
                 timeout = 480000
             else:
                 timeout = 20000

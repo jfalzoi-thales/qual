@@ -74,7 +74,6 @@ class JsonZMQClient(object):
 
         # Try to receive the response
         try:
-            self.zsocket.set(zmq.RCVTIMEO, self.timeout)
             # If timeout, then update it
             self.zsocket.set(zmq.RCVTIMEO, timeout if timeout else self.timeout)
             responseData = self.zsocket.recv_multipart()
