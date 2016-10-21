@@ -18,12 +18,21 @@ class HDDSMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Get all power supply values", HDDSMessages.getPSWC),
+        return [("Get single power supply value", HDDSMessages.getSingle),
+                ("Get all power supply values", HDDSMessages.getPSWC),
                 ("Get GPIO pin", HDDSMessages.get),
                 ("Get GPIO pins", HDDSMessages.getMul),
                 ("Set GPIO pins", HDDSMessages.setMul),
                 ("Get IFE temperature", HDDSMessages.getTemp),
                 ("Get IFE voltage",     HDDSMessages.getVolt)]
+
+    @staticmethod
+    def getSingle():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.GET
+        value = message.values.add()
+        value.key = "power_supply.28V_monitor.external_temperature"
+        return message
 
     @staticmethod
     def getPSWC():
