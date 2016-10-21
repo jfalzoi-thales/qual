@@ -82,7 +82,7 @@ class FirmwareUpdate(Module):
         secondary = False
 
         if call([self.biosTool, "set-active", "primary"]) == 0:
-            if call([self.biosTool, "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
+            if call([self.biosTool, "program-from", "%s/mps-oof-bios.dat" % self.firmPath]) == 0:
                 primary = True
             else:
                 self.log.error("Unable to properly program primary BIOS.")
@@ -90,7 +90,7 @@ class FirmwareUpdate(Module):
             self.log.error("Unable to set primary BIOS to active.")
 
         if call([self.biosTool, "set-active", "secondary"]) == 0:
-            if call([self.biosTool, "program-from", "%s/BIOS.firmware" % self.firmPath]) == 0:
+            if call([self.biosTool, "program-from", "%s/mps-oof-bios.dat" % self.firmPath]) == 0:
                 secondary = True
             else:
                 self.log.error("Unable to properly program secondary BIOS.")
