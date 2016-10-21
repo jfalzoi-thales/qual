@@ -24,6 +24,7 @@ Summary: An application that simulates MPS hardware peripherals
 Group: Development/Tools
 Requires: %{name} = %{version}
 Requires: mps-config
+Requires: i350-tools
 
 %package ife
 Summary: An application that uses a VM to communicate with the MPS IFE card
@@ -73,9 +74,6 @@ cp systemd/50-qual*-service.preset  %{buildroot}/usr/lib/systemd/system-preset/
 mv %{buildroot}/thales/qual/src/simulator/arinc429/Arinc429Driver.conf          %{buildroot}/thales/host/config/
 mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/mps-biostool.sh     %{buildroot}/thales/host/appliances/mps-biostool
 mv %{buildroot}/thales/qual/src/qual/modules/ssdErase/mpsinst-destroyraid.sh    %{buildroot}/thales/host/appliances/mpsinst-destroyraid
-mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/bootutil64e.sh      %{buildroot}/%{_bindir}/bootutil64e
-mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/eeupdate64e.sh      %{buildroot}/%{_bindir}/eeupdate64e
-mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/i350-flashtool.sh   %{buildroot}/%{_bindir}/i350-flashtool
 mv %{buildroot}/thales/qual/src/qual/modules/firmwareUpdate/sema.sh             %{buildroot}/%{_bindir}/sema
 mv %{buildroot}/etc/sysconfig/network-scripts/ifcfg-ens6sk                      %{buildroot}/etc/sysconfig/network-scripts/ifcfg-ens6:sk
 echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BIOS.firmware
@@ -111,9 +109,6 @@ echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BI
 %attr(0755,root,root) /thales/qual/src/simulator/*.sh
 %attr(0755,root,root) /thales/host/appliances/mps-biostool
 %attr(0755,root,root) /thales/host/appliances/qual-sims
-%attr(0755,root,root) %{_bindir}/bootutil64e
-%attr(0755,root,root) %{_bindir}/eeupdate64e
-%attr(0755,root,root) %{_bindir}/i350-flashtool
 %attr(0755,root,root) %{_bindir}/sema
 %attr(0644,root,root) %{_unitdir}/qual-sims.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-sims-service.preset
@@ -140,7 +135,10 @@ mv -f /thales/qual/src/config/qual-mps.conf /thales/qual/src/config/qual.conf
 
 %post sims
 %systemd_post qual-sims.service
-mv -f /thales/qual/src/config/qual-sims.conf /thales/qual/src/config/qual.conf
+mv -f /thales/qual/src/config/qual-sims.conf                            /thales/qual/src/config/qual.conf
+mv -f /thales/qual/src/qual/modules/firmwareUpdate/bootutil64e.sh       /%{_bindir}/bootutil64e
+mv -f /thales/qual/src/qual/modules/firmwareUpdate/eeupdate64e.sh       /%{_bindir}/eeupdate64e
+mv -f /thales/qual/src/qual/modules/firmwareUpdate/i350-flashtool.sh    /%{_bindir}/i350-flashtool
 rm -f /usr/lib/systemd/system-preset/50-mps-drivers.preset
 rm -f /etc/systemd/system/mps-drivers.target.wants/*
 rm -f /etc/udev/rules.d/80*
