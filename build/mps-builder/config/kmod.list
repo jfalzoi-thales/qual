@@ -1,0 +1,26 @@
+#
+# This file works pretty much like packages.list, but defines list of custom,
+# out-of-tree kernel modules that needs to be built during MPS build process.
+#
+# Please see packages.list for more info about usage/syntax.
+#
+
+# MCP2221 - USB to I2C converter
+kmod-i2c-mcp2221
+
+# Power Interrupt Protection System (PIPS) interface to userspace
+kmod-pips-trigger
+
+# Intel Network driver for on-board NIC
+kmod-e1000e
+
+# Intel Network driver for i350 Host
+kmod-igb
+
+# Intel Network driver for i350 VM
+kmod-igbvf
+
+# AMI tools
+afuwrap
+amidewrap
+scewrap
