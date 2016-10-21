@@ -36,7 +36,7 @@ class Vtss(object):
 
         if not os.path.exists(self.specFile) or update:
             #  Init the connection
-            http = httplib.HTTPSConnection(self.ip, 443, context=ssl._create_default_https_context())
+            http = httplib.HTTPSConnection(self.ip, 443, context=ssl._create_default_https_context(), timeout=5)
 
             ## Get the json specs
             auth = base64.b64encode(bytes('%s:%s' % (self.user, self.password,)).decode('utf-8'))
@@ -166,7 +166,7 @@ class Vtss(object):
 
         # Let's try first with a secure connection
         try:
-            http.request('POST',url='/json_rpc', body=post, headers=header, timeout=5)
+            http.request('POST',url='/json_rpc', body=post, headers=header)
             resp = http.getresponse()
         except socket.error:
             # Probably, HTTPS not enabled in the switch
