@@ -60,7 +60,7 @@ class JsonZMQClient(object):
     # @param request ThalesZMQMessage object containing request to send
     # @return ThalesZMQMessage object containing received response
     #
-    def sendRequest(self, request):
+    def sendRequest(self, request, timeout=None):
         # Convert GPB response message to JSON
         try:
             reqName, reqJson = JsonConversion.gpb2json(request.body)
@@ -74,6 +74,10 @@ class JsonZMQClient(object):
 
         # Try to receive the response
         try:
+            self.zsocket.set(zmq.RCVTIMEO, self.timeout)
+            # If timeout, then update it
+            if timeout:
+                self.zsocket.set(zmq.RCVTIMEO, timeout)
             responseData = self.zsocket.recv_multipart()
         except zmq.error.Again:
             responseData = None

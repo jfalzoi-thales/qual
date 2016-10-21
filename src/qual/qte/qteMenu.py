@@ -68,7 +68,15 @@ class QTEMenu(object):
 
             print "---------------------------------------------------------\n"
             print "Sending ", msg.__class__.__name__
-            response = self.client.sendRequest(ThalesZMQMessage(msg))
+            # Update timeout for FirmwareUpdateRequest
+            if msg.__class__.__name__ == 'FirmwareUpdateRequest':
+                timeout = 480000
+            else:
+                timeout = 20000
+
+            # Send the request
+            response = self.client.sendRequest(ThalesZMQMessage(msg), timeout=timeout)
+
             if response.name == "":
                 print "No response\n"
             else:
