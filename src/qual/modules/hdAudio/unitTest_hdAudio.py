@@ -1,11 +1,13 @@
-import unittest
 import time
+import unittest
 
-from common.gpb.python.HDAudio_pb2 import HDAudioRequest, HDAudioResponse
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
-from qual.modules.hdAudio.hdAudio import HDAudio
+from hdAudio import HDAudio
+from qual.pb2.HDAudio_pb2 import HDAudioRequest, HDAudioResponse
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 
@@ -71,13 +73,13 @@ class Test_HDAudio(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = Logger(name='Test HD Audio')
         cls.log.info('++++ Setup before HD Audio module unit tests ++++')
         # Create the module
-        cls.module = HDAudio()
-        # Uncomment this if you don't want to see module debug messages
-        # cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = HDAudio()
 
     ## Teardown when done with HDAudio test cases
     # This is run only once when we're done with all test cases
@@ -217,7 +219,7 @@ class Test_HDAudio(unittest.TestCase):
     #       source == "4kHz_60sec.wav"
     #       volume == 73
     #       ---------------------
-    def test_ConnectReportDisconnect_Vol50(self):
+    def test_ConnectReportDisconnect_Vol50_4kHz(self):
         log = self.__class__.log
         module = self.__class__.module
 

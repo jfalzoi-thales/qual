@@ -1,8 +1,0 @@
-package mpsqual;
-
-message RemoteInventoryRequest { 
-}
-
-message RemoteInventoryResponse {
-	required string inventory = 1;
-}
