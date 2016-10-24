@@ -51,7 +51,7 @@ class PortInfo(Module):
         ## IP address of the device
         self.switchAddress = "192.168.1.1"
         # Load config file
-        self.loadConfig(attributes=('switchAddress','cpuEthernetDev','i350EthernetDev'))
+        self.loadConfig(attributes=('switchAddress',))
         ## Object to call the RPC
         self.vtss = Vtss(switchIP=self.switchAddress)
         #  Adds handler to available message handlers

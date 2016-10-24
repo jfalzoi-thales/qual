@@ -69,6 +69,8 @@ if os.path.exists(conf_path):
 def updatePorts(confiObj=None):
     # If we pass a configurable obj, we'll update the enet_8 and i350 port names
     if isinstance(confiObj, ConfigurableObject):
+        # Get the configuration from the switch
+        confiObj.loadConfig(attributes=('cpuEthernetDev','i350EthernetDev',))
         if hasattr(confiObj, 'cpuEthernetDev'):
             portNames['external.enet_8'][0]=confiObj.cpuEthernetDev
         if hasattr(confiObj, 'i350EthernetDev'):

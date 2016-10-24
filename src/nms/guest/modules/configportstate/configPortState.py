@@ -18,7 +18,7 @@ class PortStateConfig(Module):
         self.switchAddress = "10.10.41.159"
         # path to the spec file
         self.spec_file_path = '/tmp'
-        self.loadConfig(attributes=('switchAddress','cpuEthernetDev','i350EthernetDev'))
+        self.loadConfig(attributes=('switchAddress',))
         # adding the message handler
         self.addMsgHandler(ConfigPortStateReq, self.hdlrMsg)
         # Update the enet_8 and i350 port names
