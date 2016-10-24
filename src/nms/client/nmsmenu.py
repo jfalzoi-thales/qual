@@ -34,7 +34,7 @@ class QTEMenu(object):
         if os.path.isfile("/thales/host/config/zmq/MPS_hostsrv_zmq.pub") and useGuest:
             self.client = ThalesZMQClient(address, timeout=7000, allowNoBody=True,
                                           privKeyFile="/thales/host/appliances/nms/client/TKLabs_client_zmq.prv",
-                                          pubKeysDir="/thales/host/config/zmq/")
+                                          pubServKeyFile="/thales/host/config/zmq/MAP_hostsrv_zmq.pub")
         else:
             self.client = ThalesZMQClient(address, timeout=7000, allowNoBody=True)
 
@@ -130,7 +130,7 @@ def main():
     args = cmdParameters.parse_args()
 
     # Initialize and run the QTE
-    qte = QTEMenu(args.server, args.useGuest, args.authenticate)
+    qte = QTEMenu(args.server, args.useGuest)
     qte.run()
 
     # Return exit code for qtemenu wrapper script

@@ -26,7 +26,7 @@ class ThalesZMQClient(object):
     # @param privKeyFile   File containing private and public curve authentication keys
     # @param pubKeysDir    Directory containing public curve authentication keys
     def __init__(self, address, timeout=500, log=None, msgParts=3, requestParts=0, responseParts=0, allowNoBody=False,
-                 privKeyFile="", pubKeysDir=""):
+                 privKeyFile="", pubServKeyFile=""):
         ## Address to connect to
         self.address = address
         ## Number of message parts to use for request
@@ -37,8 +37,8 @@ class ThalesZMQClient(object):
         self.allowNoBody = allowNoBody
         ## File containing secret and public authentication keys for ZMQ messages
         self.privKeyFile = privKeyFile
-        ## Directory containing public authentication keys
-        self.pubKeysDir = pubKeysDir
+        ## File containing public server authentication key
+        self.pubServKeyFile = pubServKeyFile
         ## How long to wait for responses
         self.timeout = timeout
         ## Logger
@@ -61,7 +61,7 @@ class ThalesZMQClient(object):
         if self.privKeyFile:
             self.log.info("Using ZMQ CURVE authentication")
             self.zsocket = MPSSock(self.privKeyFile, self.zcontext)
-            self.zsocket.connect(self.address, self.pubKeysDir, {zmq.RCVTIME0: self.timeout})
+            self.zsocket.connect(self.address, self.pubServKeyFile, {zmq.RCVTIME0: self.timeout})
         else:
             self.log.debug("Opening socket connection to %s" % self.address)
             self.zsocket = self.zcontext.socket(zmq.REQ)
