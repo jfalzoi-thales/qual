@@ -68,6 +68,7 @@ sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
 %attr(0755,root,root) %{THALES_BIN_DIR}/nmsmenu
 %{appdir}/*
 %{THALES_CONF_DIR}/*
+%{THALES_RUNTIME_DIR}/zmq-auth/NMS/TKLabs_client_zmq.pub
 %{_unitdir}/*
 /usr/lib/systemd/system-preset/*
 %exclude %{appdir}/nms.spec
