@@ -31,6 +31,12 @@ class PortInfoMessages(ModuleMessages):
         return message
 
     @staticmethod
+    def getSingleVlan():
+        message = PortInfoReq()
+        message.portInfoKey.append("external.enet_1.vlan_id")
+        return message
+
+    @staticmethod
     def getMultiple():
         message = PortInfoReq()
         message.portInfoKey.extend(["external.enet_8.shutdown", "internal.i350_1.shutdown"])
@@ -200,6 +206,23 @@ class Test_PortInfo(unittest.TestCase):
         self.assertEqual(response.body.values[0].error.error_description, "Port name does not exist in this setup")
 
         log.info("==== Test Complete ====")
+
+    ## Test Case: Get a Vlan_id
+    def test_GetSingleVlan(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test Case: Get a Vlan_id ****")
+
+        response = module.msgHandler(ThalesZMQMessage(PortInfoMessages.getSingleVlan()))
+
+        self.assertEqual(response.name, "PortInfoResp")
+        self.assertTrue(response.body.values[0].success)
+        self.assertEqual(response.body.values[0].keyValue.key, 'external.enet_1.vlan_id')
+        self.assertTrue(response.body.values[0].keyValue.value)
+
+        log.info("==== Test Complete ====")
+
 
 if __name__ == '__main__':
     unittest.main()
