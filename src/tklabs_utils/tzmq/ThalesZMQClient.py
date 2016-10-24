@@ -66,7 +66,9 @@ class ThalesZMQClient(object):
     # @param request ThalesZMQMessage object containing request to send
     # @return ThalesZMQMessage object containing received response
     #
-    def sendRequest(self, request):
+    def sendRequest(self, request, timeout=None):
+        # If timeout, then update it
+        self.zsocket.set(zmq.RCVTIMEO, timeout if timeout else self.timeout)
         if self.requestParts == 3:
             if self.allowNoBody and len(request.body.ListFields()) == 0:
                 # Request normally has 3 parts, but omit the body if it would be empty

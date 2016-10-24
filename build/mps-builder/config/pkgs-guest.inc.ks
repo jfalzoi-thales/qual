@@ -65,4 +65,6 @@ tcpdump
 qual-ife
 pyserial
 
+libmps-utils
+
 %end

@@ -110,7 +110,13 @@ class QATest(object):
 
     ## Send a message to the QTA and return response
     def msgHandler(self, msg):
-        response = self.client.sendRequest(msg)
+        # Update timeout for FirmwareUpdateRequest
+        if msg.name == 'FirmwareUpdateRequest':
+            timeout = 480000
+        else:
+            timeout = 20000
+        # Send the request
+        response = self.client.sendRequest(msg, timeout=timeout)
         # Deserialize response if necessary
         if response.name == "":
             print "No response to %s" % msg.name
