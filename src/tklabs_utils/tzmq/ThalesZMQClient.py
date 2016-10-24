@@ -61,7 +61,7 @@ class ThalesZMQClient(object):
         if self.privKeyFile:
             self.log.info("Using ZMQ CURVE authentication")
             self.zsocket = MPSSock(self.privKeyFile, self.zcontext)
-            self.zsocket.connect(self.address, self.pubServKeyFile, {zmq.RCVTIME0: self.timeout})
+            self.zsocket.connect(self.address, self.pubServKeyFile, {zmq.RCVTIMEO: self.timeout})
         else:
             self.log.debug("Opening socket connection to %s" % self.address)
             self.zsocket = self.zcontext.socket(zmq.REQ)

@@ -33,7 +33,7 @@ class GnmsGpbListener(ThalesZMQServer):
         ## GNMS instance we will be linked to
         self.gnms = gnms
         # Init the superclass
-        super(GnmsGpbListener, self).__init__(address=gnms.service_address, allowNoBody=True, authKeyFile=gnms.service_prvkey_file, pubKeysDir=gnms.client_pubkeys_dir)
+        super(GnmsGpbListener, self).__init__(address=gnms.service_address, allowNoBody=True, privKeyFile=gnms.service_prvkey_file, pubKeysDir=gnms.client_pubkeys_dir)
 
     ## Called by base class when a request is received from a client.
     #
