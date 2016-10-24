@@ -34,7 +34,7 @@ Network Management Service handles switch and internal communication and configu
 %build
 
 %install
-mkdir -p %{buildroot}/%{appdir}/ %{buildroot}/%{THALES_CONF_DIR}/ %{buildroot}/%{THALES_RUNTIME_DIR}/ %{buildroot}/%{_unitdir}/ %{buildroot}/usr/lib/systemd/system-preset/
+mkdir -p %{buildroot}/%{appdir}/ %{buildroot}/%{THALES_CONF_DIR}/ %{buildroot}/%{THALES_RUNTIME_DIR}/zmq-auth/NMS/ %{buildroot}/%{_unitdir}/ %{buildroot}/usr/lib/systemd/system-preset/
 cp -ra * %{buildroot}/%{appdir}/
 cp client/TKLabs_client_zmq.pub %{buildroot}/%{THALES_RUNTIME_DIR}/zmq-auth/NMS/
 cp config/*.conf %{buildroot}/%{THALES_CONF_DIR}/
