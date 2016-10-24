@@ -1,11 +1,14 @@
 import os
 import ConfigParser
 
+from ecdsa.ecdsa import point_is_valid
+
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+
 # Config file path
 conf_path = '/thales/host/config/system/system.conf'
 
 #  Dictionary with the statics port names
-#  TODO: Get non-switch port names from config file
 portNames = {
     'external.enet_1' :('Gi 1/14',True),
     'external.enet_2' :('Gi 1/9',True),
@@ -65,7 +68,17 @@ if os.path.exists(conf_path):
         for aux in configs:
             configurablesPortNames[aux[0]]=aux[1]
 
-
+# Update the enet_8 and i350 port names from config file
+def updatePorts(confiObj=None):
+    # If we pass a configurable obj, we'll update the enet_8 and i350 port names
+    if isinstance(confiObj, ConfigurableObject):
+        if hasattr(confiObj, 'cpuEthernetDev'):
+            portNames['external.enet_8'][0]=confiObj.cpuEthernetDev
+        if hasattr(confiObj, 'i350EthernetDev'):
+            portNames['internal.i350_1'][0] = confiObj.i350EthernetDev + '0'
+            portNames['internal.i350_2'][0] = confiObj.i350EthernetDev + '1'
+            portNames['internal.i350_3'][0] = confiObj.i350EthernetDev + '2'
+            portNames['internal.i350_4'][0] = confiObj.i350EthernetDev + '3'
 
 ## Resolves the VTSS switch port number according with the string passed
 #

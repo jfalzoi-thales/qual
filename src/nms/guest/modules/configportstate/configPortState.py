@@ -1,4 +1,4 @@
-from nms.common.portresolver.portResolver import resolvePort
+from nms.common.portresolver.portResolver import resolvePort, updatePorts
 from nms.guest.pb2.nms_guest_api_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -18,9 +18,11 @@ class PortStateConfig(Module):
         self.switchAddress = "10.10.41.159"
         # path to the spec file
         self.spec_file_path = '/tmp'
-        self.loadConfig(attributes=('switchAddress',))
+        self.loadConfig(attributes=('switchAddress','cpuEthernetDev','i350EthernetDev'))
         # adding the message handler
         self.addMsgHandler(ConfigPortStateReq, self.hdlrMsg)
+        # Update the enet_8 and i350 port names
+        updatePorts(self)
 
 
     ## Handles incoming messages
@@ -147,6 +149,8 @@ class PortStateConfig(Module):
         else:
             # We shouldn't get here
             return None
+
+a = PortStateConfig()
 
 
 
