@@ -58,7 +58,7 @@ class HDDS(Module):
         ## BIOS tool command
         self.biosTool = "/thales/host/appliances/mps-biostool"
         ## Flag to detect if running on MPSi
-        self.ife = os.path.isfile("/dev/mps/usb-mcp2221-ife")
+        self.ife = os.path.exists("/dev/mps/usb-mcp2221-ife")
         #  Parse key names from Thales Host Domain Device Service configuration file
         thalesHDDSConfig = "/thales/host/config/HDDS.conv"
         configParser = SafeConfigParser()
