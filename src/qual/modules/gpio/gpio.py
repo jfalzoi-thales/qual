@@ -58,7 +58,7 @@ class GPIO(module.Module):
                           "PA_ALL_KYLN_IN": self.PinInfo(self.gpioManagerGet, "PA_All_PIN_C8")}
 
         #  If we are running on an MPSi, allow ife related keys
-        if os.path.isfile("/dev/mps/usb-mcp2221-ife"):
+        if os.path.exists("/dev/mps/usb-mcp2221-ife"):
             self.outputPins.update({"GP_KYLN_OUT7": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_01"),
                                     "GP_KYLN_OUT8": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_02"),
                                     "GP_KYLN_OUT9": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_03"),
