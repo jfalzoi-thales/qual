@@ -31,7 +31,7 @@ class QTEMenu(object):
         address = str.format('tcp://{}:{}', server, 40006) if useGuest else "ipc:///tmp/nms.sock"
 
         ## Client connection to NMS
-        if os.path.isfile("/thales/host/config/zmq/MPS_hostsrv_zmq.pub") and useGuest:
+        if os.path.isfile("/thales/host/config/zmq/MAP_hostsrv_zmq.pub") and useGuest:
             self.client = ThalesZMQClient(address, timeout=7000, allowNoBody=True,
                                           privKeyFile="/thales/host/appliances/nms/client/TKLabs_client_zmq.prv",
                                           pubServKeyFile="/thales/host/config/zmq/MAP_hostsrv_zmq.pub")
