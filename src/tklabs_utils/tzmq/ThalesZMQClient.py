@@ -23,6 +23,8 @@ class ThalesZMQClient(object):
     # @param msgParts      Number of message parts for both request and response
     # @param requestParts  Number of message parts for request
     # @param responseParts Number of message parts for response
+    # @param privKeyFile   File containing private and public curve authentication keys
+    # @param pubKeysDir    Directory containing public curve authentication keys
     def __init__(self, address, timeout=500, log=None, msgParts=3, requestParts=0, responseParts=0, allowNoBody=False,
                  privKeyFile="", pubKeysDir=""):
         ## Address to connect to

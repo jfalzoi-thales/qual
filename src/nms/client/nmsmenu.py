@@ -12,7 +12,7 @@ class QTEMenu(object):
     ## Constructor
     # @param server  Host name or IP address of NMS
     # @param useGuest Connect to NMS Guest domain
-    def __init__(self, server="localhost", useGuest=False):
+    def __init__(self, server="localhost", useGuest=False, authenticate=False):
         super(QTEMenu, self).__init__()
 
         ## ClassFinder for module ModuleMessages classes
@@ -33,7 +33,10 @@ class QTEMenu(object):
             address = "ipc:///tmp/nms.sock"
 
         ## Client connection to NMS
-        self.client = ThalesZMQClient(address, timeout=7000, allowNoBody=True)
+        if authenticate:
+            self.client = ThalesZMQClient(address, timeout=7000, allowNoBody=True, privKeyFile="", pubKeysDir="")
+        else:
+            self.client = ThalesZMQClient(address, timeout=7000, allowNoBody=True)
         print "Opened connection to", address
         print
 
@@ -123,10 +126,14 @@ def main():
                                dest='useGuest',
                                action="store_true",
                                help="Connect to Guest domain NMS")
+    cmdParameters.add_argument('-a',
+                               dest='authenticate',
+                               action="store_true",
+                               help="Use ZMQ Curve authentication")
     args = cmdParameters.parse_args()
 
     # Initialize and run the QTE
-    qte = QTEMenu(args.server, args.useGuest)
+    qte = QTEMenu(args.server, args.useGuest, args.authenticate)
     qte.run()
 
     # Return exit code for qtemenu wrapper script
