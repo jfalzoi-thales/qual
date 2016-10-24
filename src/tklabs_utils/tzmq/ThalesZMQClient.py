@@ -1,5 +1,6 @@
 import zmq
 
+from mps_utils.mps_zmq_curve_socket import MPSZMQCurveSocket as MPSSock
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
@@ -22,7 +23,8 @@ class ThalesZMQClient(object):
     # @param msgParts      Number of message parts for both request and response
     # @param requestParts  Number of message parts for request
     # @param responseParts Number of message parts for response
-    def __init__(self, address, timeout=500, log=None, msgParts=3, requestParts=0, responseParts=0, allowNoBody=False):
+    def __init__(self, address, timeout=500, log=None, msgParts=3, requestParts=0, responseParts=0, allowNoBody=False,
+                 privKeyFile="", pubKeysDir=""):
         ## Address to connect to
         self.address = address
         ## Number of message parts to use for request
@@ -31,6 +33,10 @@ class ThalesZMQClient(object):
         self.responseParts = responseParts if responseParts > 0 else msgParts
         ## Whether to allow messages with no body
         self.allowNoBody = allowNoBody
+        ## File containing secret and public authentication keys for ZMQ messages
+        self.privKeyFile = privKeyFile
+        ## Directory containing public authentication keys
+        self.pubKeysDir = pubKeysDir
         ## How long to wait for responses
         self.timeout = timeout
         ## Logger
@@ -50,15 +56,20 @@ class ThalesZMQClient(object):
 
     ## Opens the ZMQ socket
     def openSocket(self):
-        self.log.debug("Opening socket connection to %s" % self.address)
-        self.zsocket = self.zcontext.socket(zmq.REQ)
-        self.zsocket.set(zmq.RCVTIMEO, self.timeout)
-        self.zsocket.connect(self.address)
+        if self.privKeyFile:
+            self.log.info("Using ZMQ CURVE authentication")
+            self.zsocket = MPSSock(self.privKeyFile, self.zcontext)
+            self.zsocket.connect(self.address, self.pubKeysDir, {zmq.RCVTIME0: self.timeout})
+        else:
+            self.log.debug("Opening socket connection to %s" % self.address)
+            self.zsocket = self.zcontext.socket(zmq.REQ)
+            self.zsocket.set(zmq.RCVTIMEO, self.timeout)
+            self.zsocket.connect(self.address)
 
     ## Closes the ZMQ socket
     def closeSocket(self):
         self.log.debug("Closing socket connection to %s" % self.address)
-        self.zsocket.close(linger=1)
+        self.zsocket.close() if self.privKeyFile else self.zsocket.close(linger=1)
         self.zsocket = None
 
     ## Sends a request to the connected server and waits for the server's response
