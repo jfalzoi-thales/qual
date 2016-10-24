@@ -1,8 +1,5 @@
 import os
 import ConfigParser
-
-from ecdsa.ecdsa import point_is_valid
-
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 
 # Config file path

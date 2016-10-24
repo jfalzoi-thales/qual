@@ -150,8 +150,6 @@ class PortStateConfig(Module):
             # We shouldn't get here
             return None
 
-a = PortStateConfig()
-
 
 
 
