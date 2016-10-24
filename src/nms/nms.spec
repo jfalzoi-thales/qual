@@ -34,8 +34,9 @@ Network Management Service handles switch and internal communication and configu
 %build
 
 %install
-mkdir -p %{buildroot}/%{appdir}/ %{buildroot}/%{THALES_CONF_DIR}/ %{buildroot}/%{_unitdir}/ %{buildroot}/usr/lib/systemd/system-preset/
+mkdir -p %{buildroot}/%{appdir}/ %{buildroot}/%{THALES_CONF_DIR}/ %{buildroot}/%{THALES_RUNTIME_DIR}/ %{buildroot}/%{_unitdir}/ %{buildroot}/usr/lib/systemd/system-preset/
 cp -ra * %{buildroot}/%{appdir}/
+cp client/TKLabs_client_zmq.pub %{buildroot}/%{THALES_RUNTIME_DIR}/zmq-auth/NMS/
 cp config/*.conf %{buildroot}/%{THALES_CONF_DIR}/
 cp systemd/*.service %{buildroot}/%{_unitdir}/
 cp systemd/*.preset %{buildroot}/usr/lib/systemd/system-preset/
@@ -74,6 +75,7 @@ sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
 %exclude %{appdir}/config
 %exclude %{appdir}/systemd
 %exclude %{appdir}/scripts
+%exclude %{appdir}/client/TKLabs_client_zmq.pub
 
 %changelog
 * Mon Oct 17 2016 Jenkins <jenkins@tklabs.com> 1.0.2-1

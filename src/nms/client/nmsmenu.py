@@ -1,4 +1,5 @@
 import argparse
+import os
 from google.protobuf.message import Message
 
 from tklabs_utils.classFinder.classFinder import ClassFinder
@@ -12,7 +13,7 @@ class QTEMenu(object):
     ## Constructor
     # @param server  Host name or IP address of NMS
     # @param useGuest Connect to NMS Guest domain
-    def __init__(self, server="localhost", useGuest=False, authenticate=False):
+    def __init__(self, server="localhost", useGuest=False):
         super(QTEMenu, self).__init__()
 
         ## ClassFinder for module ModuleMessages classes
@@ -27,16 +28,16 @@ class QTEMenu(object):
         self.useGuest = useGuest
 
         # Construct address to connect to
-        if useGuest:
-            address = str.format('tcp://{}:{}', server, 40006)
-        else:
-            address = "ipc:///tmp/nms.sock"
+        address = str.format('tcp://{}:{}', server, 40006) if useGuest else "ipc:///tmp/nms.sock"
 
         ## Client connection to NMS
-        if authenticate:
-            self.client = ThalesZMQClient(address, timeout=7000, allowNoBody=True, privKeyFile="", pubKeysDir="")
+        if os.path.isfile("/thales/host/config/zmq/MPS_hostsrv_zmq.pub") and useGuest:
+            self.client = ThalesZMQClient(address, timeout=7000, allowNoBody=True,
+                                          privKeyFile="/thales/host/appliances/nms/client/TKLabs_client_zmq.prv",
+                                          pubKeysDir="/thales/host/config/zmq/")
         else:
             self.client = ThalesZMQClient(address, timeout=7000, allowNoBody=True)
+
         print "Opened connection to", address
         print
 
@@ -126,10 +127,6 @@ def main():
                                dest='useGuest',
                                action="store_true",
                                help="Connect to Guest domain NMS")
-    cmdParameters.add_argument('-a',
-                               dest='authenticate',
-                               action="store_true",
-                               help="Use ZMQ Curve authentication")
     args = cmdParameters.parse_args()
 
     # Initialize and run the QTE
