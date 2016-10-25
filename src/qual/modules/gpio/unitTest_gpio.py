@@ -30,7 +30,7 @@ class GPIOMessages(ModuleMessages):
                     ("Connect input 1 to output 1", GPIOMessages.connectIn1Out1),
                     ("Connect input 2 to output 1", GPIOMessages.connectIn2Out1),
                     ("Connect input 2 to output 2", GPIOMessages.connectIn2Out2),
-                    ("Connect input 7 to output 8", GPIOMessages.connectIn7Out8),
+                    ("Connect input 7 to output 8", GPIOMessages.connectIn7Out7),
                     ("Connect PA input 1 to VA output 1", GPIOMessages.connectPAIn1VAOut1),
                     ("Connect all inputs to output 3", GPIOMessages.connectInAllOut3),
                     ("Disconnect input 1", GPIOMessages.disconnectIn1),
@@ -119,7 +119,7 @@ class GPIOMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def connectIn7Out8():
+    def connectIn7Out7():
         message = GPIORequest()
         message.requestType = GPIORequest.CONNECT
         message.gpIn = "GP_KYLN_IN7"
@@ -427,14 +427,14 @@ class Test_GPIO(unittest.TestCase):
             self.assertEqual(response.body.status[0].gpOut, "")
 
             log.info("==== Connect IFE pair ====")
-            response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn7Out8()))
+            response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn7Out7()))
             self.assertEqual(response.name, "GPIOResponse")
             self.assertEqual(len(response.body.status), 1)
             self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
             self.assertEqual(response.body.status[0].matchCount, 0)
             self.assertEqual(response.body.status[0].mismatchCount, 0)
             self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN7")
-            self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT8")
+            self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT7")
 
             log.info("==== Wait 5 seconds to accumulate statistics ====")
             sleep(5)
@@ -447,7 +447,7 @@ class Test_GPIO(unittest.TestCase):
             self.assertGreater(response.body.status[0].matchCount, 0)
             self.assertEqual(response.body.status[0].mismatchCount, 0)
             self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN7")
-            self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT8")
+            self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT7")
 
             log.info("==== Disconnect connected pair ====")
             response = module.msgHandler(ThalesZMQMessage(GPIOMessages.disconnectIn7()))
@@ -457,7 +457,7 @@ class Test_GPIO(unittest.TestCase):
             self.assertGreater(response.body.status[0].matchCount, 0)
             self.assertEqual(response.body.status[0].mismatchCount, 0)
             self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN7")
-            self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT8")
+            self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT7")
             log.info("==== Test complete ====")
         else:
             log.info("IFE functionality not enabled on this device")
@@ -690,8 +690,8 @@ class Test_GPIO(unittest.TestCase):
             self.assertEqual(response.body.status[0].gpIn, message.gpIn)
             self.assertEqual(response.body.status[0].gpOut, message.gpOut)
 
-        log.info("==== Wait 5 Seconds to Accumulate Statistics ====")
-        sleep(5)
+        log.info("==== Wait 8 Seconds to Accumulate Statistics ====")
+        sleep(8)
 
         log.info("==== Report on All Inputs ====")
         response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportAll()))
@@ -729,8 +729,8 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN5")
         self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT6")
 
-        log.info("==== Wait 5 Seconds to Accumulate Statistics ====")
-        sleep(5)
+        log.info("==== Wait 8 Seconds to Accumulate Statistics ====")
+        sleep(8)
 
         log.info("==== Get Report on GP_KYLN_IN5 ====")
         response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn5()))
