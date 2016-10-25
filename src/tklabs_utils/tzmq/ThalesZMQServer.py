@@ -20,7 +20,7 @@ class ThalesZMQServer(object):
     # @param responseParts Number of message parts for response
     # @param privKeyFile   File containing private and public curve authentication keys
     # @param pubKeysDir    Directory containing public curve authentication keys
-    def __init__(self, address, msgParts=3, requestParts=0, responseParts=0, allowNoBody=False, privKeyFile="",
+    def __init__(self, address, msgParts=3, requestParts=0, responseParts=0, allowNoBody=False, prvKeyFile="",
                  pubKeysDir=""):
         ## Logger implementation, based on standard python logger
         self.log = Logger(type(self).__name__)
@@ -32,17 +32,15 @@ class ThalesZMQServer(object):
         self.responseParts = responseParts if responseParts > 0 else msgParts
         ## Whether to allow messages with no body
         self.allowNoBody = allowNoBody
-        ## File containing private and public curve authentication keys
-        self.privKeyFile = privKeyFile
         ## Default request name, used for single-part messages
         self.defaultRequestName = "Request"
         ## ZMQ context
         self.zcontext = zmq.Context.instance()
 
         #  If authentication file provided, set up socket for authentication
-        if self.privKeyFile:
+        if prvKeyFile:
             self.log.info("Using ZMQ CURVE authentication")
-            self.zsocket = MPSSock(self.privKeyFile, self.zcontext)
+            self.zsocket = MPSSock(prvKeyFile, self.zcontext)
             self.zsocket.listen(self.address, pubKeysDir, allow_nonlocal_bind=True)
         else:
             ## ZMQ socket

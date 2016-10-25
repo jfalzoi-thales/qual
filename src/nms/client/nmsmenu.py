@@ -31,12 +31,12 @@ class QTEMenu(object):
         # Construct address to connect to
         address = str.format('tcp://{}:{}', server, 40006) if useGuest else "ipc:///tmp/nms.sock"
 
-        privKeyFile = ""
+        prvKeyFile = ""
         pubServKeyFile = ""
 
         ## Client connection to NMS
         if os.path.isfile("/thales/host/config/zmq/MAP_hostsrv_zmq.pub") and useGuest:
-            privKeyFile = "/thales/host/appliances/nms/client/TKLabs_client_zmq.prv"
+            prvKeyFile = "/thales/host/appliances/nms/client/TKLabs_client_zmq.prv"
             pubServKeyFile = "/thales/host/config/zmq/MAP_hostsrv_zmq.pub"
 
             if not os.path.isfile("/thales/host/runtime/zmq-auth/NMS/TKLabs_client_zmq.key"):
@@ -44,11 +44,11 @@ class QTEMenu(object):
 
                 if call(cmd) != 0:
                     print "Failed to Move Public Key File, Authentication Disabled"
-                    privKeyFile = ""
+                    prvKeyFile = ""
                     pubServKeyFile = ""
 
         self.client = ThalesZMQClient(address, timeout=7000, allowNoBody=True,
-                                      privKeyFile=privKeyFile, pubServKeyFile=pubServKeyFile)
+                                      prvKeyFile=prvKeyFile, pubServKeyFile=pubServKeyFile)
 
         print "Opened connection to", address
         print
