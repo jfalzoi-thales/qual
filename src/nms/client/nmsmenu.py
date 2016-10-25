@@ -35,7 +35,7 @@ class QTEMenu(object):
         pubServKeyFile = ""
 
         ## Client connection to NMS
-        if os.path.isfile("/thales/host/config/zmq/MAP_hostsrv_zmq.pub") and useGuest:
+        if useGuest and os.path.isfile("/thales/host/config/zmq/MAP_hostsrv_zmq.pub"):
             prvKeyFile = "/thales/host/appliances/nms/client/TKLabs_client_zmq.prv"
             pubServKeyFile = "/thales/host/config/zmq/MAP_hostsrv_zmq.pub"
 
