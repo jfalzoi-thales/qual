@@ -13,7 +13,7 @@ i2c-device-manager i2c-device-manager-1.0.9-1
 i350-tools i350-tools-1.0-3
 kmod-e1000e kmod-e1000e-3.3.5-2
 kmod-i2c-mcp2221 kmod-i2c-mcp2221-0.2-1
-kmod-igb kmod-igb-5.3.5.3-2
+kmod-igb kmod-igb-5.3.5.3-4
 kmod-igbvf kmod-igbvf-2.3.8.2-2
 kmod-pips-trigger kmod-pips-trigger-1.5-1
 libftdi libftdi-1.2-1
