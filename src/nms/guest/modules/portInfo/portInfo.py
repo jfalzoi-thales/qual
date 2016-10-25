@@ -1,7 +1,7 @@
 import collections
 from subprocess import check_output, CalledProcessError
 
-from nms.common.portresolver.portResolver import resolvePort, portNames
+from nms.common.portresolver.portResolver import resolvePort, portNames, updatePorts
 from nms.guest.pb2.nms_guest_api_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -51,11 +51,13 @@ class PortInfo(Module):
         ## IP address of the device
         self.switchAddress = "192.168.1.1"
         # Load config file
-        self.loadConfig(attributes=('switchAddress'))
+        self.loadConfig(attributes=('switchAddress',))
         ## Object to call the RPC
         self.vtss = Vtss(switchIP=self.switchAddress)
         #  Adds handler to available message handlers
         self.addMsgHandler(PortInfoReq, self.handler)
+        # Update the enet_8 and i350 port names
+        updatePorts(self)
 
     ## Handles incoming messages
     #  @param   self
