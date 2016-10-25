@@ -19,8 +19,8 @@ class VlanAssignmentMessages(ModuleMessages):
         return [("Set VF1 int 301 ext 127", VlanAssignmentMessages.configVFExtVlanIntVlan),
                 ("Set VF1 int 301",         VlanAssignmentMessages.configVFIntVlan),
                 ("Set VF1 none",            VlanAssignmentMessages.configVFNoVlans),
-                ("Set PF1 int 301",         VlanAssignmentMessages.configPFIntVlan),
-                ("Set PF1 none",            VlanAssignmentMessages.configPFNoVlans)]
+                ("Set PF int 301",          VlanAssignmentMessages.configPFIntVlan),
+                ("Set PF none",             VlanAssignmentMessages.configPFNoVlans)]
 
     @staticmethod
     def configPFIntVlan():
