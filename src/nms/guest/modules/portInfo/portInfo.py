@@ -71,7 +71,15 @@ class PortInfo(Module):
                 keyParts = key.rsplit('.', 1)
 
                 if "*" in keyParts:
-                    self.wild(response, key, keyParts)
+                    if len(keyParts) == 1:
+                        keyParts += ["*", "*"]
+                    elif len(keyParts) == 2:
+                        if keyParts[0] == "*":
+                            keyParts = ["*"] + keyParts
+                        else:
+                            keyParts += ["*"]
+
+                    self.wild(response, keyParts)
                 elif keyParts[-1] in self.insidePortFuncs.keys() + self.outsidePortFuncs.keys():
                     port = resolvePort(keyParts[0])
 
@@ -92,7 +100,7 @@ class PortInfo(Module):
                     self.log.warning("Invalid key: %s" % key)
                     self.addResp(response, key=key, errCode=1004)
         else:
-            self.wild(response, "*", ["*"])
+            self.wild(response, ["*", "*", "*"])
 
         return ThalesZMQMessage(response)
 
@@ -116,40 +124,36 @@ class PortInfo(Module):
     ## Handles wildcards (*) in requested keys
     #  @param   self
     #  @param   response  PortInfoResp object
-    #  @param   key       Requested key
     #  @param   keyParts  Key split on last separator
-    def wild(self, response, key, keyParts):
+    def wild(self, response, keyParts):
         self.ethCache = {}
         self.ipLinkCache = {}
         self.configCache = {}
         self.statusCache = {}
 
-        if keyParts[0] == "*":
-            for name in portNames:
-                port = resolvePort(name)
+        locs = keyParts[0]
+        devs = keyParts[1]
+        stats = keyParts[2]
 
-                if port[1]:
-                    if keyParts[-1] == "*":
-                        for stat in self.outsidePortFuncs:
-                            self.callFunc(response, name + '.' + stat, stat, port[0])
-                    else:
-                        self.callFunc(response, name + '.' + keyParts[-1], keyParts[-1], port[0])
-                else:
-                    if keyParts[-1] == "*":
-                        for stat in self.insidePortFuncs:
-                            self.callFunc(response, name + '.' + stat, stat, port[0], False)
-                    else:
-                        self.callFunc(response, name + '.' + keyParts[-1], keyParts[-1], port[0], False)
-        else:
-            name = keyParts[0]
-            port = resolvePort(name)
+        if locs == "*": locs = ["internal", "external"]
+        if devs == "*": devs = ["enet_%i" % x for x in range(1, 15)] +\
+                               ["front_panel"] +\
+                               ["switch_%i" % x for x in range(1, 20)] +\
+                               ["i350_%i" % x for x in range(1, 4)]
+        if stats == "*": stats = ["shutdown",
+                                  "speed",
+                                  "configured_speed",
+                                  "flow_control",
+                                  "MTU",
+                                  "link",
+                                  "vlan_id",
+                                  "BPDU_state"]
 
-            if port[1]:
-                for stat in self.outsidePortFuncs:
-                    self.callFunc(response, name + '.' + stat, stat, port[0])
-            else:
-                for stat in self.insidePortFuncs:
-                    self.callFunc(response, name + '.' + stat, stat, port[0], False)
+        for loc in locs:
+            for dev in devs:
+                for stat in stats:
+                    port = resolvePort(loc + "." + dev)
+                    self.callFunc(response, loc + "." + dev + "." + stat, stat, port[0], port[1])
 
     ## Calls appropriate function with specified parameters
     #  @param   self
