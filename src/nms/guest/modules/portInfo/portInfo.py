@@ -32,7 +32,7 @@ class PortInfo(Module):
                                  "flow_control":        self.keyInfo(self.getPortConfigInfo, "FC"),
                                  "MTU":                 self.keyInfo(self.getPortConfigInfo, "MTU"),
                                  "link":                self.keyInfo(self.getPortStatusInfo, "Link"),
-                                 "vlan_id":             self.keyInfo(self.getVlan          , "AccessVlan"),
+                                 "vlan_id":             self.keyInfo(self.getVlan          , "TrunkVlans"),
                                  "BPDU_state":          self.keyInfo(self.tempFunc         ,  0)}
         ## Dict containing error codes and descriptions defined by ICD
         self.errors = {1001: "Port is not supported in this setup",
@@ -49,7 +49,7 @@ class PortInfo(Module):
         ## Dict for storing relevant output from VTSS RPC
         self.statusCache = {}
         ## IP address of the device
-        self.switchAddress = "192.168.1.1"
+        self.switchAddress = "10.10.41.159"
         # Load config file
         self.loadConfig(attributes=('switchAddress',))
         ## Object to call the RPC
@@ -293,9 +293,10 @@ class PortInfo(Module):
     def getVlan(self, response, key, port, field):
         try:
             # Response from the switch
-            jsonResp = self.vtss.callMethod(['vlan.config.interface.get', port])
+            jsonResp = self.vtss.callMethod(['vlan.config.interface.get',port])
             if jsonResp["error"] == None:
-                self.addResp(response, True, key, jsonResp[field])
+                for vlan_id in jsonResp['result'][field]:
+                    self.addResp(response, True, key, str(vlan_id))
             else:
                 self.log.error("Unable to get the VLanId from the switch")
                 self.addResp(response, key=key, errCode=1005)
