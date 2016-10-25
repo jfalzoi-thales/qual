@@ -113,6 +113,7 @@ tcpdump
 # NMS
 nms
 tklabs_utils
+i350-tools
 
 # Qual
 qual
@@ -130,7 +131,6 @@ mps-guest-vm
 afuwrap
 amidewrap
 flashrom
-i350tools
 mps-firmware
 pciutils
 scewrap

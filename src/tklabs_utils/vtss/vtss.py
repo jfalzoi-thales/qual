@@ -36,7 +36,7 @@ class Vtss(object):
 
         if not os.path.exists(self.specFile) or update:
             #  Init the connection
-            http = httplib.HTTPSConnection(self.ip, 443, context=ssl._create_default_https_context())
+            http = httplib.HTTPSConnection(self.ip, 443, context=ssl._create_default_https_context(), timeout=5)
 
             ## Get the json specs
             auth = base64.b64encode(bytes('%s:%s' % (self.user, self.password,)).decode('utf-8'))
@@ -50,12 +50,13 @@ class Vtss(object):
                 # Probably, HTTPS not enabled in the switch
                 # let's try with a non-secure connection
                 #  Init the connection
-                http = httplib.HTTPConnection(self.ip, 80)
+                http = httplib.HTTPConnection(self.ip, 80, timeout=5)
                 try:
                     http.request('GET', '/json_spec', headers=header)
                     resp = http.getresponse()
                 except Exception as e:
                     # well, now we really don't what happened
+                    e.message = 'Unable to perform GET request to the switch'
                     raise e
 
             #  Get the json in a string representation
@@ -158,7 +159,7 @@ class Vtss(object):
     #  @param: post
     def postRequest(self, post):
         #  Init the connection
-        http = httplib.HTTPSConnection(self.ip, 443, context=ssl._create_default_https_context())
+        http = httplib.HTTPSConnection(self.ip, 443, context=ssl._create_default_https_context(), timeout=5)
         ## Get the json specs
         auth = base64.b64encode(bytes('%s:%s' % (self.user, self.password,)).decode('utf-8'))
         header = {'Authorization': 'Basic %s' % auth, 'Content-type': 'application/json'}
@@ -171,7 +172,7 @@ class Vtss(object):
             # Probably, HTTPS not enabled in the switch
             # let's try with a non-secure connection
             # Init the connection
-            http = httplib.HTTPConnection(self.ip, 80)
+            http = httplib.HTTPConnection(self.ip, 80, timeout=5)
             try:
                 http.request('POST',url='/json_rpc', body=post, headers=header)
                 resp = http.getresponse()

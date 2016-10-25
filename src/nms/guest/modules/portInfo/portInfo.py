@@ -1,7 +1,7 @@
 import collections
 from subprocess import check_output, CalledProcessError
 
-from nms.common.portresolver.portResolver import resolvePort, portNames
+from nms.common.portresolver.portResolver import resolvePort, portNames, updatePorts
 from nms.guest.pb2.nms_guest_api_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -32,7 +32,7 @@ class PortInfo(Module):
                                  "flow_control":        self.keyInfo(self.getPortConfigInfo, "FC"),
                                  "MTU":                 self.keyInfo(self.getPortConfigInfo, "MTU"),
                                  "link":                self.keyInfo(self.getPortStatusInfo, "Link"),
-                                 "vlan_id":             self.keyInfo(self.getVlan          , "AccessVlan"),
+                                 "vlan_id":             self.keyInfo(self.getVlan          , "TrunkVlans"),
                                  "BPDU_state":          self.keyInfo(self.tempFunc         ,  0)}
         ## Dict containing error codes and descriptions defined by ICD
         self.errors = {1001: "Port is not supported in this setup",
@@ -51,11 +51,13 @@ class PortInfo(Module):
         ## IP address of the device
         self.switchAddress = "10.10.41.159"
         # Load config file
-        self.loadConfig(attributes=('switchAddress'))
+        self.loadConfig(attributes=('switchAddress',))
         ## Object to call the RPC
         self.vtss = Vtss(switchIP=self.switchAddress)
         #  Adds handler to available message handlers
         self.addMsgHandler(PortInfoReq, self.handler)
+        # Update the enet_8 and i350 port names
+        updatePorts(self)
 
     ## Handles incoming messages
     #  @param   self
@@ -129,25 +131,25 @@ class PortInfo(Module):
                 if port[1]:
                     if keyParts[-1] == "*":
                         for stat in self.outsidePortFuncs:
-                            self.callFunc(response, key, stat, port[0])
+                            self.callFunc(response, name + '.' + stat, stat, port[0])
                     else:
-                        self.callFunc(response, key, keyParts[-1], port[0])
+                        self.callFunc(response, name + '.' + keyParts[-1], keyParts[-1], port[0])
                 else:
                     if keyParts[-1] == "*":
                         for stat in self.insidePortFuncs:
-                            self.callFunc(response, key, stat, port[0], False)
+                            self.callFunc(response, name + '.' + stat, stat, port[0], False)
                     else:
-                        self.callFunc(response, key, keyParts[-1], port[0], False)
+                        self.callFunc(response, name + '.' + keyParts[-1], keyParts[-1], port[0], False)
         else:
             name = keyParts[0]
             port = resolvePort(name)
 
             if port[1]:
                 for stat in self.outsidePortFuncs:
-                    self.callFunc(response, key, stat, port[0])
+                    self.callFunc(response, name + '.' + stat, stat, port[0])
             else:
                 for stat in self.insidePortFuncs:
-                    self.callFunc(response, key, stat, port[0], False)
+                    self.callFunc(response, name + '.' + stat, stat, port[0], False)
 
     ## Calls appropriate function with specified parameters
     #  @param   self
@@ -291,9 +293,10 @@ class PortInfo(Module):
     def getVlan(self, response, key, port, field):
         try:
             # Response from the switch
-            jsonResp = self.vtss.callMethod(['vlan.config.interface.get', port])
+            jsonResp = self.vtss.callMethod(['vlan.config.interface.get',port])
             if jsonResp["error"] == None:
-                self.addResp(response, True, key, jsonResp[field])
+                for vlan_id in jsonResp['result'][field]:
+                    self.addResp(response, True, key, str(vlan_id))
             else:
                 self.log.error("Unable to get the VLanId from the switch")
                 self.addResp(response, key=key, errCode=1005)
@@ -314,20 +317,21 @@ class PortInfo(Module):
             # Add the response
             self.addResp(response, True, key, self.configCache[field])
             return
-        # Remote Procedure Call
-        call = 'port.config.get'
+
         try:
+            # Remote Procedure Call
+            call = 'port.config.get'
             # Response from the switch
             jsonResp = self.vtss.callMethod([call, port])
             if jsonResp["error"] == None:
                 # fill the cache with the received values from the switch
-                self.configCache['Shutdown'] = jsonResp['Shutdown']
-                self.configCache['Speed'] = jsonResp['Speed'].upper()
-                self.configCache['FC'] = True if jsonResp['FC'] == "on" else False
-                self.configCache['MTC'] = jsonResp['MTC']
+                self.configCache['Shutdown'] = 'True' if jsonResp['result']['Shutdown'] else 'False'
+                self.configCache['Speed'] = jsonResp['result']['Speed'].upper()
+                self.configCache['FC'] = 'True' if jsonResp['result']['FC'] == "on" else 'False'
+                self.configCache['MTU'] = str(jsonResp['result']['MTU'])
 
                 # Add the response
-                self.addResp(response, True, key, jsonResp[field])
+                self.addResp(response, True, key, self.configCache[field])
             else:
                 self.log.error('Unable to get "%s" port information from the switch.' % (field))
                 self.addResp(response, key=key, errCode=1005)
@@ -350,17 +354,19 @@ class PortInfo(Module):
             # Add the response
             self.addResp(response, True, key, self.statusCache[field])
             return
-        call = 'port.status.get'
+
         try:
+            # Remote Procedure Call
+            call = 'port.status.get'
             # Response from the switch
             jsonResp = self.vtss.callMethod([call, port])
             if jsonResp["error"] == None:
                 # fill the cache with the received values from the switch
-                self.statusCache['Speed'] = jsonResp['Speed'].upper()
-                self.statusCache['Link'] = 'LINK_UP' if jsonResp['Link'] else 'LINK_DOWN'
+                self.statusCache['Speed'] = jsonResp['result']['Speed'].upper()
+                self.statusCache['Link'] = 'LINK_UP' if jsonResp['result']['Link'] else 'LINK_DOWN'
 
                 # Add the response
-                self.addResp(response, True, key, jsonResp[field])
+                self.addResp(response, True, key, self.statusCache[field])
             else:
                 self.log.error('Unable to get "%s" port information from the switch.' % (field))
                 self.addResp(response, key=key, errCode=1005)
