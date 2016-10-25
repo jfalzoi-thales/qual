@@ -1,12 +1,11 @@
 [Unit]
 Description=Start QUAL simulators
+Before=HDDS.service
 
 [Service]
-Type=idle
+Type=oneshot
 ExecStart=/thales/host/appliances/qual-sims
 RemainAfterExit=yes
-Restart=always
-RestartSec=3s
 
 [Install]
 WantedBy=multi-user.target
