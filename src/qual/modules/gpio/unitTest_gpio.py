@@ -123,7 +123,7 @@ class GPIOMessages(ModuleMessages):
         message = GPIORequest()
         message.requestType = GPIORequest.CONNECT
         message.gpIn = "GP_KYLN_IN7"
-        message.gpOut = "GP_KYLN_OUT8"
+        message.gpOut = "GP_KYLN_OUT7"
         return message
 
     @staticmethod
