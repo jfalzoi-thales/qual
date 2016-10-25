@@ -1,7 +1,7 @@
+from common.pb2.SEMA_pb2 import RequestStatusMessage, ResponseStatusMessage
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.SEMA_pb2 import RequestStatusMessage, ResponseStatusMessage
 
 # @cond doxygen_unittest
 
