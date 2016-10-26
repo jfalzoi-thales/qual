@@ -192,7 +192,7 @@ class Vtss(object):
     def downloadFile(self, fileName):
         #  Init the connection
         http = httplib.HTTPSConnection(self.ip, 443, context=ssl._create_default_https_context(), timeout=5)
-        ## Get the json specs
+        ## Header to make the POST request of the file
         auth = base64.b64encode(bytes('%s:%s' % ('admin', '',)).decode('utf-8'))
         header = {'Authorization': 'Basic %s' % auth, 'Content-type': 'application/x-www-form-urlencoded'}
 
