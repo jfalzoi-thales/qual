@@ -1,4 +1,6 @@
 import argparse
+import os
+from subprocess import call
 from google.protobuf.message import Message
 
 from tklabs_utils.classFinder.classFinder import ClassFinder
@@ -27,13 +29,27 @@ class QTEMenu(object):
         self.useGuest = useGuest
 
         # Construct address to connect to
-        if useGuest:
-            address = str.format('tcp://{}:{}', server, 40006)
-        else:
-            address = "ipc:///tmp/nms.sock"
+        address = str.format('tcp://{}:{}', server, 40006) if useGuest else "ipc:///tmp/nms.sock"
+
+        prvKeyFile = ""
+        pubServKeyFile = ""
 
         ## Client connection to NMS
-        self.client = ThalesZMQClient(address, timeout=20000, allowNoBody=True)
+        if useGuest and os.path.isfile("/thales/host/config/zmq/MAP_hostsrv_zmq.pub"):
+            prvKeyFile = "/thales/host/appliances/nms/client/TKLabs_client_zmq.prv"
+            pubServKeyFile = "/thales/host/config/zmq/MAP_hostsrv_zmq.pub"
+
+            if not os.path.isfile("/thales/host/runtime/zmq-auth/NMS/TKLabs_client_zmq.key"):
+                cmd = ["cp", "-f", "/thales/host/appliances/nms/client/TKLabs_client_zmq.pub", "/thales/host/runtime/zmq-auth/NMS/TKLabs_client_zmq.key"]
+
+                if call(cmd) != 0:
+                    print "Failed to Move Public Key File, Authentication Disabled"
+                    prvKeyFile = ""
+                    pubServKeyFile = ""
+
+        self.client = ThalesZMQClient(address, timeout=7000, allowNoBody=True,
+                                      prvKeyFile=prvKeyFile, pubServKeyFile=pubServKeyFile)
+
         print "Opened connection to", address
         print
 
