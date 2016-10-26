@@ -72,12 +72,12 @@ def updatePorts(confiObj=None):
         # Get the configuration from the switch
         confiObj.loadConfig(attributes=('cpuEthernetDev','i350EthernetDev',))
         if hasattr(confiObj, 'cpuEthernetDev'):
-            portNames['external.enet_8'] = (confiObj.cpuEthernetDev, portNames['external.enet_8'][1])
+            portNames['external.enet_8'] = (confiObj.cpuEthernetDev, False)
         if hasattr(confiObj, 'i350EthernetDev'):
-            portNames['internal.i350_1'] = (confiObj.i350EthernetDev + '0', portNames['internal.i350_1'][1])
-            portNames['internal.i350_2'] = (confiObj.i350EthernetDev + '1', portNames['internal.i350_2'][1])
-            portNames['internal.i350_3'] = (confiObj.i350EthernetDev + '2', portNames['internal.i350_3'][1])
-            portNames['internal.i350_4'] = (confiObj.i350EthernetDev + '3', portNames['internal.i350_4'][1])
+            portNames['internal.i350_1'] = (confiObj.i350EthernetDev + '0', False)
+            portNames['internal.i350_2'] = (confiObj.i350EthernetDev + '1', False)
+            portNames['internal.i350_3'] = (confiObj.i350EthernetDev + '2', False)
+            portNames['internal.i350_4'] = (confiObj.i350EthernetDev + '3', False)
 
 ## Resolves the VTSS switch port number according with the string passed
 #
