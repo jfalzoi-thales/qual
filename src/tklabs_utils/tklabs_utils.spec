@@ -22,6 +22,7 @@ cp -r * %{buildroot}/%{python2_sitelib}/tklabs_utils/
 
 %files
 %{python2_sitelib}/tklabs_utils/
+%exclude %{python2_sitelib}/tklabs_utils/tklabs_utils.spec
 %exclude %{python2_sitelib}/tklabs_utils/*/unitTest*
 %exclude %{python2_sitelib}/tklabs_utils/tzmq/jsonConversion/readme.md
 %exclude %{python2_sitelib}/tklabs_utils/tzmq/jsonConversion/unitTest*
