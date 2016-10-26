@@ -20,9 +20,12 @@ class PortInfoMessages(ModuleMessages):
     def getMenuItems():
         return [("Get Single Key",          PortInfoMessages.getSingle),
                 ("Get Multiple Keys",       PortInfoMessages.getMultiple),
+                ("Get Int and Ext Speed",   PortInfoMessages.getIntExtSpeed),
                 ("Get All Keys",            PortInfoMessages.getAll),
                 ("Get All Speed",           PortInfoMessages.getAllSpeed),
-                ("Get All Stats",           PortInfoMessages.getAllStats)]
+                ("Get All Internal Speed",  PortInfoMessages.getAllIntSpeed),
+                ("Get All Stats",           PortInfoMessages.getAllStats),
+                ("Get All Internal Stats",  PortInfoMessages.getAllIntStats)]
 
     @staticmethod
     def getSingle():
@@ -43,6 +46,12 @@ class PortInfoMessages(ModuleMessages):
         return message
 
     @staticmethod
+    def getIntExtSpeed():
+        message = PortInfoReq()
+        message.portInfoKey.append("*.enet_1.speed")
+        return message
+
+    @staticmethod
     def getAll():
         message = PortInfoReq()
         message.portInfoKey.append("*")
@@ -60,6 +69,12 @@ class PortInfoMessages(ModuleMessages):
         return message
 
     @staticmethod
+    def getAllIntSpeed():
+        message = PortInfoReq()
+        message.portInfoKey.append("internal.*.speed")
+        return message
+
+    @staticmethod
     def getAllStats(ports=None):
         message = PortInfoReq()
         portList = ports if ports else ["external.ENET_1", "external.ENET_8", "internal.i350_1"]
@@ -67,6 +82,12 @@ class PortInfoMessages(ModuleMessages):
         for port in portList:
             message.portInfoKey.append(port + ".*")
 
+        return message
+
+    @staticmethod
+    def getAllIntStats():
+        message = PortInfoReq()
+        message.portInfoKey.append("internal.*")
         return message
 
     @staticmethod

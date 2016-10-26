@@ -33,7 +33,7 @@ class QTEMenu(object):
             address = "ipc:///tmp/nms.sock"
 
         ## Client connection to NMS
-        self.client = ThalesZMQClient(address, timeout=7000, allowNoBody=True)
+        self.client = ThalesZMQClient(address, timeout=20000, allowNoBody=True)
         print "Opened connection to", address
         print
 

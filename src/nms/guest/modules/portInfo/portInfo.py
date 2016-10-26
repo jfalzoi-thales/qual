@@ -68,7 +68,7 @@ class PortInfo(Module):
 
         if msg.body != None:
             for key in msg.body.portInfoKey:
-                keyParts = key.rsplit('.', 1)
+                keyParts = key.split('.')
 
                 if "*" in keyParts:
                     if len(keyParts) == 1:
@@ -81,7 +81,7 @@ class PortInfo(Module):
 
                     self.wild(response, keyParts)
                 elif keyParts[-1] in self.insidePortFuncs.keys() + self.outsidePortFuncs.keys():
-                    port = resolvePort(keyParts[0])
+                    port = resolvePort(keyParts[0] + "." + keyParts[1])
 
                     if port:
                         self.ethCache = {}
@@ -131,29 +131,19 @@ class PortInfo(Module):
         self.configCache = {}
         self.statusCache = {}
 
-        locs = keyParts[0]
-        devs = keyParts[1]
-        stats = keyParts[2]
+        locs = ["internal", "external"] if keyParts[0] == "*" else [keyParts[0]]
+        stats = ["shutdown", "speed", "configured_speed", "flow_control",
+                 "MTU", "link", "vlan_id", "BPDU_state"] if keyParts[2] == "*" else [keyParts[2]]
 
-        if locs == "*": locs = ["internal", "external"]
-        if devs == "*": devs = ["enet_%i" % x for x in range(1, 15)] +\
-                               ["front_panel"] +\
-                               ["switch_%i" % x for x in range(1, 20)] +\
-                               ["i350_%i" % x for x in range(1, 4)]
-        if stats == "*": stats = ["shutdown",
-                                  "speed",
-                                  "configured_speed",
-                                  "flow_control",
-                                  "MTU",
-                                  "link",
-                                  "vlan_id",
-                                  "BPDU_state"]
+        if keyParts[1] == "*":
+            devs = {name for loc in locs for name in portNames if name.startswith(loc)}
+        else:
+            devs = {loc + "." + keyParts[1] for loc in locs if loc + "." + keyParts[1] in portNames}
 
-        for loc in locs:
-            for dev in devs:
-                for stat in stats:
-                    port = resolvePort(loc + "." + dev)
-                    self.callFunc(response, loc + "." + dev + "." + stat, stat, port[0], port[1])
+        for dev in devs:
+            for stat in stats:
+                port = resolvePort(dev)
+                self.callFunc(response, dev + "." + stat, stat, port[0], port[1])
 
     ## Calls appropriate function with specified parameters
     #  @param   self
