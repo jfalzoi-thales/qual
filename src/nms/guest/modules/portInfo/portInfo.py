@@ -16,7 +16,7 @@ class PortInfo(Module):
         super(PortInfo, self).__init__(config)
         ## Named tuple for storing key functions and parsing fields
         self.keyInfo = collections.namedtuple("keyInfo", "inFunc inField outFunc outField")
-        ## Dict containing possible keys and their functions for internal ports
+        ## Dict containing possible keys and their functions
         self.portFuncs = {"shutdown":         self.keyInfo(self.getIpLinkData, "state",            self.getPortConfigInfo, "Shutdown"),
                           "speed":            self.keyInfo(self.getEthData,    "Speed",            self.getPortStatusInfo, "Speed"),
                           "configured_speed": self.keyInfo(self.getEthData,    "Auto-negotiation", self.getPortConfigInfo, "Speed"),
