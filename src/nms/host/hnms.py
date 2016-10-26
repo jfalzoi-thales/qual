@@ -22,8 +22,10 @@ class HNMS(ConfigurableObject):
         self.serviceAddress = "ipc:///tmp/nms.sock"
         ## Current version information from the Vitesse Ethernet Switch
         self.switchAddress = '10.10.41.159'
+        ## Name of I350 Ethernet device
+        self.i350EthernetDev = "ens1f"
         #  Read config file and update specified instance variables
-        self.loadConfig(attributes=('serviceAddress','switchAddress'))
+        self.loadConfig(attributes=('serviceAddress','switchAddress','i350EthernetDev'))
         ## Module shell that will contain the modules
         self.moduleShell = ModuleShell(name="HNMS", moduleDir="nms.host.modules", messageDir="nms.host.pb2")
         # Get BIOS info
@@ -46,28 +48,29 @@ class HNMS(ConfigurableObject):
         # In case we can't get the info, "not found." will be logged
         firmwareInfo = "Not found."
         configInfo = "Not found."
-        # Open connection with the switch
-        vtss = Vtss(switchIP=self.switchAddress)
-        # Get the info from the switch
-        jsonResp = vtss.callMethod(['firmware.status.switch.get'])
-        # If no error, update the info
-        if jsonResp['error'] == None:
-            firmwareInfo = jsonResp['result'][0]['val']['Version']
+        try:
+            # Open connection with the switch
+            vtss = Vtss(switchIP=self.switchAddress)
+            # Get the info from the switch
+            # Get the firmware version
+            jsonResp = vtss.callMethod(['firmware.status.switch.get'])
+            # If no error, update the info
+            if jsonResp['error'] == None:
+                firmwareInfo = jsonResp['result'][0]['val']['Version']
+            # Get the config info
+            response = vtss.downloadFile('startup-config').splitlines()
+            for version in reversed(response):
+                # Version number should be the first line we find when we reverse the list
+                # if we get empty strings, we should skip them
+                if version == "":
+                    continue
+                # this should be the version number
+                else:
+                    configInfo = version
+                    break
 
-        # Get the config info
-        # Save the startup-config file
-        jsonResp = vtss.callMethod(['icfg.control.copy.set','{"Argument1":{"Copy":true,"SourceConfigType":"2","SourceConfigFile":"flash:startup-config","DestinationConfigType":"3","DestinationConfigFile":"tftp://192.168.1.122/tmp-startup-config","Merge":false}}'])
-        # If no error from the RPC, check if the file was actually copied
-        if jsonResp['error'] == None:
-            # If the file exist
-            if os.path.exists('/thales/qual/firmware/tmp-startup-config'):
-                # Read the file, and the config info is the line after the line "end"
-                configFile = open('/thales/qual/firmware/tmp-startup-config')
-                lines = configFile.readlines()
-                # read the file backwards for optimization
-                for index,line in reversed(list(enumerate(lines))):
-                    if 'end' in line:
-                        configInfo = lines[index-1]
+        except Exception:
+            self.moduleShell.log.error('Unable to retrieve the information from the switch.')
 
         return ('version.switch='+firmwareInfo, 'version.switch_config='+configInfo)
 
@@ -113,16 +116,16 @@ class HNMS(ConfigurableObject):
         # In case we can't get the info, "not found." will be logged
         biosInfo = 'Not found.'
         # get information
-        proc = subprocess.Popen(['amidewrap' ,'/SS', '/SV'],stdout=subprocess.PIPE)
-        proc.wait()
-        if proc.returncode != 0:
+        try:
+            lines = subprocess.check_output(['amidewrap' ,'/SS', '/SV']).splitlines()
+        except subprocess.CalledProcessError:
             self.moduleShell.log.error('Unable to retrieve BIOS information.')
         else:
-            lines = proc.stdout.readlines()
             for line in lines:
                 if 'System version' in line:
                     line = line.split(" ")
                     biosInfo = line[-1]
+                    break
 
         return 'version.BIOS='+biosInfo
 
@@ -131,13 +134,13 @@ class HNMS(ConfigurableObject):
     #  @param: offset
     def _readWord(self, offset):
         # Device
-        ethDevice = 'ens1f0'
-        if subprocess.call(['ethtool', ethDevice], stdout=DEVNULL, stderr=DEVNULL) != 0:
-            self.moduleShell.log.error('Unable to acces i350 device ens1f0')
+        self.i350EthernetDev += '0'
+        if subprocess.call(['ethtool', self.i350EthernetDev], stdout=DEVNULL, stderr=DEVNULL) != 0:
+            self.moduleShell.log.error('Unable to acces i350 device %s',self.i350EthernetDev)
             return None
         else:
             # Call ethtool to read the word at the specified offset
-            cmd = ['ethtool', '-e', ethDevice, 'offset', str(offset), 'length', '2', 'raw', 'on']
+            cmd = ['ethtool', '-e', self.i350EthernetDev, 'offset', str(offset), 'length', '2', 'raw', 'on']
             ethtool = subprocess.Popen(cmd, stdout=subprocess.PIPE)
             data = ethtool.stdout.read(2)
             rc = ethtool.wait()

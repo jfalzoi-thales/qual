@@ -183,3 +183,35 @@ class Vtss(object):
         rawResponse = resp.read()
 
         return json.loads(rawResponse)
+
+    ## Download a file content from the device
+    #
+    #  @param: fileName
+    #  @type: str
+    #  @return: str (file content in a string)
+    def downloadFile(self, fileName):
+        #  Init the connection
+        http = httplib.HTTPSConnection(self.ip, 443, context=ssl._create_default_https_context(), timeout=5)
+        ## Get the json specs
+        auth = base64.b64encode(bytes('%s:%s' % ('admin', '',)).decode('utf-8'))
+        header = {'Authorization': 'Basic %s' % auth, 'Content-type': 'application/x-www-form-urlencoded'}
+
+        x_UrlMsg = "sid=&file_name=%s&file_name_radio=%s" %(fileName, fileName)
+
+        # Let's try first with a secure connection
+        try:
+            http.request('POST', url='/config/icfg_conf_download', body=x_UrlMsg, headers=header)
+            resp = http.getresponse()
+            return resp.read()
+        except socket.error as e:
+            # Probably, HTTPS not enabled in the switch
+            # let's try with a non-secure connection
+            # Init the connection
+            http = httplib.HTTPConnection('10.10.41.159', 80, timeout=5)
+            try:
+                http.request('POST', url='/config/icfg_conf_download', body=x_UrlMsg, headers=header)
+                resp = http.getresponse()
+                return resp.read()
+            except Exception as e:
+                # well, now we really don't what happened
+                raise e
