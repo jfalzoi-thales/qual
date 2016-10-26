@@ -20,12 +20,11 @@ class PortInfoMessages(ModuleMessages):
     def getMenuItems():
         return [("Get Single Key",          PortInfoMessages.getSingle),
                 ("Get Multiple Keys",       PortInfoMessages.getMultiple),
-                ("Get Int and Ext Speed",   PortInfoMessages.getIntExtSpeed),
-                ("Get All Keys",            PortInfoMessages.getAll),
-                ("Get All Speed",           PortInfoMessages.getAllSpeed),
                 ("Get All Internal Speed",  PortInfoMessages.getAllIntSpeed),
+                ("Get All Speed",           PortInfoMessages.getAllSpeed),
+                ("Get All Internal Stats",  PortInfoMessages.getAllIntStats),
                 ("Get All Stats",           PortInfoMessages.getAllStats),
-                ("Get All Internal Stats",  PortInfoMessages.getAllIntStats)]
+                ("Get All Keys",            PortInfoMessages.getAll)]
 
     @staticmethod
     def getSingle():
@@ -46,20 +45,15 @@ class PortInfoMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def getIntExtSpeed():
+    def getAllSpeedSinglePort():
         message = PortInfoReq()
         message.portInfoKey.append("*.enet_1.speed")
         return message
 
     @staticmethod
-    def getAll():
+    def getAllIntSpeed():
         message = PortInfoReq()
-        message.portInfoKey.append("*")
-        return message
-
-    @staticmethod
-    def getEmpty():
-        message = None
+        message.portInfoKey.append("internal.*.speed")
         return message
 
     @staticmethod
@@ -69,9 +63,9 @@ class PortInfoMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def getAllIntSpeed():
+    def getAllIntStats():
         message = PortInfoReq()
-        message.portInfoKey.append("internal.*.speed")
+        message.portInfoKey.append("internal.*")
         return message
 
     @staticmethod
@@ -85,9 +79,14 @@ class PortInfoMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def getAllIntStats():
+    def getAll():
         message = PortInfoReq()
-        message.portInfoKey.append("internal.*")
+        message.portInfoKey.append("*")
+        return message
+
+    @staticmethod
+    def getEmpty():
+        message = None
         return message
 
     @staticmethod
@@ -174,6 +173,43 @@ class Test_PortInfo(unittest.TestCase):
 
         log.info("==== Test Complete ====")
 
+    ## Test Case: Get All Speeds for Single Port
+    def test_GetAllSpeedSinglePort(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test Case: Get All Speeds for Single Port ****")
+
+        response = module.msgHandler(ThalesZMQMessage(PortInfoMessages.getAllSpeedSinglePort()))
+
+        self.assertEqual(response.name, "PortInfoResp")
+
+        for value in response.body.values:
+            self.assertTrue(value.success)
+            self.assertTrue(value.keyValue.key.endswith("speed"))
+            self.assertTrue(value.keyValue.value)
+
+        log.info("==== Test Complete ====")
+
+    ## Test Case: Get All Internal Speeds
+    def test_GetAllIntSpeed(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test Case: Get All Internal Speeds ****")
+
+        response = module.msgHandler(ThalesZMQMessage(PortInfoMessages.getAllIntSpeed()))
+
+        self.assertEqual(response.name, "PortInfoResp")
+
+        for value in response.body.values:
+            self.assertTrue(value.success)
+            self.assertTrue(value.keyValue.key.startswith("internal"))
+            self.assertTrue(value.keyValue.key.endswith("speed"))
+            self.assertTrue(value.keyValue.value)
+
+        log.info("==== Test Complete ====")
+
     ## Test Case: Get All Speeds for All Ports
     def test_GetAllSpeed(self):
         log = self.__class__.log
@@ -188,6 +224,24 @@ class Test_PortInfo(unittest.TestCase):
         for value in response.body.values:
             self.assertTrue(value.success)
             self.assertTrue(value.keyValue.key.endswith("speed"))
+            self.assertTrue(value.keyValue.value)
+
+        log.info("==== Test Complete ====")
+
+    ## Test Case: Get All Internal Stats
+    def test_GetAllIntStats(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test Case: Get All Internal Stats ****")
+
+        response = module.msgHandler(ThalesZMQMessage(PortInfoMessages.getAllIntStats()))
+
+        self.assertEqual(response.name, "PortInfoResp")
+
+        for value in response.body.values:
+            self.assertTrue(value.success)
+            self.assertTrue(value.keyValue.key.startswith("internal"))
             self.assertTrue(value.keyValue.value)
 
         log.info("==== Test Complete ====")
