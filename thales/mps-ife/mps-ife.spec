@@ -4,7 +4,7 @@
 Name: mps-ife
 Summary: Software to support MPS IFE card for Qual
 Version: 1.0
-Release: 1
+Release: 2
 License: Proprietary
 Group: Applications/Engineering
 URL: https://repo-tav.tklabs.com:8102/
@@ -27,6 +27,7 @@ rm -rf ife-lls-mps
 mkdir -p %{buildroot}/%{_bindir} %{buildroot}/usr/lib64 %{buildroot}/lib/modules %{buildroot}/lib/firmware
 install -m755 ife-lls-mps/usr/lib64/libllsapi.so %{buildroot}/usr/lib64/
 cp ife-lls-mps/usr/bin/* %{buildroot}/%{_bindir}/
+sed -i 's|    pa_loop_enable|    pa_enable $src_kl\n\n    pa_loop_enable|g' %{buildroot}/%{_bindir}/pavaTest.sh
 install -m755 ife-lls-mps/lib/modules/i2c-mcp2221.ko %{buildroot}/lib/modules/
 install -m755 ife-lls-mps/Sidekick.afx.S19 %{buildroot}/lib/firmware/
 
