@@ -100,10 +100,10 @@ class Test_Encoder(unittest.TestCase):
         response = module.msgHandler(ThalesZMQMessage(EncoderMessages.run()))
         self.assertEqual(response.name, "EncoderResponse")
         self.assertEqual(response.body.state, EncoderResponse.RUNNING)
-        self.assertEqual(response.body.streamActive, True)
+        self.assertEqual(response.body.streamActive, False)
 
-        log.info("==== Waiting 8 seconds for encoder to start ====")
-        sleep(8)
+        log.info("==== Waiting 10 seconds for encoder to start ====")
+        sleep(10)
 
         response = module.msgHandler(ThalesZMQMessage(EncoderMessages.report()))
         self.assertEqual(response.name, "EncoderResponse")
@@ -116,7 +116,7 @@ class Test_Encoder(unittest.TestCase):
         response = module.msgHandler(ThalesZMQMessage(EncoderMessages.stop()))
         self.assertEqual(response.name, "EncoderResponse")
         self.assertEqual(response.body.state, EncoderResponse.STOPPED)
-        self.assertEqual(response.body.streamActive, False)
+        self.assertEqual(response.body.streamActive, True)
 
         log.info("==== Waiting 2 seconds for video to stop ====")
         sleep(2)
