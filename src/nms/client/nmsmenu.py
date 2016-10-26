@@ -47,7 +47,7 @@ class QTEMenu(object):
                     prvKeyFile = ""
                     pubServKeyFile = ""
 
-        self.client = ThalesZMQClient(address, timeout=7000, allowNoBody=True,
+        self.client = ThalesZMQClient(address, timeout=20000, allowNoBody=True,
                                       prvKeyFile=prvKeyFile, pubServKeyFile=pubServKeyFile)
 
         print "Opened connection to", address
