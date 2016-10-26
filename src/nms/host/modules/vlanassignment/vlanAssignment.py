@@ -45,8 +45,8 @@ class VlanAssignment(Module):
         # Create the empty response
         response = VLANAssignResp()
         response.success = True
-        # Build a list of virtual functions to act on
-        vfs = set()
+        # Build a set of ports to act on
+        ports = set()
 
         # If there is no port name, return an error
         if len(request.body.port_name) == 0:
@@ -58,15 +58,15 @@ class VlanAssignment(Module):
                     # Physical function
                     if port not in self.pfNames:
                         self.setResp(response, False, ERROR_PROCESSING_MESSAGE, "Invalid port name %s" % port)
-                    else:
-                        self.setResp(response, False, VLAN_ASSIGNMENT_FAILED, "PF configuration not yet supported")
+                        break
+                    ports.add(port[5:]) # Strip off "i350_"
                 else:
                     # Virtual function
                     parts = port.rsplit('_', 1)
                     if len(parts) != 2 or parts[0] not in self.pfNames or parts[1] not in self.vfNames:
                         self.setResp(response, False, ERROR_PROCESSING_MESSAGE, "Invalid port name %s" % port)
                         break
-                    vfs.add(int(parts[1][-1]) - 1)
+                    ports.add(port[5:]) # Strip off "i350_"
 
         if response.success:
             # Build list of pairs to send to I350 driver.
@@ -77,11 +77,11 @@ class VlanAssignment(Module):
             for vlan in request.body.internal_vlans:
                 vlanConf.append("1 %u" % vlan)
 
-            for vf in vfs:
-                self.log.info("Configuring vf%d: %s" % (vf, " ".join(vlanConf)))
-                procPath = "/proc/driver/igb/vf%dvlans" % vf
+            for port in sorted(ports):
+                self.log.info("Configuring VLANs on %s: %s" % (port, " ".join(vlanConf)))
+                procPath = "/proc/driver/igb/vlans/%s" % port
                 if not os.path.exists(procPath):
-                    self.setResp(response, False, VLAN_ASSIGNMENT_FAILED, "I350 driver does not support VF config")
+                    self.setResp(response, False, VLAN_ASSIGNMENT_FAILED, "I350 driver does not support VLAN config")
                     break
                 else:
                     with open(procPath, 'wb') as procFile:
@@ -95,14 +95,14 @@ class VlanAssignment(Module):
                     lines = readback.splitlines()
                     # Must be same number of lines and each line in vlanConf must be in the read back list
                     if len(lines) != len(vlanConf):
-                        self.setResp(response, False, VLAN_ASSIGNMENT_FAILED, "I350 driver error configuring VF %d" % vf)
+                        self.setResp(response, False, VLAN_ASSIGNMENT_FAILED, "I350 driver error configuring %s" % port)
                     else:
                         for confLine in vlanConf:
                             if confLine not in lines:
-                                self.setResp(response, False, VLAN_ASSIGNMENT_FAILED, "I350 driver error configuring VF %d" % vf)
+                                self.setResp(response, False, VLAN_ASSIGNMENT_FAILED, "I350 driver error configuring %s" % port)
                                 break
 
                     if not response.success:
-                        self.log.error("Read back vf%d: %s" % (vf, " ".join(lines)))
+                        self.log.error("Read back %s: %s" % (port, " ".join(lines)))
 
         return ThalesZMQMessage(response)
