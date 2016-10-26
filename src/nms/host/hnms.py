@@ -64,6 +64,9 @@ class HNMS(ConfigurableObject):
                 # if we get empty strings, we should skip them
                 if version == "":
                     continue
+                # Is finds the "end" tag, not version found
+                elif version == 'end':
+                    break
                 # this should be the version number
                 else:
                     configInfo = version
