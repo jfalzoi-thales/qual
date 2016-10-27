@@ -283,8 +283,7 @@ class PortInfo(Module):
         pf = int(port[-1]) + 1
         procPath = "/proc/driver/igb/vlans/pf_%d" % pf
         if not os.path.exists(procPath):
-            self.log.error("Cannot get VLAN info for I350 PF%d" % pf)
-            self.addResp(response, key=key, errCode=1005)
+            self.addResp(response, key=key, errCode=1005, errDesc="Cannot get VLAN info for I350 PF%d" % pf)
         else:
             with open(procPath, 'r') as procFile:
                 contents = procFile.read(256)
