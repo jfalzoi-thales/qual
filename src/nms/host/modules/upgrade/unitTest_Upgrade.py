@@ -1,7 +1,7 @@
 import unittest
 
 import upgrade
-from nms.host.pb2.nms_host_api_pb2 import UpgradeReq, I350, SWITCH
+from nms.host.pb2.nms_host_api_pb2 import UpgradeReq, I350, SWITCH, UPGRADE_FAILED, INVALID_UPGRADE_PACKAGE_PROVIDED, INVALID_NAME
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
 from tklabs_utils.logger.logger import Logger
 from tklabs_utils.module.modulemsgs import ModuleMessages
@@ -19,7 +19,7 @@ class UpgradeMessages(ModuleMessages):
     def getMenuItems():
         return [("Upgrade I350 EEPROM",                 UpgradeMessages.upgradeI350EEPROM),
                 ("Upgrade I350 Flash",                  UpgradeMessages.upgradeI350Flash),
-                ("(Unimplemented) Upgrade Switch",      UpgradeMessages.upgradeSwitch)]
+                ("Upgrade Switch",                      UpgradeMessages.upgradeSwitch)]
 
     @staticmethod
     def upgradeI350EEPROM():
@@ -85,15 +85,13 @@ class Test_Upgrade(unittest.TestCase):
         self.assertTrue(response.body.success)
         log.info("==== Test complete ====")
 
-    ## Valid Test Case: Upgrade I350 Flash
+    ## Valid Test Case: Upgrade Switch
     def test_Switch(self):
         log = self.__class__.log
         module = self.__class__.module
         log.info("**** Valid Test Case: Upgrade Switch ****")
         response = module.msgHandler(ThalesZMQMessage(UpgradeMessages.upgradeSwitch()))
-        self.assertFalse(response.body.success)
-        self.assertEqual(response.body.error.error_code, 1003)
-        self.assertEqual(response.body.error.error_description, "SWITCH specified as upgrade target")
+        self.assertTrue(response.body.success)
         log.info("==== Test complete ====")
 
 if __name__ == '__main__':
