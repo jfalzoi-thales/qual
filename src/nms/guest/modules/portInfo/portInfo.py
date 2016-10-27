@@ -26,12 +26,6 @@ class PortInfo(Module):
                           "link":             self.keyInfo(self.getEthData,    "Link detected",    self.getPortStatusInfo, "Link"),
                           "vlan_id":          self.keyInfo(self.getInVlans,    0,                  self.getPortVlans     , "TrunkVlans"),
                           "BPDU_state":       self.keyInfo(self.notApplicable, 0,                  self.tempFunc         ,  0)}
-        ## Dict containing error codes and descriptions defined by ICD
-        self.errors = {1001: "Port is not supported in this setup",
-                       1002: "Port is not active",
-                       1003: "Port name does not exist in this setup",
-                       1004: "Invalid Message Received",
-                       1005: "Error Processing Message"}
         ## Dict for storing relevant output from Ethtool calls
         self.ethCache = {}
         ## Dict for storing relevant output from IpLinkShow calls
@@ -88,11 +82,9 @@ class PortInfo(Module):
                         else:
                             self.callFunc(response, key, keyParts[-1], port[0], False)
                     else:
-                        self.log.warning("Unknown key: %s" % key)
-                        self.addResp(response, key=key, errCode=1003)
+                        self.addResp(response, key=key, errCode=1003, errDesc="Unknown key: %s" % key)
                 else:
-                    self.log.warning("Invalid key: %s" % key)
-                    self.addResp(response, key=key, errCode=1004)
+                    self.addResp(response, key=key, errCode=1004, errDesc="Invalid key: %s" % key)
         else:
             self.wild(response, ["*", "*", "*"])
 
@@ -105,15 +97,16 @@ class PortInfo(Module):
     #  @param   key         Key to be added to response, default empty
     #  @param   value       Value of key to be added to response, default empty
     #  @param   errCode     Error code for optional ErrorMessage field
-    def addResp(self, response, success=False, key="", value="",  errCode=None):
+    def addResp(self, response, success=False, key="", value="",  errCode=None, errDesc=""):
         respVal = response.values.add()
         respVal.success = success
         respVal.keyValue.key = key
         respVal.keyValue.value = value
 
         if errCode:
+            self.log.error(errDesc)
             respVal.error.error_code = errCode
-            respVal.error.error_description = self.errors[errCode] if errCode in self.errors else "Unrecognized Error Code"
+            respVal.error.error_description = errDesc
 
     ## Handles wildcards (*) in requested keys
     #  @param   self
@@ -204,8 +197,7 @@ class PortInfo(Module):
         if value:
             self.addResp(response, True, key, value)
         else:
-            self.log.error("Unable to obtain value from ipLink cache.")
-            self.addResp(response, key=key, errCode=1005)
+            self.addResp(response, key=key, errCode=1005, errDesc="Unable to obtain value from ip link show")
 
     ## Populates ethCache with values
     #  @param   self
@@ -237,15 +229,21 @@ class PortInfo(Module):
                      "10000" : "FORCE10GMODE",
                      "12000" : "FORCE12GMODE"}
         value = None
+        errCode = 1005
+        errDesc = "Unable to obtain value from ethtool"
 
-        if not self.ethCache:
-            self.runEthtool(port)
+        if not self.ethCache: self.runEthtool(port)
 
         if field in self.ethCache:
             if field == "Speed" or [field == "Auto-negotiation" and self.ethCache[field] != "on"]:
-                speed = portSpeed[self.ethCache["Speed"].rstrip('Mb/s')]
-                duplex = "FDX" if self.ethCache["Duplex"] == "Full" else "HDX"
-                value = speed + duplex
+                if self.ethCache["Link detected"] == "yes":
+                    speed = self.ethCache["Speed"].rstrip('Mb/s')
+                    force = portSpeed[speed] if speed in portSpeed else ""
+                    duplex = "FDX" if self.ethCache["Duplex"] == "Full" else "HDX"
+                    value = force + duplex
+                else:
+                    errCode = 1002
+                    errDesc = "Link is down, unable to return speed."
             elif field == "Auto-negotiation" and self.ethCache["Auto-negotiation"] == "on":
                 value = "AUTONEGMODE"
             elif field == "Link detected":
@@ -254,8 +252,7 @@ class PortInfo(Module):
         if value:
             self.addResp(response, True, key, value)
         else:
-            self.log.error("Unable to obtain value from ethtool cache.")
-            self.addResp(response, key=key, errCode=1005)
+            self.addResp(response, key=key, errCode=errCode, errDesc=errDesc)
 
     ## Handles inside flow_control key requests
     #  @param   self
@@ -268,8 +265,7 @@ class PortInfo(Module):
             out = check_output(["ethtool", "-a", port])
             self.addResp(response, True, key, out.split('\n')[field])
         except CalledProcessError as err:
-            self.log.error("Problem running command: %s" % err.cmd)
-            self.addResp(response, key=key, errCode=1005)
+            self.addResp(response, key=key, errCode=1005, errDesc="Problem running command: %s" % err.cmd)
 
     ## Handles inside VLAN key requests
     #  @param   self
@@ -287,8 +283,7 @@ class PortInfo(Module):
         pf = int(port[-1]) + 1
         procPath = "/proc/driver/igb/vlans/pf_%d" % pf
         if not os.path.exists(procPath):
-            self.log.error("Cannot get VLAN info for I350 PF%d" % pf)
-            self.addResp(response, key=key, errCode=1005)
+            self.addResp(response, key=key, errCode=1005, errDesc="Cannot get VLAN info for I350 PF%d" % pf)
         else:
             with open(procPath, 'r') as procFile:
                 contents = procFile.read(256)
@@ -322,11 +317,9 @@ class PortInfo(Module):
                         self.addResp(response, True, key, str(vlan_id))
 
             else:
-                self.log.error("Unable to get the VLanId from the switch")
-                self.addResp(response, key=key, errCode=1005)
+                self.addResp(response, key=key, errCode=1005, errDesc="Unable to get the VLanId from the switch")
         except Exception:
-            self.log.error("Unable to connect to the switch")
-            self.addResp(response, key=key, errCode=1005)
+            self.addResp(response, key=key, errCode=1005, errDesc="Unable to connect to the switch")
 
     ## Handles switch port config key requests
     #  @param   self
@@ -357,12 +350,10 @@ class PortInfo(Module):
                 # Add the response
                 self.addResp(response, True, key, self.configCache[field])
             else:
-                self.log.error('Unable to get "%s" port information from the switch.' % (field))
-                self.addResp(response, key=key, errCode=1005)
+                self.addResp(response, key=key, errCode=1005, errDesc='Unable to get "%s" port information from the switch' % (field))
                 self.configCache = {}
         except Exception:
-            self.log.error("Unable to connect to the switch")
-            self.addResp(response, key=key, errCode=1005)
+            self.addResp(response, key=key, errCode=1005, errDesc="Unable to connect to the switch")
             self.configCache = {}
 
     ## Handles switch port status key requests
@@ -392,12 +383,10 @@ class PortInfo(Module):
                 # Add the response
                 self.addResp(response, True, key, self.statusCache[field])
             else:
-                self.log.error('Unable to get "%s" port information from the switch.' % (field))
-                self.addResp(response, key=key, errCode=1005)
+                self.addResp(response, key=key, errCode=1005, errDesc='Unable to get "%s" port information from the switch.' % (field))
                 self.statusCache = {}
         except Exception:
-            self.log.error("Unable to connect to the switch")
-            self.addResp(response, key=key, errCode=1005)
+            self.addResp(response, key=key, errCode=1005, errDesc="Unable to connect to the switch")
             self.statusCache = {}
 
     ## Handles key requests that are not applicable to this type of port
