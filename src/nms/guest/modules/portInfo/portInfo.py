@@ -279,8 +279,19 @@ class PortInfo(Module):
             # Response from the switch
             jsonResp = self.vtss.callMethod(['vlan.config.interface.get',port])
             if jsonResp["error"] == None:
-                for vlan_id in jsonResp['result'][field]:
-                    self.addResp(response, True, key, str(vlan_id))
+                # We'll set the vlan_id according to the current port mode
+                # Access mode
+                if jsonResp['result']['Mode'] == 'access':
+                    self.addResp(response, True, key, str(jsonResp['result']['AccessVlan']))
+                # Trunk mode
+                elif jsonResp['result']['Mode'] == 'trunk':
+                    for vlan_id in jsonResp['result']['TrunkVlans']:
+                        self.addResp(response, True, key, str(vlan_id))
+                # Hybrid mode
+                elif jsonResp['result']['Mode'] == 'hybrid':
+                    for vlan_id in jsonResp['result']['HybridVlans']:
+                        self.addResp(response, True, key, str(vlan_id))
+
             else:
                 self.log.error("Unable to get the VLanId from the switch")
                 self.addResp(response, key=key, errCode=1005)
