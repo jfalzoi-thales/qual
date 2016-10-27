@@ -1,5 +1,6 @@
 import os
-import subprocess
+import socket
+from subprocess import Popen, call, check_output, CalledProcessError, PIPE
 from systemd.daemon import notify as sd_notify
 
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
@@ -22,10 +23,12 @@ class HNMS(ConfigurableObject):
         self.serviceAddress = "ipc:///tmp/nms.sock"
         ## Current version information from the Vitesse Ethernet Switch
         self.switchAddress = '10.10.41.159'
+        ## Name of CPU Ethernet device
+        self.cpuEthernetDev = "enp0s31f"
         ## Name of I350 Ethernet device
         self.i350EthernetDev = "ens1f"
         #  Read config file and update specified instance variables
-        self.loadConfig(attributes=('serviceAddress','switchAddress','i350EthernetDev'))
+        self.loadConfig(attributes=('serviceAddress','switchAddress','cpuEthernetDev','i350EthernetDev'))
         ## Module shell that will contain the modules
         self.moduleShell = ModuleShell(name="HNMS", moduleDir="nms.host.modules", messageDir="nms.host.pb2")
         # Get BIOS info
@@ -39,6 +42,41 @@ class HNMS(ConfigurableObject):
         switchInfo = self.getSwitchInfo()
         self.moduleShell.log.info(switchInfo[0])
         self.moduleShell.log.info(switchInfo[1])
+        # Get CPU MAC address
+        cpuMAC = self.getNicMac(self.cpuEthernetDev)
+        self.moduleShell.log.info(cpuMAC)
+        # Get i350 MAC addresses
+        for x in range(1, 4):
+            i350MAC = self.getNicMac(self.i350EthernetDev + "_%s" % x)
+            self.moduleShell.log.info(i350MAC)
+        # Get switch MAC address
+        switchMAC = self.getVtssMac()
+        self.moduleShell.log.info(switchMAC)
+
+    ## Get local Ethernet MAC addresses
+    #  @param   self
+    #  @param   device      Device who's MAC address is being retrieved
+    def getNicMac(self, device):
+        try:
+            mac = check_output(["cat", "/sys/class/net/%s/address" % device])
+        except CalledProcessError:
+            mac = ""
+
+        if not mac: self.moduleShell.log.error("Unable to retrieve MAC address for device: %s" % device)
+        return "mac_address.%s=" % device + mac
+
+    ## Get switch MAC addresses
+    #  @param   self
+    def getVtssMac(self):
+        try:
+            vtss = Vtss(self.switchAddress)
+            json = vtss.callMethod(["ip.status.interface.link.get"])
+            mac = json["result"][0]["val"]["macAddress"]
+        except (socket.error, KeyError, IndexError):
+            mac = ""
+
+        if not mac: self.moduleShell.log.error("Unable to retrieve switch MAC address.")
+        return 'mac_address.switch=' + mac
 
     ## Get the info from the Vitesse Ethernet Switch
     #
@@ -103,7 +141,7 @@ class HNMS(ConfigurableObject):
         i350firmware = self._readWord(0x64)
         if i350firmware != None:
             majorVersion = str((i350firmware & 0xf000) >> 12)
-            minorVersion = str(i350firmware & 0xf00) >> 8
+            minorVersion = str((i350firmware & 0xf00) >> 8)
             buildNumber = str(i350firmware & 0xff)
             # If we reach this point, we have the major and the minor version, and the OEM
             # We can update the response for i350 Firmware version
@@ -120,8 +158,8 @@ class HNMS(ConfigurableObject):
         biosInfo = 'Not found.'
         # get information
         try:
-            lines = subprocess.check_output(['amidewrap' ,'/SS', '/SV']).splitlines()
-        except subprocess.CalledProcessError:
+            lines = check_output(['amidewrap' ,'/SS', '/SV']).splitlines()
+        except (CalledProcessError, OSError):
             self.moduleShell.log.error('Unable to retrieve BIOS information.')
         else:
             for line in lines:
@@ -137,14 +175,13 @@ class HNMS(ConfigurableObject):
     #  @param: offset
     def _readWord(self, offset):
         # Device
-        self.i350EthernetDev += '0'
-        if subprocess.call(['ethtool', self.i350EthernetDev], stdout=DEVNULL, stderr=DEVNULL) != 0:
+        if call(['ethtool', self.i350EthernetDev + '0'], stdout=DEVNULL, stderr=DEVNULL) != 0:
             self.moduleShell.log.error('Unable to acces i350 device %s',self.i350EthernetDev)
             return None
         else:
             # Call ethtool to read the word at the specified offset
-            cmd = ['ethtool', '-e', self.i350EthernetDev, 'offset', str(offset), 'length', '2', 'raw', 'on']
-            ethtool = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            cmd = ['ethtool', '-e', self.i350EthernetDev + '0', 'offset', str(offset), 'length', '2', 'raw', 'on']
+            ethtool = Popen(cmd, stdout=PIPE)
             data = ethtool.stdout.read(2)
             rc = ethtool.wait()
             if rc != 0:
