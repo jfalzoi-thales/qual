@@ -58,7 +58,7 @@ class HDDS(Module):
         ## BIOS tool command
         self.biosTool = "/thales/host/appliances/mps-biostool"
         ## Flag to detect if running on MPSi
-        self.ife = os.path.isfile("/dev/mps/usb-mcp2221-ife")
+        self.ife = os.path.exists("/dev/mps/usb-mcp2221-ife")
         #  Parse key names from Thales Host Domain Device Service configuration file
         thalesHDDSConfig = "/thales/host/config/HDDS.conv"
         configParser = SafeConfigParser()
@@ -438,14 +438,10 @@ class HDDS(Module):
             self.log.error("Unable to write file for %s", key)
         else:
             # Actually program the MAC address
-            call(["eeupdate64e", "-nic=%d" % nicidx, "-a", macfile])
+            if call(["eeupdate64e", "-nic=%d" % nicidx, "-a", macfile]) == 0:
+                success = True
 
-            try:
-                if i350mac in check_output(["eeupdate64e", "-nic=%d" % nicidx, "-mac_dump"]).splitlines()[-1]:
-                    success = True
-            except CalledProcessError as err:
-                self.log.warning("Unable to run %s" % err.cmd)
-                self.addResp(response, key, mac)
+            # TODO: using eeupdate63e to read back doesn't work; do we want to verify a different way?
 
             if not success:
                 self.log.error("Error programming %s", key)

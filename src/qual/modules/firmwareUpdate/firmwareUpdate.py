@@ -5,7 +5,7 @@ import paramiko
 from Queue import Queue
 from subprocess import call, Popen
 
-from common.pb2.GPIOManager_pb2 import RequestMessage, ResponseMessage
+from common.pb2.GPIOManager_pb2 import RequestMessage
 from qual.pb2.FirmwareUpdate_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
@@ -47,7 +47,7 @@ class FirmwareUpdate(Module):
         self.switchPassword = ''
         self.loadConfig(attributes=('switchAddress','switchUser','switchPassword', 'tftpServer'))
         ## BIOS tool command
-        self.biosTool = "/thales/host/appliances/mps-biostool"
+        self.biosTool = "PATH=$PATH:/thales/host/appliances mps-biostool"
         ## Connection to GPIO manager
         self.gpioMgrClient = ThalesZMQClient("ipc:///tmp/gpio-mgr.sock", log=self.log, msgParts=1)
         ## Queue for storing a reboot request
@@ -78,19 +78,20 @@ class FirmwareUpdate(Module):
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
     def updateBIOS(self, response, reboot):
+        biosFile = "mps-oof-bios.dat"
         primary = False
         secondary = False
 
-        if call([self.biosTool, "set-active", "primary"]) == 0:
-            if call([self.biosTool, "program-from", "%s/mps-oof-bios.dat" % self.firmPath]) == 0:
+        if call("%s set-active primary" % self.biosTool, shell=True) == 0:
+            if call("%s program-from %s/%s" % (self.biosTool, self.firmPath, biosFile), shell=True, stdout=DEVNULL) == 0:
                 primary = True
             else:
                 self.log.error("Unable to properly program primary BIOS.")
         else:
             self.log.error("Unable to set primary BIOS to active.")
 
-        if call([self.biosTool, "set-active", "secondary"]) == 0:
-            if call([self.biosTool, "program-from", "%s/mps-oof-bios.dat" % self.firmPath]) == 0:
+        if call("%s set-active secondary" % self.biosTool, shell=True) == 0:
+            if call("%s program-from %s/%s" % (self.biosTool, self.firmPath, biosFile), shell=True, stdout=DEVNULL) == 0:
                 secondary = True
             else:
                 self.log.error("Unable to properly program secondary BIOS.")
@@ -128,7 +129,7 @@ class FirmwareUpdate(Module):
         # File to install
         bmcFile = 'ESL1v9.bin'
         # Subprocess obj
-        sema = Popen(['sema', '%s/%s' % (self.firmPath, bmcFile), delay], stdout=DEVNULL)
+        sema = Popen(['sema', 'update', '%s/%s' % (self.firmPath, bmcFile), delay], stdout=DEVNULL)
         # Wait until the BMC is updated
         sema.wait()
         # Success???
@@ -136,8 +137,8 @@ class FirmwareUpdate(Module):
             # ERROR!!!
             response.success = False
             response.component = FW_BMC
-            response.errorMessage = "SEMA failed. Error code %d" % (sema.returncode)
-            self.log.error("SEMA failed. Error code %d" % (sema.returncode))
+            response.errorMessage = "SEMA failed. Error code %d" % sema.returncode
+            self.log.error("SEMA failed. Error code %d" % sema.returncode)
         else:
             # SUCCESS!!!
             response.success = True
@@ -149,23 +150,16 @@ class FirmwareUpdate(Module):
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
     def updateI350EEPROM(self, response, reboot):
+        eepromFile = "I350_mps.txt"
         response.success = True
 
-        if call(["eeupdate64e", "-nic=2", "-data", "%s/I350_mps.txt" % self.firmPath]) != 0:
+        # TODO: Save/restore boot flag and inventory info (QUAL-412)
+
+        if call(["eeupdate64e", "-nic=2", "-data", "%s/%s" % (self.firmPath, eepromFile)]) != 0:
             self.log.error("Unable to program I350 EEPROM.")
             response.component = FW_I350_EEPROM
             response.success = False
             response.errorMessage = "Unable to program I350 EEPROM."
-            return
-
-        result = 0
-        for nicidx in range(2, 6):
-            result |= call(["bootutil64e", "-nic=%d" % nicidx, "-fe"])
-        if result != 0:
-            self.log.error("Unable to enable I350 flash.")
-            response.component = FW_I350_EEPROM
-            response.success = False
-            response.errorMessage = "Unable to enable I350 flash."
             return
 
         if reboot: self.reboot.put("REBOOT")
@@ -175,13 +169,21 @@ class FirmwareUpdate(Module):
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
     def updateI350Flash(self, response, reboot):
+        flashFile = "1573_i350_flash.bin"
         response.success = True
 
-        if call(["i350-flashtool", "%s/1573_i350_flash.bin" % self.firmPath]) != 0:
+        if call(["i350-flashtool", "%s/%s" % (self.firmPath, flashFile)]) != 0:
             self.log.error("Unable to program I350 flash.")
             response.component = FW_I350_FLASH
             response.success = False
             response.errorMessage = "Unable to program I350 flash."
+            return
+
+        if call(["bootutil64e", "-all", "-fe"], stdout=DEVNULL) != 0:
+            self.log.error("Unable to enable I350 flash boot.")
+            response.component = FW_I350_FLASH
+            response.success = False
+            response.errorMessage = "Unable to enable I350 flash boot."
             return
 
         if reboot: self.reboot.put("REBOOT")
@@ -226,8 +228,8 @@ class FirmwareUpdate(Module):
                     # There was an error transferring the file
                     response.success = False
                     response.component = FW_SWITCH_CONFIG
-                    response.errorMessage = "Error transfering file %s to secondary-file" % (switchConfigFile)
-                    self.log.error("Error transfering file %s to secondary-file" % (switchConfigFile))
+                    response.errorMessage = "Error transfering file %s to secondary-file" % switchConfigFile
+                    self.log.error("Error transfering file %s to secondary-file" % switchConfigFile)
                     return
                 break
             # Close the connection
@@ -240,13 +242,13 @@ class FirmwareUpdate(Module):
         except paramiko.ssh_exception.SSHException:
             response.success = False
             response.component = FW_SWITCH_CONFIG
-            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
-            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+            response.errorMessage = "Unable to establish the connection with %s" % self.switchAddress
+            self.log.error("Unable to establish the connection with %s" % self.switchAddress)
         except Exception as e:
             response.success = False
             response.component = FW_SWITCH_CONFIG
-            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
-            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % e.message
+            self.log.error("Unexpected error with connection. Error message: %s" % e.message)
 
     ## Attempts to swap the configuration update into the
     #  secondary config location
@@ -310,16 +312,16 @@ class FirmwareUpdate(Module):
 
             if reboot: self.reboot.put("REBOOT")
 
-        except paramiko.ssh_exception.SSHException as e:
+        except paramiko.ssh_exception.SSHException:
             response.success = False
             response.component = FW_SWITCH_CONFIG_SWAP
-            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
-            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+            response.errorMessage = "Unable to establish the connection with %s" % self.switchAddress
+            self.log.error("Unable to establish the connection with %s" % self.switchAddress)
         except Exception as e:
             response.success = False
             response.component = FW_SWITCH_CONFIG_SWAP
-            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
-            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % e.message
+            self.log.error("Unexpected error with connection. Error message: %s" % e.message)
 
     ## Attempts to load a firmware image into
     #  the alternate location
@@ -354,15 +356,15 @@ class FirmwareUpdate(Module):
                 if "Invalid IP address" in output:
                     response.success = False
                     response.component = FW_SWITCH_FIRMWARE
-                    response.errorMessage = "Switch unable to establish the connection with tftp server %s" % (self.tftpServer)
-                    self.log.error("Switch unable to establish the connection with tftp server %s" % (self.tftpServer))
+                    response.errorMessage = "Switch unable to establish the connection with tftp server %s" % self.tftpServer
+                    self.log.error("Switch unable to establish the connection with tftp server %s" % self.tftpServer)
                     return
                 # if Thales-MPS.dat was not present on the tftp server
                 elif 'File not found' in output:
                     response.success = False
                     response.component = FW_SWITCH_FIRMWARE
-                    response.errorMessage = "Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % (self.tftpServer)
-                    self.log.error("Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % (self.tftpServer))
+                    response.errorMessage = "Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % self.tftpServer
+                    self.log.error("Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % self.tftpServer)
                     return
                 # if Thales-MPS.dat was an invalid image
                 elif 'Error: Invalid image' in output:
@@ -399,13 +401,13 @@ class FirmwareUpdate(Module):
         except paramiko.ssh_exception.SSHException:
             response.success = False
             response.component = FW_SWITCH_FIRMWARE
-            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
-            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+            response.errorMessage = "Unable to establish the connection with %s" % self.switchAddress
+            self.log.error("Unable to establish the connection with %s" % self.switchAddress)
         except Exception as e:
             response.success = False
             response.component = FW_SWITCH_FIRMWARE
-            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
-            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % e.message
+            self.log.error("Unexpected error with connection. Error message: %s" % e.message)
 
     ## Attempts to swap the firmware between the primary
     # location and the alternate location
@@ -440,13 +442,13 @@ class FirmwareUpdate(Module):
         except paramiko.ssh_exception.SSHException:
             response.success = False
             response.component = FW_SWITCH_FIRMWARE_SWAP
-            response.errorMessage = "Unable to establish the connection with %s" % (self.switchAddress)
-            self.log.error("Unable to establish the connection with %s" % (self.switchAddress))
+            response.errorMessage = "Unable to establish the connection with %s" % self.switchAddress
+            self.log.error("Unable to establish the connection with %s" % self.switchAddress)
         except Exception as e:
             response.success = False
             response.component = FW_SWITCH_CONFIG_SWAP
-            response.errorMessage = "Unexpected error with connection. Error message: %s" % (e.message)
-            self.log.error("Unexpected error with connection. Error message: %s" % (e.message))
+            response.errorMessage = "Unexpected error with connection. Error message: %s" % e.message
+            self.log.error("Unexpected error with connection. Error message: %s" % e.message)
 
     ## Catches valid, unimplemented message command types.
     #  @param   self

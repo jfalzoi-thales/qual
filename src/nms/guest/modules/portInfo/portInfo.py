@@ -1,7 +1,7 @@
 import collections
 from subprocess import check_output, CalledProcessError
 
-from nms.common.portresolver.portResolver import resolvePort, portNames
+from nms.common.portresolver.portResolver import resolvePort, portNames, updatePorts
 from nms.guest.pb2.nms_guest_api_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -15,25 +15,16 @@ class PortInfo(Module):
     def __init__(self, config=None):
         super(PortInfo, self).__init__(config)
         ## Named tuple for storing key functions and parsing fields
-        self.keyInfo = collections.namedtuple("keyInfo", "func field")
-        ## Dict containing possible keys and their functions for internal ports
-        self.insidePortFuncs = {"shutdown":             self.keyInfo(self.getIpLinkData, "state"),
-                                "speed":                self.keyInfo(self.getEthData, "Speed"),
-                                "configured_speed":     self.keyInfo(self.getEthData, "Auto-negotiation"),
-                                "flow_control":         self.keyInfo(self.runEthtoola, 0),
-                                "MTU":                  self.keyInfo(self.getIpLinkData, "mtu"),
-                                "link":                 self.keyInfo(self.getEthData, "Link detected"),
-                                "vlan_id":              self.keyInfo(self.tempFunc, 0),
-                                "BPDU_state":           self.keyInfo(self.unsupported, 0)}
-        ## Dict containing possible keys and their functions for external ports
-        self.outsidePortFuncs = {"shutdown":            self.keyInfo(self.getPortConfigInfo, "Shutdown"),
-                                 "speed":               self.keyInfo(self.getPortStatusInfo, "Speed"),
-                                 "configured_speed":    self.keyInfo(self.getPortConfigInfo, "Speed"),
-                                 "flow_control":        self.keyInfo(self.getPortConfigInfo, "FC"),
-                                 "MTU":                 self.keyInfo(self.getPortConfigInfo, "MTU"),
-                                 "link":                self.keyInfo(self.getPortStatusInfo, "Link"),
-                                 "vlan_id":             self.keyInfo(self.getVlan          , "TrunkVlans"),
-                                 "BPDU_state":          self.keyInfo(self.tempFunc         ,  0)}
+        self.keyInfo = collections.namedtuple("keyInfo", "inFunc inField outFunc outField")
+        ## Dict containing possible keys and their functions
+        self.portFuncs = {"shutdown":         self.keyInfo(self.getIpLinkData, "state",            self.getPortConfigInfo, "Shutdown"),
+                          "speed":            self.keyInfo(self.getEthData,    "Speed",            self.getPortStatusInfo, "Speed"),
+                          "configured_speed": self.keyInfo(self.getEthData,    "Auto-negotiation", self.getPortConfigInfo, "Speed"),
+                          "flow_control":     self.keyInfo(self.runEthtoola,   0,                  self.getPortConfigInfo, "FC"),
+                          "MTU":              self.keyInfo(self.getIpLinkData, "mtu",              self.getPortConfigInfo, "MTU"),
+                          "link":             self.keyInfo(self.getEthData,    "Link detected",    self.getPortStatusInfo, "Link"),
+                          "vlan_id":          self.keyInfo(self.tempFunc,      0,                  self.getVlan          , "TrunkVlans"),
+                          "BPDU_state":       self.keyInfo(self.unsupported,   0,                  self.tempFunc         ,  0)}
         ## Dict containing error codes and descriptions defined by ICD
         self.errors = {1001: "Port is not supported in this setup",
                        1002: "Port is not active",
@@ -51,11 +42,13 @@ class PortInfo(Module):
         ## IP address of the device
         self.switchAddress = "10.10.41.159"
         # Load config file
-        self.loadConfig(attributes=('switchAddress'))
+        self.loadConfig(attributes=('switchAddress',))
         ## Object to call the RPC
         self.vtss = Vtss(switchIP=self.switchAddress)
         #  Adds handler to available message handlers
         self.addMsgHandler(PortInfoReq, self.handler)
+        # Update the enet_8 and i350 port names
+        updatePorts(self)
 
     ## Handles incoming messages
     #  @param   self
@@ -66,12 +59,20 @@ class PortInfo(Module):
 
         if msg.body != None:
             for key in msg.body.portInfoKey:
-                keyParts = key.rsplit('.', 1)
+                keyParts = key.split('.')
 
                 if "*" in keyParts:
-                    self.wild(response, key, keyParts)
-                elif keyParts[-1] in self.insidePortFuncs.keys() + self.outsidePortFuncs.keys():
-                    port = resolvePort(keyParts[0])
+                    if len(keyParts) == 1:
+                        keyParts += ["*", "*"]
+                    elif len(keyParts) == 2:
+                        if keyParts[0] == "*":
+                            keyParts = ["*"] + keyParts
+                        else:
+                            keyParts += ["*"]
+
+                    self.wild(response, keyParts)
+                elif keyParts[-1] in self.portFuncs:
+                    port = resolvePort(keyParts[0] + "." + keyParts[1])
 
                     if port:
                         self.ethCache = {}
@@ -90,7 +91,7 @@ class PortInfo(Module):
                     self.log.warning("Invalid key: %s" % key)
                     self.addResp(response, key=key, errCode=1004)
         else:
-            self.wild(response, "*", ["*"])
+            self.wild(response, ["*", "*", "*"])
 
         return ThalesZMQMessage(response)
 
@@ -114,40 +115,25 @@ class PortInfo(Module):
     ## Handles wildcards (*) in requested keys
     #  @param   self
     #  @param   response  PortInfoResp object
-    #  @param   key       Requested key
     #  @param   keyParts  Key split on last separator
-    def wild(self, response, key, keyParts):
-        self.ethCache = {}
-        self.ipLinkCache = {}
-        self.configCache = {}
-        self.statusCache = {}
+    def wild(self, response, keyParts):
+        locs = ["internal", "external"] if keyParts[0] == "*" else [keyParts[0]]
+        stats = self.portFuncs.keys() if keyParts[2] == "*" else [keyParts[2]]
 
-        if keyParts[0] == "*":
-            for name in portNames:
-                port = resolvePort(name)
-
-                if port[1]:
-                    if keyParts[-1] == "*":
-                        for stat in self.outsidePortFuncs:
-                            self.callFunc(response, name + '.' + stat, stat, port[0])
-                    else:
-                        self.callFunc(response, name + '.' + keyParts[-1], keyParts[-1], port[0])
-                else:
-                    if keyParts[-1] == "*":
-                        for stat in self.insidePortFuncs:
-                            self.callFunc(response, name + '.' + stat, stat, port[0], False)
-                    else:
-                        self.callFunc(response, name + '.' + keyParts[-1], keyParts[-1], port[0], False)
+        if keyParts[1] == "*":
+            devs = {name for loc in locs for name in portNames if name.startswith(loc)}
         else:
-            name = keyParts[0]
-            port = resolvePort(name)
+            devs = {loc + "." + keyParts[1] for loc in locs if loc + "." + keyParts[1] in portNames}
 
-            if port[1]:
-                for stat in self.outsidePortFuncs:
-                    self.callFunc(response, name + '.' + stat, stat, port[0])
-            else:
-                for stat in self.insidePortFuncs:
-                    self.callFunc(response, name + '.' + stat, stat, port[0], False)
+        for dev in devs:
+            self.ethCache = {}
+            self.ipLinkCache = {}
+            self.configCache = {}
+            self.statusCache = {}
+
+            for stat in stats:
+                port = resolvePort(dev)
+                self.callFunc(response, dev + "." + stat, stat, port[0], port[1])
 
     ## Calls appropriate function with specified parameters
     #  @param   self
@@ -157,12 +143,12 @@ class PortInfo(Module):
     #  @param   port      Port name for function calls
     #  @param   external  True if port is external, False if port is internal
     def callFunc(self, response, key, stat, port, external=True):
-        if external:
-            call = self.outsidePortFuncs[stat]
-        else:
-            call = self.insidePortFuncs[stat]
+        call = self.portFuncs[stat]
 
-        call.func(response, key, port, call.field)
+        if external:
+            call.outFunc(response, key, port, call.outField)
+        else:
+            call.inFunc(response, key, port, call.inField)
 
     ## Temporary function for unimplemented key requests
     #  @param   self

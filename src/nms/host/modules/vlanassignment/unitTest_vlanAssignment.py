@@ -19,7 +19,8 @@ class VlanAssignmentMessages(ModuleMessages):
         return [("Set VF1 int 301 ext 127", VlanAssignmentMessages.configVFExtVlanIntVlan),
                 ("Set VF1 int 301",         VlanAssignmentMessages.configVFIntVlan),
                 ("Set VF1 none",            VlanAssignmentMessages.configVFNoVlans),
-                ("Set PF int 301",          VlanAssignmentMessages.configPFIntVlan)]
+                ("Set PF int 301",          VlanAssignmentMessages.configPFIntVlan),
+                ("Set PF none",             VlanAssignmentMessages.configPFNoVlans)]
 
     @staticmethod
     def configPFIntVlan():
@@ -29,6 +30,15 @@ class VlanAssignmentMessages(ModuleMessages):
         message.port_name.append('i350_pf_3')
         message.port_name.append('i350_pf_4')
         message.internal_vlans.append(301)
+        return message
+
+    @staticmethod
+    def configPFNoVlans():
+        message = VLANAssignReq()
+        message.port_name.append('i350_pf_1')
+        message.port_name.append('i350_pf_2')
+        message.port_name.append('i350_pf_3')
+        message.port_name.append('i350_pf_4')
         return message
 
     @staticmethod
@@ -131,7 +141,7 @@ class Test_VlanAssig(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
 
-        log.info("**** Test case: Valid VF message sequence ****")
+        log.info("**** Test case: Valid VLAN message sequence ****")
 
         response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.configVFIntVlan()))
         self.assertEqual(response.name, "VLANAssignResp")
@@ -146,6 +156,14 @@ class Test_VlanAssig(unittest.TestCase):
         self.assertEqual(response.body.success, True)
 
         response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.configVFNoVlans()))
+        self.assertEqual(response.name, "VLANAssignResp")
+        self.assertEqual(response.body.success, True)
+
+        response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.configPFIntVlan()))
+        self.assertEqual(response.name, "VLANAssignResp")
+        self.assertEqual(response.body.success, True)
+
+        response = module.msgHandler(ThalesZMQMessage(VlanAssignmentMessages.configPFNoVlans()))
         self.assertEqual(response.name, "VLANAssignResp")
         self.assertEqual(response.body.success, True)
 

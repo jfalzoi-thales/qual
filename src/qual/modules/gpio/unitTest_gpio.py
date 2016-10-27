@@ -20,7 +20,7 @@ class GPIOMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        if os.path.isfile("/dev/mps/usb-mcp2221-ife"):
+        if os.path.exists("/dev/mps/usb-mcp2221-ife"):
             items = [("Report for input 1", GPIOMessages.reportIn1),
                     ("Report for input 2", GPIOMessages.reportIn2),
                     ("Report for input 7", GPIOMessages.reportIn7),
@@ -30,7 +30,7 @@ class GPIOMessages(ModuleMessages):
                     ("Connect input 1 to output 1", GPIOMessages.connectIn1Out1),
                     ("Connect input 2 to output 1", GPIOMessages.connectIn2Out1),
                     ("Connect input 2 to output 2", GPIOMessages.connectIn2Out2),
-                    ("Connect input 7 to output 7", GPIOMessages.connectIn7Out7),
+                    ("Connect input 7 to output 8", GPIOMessages.connectIn7Out7),
                     ("Connect PA input 1 to VA output 1", GPIOMessages.connectPAIn1VAOut1),
                     ("Connect all inputs to output 3", GPIOMessages.connectInAllOut3),
                     ("Disconnect input 1", GPIOMessages.disconnectIn1),
@@ -119,11 +119,11 @@ class GPIOMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def connectIn7Out8():
+    def connectIn7Out7():
         message = GPIORequest()
         message.requestType = GPIORequest.CONNECT
         message.gpIn = "GP_KYLN_IN7"
-        message.gpOut = "GP_KYLN_OUT8"
+        message.gpOut = "GP_KYLN_OUT7"
         return message
 
     @staticmethod
@@ -194,14 +194,14 @@ class GPIOMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def connectMapping(map):
+    def connectMapping(gpMap):
         messages = []
 
-        for input, output in map.items():
+        for gpIn, gpOut in gpMap.items():
             message = GPIORequest()
             message.requestType = GPIORequest.CONNECT
-            message.gpIn = input
-            message.gpOut = output
+            message.gpIn = gpIn
+            message.gpOut = gpOut
             messages.append(message)
 
         return messages
@@ -251,7 +251,7 @@ class Test_GPIO(unittest.TestCase):
     def setUpClass(cls):
         ConfigurableObject.setFilename("qual")
         # Flag to detect if running on MPSi
-        cls.ife = os.path.isfile("/dev/mps/usb-mcp2221-ife")
+        cls.ife = os.path.exists("/dev/mps/usb-mcp2221-ife")
         # Create a logger so we can add details to a multi-step test case
         cls.log = logger.Logger(name='Test GPIO')
         cls.log.info('++++ Setup before GPIO module unit tests ++++')
@@ -427,14 +427,14 @@ class Test_GPIO(unittest.TestCase):
             self.assertEqual(response.body.status[0].gpOut, "")
 
             log.info("==== Connect IFE pair ====")
-            response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn7Out8()))
+            response = module.msgHandler(ThalesZMQMessage(GPIOMessages.connectIn7Out7()))
             self.assertEqual(response.name, "GPIOResponse")
             self.assertEqual(len(response.body.status), 1)
             self.assertEqual(response.body.status[0].conState, GPIOResponse.CONNECTED)
             self.assertEqual(response.body.status[0].matchCount, 0)
             self.assertEqual(response.body.status[0].mismatchCount, 0)
             self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN7")
-            self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT8")
+            self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT7")
 
             log.info("==== Wait 5 seconds to accumulate statistics ====")
             sleep(5)
@@ -447,7 +447,7 @@ class Test_GPIO(unittest.TestCase):
             self.assertGreater(response.body.status[0].matchCount, 0)
             self.assertEqual(response.body.status[0].mismatchCount, 0)
             self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN7")
-            self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT8")
+            self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT7")
 
             log.info("==== Disconnect connected pair ====")
             response = module.msgHandler(ThalesZMQMessage(GPIOMessages.disconnectIn7()))
@@ -457,7 +457,7 @@ class Test_GPIO(unittest.TestCase):
             self.assertGreater(response.body.status[0].matchCount, 0)
             self.assertEqual(response.body.status[0].mismatchCount, 0)
             self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN7")
-            self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT8")
+            self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT7")
             log.info("==== Test complete ====")
         else:
             log.info("IFE functionality not enabled on this device")
@@ -629,7 +629,7 @@ class Test_GPIO(unittest.TestCase):
             # All pins just got disconnected from output 3
             self.assertEqual(gpioStat.conState, GPIOResponse.DISCONNECTED)
             self.assertEqual(gpioStat.gpOut, "GP_KYLN_OUT3")
-            if (gpioStat.gpIn == "GP_KYLN_IN3"):
+            if gpioStat.gpIn == "GP_KYLN_IN3":
                 self.assertGreater(gpioStat.matchCount, 0)
                 self.assertEqual(gpioStat.mismatchCount, 0)
             else:
@@ -653,33 +653,33 @@ class Test_GPIO(unittest.TestCase):
         module = self.__class__.module
 
         if ife:
-            map = {"GP_KYLN_IN1": "GP_KYLN_OUT1",
-                   "GP_KYLN_IN2": "GP_KYLN_OUT2",
-                   "GP_KYLN_IN3": "GP_KYLN_OUT3",
-                   "GP_KYLN_IN4": "GP_KYLN_OUT4",
-                   "GP_KYLN_IN5": "GP_KYLN_OUT5",
-                   "GP_KYLN_IN6": "GP_KYLN_OUT7",
-                   "GP_KYLN_IN7": "GP_KYLN_OUT7",
-                   "GP_KYLN_IN8": "GP_KYLN_OUT8",
-                   "GP_KYLN_IN9": "GP_KYLN_OUT9",
-                   "PA_KYLN_IN1": "VA_KYLN_OUT1",
-                   "PA_KYLN_IN2": "VA_KYLN_OUT2",
-                   "PA_KYLN_IN3": "VA_KYLN_OUT3",
-                   "PA_KYLN_IN4": "VA_KYLN_OUT4",
-                   "PA_KYLN_IN5": "VA_KYLN_OUT5",
-                   "PA_KYLN_IN6": "VA_KYLN_OUT6",
-                   "PA_KYLN_IN7": "VA_KYLN_OUT6",
-                   "PA_KYLN_IN8": "VA_KYLN_OUT6"}
+            gpMap = {"GP_KYLN_IN1": "GP_KYLN_OUT1",
+                     "GP_KYLN_IN2": "GP_KYLN_OUT2",
+                     "GP_KYLN_IN3": "GP_KYLN_OUT3",
+                     "GP_KYLN_IN4": "GP_KYLN_OUT4",
+                     "GP_KYLN_IN5": "GP_KYLN_OUT5",
+                     "GP_KYLN_IN6": "GP_KYLN_OUT7",
+                     "GP_KYLN_IN7": "GP_KYLN_OUT7",
+                     "GP_KYLN_IN8": "GP_KYLN_OUT8",
+                     "GP_KYLN_IN9": "GP_KYLN_OUT9",
+                     "PA_KYLN_IN1": "VA_KYLN_OUT1",
+                     "PA_KYLN_IN2": "VA_KYLN_OUT2",
+                     "PA_KYLN_IN3": "VA_KYLN_OUT3",
+                     "PA_KYLN_IN4": "VA_KYLN_OUT4",
+                     "PA_KYLN_IN5": "VA_KYLN_OUT5",
+                     "PA_KYLN_IN6": "VA_KYLN_OUT6",
+                     "PA_KYLN_IN7": "VA_KYLN_OUT6",
+                     "PA_KYLN_IN8": "VA_KYLN_OUT6"}
         else:
-            map = {"GP_KYLN_IN1": "GP_KYLN_OUT1",
-                   "GP_KYLN_IN2": "GP_KYLN_OUT2",
-                   "GP_KYLN_IN3": "GP_KYLN_OUT3",
-                   "GP_KYLN_IN4": "GP_KYLN_OUT4",
-                   "GP_KYLN_IN5": "GP_KYLN_OUT5"}
+            gpMap = {"GP_KYLN_IN1": "GP_KYLN_OUT1",
+                     "GP_KYLN_IN2": "GP_KYLN_OUT2",
+                     "GP_KYLN_IN3": "GP_KYLN_OUT3",
+                     "GP_KYLN_IN4": "GP_KYLN_OUT4",
+                     "GP_KYLN_IN5": "GP_KYLN_OUT5"}
 
         log.info("**** Test case: Test Mapping Defined by Test Equipment ****")
         log.info("==== Connect Mapped Channels ====")
-        messages = GPIOMessages.connectMapping(map)
+        messages = GPIOMessages.connectMapping(gpMap)
 
         for message in messages:
             response = module.msgHandler(ThalesZMQMessage(message))
@@ -690,8 +690,8 @@ class Test_GPIO(unittest.TestCase):
             self.assertEqual(response.body.status[0].gpIn, message.gpIn)
             self.assertEqual(response.body.status[0].gpOut, message.gpOut)
 
-        log.info("==== Wait 5 Seconds to Accumulate Statistics ====")
-        sleep(5)
+        log.info("==== Wait 8 Seconds to Accumulate Statistics ====")
+        sleep(8)
 
         log.info("==== Report on All Inputs ====")
         response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportAll()))
@@ -702,8 +702,8 @@ class Test_GPIO(unittest.TestCase):
                 self.assertEqual(gpioStat.conState, GPIOResponse.CONNECTED)
                 self.assertGreater(gpioStat.matchCount, 0)
                 self.assertEqual(gpioStat.mismatchCount, 0)
-                self.assertTrue(gpioStat.gpIn in map)
-                self.assertEqual(gpioStat.gpOut, map[gpioStat.gpIn])
+                self.assertTrue(gpioStat.gpIn in gpMap)
+                self.assertEqual(gpioStat.gpOut, gpMap[gpioStat.gpIn])
             else:
                 self.assertEqual(gpioStat.conState, GPIOResponse.DISCONNECTED)
                 self.assertEqual(gpioStat.matchCount, 0)
@@ -729,8 +729,8 @@ class Test_GPIO(unittest.TestCase):
         self.assertEqual(response.body.status[0].gpIn, "GP_KYLN_IN5")
         self.assertEqual(response.body.status[0].gpOut, "GP_KYLN_OUT6")
 
-        log.info("==== Wait 5 Seconds to Accumulate Statistics ====")
-        sleep(5)
+        log.info("==== Wait 8 Seconds to Accumulate Statistics ====")
+        sleep(8)
 
         log.info("==== Get Report on GP_KYLN_IN5 ====")
         response = module.msgHandler(ThalesZMQMessage(GPIOMessages.reportIn5()))
@@ -753,12 +753,12 @@ class Test_GPIO(unittest.TestCase):
             if gpioStat.gpIn not in ["PA_ALL_KYLN_IN", "PA_MUTE_KYLN_IN"]:
                 self.assertGreater(gpioStat.matchCount, 0)
 
-                if (gpioStat.gpIn == "GP_KYLN_IN5"):
+                if gpioStat.gpIn == "GP_KYLN_IN5":
                     self.assertEqual(gpioStat.gpIn, "GP_KYLN_IN5")
                     self.assertEqual(gpioStat.gpOut, "GP_KYLN_OUT6")
                 else:
-                    self.assertTrue(gpioStat.gpIn in map)
-                    self.assertEqual(gpioStat.gpOut, map[gpioStat.gpIn])
+                    self.assertTrue(gpioStat.gpIn in gpMap)
+                    self.assertEqual(gpioStat.gpOut, gpMap[gpioStat.gpIn])
             else:
                 self.assertEqual(gpioStat.matchCount, 0)
                 self.assertTrue(gpioStat.gpIn in ["PA_ALL_KYLN_IN", "PA_MUTE_KYLN_IN"])
