@@ -23,8 +23,10 @@ class Upgrade(Module):
         self.switchUser = 'admin'
         ## Password for switch
         self.switchPassword = ''
+        ## TFTP server path
+        self.tftpServerPath = '/thales/qual/firmware/'
         # Load the configuration
-        self.loadConfig(['switchAddress','switchUser','switchPassword'])
+        self.loadConfig(['switchAddress','switchUser','switchPassword','tftpServerPath'])
         # Adds handler to available message handlers
         self.addMsgHandler(UpgradeReq, self.handler)
 
@@ -89,7 +91,7 @@ class Upgrade(Module):
     def upgradeVitesseSwitch(self, response, path):
         # Copy the file into the tftp server directory
         try:
-            shutil.copy(path, '/thales/qual/firmware/')
+            shutil.copy(path, self.tftpServerPath)
             # Object to call switch functions
             vtss = Vtss(switchIP=self.switchIP)
             # Try to upgrade the switch
