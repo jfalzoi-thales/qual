@@ -20,6 +20,7 @@ class PortInfoMessages(ModuleMessages):
     def getMenuItems():
         return [("Get Single Key",          PortInfoMessages.getSingle),
                 ("Get Multiple Keys",       PortInfoMessages.getMultiple),
+                ("Get I350 VLANs",          PortInfoMessages.getI350Vlans),
                 ("Get All Internal Speed",  PortInfoMessages.getAllIntSpeed),
                 ("Get All Speed",           PortInfoMessages.getAllSpeed),
                 ("Get All Internal Stats",  PortInfoMessages.getAllIntStats),
@@ -42,6 +43,12 @@ class PortInfoMessages(ModuleMessages):
     def getMultiple():
         message = PortInfoReq()
         message.portInfoKey.extend(["external.enet_8.shutdown", "internal.i350_1.shutdown"])
+        return message
+
+    @staticmethod
+    def getI350Vlans():
+        message = PortInfoReq()
+        message.portInfoKey.extend(["internal.i350_1.vlan_id", "internal.i350_2.vlan_id", "internal.i350_3.vlan_id", "internal.i350_4.vlan_id"])
         return message
 
     @staticmethod
