@@ -80,8 +80,10 @@ class ThalesZMQClient(object):
     # @return ThalesZMQMessage object containing received response
     #
     def sendRequest(self, request, timeout=None):
-        # If timeout, then update it
-        self.zsocket.set(zmq.RCVTIMEO, timeout if timeout else self.timeout)
+        # If timeout, then update it (not supported on CURVE sockets)
+        if not self.prvKeyFile:
+            self.zsocket.set(zmq.RCVTIMEO, timeout if timeout else self.timeout)
+
         if self.requestParts == 3:
             if self.allowNoBody and len(request.body.ListFields()) == 0:
                 # Request normally has 3 parts, but omit the body if it would be empty

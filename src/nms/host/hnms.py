@@ -1,5 +1,6 @@
 import os
-import subprocess
+import socket
+from subprocess import Popen, check_output, CalledProcessError, PIPE
 from systemd.daemon import notify as sd_notify
 
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
@@ -22,42 +23,91 @@ class HNMS(ConfigurableObject):
         self.serviceAddress = "ipc:///tmp/nms.sock"
         ## Current version information from the Vitesse Ethernet Switch
         self.switchAddress = '10.10.41.159'
+        ## Name of CPU Ethernet device
+        self.cpuEthernetDev = "enp0s31f"
         ## Name of I350 Ethernet device
         self.i350EthernetDev = "ens1f"
         #  Read config file and update specified instance variables
-        self.loadConfig(attributes=('serviceAddress','switchAddress','i350EthernetDev'))
+        self.loadConfig(attributes=('serviceAddress','switchAddress','cpuEthernetDev','i350EthernetDev'))
         ## Module shell that will contain the modules
         self.moduleShell = ModuleShell(name="HNMS", moduleDir="nms.host.modules", messageDir="nms.host.pb2")
-        # Get BIOS info
-        biosInfo = self.getBiosInfo()
-        self.moduleShell.log.info(biosInfo)
-        # Get i350_eeprom and i350_PXE Firmware
-        i350Info = self.geti350Info()
-        self.moduleShell.log.info(i350Info[0])
-        self.moduleShell.log.info(i350Info[1])
-        # Get the switch information
-        switchInfo = self.getSwitchInfo()
-        self.moduleShell.log.info(switchInfo[0])
-        self.moduleShell.log.info(switchInfo[1])
 
-    ## Get the info from the Vitesse Ethernet Switch
-    #
-    #  @return: (version,config_version)
-    #  @type: tuple(str, str)
-    def getSwitchInfo(self):
-        # In case we can't get the info, "not found." will be logged
-        firmwareInfo = "Not found."
-        configInfo = "Not found."
+        # Log firmware version information
+        self.moduleShell.log.info("version.BIOS="           + self.getBiosInfo())
+        self.moduleShell.log.info("version.i350_eeprom="    + self.geti350EepromVersion())
+        self.moduleShell.log.info("version.i350_pxe="       + self.geti350PxeVersion())
+        self.moduleShell.log.info("version.switch="         + self.getSwitchFirmwareVersion())
+        self.moduleShell.log.info("version.switch_config="  + self.getSwitchConfigVersion())
+
+        # Log MAC addresses
+        self.moduleShell.log.info("mac_address.processor="  + self.getNicMac(self.cpuEthernetDev))
+        self.moduleShell.log.info("mac_address.i350_1="     + self.getNicMac(self.i350EthernetDev + "0"))
+        self.moduleShell.log.info("mac_address.i350_2="     + self.getNicMac(self.i350EthernetDev + "1"))
+        self.moduleShell.log.info("mac_address.i350_3="     + self.getNicMac(self.i350EthernetDev + "2"))
+        self.moduleShell.log.info("mac_address.i350_4="     + self.getNicMac(self.i350EthernetDev + "3"))
+        self.moduleShell.log.info("mac_address.switch="     + self.getSwitchMac())
+
+    ## Get local Ethernet MAC addresses
+    #  @param   self
+    #  @param   device      Device whose MAC address is being retrieved
+    #  @return  MAC address string
+    def getNicMac(self, device):
+        try:
+            mac = check_output(["cat", "/sys/class/net/%s/address" % device])
+        except CalledProcessError:
+            mac = ""
+
+        if not mac: self.moduleShell.log.error("Unable to retrieve MAC address for device: %s" % device)
+        return mac.rstrip()
+
+    ## Get switch MAC address
+    #  @param   self
+    #  @return  MAC address string
+    def getSwitchMac(self):
+        try:
+            vtss = Vtss(self.switchAddress)
+            json = vtss.callMethod(["ip.status.interface.link.get"])
+            mac = json["result"][0]["val"]["macAddress"]
+        except (socket.error, KeyError, IndexError):
+            mac = ""
+
+        if not mac: self.moduleShell.log.error("Unable to retrieve switch MAC address.")
+        return mac
+
+    ## Get the switch firmware version
+    #  @return: version info
+    #  @type: str
+    def getSwitchFirmwareVersion(self):
+        # In case we can't get the info, "unknown" will be logged
+        firmwareInfo = "unknown"
+
         try:
             # Open connection with the switch
             vtss = Vtss(switchIP=self.switchAddress)
-            # Get the info from the switch
             # Get the firmware version
             jsonResp = vtss.callMethod(['firmware.status.switch.get'])
-            # If no error, update the info
-            if jsonResp['error'] == None:
-                firmwareInfo = jsonResp['result'][0]['val']['Version']
-            # Get the config info
+            # If no error, look for something in the string that looks like a version number
+            if jsonResp['error'] is None:
+                for item in jsonResp['result'][0]['val']['Version'].split():
+                    if item[0].isdigit():
+                        firmwareInfo = item
+                        break
+        except Exception:
+            self.moduleShell.log.error('Unable to retrieve the information from the switch.')
+
+        return firmwareInfo
+
+    ## Get the switch configuration version
+    #  @return: version info
+    #  @type: str
+    def getSwitchConfigVersion(self):
+        # In case we can't get the info, "unknown" will be logged
+        configInfo = "unknown"
+
+        try:
+            # Open connection with the switch
+            vtss = Vtss(switchIP=self.switchAddress)
+            # Download the config file
             response = vtss.downloadFile('startup-config').splitlines()
             for version in reversed(response):
                 # Version number should be the first line we find when we reverse the list
@@ -71,84 +121,84 @@ class HNMS(ConfigurableObject):
                 else:
                     configInfo = version
                     break
-
         except Exception:
             self.moduleShell.log.error('Unable to retrieve the information from the switch.')
 
-        return ('version.switch='+firmwareInfo, 'version.switch_config='+configInfo)
+        return configInfo
 
-    ## Get the i350_eeprom and i350_PXE Firmware
-    #
-    #  @return: (i350_eeprom,i350_PXE Firmware)
-    #  @type: tuple(str, str)
-    def geti350Info(self):
-        # In case we can't get the info, "not found." will be logged
-        i350_eeprom = 'Not found.'
-        i350_pxe = 'Not found.'
+    ## Get the I350 EEPROM version
+    #  @return: version info
+    #  @type: str
+    def geti350EepromVersion(self):
+        # In case we can't get the info, "unknown" will be logged
+        i350_eeprom = 'unknown'
 
-        # Get EEPROM
-        eePromValue = self._readWord(0x10)
-        # If success
-        if eePromValue != None:
+        # Read version word from EEPROM
+        eePromValue = self._readWord(0x0a)
+        if eePromValue is not None:
             majorVersion = str((eePromValue & 0xf000) >> 12)
             minorVersion = str(eePromValue & 0xff)
-            eePromValue =  self._readWord(0x12)
-            if eePromValue != None:
+
+            # OEM version number is in a different EEPROM word
+            eePromValue = self._readWord(0x0c)
+            if eePromValue is not None:
                 oem = str(eePromValue)
                 # If we reach this point, we have the major and the minor version, and the OEM
-                # We can update the response for EEPROM
-                i350_eeprom = '%s.%s.%s' % (majorVersion,minorVersion,oem)
+                # We can construct the complete version number
+                i350_eeprom = '%s.%s.%s' % (majorVersion, minorVersion, oem)
 
-        # Get i350 firmware version
-        i350firmware = self._readWord(0x64)
-        if i350firmware != None:
-            majorVersion = str((i350firmware & 0xf000) >> 12)
-            minorVersion = str(i350firmware & 0xf00) >> 8
-            buildNumber = str(i350firmware & 0xff)
+        return i350_eeprom
+
+    ## Get the I350 PXE Firmware version
+    #  @return: version info
+    #  @type: str
+    def geti350PxeVersion(self):
+        # In case we can't get the info, "unknown" will be logged
+        i350_pxe = 'unknown'
+
+        # Read PXE Firmware version word from EEPROM
+        eePromValue = self._readWord(0x64)
+        if eePromValue is not None:
+            majorVersion = str((eePromValue & 0xf000) >> 12)
+            minorVersion = str((eePromValue & 0xf00) >> 8)
+            buildNumber = str(eePromValue & 0xff)
             # If we reach this point, we have the major and the minor version, and the OEM
-            # We can update the response for i350 Firmware version
-            i350_pxe = '%s.%s.%s' % (majorVersion,minorVersion,buildNumber)
+            # We can construct the complete version number
+            i350_pxe = '%s.%s.%s' % (majorVersion, minorVersion, buildNumber)
 
+        return i350_pxe
 
-        return ('version.i350_eeprom='+i350_eeprom, 'version.i350_pxe='+i350_pxe)
-
-    ## Get BIOS information
-    #  @return: biosInfo
+    ## Get BIOS version
+    #  @return: version info
     #  @type: str
     def getBiosInfo(self):
-        # In case we can't get the info, "not found." will be logged
-        biosInfo = 'Not found.'
+        # In case we can't get the info, "unknown" will be logged
+        biosInfo = 'unknown'
         # get information
         try:
-            lines = subprocess.check_output(['amidewrap' ,'/SS', '/SV']).splitlines()
-        except subprocess.CalledProcessError:
+            lines = check_output(['amidewrap' ,'/SS', '/SV']).splitlines()
+        except (CalledProcessError, OSError):
             self.moduleShell.log.error('Unable to retrieve BIOS information.')
         else:
             for line in lines:
                 if 'System version' in line:
                     line = line.split(" ")
-                    biosInfo = line[-1]
+                    biosInfo = line[-1].strip('"')
                     break
 
-        return 'version.BIOS='+biosInfo
+        return biosInfo
 
-    ## Private function
+    ## Private function - read word from I350 EEPROM
     #
     #  @param: offset
     def _readWord(self, offset):
-        # Device
-        self.i350EthernetDev += '0'
-        if subprocess.call(['ethtool', self.i350EthernetDev], stdout=DEVNULL, stderr=DEVNULL) != 0:
-            self.moduleShell.log.error('Unable to acces i350 device %s',self.i350EthernetDev)
+        # Call ethtool to read the word at the specified offset
+        cmd = ['ethtool', '-e', self.i350EthernetDev + '0', 'offset', str(offset), 'length', '2', 'raw', 'on']
+        ethtool = Popen(cmd, stdout=PIPE)
+        data = ethtool.stdout.read(2)
+        rc = ethtool.wait()
+        if rc != 0:
             return None
-        else:
-            # Call ethtool to read the word at the specified offset
-            cmd = ['ethtool', '-e', self.i350EthernetDev, 'offset', str(offset), 'length', '2', 'raw', 'on']
-            ethtool = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-            data = ethtool.stdout.read(2)
-            rc = ethtool.wait()
-            if rc != 0:
-                return None
         # Values are stored little-endian
         val = (ord(data[1]) << 8) | ord(data[0])
 

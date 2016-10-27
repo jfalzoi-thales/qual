@@ -1,4 +1,5 @@
 import collections
+import os
 from subprocess import check_output, CalledProcessError
 
 from nms.common.portresolver.portResolver import resolvePort, portNames, updatePorts
@@ -23,8 +24,8 @@ class PortInfo(Module):
                           "flow_control":     self.keyInfo(self.runEthtoola,   0,                  self.getPortConfigInfo, "FC"),
                           "MTU":              self.keyInfo(self.getIpLinkData, "mtu",              self.getPortConfigInfo, "MTU"),
                           "link":             self.keyInfo(self.getEthData,    "Link detected",    self.getPortStatusInfo, "Link"),
-                          "vlan_id":          self.keyInfo(self.tempFunc,      0,                  self.getVlan          , "TrunkVlans"),
-                          "BPDU_state":       self.keyInfo(self.unsupported,   0,                  self.tempFunc         ,  0)}
+                          "vlan_id":          self.keyInfo(self.getInVlans,    0,                  self.getPortVlans     , "TrunkVlans"),
+                          "BPDU_state":       self.keyInfo(self.notApplicable, 0,                  self.tempFunc         ,  0)}
         ## Dict for storing relevant output from Ethtool calls
         self.ethCache = {}
         ## Dict for storing relevant output from IpLinkShow calls
@@ -35,8 +36,10 @@ class PortInfo(Module):
         self.statusCache = {}
         ## IP address of the device
         self.switchAddress = "10.10.41.159"
+        ## Device name of the I350
+        self.i350EthernetDev="ens1f"
         # Load config file
-        self.loadConfig(attributes=('switchAddress',))
+        self.loadConfig(attributes=('switchAddress','i350EthernetDev'))
         ## Object to call the RPC
         self.vtss = Vtss(switchIP=self.switchAddress)
         #  Adds handler to available message handlers
@@ -173,7 +176,7 @@ class PortInfo(Module):
             self.log.error("Problem running command: %s" % err.cmd)
             self.ipLinkCache = {}
 
-    ## Handles external key requests with data stored in ipLinkCache
+    ## Handles inside key requests with data stored in ipLinkCache
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
@@ -211,7 +214,7 @@ class PortInfo(Module):
             self.log.error("Problem running command: %s" % err.cmd)
             self.ethCache = {}
 
-    ## Handles external key requests with data stored in ethCache
+    ## Handles inside key requests with data stored in ethCache
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
@@ -251,7 +254,7 @@ class PortInfo(Module):
         else:
             self.addResp(response, key=key, errCode=errCode, errDesc=errDesc)
 
-    ## Handles external flow_control
+    ## Handles inside flow_control key requests
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
@@ -264,25 +267,62 @@ class PortInfo(Module):
         except CalledProcessError as err:
             self.addResp(response, key=key, errCode=1005, errDesc="Problem running command: %s" % err.cmd)
 
-    ## Handles external vlan key requests
+    ## Handles inside VLAN key requests
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
     #  @param   port      Port name for function calls
     #  @param   field     Field to retrieve from cache
-    def getVlan(self, response, key, port, field):
+    def getInVlans(self, response, key, port, field):
+        # Only applicable to I350 ports
+        if not port.startswith(self.i350EthernetDev):
+            self.notApplicable(response, key, port, field)
+            return
+
+        # VLAN info comes from /proc entries managed by igb (I350) driver
+        pf = int(port[-1]) + 1
+        procPath = "/proc/driver/igb/vlans/pf_%d" % pf
+        if not os.path.exists(procPath):
+            self.log.error("Cannot get VLAN info for I350 PF%d" % pf)
+            self.addResp(response, key=key, errCode=1005)
+        else:
+            with open(procPath, 'r') as procFile:
+                contents = procFile.read(256)
+            for line in contents.splitlines():
+                fields = line.split()
+                if len(fields) > 1:
+                    self.addResp(response, True, key, fields[1])
+
+    ## Handles switch port VLAN key requests
+    #  @param   self
+    #  @param   response  PortInfoResp object
+    #  @param   key       Requested key
+    #  @param   port      Port name for function calls
+    #  @param   field     Field to retrieve from cache
+    def getPortVlans(self, response, key, port, field):
         try:
             # Response from the switch
             jsonResp = self.vtss.callMethod(['vlan.config.interface.get',port])
             if jsonResp["error"] == None:
-                for vlan_id in jsonResp['result'][field]:
-                    self.addResp(response, True, key, str(vlan_id))
+                # We'll set the vlan_id according to the current port mode
+                # Access mode
+                if jsonResp['result']['Mode'] == 'access':
+                    self.addResp(response, True, key, str(jsonResp['result']['AccessVlan']))
+                # Trunk mode
+                elif jsonResp['result']['Mode'] == 'trunk':
+                    for vlan_id in jsonResp['result']['TrunkVlans']:
+                        self.addResp(response, True, key, str(vlan_id))
+                # Hybrid mode
+                elif jsonResp['result']['Mode'] == 'hybrid':
+                    for vlan_id in jsonResp['result']['HybridVlans']:
+                        self.addResp(response, True, key, str(vlan_id))
+
             else:
                 self.addResp(response, key=key, errCode=1005, errDesc="Unable to get the VLanId from the switch")
         except Exception:
             self.addResp(response, key=key, errCode=1005, errDesc="Unable to connect to the switch")
 
-    ## Handles external port key requests
+    ## Handles switch port config key requests
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
@@ -317,7 +357,7 @@ class PortInfo(Module):
             self.addResp(response, key=key, errCode=1005, errDesc="Unable to connect to the switch")
             self.configCache = {}
 
-    ## Handles external port key requests
+    ## Handles switch port status key requests
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
@@ -350,11 +390,12 @@ class PortInfo(Module):
             self.addResp(response, key=key, errCode=1005, errDesc="Unable to connect to the switch")
             self.statusCache = {}
 
-    ## Handles unsupported key requests
+    ## Handles key requests that are not applicable to this type of port
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
     #  @param   port      Port name for function calls
     #  @param   field     Field to retrieve from cache
-    def unsupported(self, response, key, port, field):
-        self.addResp(response, key=key, errCode=1001, errDesc="Unsupported key: %s" % key)
+    def notApplicable(self, response, key, port, field):
+        # Returning an empty string as the value, because it's not really an error
+        self.addResp(response, True, key, "")
