@@ -194,7 +194,7 @@ class PortInfo(Module):
         if value:
             self.addResp(response, True, key, value)
         else:
-            self.addResp(response, key=key, errCode=1005, errDesc="Unable to obtain value from 'ip link show'")
+            self.addResp(response, key=key, errCode=1005, errDesc="Unable to obtain value from ip link show")
 
     ## Populates ethCache with values
     #  @param   self
@@ -227,7 +227,7 @@ class PortInfo(Module):
                      "12000" : "FORCE12GMODE"}
         value = None
         errCode = 1005
-        errDesc = "Unable to obtain value from 'ethtool'."
+        errDesc = "Unable to obtain value from ethtool"
 
         if not self.ethCache: self.runEthtool(port)
 
