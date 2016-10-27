@@ -134,13 +134,13 @@ class HNMS(ConfigurableObject):
         i350_eeprom = 'unknown'
 
         # Read version word from EEPROM
-        eePromValue = self._readWord(0x10)
+        eePromValue = self._readWord(0x0a)
         if eePromValue is not None:
             majorVersion = str((eePromValue & 0xf000) >> 12)
             minorVersion = str(eePromValue & 0xff)
 
             # OEM version number is in a different EEPROM word
-            eePromValue = self._readWord(0x12)
+            eePromValue = self._readWord(0x0c)
             if eePromValue is not None:
                 oem = str(eePromValue)
                 # If we reach this point, we have the major and the minor version, and the OEM
