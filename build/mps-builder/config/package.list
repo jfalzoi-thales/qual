@@ -1,0 +1,98 @@
+#
+# This file defines the list of packages that needs to be built during MPS
+# build process.
+#
+#
+# Note:
+# The packages defined in this file are not included in the Host/Guest OS
+# images automatically.
+# To include the packages in the Host or Guest OS image add the package name to
+# the %packages section in mps-host.ks or mps-guest.ks file.
+#
+#
+# The file is in following format (one package per line):
+# [name] [flags]
+# where:
+# name  - package name defined in package spec file
+# flags - optional, comma-separated (no spaces!) list of following flags:
+#         builddep - meaning that the package must be installed on the build
+#                    machine to allow building of the consecutive RPM packages
+#         imagedep - meaning that the package must be installed on the build
+#                    machine to allow building of the images
+
+
+# LiveCD target building tools (to be installed locally)
+syslinux imagedep
+livecd-tools imagedep
+
+# MPS Configuration
+mps-config
+mps-keys
+
+# GPB
+protobuf builddep
+protobuf-c builddep
+
+# Misc
+flashrom
+libmps-utils builddep
+mps-tools
+
+# ZeroMQ
+libsodium builddep
+zeromq4 builddep
+czmq builddep
+python-zmq builddep
+
+# FTDI driver (libftd2xx is closed/proprietary, libftdi is opensource)
+libftdi builddep
+
+memlockd
+
+# SEMA
+libsema builddep
+sema-driver builddep
+
+# PIPS
+pipsd
+
+# I2C Manager
+i2c-device-manager
+
+# GPIO Manager
+gpio-manager
+
+# SPI Manager
+spi-manager
+
+# ARINC Drivers
+arinc429-driver
+arinc717-driver
+
+# RTC Driver
+rtc-driver
+rtc-service
+
+# Power Supply Monitor
+power-supply-monitor
+
+# Higher level services
+machine-manager
+host-domain-device-service
+fake-nms
+
+
+# MAP Test tools
+test-tools
+
+# QEMU (KVM + VirtFS)
+qemu
+
+mdadm
+dracut
+
+smartmontools
+stress-ng
+coremark
+pmbw
+i350-tools

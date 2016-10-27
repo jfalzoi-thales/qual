@@ -2,10 +2,12 @@ import unittest
 from time import sleep
 
 import arinc429
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.ARINC429_pb2 import ARINC429Request, ARINC429Response
-from common.logger import logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.ARINC429_pb2 import ARINC429Request, ARINC429Response
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.logger import logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 
@@ -118,6 +120,25 @@ class ARINC429Messages(ModuleMessages):
         message.source = "ARINC_429_BOGUS"
         return message
 
+    @staticmethod
+    def guiSetUp():
+        # MAP according to the requirements
+        list = [
+            ('ARINC_429_TX1', 'ARINC_429_RX1'),
+            ('ARINC_429_TX2', 'ARINC_429_RX2'),
+            ('ARINC_429_TX2', 'ARINC_429_RX3'),
+            ('ARINC_429_TX2', 'ARINC_429_RX4'),
+            ('ARINC_429_TX3', 'ARINC_429_RX5'),
+            ('ARINC_429_TX4', 'ARINC_429_RX6'),
+            ('ARINC_429_TX4', 'ARINC_429_RX7'),
+            ]
+        for connection in list:
+            message = ARINC429Request()
+            message.requestType = ARINC429Request.CONNECT
+            message.sink = connection[1]
+            message.source = connection[0]
+            yield message
+
     ## Constructor (not used)
     #  @param     self
     def __init__(self):
@@ -135,13 +156,13 @@ class Test_ARINC429(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = logger.Logger(name='Test ARINC429')
         cls.log.info('++++ Setup before ARINC429 module unit tests ++++')
         # Create the module
-        cls.module = arinc429.ARINC429()
-        # Uncomment this if you don't want to see module debug messages
-        #cls.module.log.setLevel(logger.INFO)
+        if cls.module is None:
+            cls.module = arinc429.ARINC429()
 
     ## Teardown when done with ARINC429 test cases
     # This is run only once when we're done with all test cases
@@ -185,8 +206,7 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(len(response.body.status), 0)
         log.info("==== Test complete ====")
 
-    ## Test case: Try to reconnect a connected input channel
-    # Should return a ARINC429Response showing channel still connected to original output
+    ## Test case: Try to reconnect a connected input channel to a different output channel
     def test_reconnect(self):
         log = self.__class__.log
         module = self.__class__.module
@@ -214,7 +234,7 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(len(response.body.status), 1)
         self.assertEqual(response.body.status[0].conState, ARINC429Response.CONNECTED)
         self.assertEqual(response.body.status[0].sink, "ARINC_429_RX3")
-        self.assertEqual(response.body.status[0].source, "ARINC_429_TX1")
+        self.assertEqual(response.body.status[0].source, "ARINC_429_TX2")
         log.info("==== Test complete ====")
 
     ## Test case: Connect a linked input/output pair
@@ -244,8 +264,8 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(len(response.body.status), 1)
         self.assertEqual(response.body.status[0].conState, ARINC429Response.CONNECTED)
         self.assertGreaterEqual(response.body.status[0].xmtCount, 0)
-        self.assertGreaterEqual(response.body.status[0].xmtCount, response.body.status[0].rcvCount)
-        self.assertGreaterEqual(response.body.status[0].errorCount, 0)
+        self.assertTrue(response.body.status[0].xmtCount - response.body.status[0].rcvCount in [0,1])
+        self.assertEqual(response.body.status[0].errorCount, 0)
         self.assertEqual(response.body.status[0].sink, "ARINC_429_RX1")
         self.assertEqual(response.body.status[0].source, "ARINC_429_TX1")
 
@@ -257,9 +277,9 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(response.name, "ARINC429Response")
         self.assertEqual(len(response.body.status), 1)
         self.assertEqual(response.body.status[0].conState, ARINC429Response.CONNECTED)
-        self.assertGreaterEqual(response.body.status[0].xmtCount, 0)
-        self.assertGreaterEqual(response.body.status[0].xmtCount, response.body.status[0].rcvCount)
-        self.assertGreaterEqual(response.body.status[0].errorCount, 0)
+        self.assertGreater(response.body.status[0].xmtCount, 0)
+        self.assertTrue(response.body.status[0].xmtCount - response.body.status[0].rcvCount in [0,1])
+        self.assertEqual(response.body.status[0].errorCount, 0)
         self.assertEqual(response.body.status[0].sink, "ARINC_429_RX1")
         self.assertEqual(response.body.status[0].source, "ARINC_429_TX1")
 
@@ -269,8 +289,8 @@ class Test_ARINC429(unittest.TestCase):
         self.assertEqual(len(response.body.status), 1)
         self.assertEqual(response.body.status[0].conState, ARINC429Response.DISCONNECTED)
         self.assertGreater(response.body.status[0].xmtCount, 0)
-        self.assertGreaterEqual(response.body.status[0].xmtCount, response.body.status[0].rcvCount)
-        self.assertGreaterEqual(response.body.status[0].errorCount, 0)
+        self.assertTrue(response.body.status[0].xmtCount - response.body.status[0].rcvCount in [0,1])
+        self.assertEqual(response.body.status[0].errorCount, 0)
         self.assertEqual(response.body.status[0].sink, "ARINC_429_RX1")
         self.assertEqual(response.body.status[0].source, "ARINC_429_TX1")
 
@@ -338,7 +358,7 @@ class Test_ARINC429(unittest.TestCase):
         log = self.__class__.log
         module = self.__class__.module
 
-        numInputs = len(module.inputChans)
+        numInputs = 8
 
         log.info("**** Test case: Test use of the \"ALL\" parameter ****")
         log.info("==== Report on all inputs before connect ====")
@@ -397,6 +417,57 @@ class Test_ARINC429(unittest.TestCase):
             self.assertEqual(ARINC429Stat.conState, ARINC429Response.DISCONNECTED)
             self.assertEqual(ARINC429Stat.source, "")
         log.info("==== Test complete ====")
+
+    ## Test case: Qual GUI set up
+    #  test map:
+    #       TX1 -> RX1
+    #       TX2 -> RX2, RX3, RX4
+    #       TX3 -> RX5
+    #       TX4 -> RX6, RX7
+    def test_QualGUISetUp(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        numInputs = 1
+
+        log.info("==== Report on all inputs before connect ====")
+        response = module.msgHandler(ThalesZMQMessage(ARINC429Messages.reportAll()))
+        self.assertEqual(response.name, "ARINC429Response")
+        self.assertEqual(len(response.body.status), 8)
+        for ARINC429Stat in response.body.status:
+            # All channels should be disconnected
+            self.assertEqual(ARINC429Stat.conState, ARINC429Response.DISCONNECTED)
+            self.assertEqual(ARINC429Stat.source, "")
+
+        log.info('**** Test case: Test use of the "Qual GUI Set Up" parameter ****')
+        for message in ARINC429Messages.guiSetUp():
+            log.info("==== %s -> %s ====" % (message.source[-3:], message.sink[-3:]))
+            response = module.msgHandler(ThalesZMQMessage(message))
+            self.assertEqual(response.name, "ARINC429Response")
+            self.assertEqual(len(response.body.status), numInputs)
+
+        log.info("==== Wait 20 seconds to accumulate statistics ====")
+        sleep(20)
+
+        log.info("==== Get report after 10 second ====")
+        response = module.msgHandler(ThalesZMQMessage(ARINC429Messages.reportAll()))
+        self.assertEqual(response.name, "ARINC429Response")
+        self.assertEqual(len(response.body.status), 8)
+        for connection in response.body.status[:-1]:
+            self.assertEqual(connection.conState, ARINC429Response.CONNECTED)
+            self.assertGreater(connection.xmtCount, 0)
+            self.assertTrue(connection.xmtCount - connection.rcvCount in [0,1])
+            self.assertEqual(connection.errorCount, 0)
+
+        log.info("==== Disconnect all connected ====")
+        response = module.msgHandler(ThalesZMQMessage(ARINC429Messages.disconnectAll()))
+        self.assertEqual(response.name, "ARINC429Response")
+        self.assertEqual(len(response.body.status), 8)
+        for connection in response.body.status[:-1]:
+            self.assertEqual(connection.conState, ARINC429Response.DISCONNECTED)
+            self.assertGreater(connection.xmtCount, 0)
+            self.assertTrue(connection.xmtCount - connection.rcvCount in [0,1])
+            self.assertEqual(connection.errorCount, 0)
 
 if __name__ == '__main__':
     unittest.main()

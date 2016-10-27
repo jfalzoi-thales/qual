@@ -1,9 +1,11 @@
 import unittest
+
 import hdds
-from common.gpb.python.HDDS_pb2 import HostDomainDeviceServiceRequest
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.HDDS_pb2 import HostDomainDeviceServiceRequest
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 #  @cond doxygen_unittest
 

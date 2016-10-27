@@ -1,0 +1,46 @@
+afuwrap-5.08.00-5
+amidewrap-5.18-1
+arinc429-driver arinc429-driver-1.0.1-7
+arinc717-driver arinc717-driver-1.0.7-1
+coremark coremark-1.0-1
+czmq czmq-3.0.2-4
+dracut dracut-033-438.2
+fake-nms fake-nms-1.0.0-1
+flashrom flashrom-0.9.8-4.svn1887m
+gpio-manager gpio-manager-1.0.17-1
+host-domain-device-service host-domain-device-service-1.0.7-1
+i2c-device-manager i2c-device-manager-1.0.9-1
+i350-tools i350-tools-1.0-3
+kmod-e1000e kmod-e1000e-3.3.5-2
+kmod-i2c-mcp2221 kmod-i2c-mcp2221-0.2-1
+kmod-igb kmod-igb-5.3.5.3-4
+kmod-igbvf kmod-igbvf-2.3.8.2-2
+kmod-pips-trigger kmod-pips-trigger-1.5-1
+libftdi libftdi-1.2-1
+libmps-utils libmps-utils-1.0.0-21
+libsema libsema-3.0-7.r7
+libsodium libsodium-1.0.6-2
+livecd-tools livecd-tools-21.6.2-4
+machine-manager machine-manager-1.0.7-1
+mdadm mdadm-3.4-2
+memlockd memlockd-1.1-2
+mps-config mps-config-1.0.14-1
+mps-keys mps-keys-1.0.2-1
+mps-tools mps-tools-1.0.17-1
+pipsd pipsd-1.0.0-24
+pmbw pmbw-0.6.2-1
+power-supply-monitor power-supply-monitor-1.0.6-1
+protobuf protobuf-2.6.1-1
+protobuf-c protobuf-c-1.2.1-1
+python-zmq python-zmq-14.7.0-2
+qemu qemu-kvm-1.5.3.1-105.9
+rtc-driver rtc-driver-1.0.4-1
+rtc-service rtc-service-1.0.1-1
+scewrap-5.02.1097-1
+sema-driver sema-driver-1.0.0-43
+smartmontools smartmontools-6.4-3
+spi-manager spi-manager-1.0.8-1
+stress-ng stress-ng-0.05.22-1
+syslinux syslinux-6.03-9
+test-tools test-tools-1.0.0-6
+zeromq4 zeromq4-4.1.4-5

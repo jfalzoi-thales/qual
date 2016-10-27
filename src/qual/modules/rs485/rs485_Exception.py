@@ -1,4 +1,4 @@
-from common.module.exception import ModuleException
+from tklabs_utils.module.exception import ModuleException
 
 ## RS232 Module Exception
 #
