@@ -8,19 +8,22 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-
+from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
-from nms.host.pb2 import common_nm_pb2
+
+import common_nm_pb2
+
+from common_nm_pb2 import *
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='nms_host_api.proto',
   package='',
-  serialized_pb=_b('\n\x12nms_host_api.proto\x1a\x0f\x63ommon_nm.proto\"R\n\rVLANAssignReq\x12\x11\n\tport_name\x18\x01 \x03(\t\x12\x16\n\x0e\x65xternal_vlans\x18\x02 \x03(\r\x12\x16\n\x0einternal_vlans\x18\x03 \x03(\r\"?\n\x0eVLANAssignResp\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x1c\n\x05\x65rror\x18\x02 \x01(\x0b\x32\r.ErrorMessage\"\x0f\n\rSwitchInfoReq\"Z\n\x0eSwitchInfoResp\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x1c\n\x05\x65rror\x18\x02 \x01(\x0b\x32\r.ErrorMessage\x12\x19\n\x06values\x18\x03 \x03(\x0b\x32\t.Property\"\x0e\n\x0cInventoryReq\"Z\n\rInventoryResp\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x1c\n\x05\x65rror\x18\x02 \x01(\x0b\x32\r.ErrorMessage\x12\x1a\n\x06values\x18\x03 \x03(\x0b\x32\n.ValueResp\"7\n\nUpgradeReq\x12\x1b\n\x06target\x18\x01 \x02(\x0e\x32\x0b.TargetEnum\x12\x0c\n\x04path\x18\x02 \x02(\t\"<\n\x0bUpgradeResp\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x1c\n\x05\x65rror\x18\x02 \x01(\x0b\x32\r.ErrorMessage*\x8d\x02\n\rErrorCodeEnum\x12\x11\n\x0cINVALID_NAME\x10\xe8\x07\x12\x1b\n\x16VLAN_ASSIGNMENT_FAILED\x10\xe9\x07\x12\x1d\n\x18\x45RROR_PROCESSING_MESSAGE\x10\xea\x07\x12%\n NETWORK_MANAGEMENT_SERVICE_ERROR\x10\xeb\x07\x12(\n#FAILED_OBTAINING_SWITCH_INFORMATION\x10\xf3\x07\x12 \n\x1b\x46\x41ILURE_TO_OBTAIN_INVENTORY\x10\xfe\x07\x12\x13\n\x0eUPGRADE_FAILED\x10\x87\x08\x12%\n INVALID_UPGRADE_PACKAGE_PROVIDED\x10\x88\x08*\"\n\nTargetEnum\x12\n\n\x06SWITCH\x10\x00\x12\x08\n\x04I350\x10\x01P\x00')
+  serialized_pb=_b('\n\x12nms_host_api.proto\x1a\x0f\x63ommon_nm.proto\"R\n\rVLANAssignReq\x12\x11\n\tport_name\x18\x01 \x03(\t\x12\x16\n\x0e\x65xternal_vlans\x18\x02 \x03(\r\x12\x16\n\x0einternal_vlans\x18\x03 \x03(\r\"?\n\x0eVLANAssignResp\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x1c\n\x05\x65rror\x18\x02 \x01(\x0b\x32\r.ErrorMessage\"\x0f\n\rSwitchInfoReq\"Z\n\x0eSwitchInfoResp\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x1c\n\x05\x65rror\x18\x02 \x01(\x0b\x32\r.ErrorMessage\x12\x19\n\x06values\x18\x03 \x03(\x0b\x32\t.Property\"\x0e\n\x0cInventoryReq\"Z\n\rInventoryResp\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x1c\n\x05\x65rror\x18\x02 \x01(\x0b\x32\r.ErrorMessage\x12\x1a\n\x06values\x18\x03 \x03(\x0b\x32\n.ValueResp\"7\n\nUpgradeReq\x12\x1b\n\x06target\x18\x01 \x02(\x0e\x32\x0b.TargetEnum\x12\x0c\n\x04path\x18\x02 \x02(\t\"<\n\x0bUpgradeResp\x12\x0f\n\x07success\x18\x01 \x02(\x08\x12\x1c\n\x05\x65rror\x18\x02 \x01(\x0b\x32\r.ErrorMessage\"\x0f\n\rHealthInfoReq\";\n\x0eHealthInfoResp\x12\x0f\n\x07healthy\x18\x01 \x02(\x08\x12\x18\n\x10unhealthy_reason\x18\x02 \x01(\t*\x8d\x02\n\rErrorCodeEnum\x12\x11\n\x0cINVALID_NAME\x10\xe8\x07\x12\x1b\n\x16VLAN_ASSIGNMENT_FAILED\x10\xe9\x07\x12\x1d\n\x18\x45RROR_PROCESSING_MESSAGE\x10\xea\x07\x12%\n NETWORK_MANAGEMENT_SERVICE_ERROR\x10\xeb\x07\x12(\n#FAILED_OBTAINING_SWITCH_INFORMATION\x10\xf3\x07\x12 \n\x1b\x46\x41ILURE_TO_OBTAIN_INVENTORY\x10\xfe\x07\x12\x13\n\x0eUPGRADE_FAILED\x10\x87\x08\x12%\n INVALID_UPGRADE_PACKAGE_PROVIDED\x10\x88\x08*\"\n\nTargetEnum\x12\n\n\x06SWITCH\x10\x00\x12\x08\n\x04I350\x10\x01P\x00')
   ,
-  dependencies=[common_nm_pb2.DESCRIPTOR, ])
+  dependencies=[common_nm_pb2.DESCRIPTOR,])
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 _ERRORCODEENUM = _descriptor.EnumDescriptor(
@@ -64,8 +67,8 @@ _ERRORCODEENUM = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=525,
-  serialized_end=794,
+  serialized_start=603,
+  serialized_end=872,
 )
 _sym_db.RegisterEnumDescriptor(_ERRORCODEENUM)
 
@@ -87,8 +90,8 @@ _TARGETENUM = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=796,
-  serialized_end=830,
+  serialized_start=874,
+  serialized_end=908,
 )
 _sym_db.RegisterEnumDescriptor(_TARGETENUM)
 
@@ -394,6 +397,66 @@ _UPGRADERESP = _descriptor.Descriptor(
   serialized_end=522,
 )
 
+
+_HEALTHINFOREQ = _descriptor.Descriptor(
+  name='HealthInfoReq',
+  full_name='HealthInfoReq',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=524,
+  serialized_end=539,
+)
+
+
+_HEALTHINFORESP = _descriptor.Descriptor(
+  name='HealthInfoResp',
+  full_name='HealthInfoResp',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='healthy', full_name='HealthInfoResp.healthy', index=0,
+      number=1, type=8, cpp_type=7, label=2,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='unhealthy_reason', full_name='HealthInfoResp.unhealthy_reason', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=541,
+  serialized_end=600,
+)
+
 _VLANASSIGNRESP.fields_by_name['error'].message_type = common_nm_pb2._ERRORMESSAGE
 _SWITCHINFORESP.fields_by_name['error'].message_type = common_nm_pb2._ERRORMESSAGE
 _SWITCHINFORESP.fields_by_name['values'].message_type = common_nm_pb2._PROPERTY
@@ -409,6 +472,8 @@ DESCRIPTOR.message_types_by_name['InventoryReq'] = _INVENTORYREQ
 DESCRIPTOR.message_types_by_name['InventoryResp'] = _INVENTORYRESP
 DESCRIPTOR.message_types_by_name['UpgradeReq'] = _UPGRADEREQ
 DESCRIPTOR.message_types_by_name['UpgradeResp'] = _UPGRADERESP
+DESCRIPTOR.message_types_by_name['HealthInfoReq'] = _HEALTHINFOREQ
+DESCRIPTOR.message_types_by_name['HealthInfoResp'] = _HEALTHINFORESP
 DESCRIPTOR.enum_types_by_name['ErrorCodeEnum'] = _ERRORCODEENUM
 DESCRIPTOR.enum_types_by_name['TargetEnum'] = _TARGETENUM
 
@@ -467,6 +532,20 @@ UpgradeResp = _reflection.GeneratedProtocolMessageType('UpgradeResp', (_message.
   # @@protoc_insertion_point(class_scope:UpgradeResp)
   ))
 _sym_db.RegisterMessage(UpgradeResp)
+
+HealthInfoReq = _reflection.GeneratedProtocolMessageType('HealthInfoReq', (_message.Message,), dict(
+  DESCRIPTOR = _HEALTHINFOREQ,
+  __module__ = 'nms_host_api_pb2'
+  # @@protoc_insertion_point(class_scope:HealthInfoReq)
+  ))
+_sym_db.RegisterMessage(HealthInfoReq)
+
+HealthInfoResp = _reflection.GeneratedProtocolMessageType('HealthInfoResp', (_message.Message,), dict(
+  DESCRIPTOR = _HEALTHINFORESP,
+  __module__ = 'nms_host_api_pb2'
+  # @@protoc_insertion_point(class_scope:HealthInfoResp)
+  ))
+_sym_db.RegisterMessage(HealthInfoResp)
 
 
 # @@protoc_insertion_point(module_scope)

@@ -8,19 +8,22 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-
+from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
-from nms.host.pb2 import common_nm_pb2
+
+import common_nm_pb2
+
+from common_nm_pb2 import *
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='nms_guest_api.proto',
   package='',
-  serialized_pb=_b('\n\x13nms_guest_api.proto\x1a\x0f\x63ommon_nm.proto\"\"\n\x0bPortInfoReq\x12\x13\n\x0bportInfoKey\x18\x01 \x03(\t\"*\n\x0cPortInfoResp\x12\x1a\n\x06values\x18\x01 \x03(\x0b\x32\n.ValueResp\"\x1f\n\rConfigBPDUReq\x12\x0e\n\x06vlanid\x18\x01 \x02(\r\">\n\x0e\x43onfigBPDUResp\x12\x0e\n\x06status\x18\x01 \x02(\x08\x12\x1c\n\x05\x65rror\x18\x02 \x01(\x0b\x32\r.ErrorMessage\"m\n\rBPDUPortState\x12\x11\n\tnamedPort\x18\x01 \x02(\t\x12\x1a\n\x05state\x18\x02 \x02(\x0e\x32\x0b.BPDUStates\x12\x0f\n\x07success\x18\x03 \x02(\x08\x12\x1c\n\x05\x65rror\x18\x04 \x01(\x0b\x32\r.ErrorMessage\"@\n\x0f\x43onfigPortState\x12\x11\n\tnamedPort\x18\x01 \x02(\t\x12\x1a\n\x05state\x18\x02 \x02(\x0e\x32\x0b.BPDUStates\"5\n\x12\x43onfigPortStateReq\x12\x1f\n\x05state\x18\x01 \x03(\x0b\x32\x10.ConfigPortState\"4\n\x13\x43onfigPortStateResp\x12\x1d\n\x05state\x18\x01 \x03(\x0b\x32\x0e.BPDUPortState*\xd5\x01\n\tPortSpeed\x12\x12\n\x0e\x46ORCE10MODEFDX\x10\x00\x12\x12\n\x0e\x46ORCE10MODEHDX\x10\x01\x12\x13\n\x0f\x46ORCE100MODEFDX\x10\x02\x12\x13\n\x0f\x46ORCE100MODEHDX\x10\x03\x12\x12\n\x0e\x46ORCE1GMODEFDX\x10\x04\x12\x0f\n\x0b\x41UTONEGMODE\x10\x05\x12\x13\n\x0f\x46ORCE2G5MODEFDX\x10\x06\x12\x12\n\x0e\x46ORCE5GMODEFDX\x10\x07\x12\x13\n\x0f\x46ORCE10GMODEFDX\x10\x08\x12\x13\n\x0f\x46ORCE12GMODEFDX\x10\t*U\n\nBPDUStates\x12\x0c\n\x08\x42LOCKING\x10\x00\x12\r\n\tLISTENING\x10\x01\x12\x0c\n\x08LEARNING\x10\x02\x12\x0e\n\nFORWARDING\x10\x03\x12\x0c\n\x08\x44ISABLED\x10\x04P\x00')
+  serialized_pb=_b('\n\x13nms_guest_api.proto\x1a\x0f\x63ommon_nm.proto\"@\n\x0f\x43onfigPortState\x12\x11\n\tnamedPort\x18\x01 \x02(\t\x12\x1a\n\x05state\x18\x02 \x02(\x0e\x32\x0b.BPDUStates\"m\n\rBPDUPortState\x12\x11\n\tnamedPort\x18\x01 \x02(\t\x12\x1a\n\x05state\x18\x02 \x02(\x0e\x32\x0b.BPDUStates\x12\x0f\n\x07success\x18\x03 \x02(\x08\x12\x1c\n\x05\x65rror\x18\x04 \x01(\x0b\x32\r.ErrorMessage\"\"\n\x0bPortInfoReq\x12\x13\n\x0bportInfoKey\x18\x01 \x03(\t\"*\n\x0cPortInfoResp\x12\x1a\n\x06values\x18\x01 \x03(\x0b\x32\n.ValueResp\"\x1f\n\rConfigBPDUReq\x12\x0e\n\x06vlanid\x18\x01 \x02(\r\">\n\x0e\x43onfigBPDUResp\x12\x0e\n\x06status\x18\x01 \x02(\x08\x12\x1c\n\x05\x65rror\x18\x02 \x01(\x0b\x32\r.ErrorMessage\"5\n\x12\x43onfigPortStateReq\x12\x1f\n\x05state\x18\x01 \x03(\x0b\x32\x10.ConfigPortState\"4\n\x13\x43onfigPortStateResp\x12\x1d\n\x05state\x18\x01 \x03(\x0b\x32\x0e.BPDUPortState*\xd5\x01\n\tPortSpeed\x12\x12\n\x0e\x46ORCE10MODEFDX\x10\x00\x12\x12\n\x0e\x46ORCE10MODEHDX\x10\x01\x12\x13\n\x0f\x46ORCE100MODEFDX\x10\x02\x12\x13\n\x0f\x46ORCE100MODEHDX\x10\x03\x12\x12\n\x0e\x46ORCE1GMODEFDX\x10\x04\x12\x0f\n\x0b\x41UTONEGMODE\x10\x05\x12\x13\n\x0f\x46ORCE2G5MODEFDX\x10\x06\x12\x12\n\x0e\x46ORCE5GMODEFDX\x10\x07\x12\x13\n\x0f\x46ORCE10GMODEFDX\x10\x08\x12\x13\n\x0f\x46ORCE12GMODEFDX\x10\t*U\n\nBPDUStates\x12\x0c\n\x08\x42LOCKING\x10\x00\x12\r\n\tLISTENING\x10\x01\x12\x0c\n\x08LEARNING\x10\x02\x12\x0e\n\nFORWARDING\x10\x03\x12\x0c\n\x08\x44ISABLED\x10\x04P\x00')
   ,
-  dependencies=[common_nm_pb2.DESCRIPTOR, ])
+  dependencies=[common_nm_pb2.DESCRIPTOR,])
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 _PORTSPEED = _descriptor.EnumDescriptor(
@@ -131,76 +134,23 @@ DISABLED = 4
 
 
 
-_PORTINFOREQ = _descriptor.Descriptor(
-  name='PortInfoReq',
-  full_name='PortInfoReq',
+_CONFIGPORTSTATE = _descriptor.Descriptor(
+  name='ConfigPortState',
+  full_name='ConfigPortState',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='portInfoKey', full_name='PortInfoReq.portInfoKey', index=0,
-      number=1, type=9, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
+      name='namedPort', full_name='ConfigPortState.namedPort', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=40,
-  serialized_end=74,
-)
-
-
-_PORTINFORESP = _descriptor.Descriptor(
-  name='PortInfoResp',
-  full_name='PortInfoResp',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
     _descriptor.FieldDescriptor(
-      name='values', full_name='PortInfoResp.values', index=0,
-      number=1, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=76,
-  serialized_end=118,
-)
-
-
-_CONFIGBPDUREQ = _descriptor.Descriptor(
-  name='ConfigBPDUReq',
-  full_name='ConfigBPDUReq',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='vlanid', full_name='ConfigBPDUReq.vlanid', index=0,
-      number=1, type=13, cpp_type=3, label=2,
+      name='state', full_name='ConfigPortState.state', index=1,
+      number=2, type=14, cpp_type=8, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -216,45 +166,8 @@ _CONFIGBPDUREQ = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=120,
-  serialized_end=151,
-)
-
-
-_CONFIGBPDURESP = _descriptor.Descriptor(
-  name='ConfigBPDUResp',
-  full_name='ConfigBPDUResp',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='status', full_name='ConfigBPDUResp.status', index=0,
-      number=1, type=8, cpp_type=7, label=2,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='error', full_name='ConfigBPDUResp.error', index=1,
-      number=2, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=153,
-  serialized_end=215,
+  serialized_start=40,
+  serialized_end=104,
 )
 
 
@@ -304,28 +217,81 @@ _BPDUPORTSTATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=217,
-  serialized_end=326,
+  serialized_start=106,
+  serialized_end=215,
 )
 
 
-_CONFIGPORTSTATE = _descriptor.Descriptor(
-  name='ConfigPortState',
-  full_name='ConfigPortState',
+_PORTINFOREQ = _descriptor.Descriptor(
+  name='PortInfoReq',
+  full_name='PortInfoReq',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='namedPort', full_name='ConfigPortState.namedPort', index=0,
-      number=1, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      name='portInfoKey', full_name='PortInfoReq.portInfoKey', index=0,
+      number=1, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=217,
+  serialized_end=251,
+)
+
+
+_PORTINFORESP = _descriptor.Descriptor(
+  name='PortInfoResp',
+  full_name='PortInfoResp',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
     _descriptor.FieldDescriptor(
-      name='state', full_name='ConfigPortState.state', index=1,
-      number=2, type=14, cpp_type=8, label=2,
+      name='values', full_name='PortInfoResp.values', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=253,
+  serialized_end=295,
+)
+
+
+_CONFIGBPDUREQ = _descriptor.Descriptor(
+  name='ConfigBPDUReq',
+  full_name='ConfigBPDUReq',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='vlanid', full_name='ConfigBPDUReq.vlanid', index=0,
+      number=1, type=13, cpp_type=3, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -341,7 +307,44 @@ _CONFIGPORTSTATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=328,
+  serialized_start=297,
+  serialized_end=328,
+)
+
+
+_CONFIGBPDURESP = _descriptor.Descriptor(
+  name='ConfigBPDUResp',
+  full_name='ConfigBPDUResp',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='ConfigBPDUResp.status', index=0,
+      number=1, type=8, cpp_type=7, label=2,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='error', full_name='ConfigBPDUResp.error', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=330,
   serialized_end=392,
 )
 
@@ -405,23 +408,37 @@ _CONFIGPORTSTATERESP = _descriptor.Descriptor(
   serialized_end=501,
 )
 
-_PORTINFORESP.fields_by_name['values'].message_type = common_nm_pb2._VALUERESP
-_CONFIGBPDURESP.fields_by_name['error'].message_type = common_nm_pb2._ERRORMESSAGE
+_CONFIGPORTSTATE.fields_by_name['state'].enum_type = _BPDUSTATES
 _BPDUPORTSTATE.fields_by_name['state'].enum_type = _BPDUSTATES
 _BPDUPORTSTATE.fields_by_name['error'].message_type = common_nm_pb2._ERRORMESSAGE
-_CONFIGPORTSTATE.fields_by_name['state'].enum_type = _BPDUSTATES
+_PORTINFORESP.fields_by_name['values'].message_type = common_nm_pb2._VALUERESP
+_CONFIGBPDURESP.fields_by_name['error'].message_type = common_nm_pb2._ERRORMESSAGE
 _CONFIGPORTSTATEREQ.fields_by_name['state'].message_type = _CONFIGPORTSTATE
 _CONFIGPORTSTATERESP.fields_by_name['state'].message_type = _BPDUPORTSTATE
+DESCRIPTOR.message_types_by_name['ConfigPortState'] = _CONFIGPORTSTATE
+DESCRIPTOR.message_types_by_name['BPDUPortState'] = _BPDUPORTSTATE
 DESCRIPTOR.message_types_by_name['PortInfoReq'] = _PORTINFOREQ
 DESCRIPTOR.message_types_by_name['PortInfoResp'] = _PORTINFORESP
 DESCRIPTOR.message_types_by_name['ConfigBPDUReq'] = _CONFIGBPDUREQ
 DESCRIPTOR.message_types_by_name['ConfigBPDUResp'] = _CONFIGBPDURESP
-DESCRIPTOR.message_types_by_name['BPDUPortState'] = _BPDUPORTSTATE
-DESCRIPTOR.message_types_by_name['ConfigPortState'] = _CONFIGPORTSTATE
 DESCRIPTOR.message_types_by_name['ConfigPortStateReq'] = _CONFIGPORTSTATEREQ
 DESCRIPTOR.message_types_by_name['ConfigPortStateResp'] = _CONFIGPORTSTATERESP
 DESCRIPTOR.enum_types_by_name['PortSpeed'] = _PORTSPEED
 DESCRIPTOR.enum_types_by_name['BPDUStates'] = _BPDUSTATES
+
+ConfigPortState = _reflection.GeneratedProtocolMessageType('ConfigPortState', (_message.Message,), dict(
+  DESCRIPTOR = _CONFIGPORTSTATE,
+  __module__ = 'nms_guest_api_pb2'
+  # @@protoc_insertion_point(class_scope:ConfigPortState)
+  ))
+_sym_db.RegisterMessage(ConfigPortState)
+
+BPDUPortState = _reflection.GeneratedProtocolMessageType('BPDUPortState', (_message.Message,), dict(
+  DESCRIPTOR = _BPDUPORTSTATE,
+  __module__ = 'nms_guest_api_pb2'
+  # @@protoc_insertion_point(class_scope:BPDUPortState)
+  ))
+_sym_db.RegisterMessage(BPDUPortState)
 
 PortInfoReq = _reflection.GeneratedProtocolMessageType('PortInfoReq', (_message.Message,), dict(
   DESCRIPTOR = _PORTINFOREQ,
@@ -450,20 +467,6 @@ ConfigBPDUResp = _reflection.GeneratedProtocolMessageType('ConfigBPDUResp', (_me
   # @@protoc_insertion_point(class_scope:ConfigBPDUResp)
   ))
 _sym_db.RegisterMessage(ConfigBPDUResp)
-
-BPDUPortState = _reflection.GeneratedProtocolMessageType('BPDUPortState', (_message.Message,), dict(
-  DESCRIPTOR = _BPDUPORTSTATE,
-  __module__ = 'nms_guest_api_pb2'
-  # @@protoc_insertion_point(class_scope:BPDUPortState)
-  ))
-_sym_db.RegisterMessage(BPDUPortState)
-
-ConfigPortState = _reflection.GeneratedProtocolMessageType('ConfigPortState', (_message.Message,), dict(
-  DESCRIPTOR = _CONFIGPORTSTATE,
-  __module__ = 'nms_guest_api_pb2'
-  # @@protoc_insertion_point(class_scope:ConfigPortState)
-  ))
-_sym_db.RegisterMessage(ConfigPortState)
 
 ConfigPortStateReq = _reflection.GeneratedProtocolMessageType('ConfigPortStateReq', (_message.Message,), dict(
   DESCRIPTOR = _CONFIGPORTSTATEREQ,
