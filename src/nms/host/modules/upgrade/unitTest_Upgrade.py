@@ -19,6 +19,7 @@ class UpgradeMessages(ModuleMessages):
     def getMenuItems():
         return [("Upgrade I350 EEPROM",                 UpgradeMessages.upgradeI350EEPROM),
                 ("Upgrade I350 Flash",                  UpgradeMessages.upgradeI350Flash),
+                ("Update Config",                       UpgradeMessages.uppdateConfig),
                 ("Upgrade Switch",                      UpgradeMessages.upgradeSwitch)]
 
     @staticmethod
@@ -39,7 +40,14 @@ class UpgradeMessages(ModuleMessages):
     def upgradeSwitch():
         message = UpgradeReq()
         message.target = SWITCH
-        message.path = "/tmp/Switch/firmware"
+        message.path = "/tmp/Switch/firmware.dat"
+        return message
+
+    @staticmethod
+    def uppdateConfig():
+        message = UpgradeReq()
+        message.target = SWITCH
+        message.path = "/tmp/Switch/startup-config"
         return message
 
 ## Upgrade Unit Test for I350 EEPROM
@@ -91,6 +99,15 @@ class Test_Upgrade(unittest.TestCase):
         module = self.__class__.module
         log.info("**** Valid Test Case: Upgrade Switch ****")
         response = module.msgHandler(ThalesZMQMessage(UpgradeMessages.upgradeSwitch()))
+        self.assertTrue(response.body.success)
+        log.info("==== Test complete ====")
+
+    ## Valid Test Case: Update Switch config
+    def test_SwitchConfig(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("**** Valid Test Case: Update Switch Configuration ****")
+        response = module.msgHandler(ThalesZMQMessage(UpgradeMessages.uppdateConfig()))
         self.assertTrue(response.body.success)
         log.info("==== Test complete ====")
 
