@@ -4,6 +4,7 @@ from subprocess import Popen, check_output, CalledProcessError, PIPE
 from systemd.daemon import notify as sd_notify
 
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.i350.eepromTools import EepromTools
 from tklabs_utils.module.moduleshell import ModuleShell
 from tklabs_utils.tzmq.ThalesZMQServer import ThalesZMQServer
 from tklabs_utils.vtss.vtss import Vtss
@@ -31,6 +32,8 @@ class HNMS(ConfigurableObject):
         self.loadConfig(attributes=('serviceAddress','switchAddress','cpuEthernetDev','i350EthernetDev'))
         ## Module shell that will contain the modules
         self.moduleShell = ModuleShell(name="HNMS", moduleDir="nms.host.modules", messageDir="nms.host.pb2")
+        ## I350 EepromTools object lets us read I350 EEPROM
+        self.i350eeprom = EepromTools(self.moduleShell.log)
 
         # Log firmware version information
         self.moduleShell.log.info("version.BIOS="           + self.getBiosInfo())
@@ -134,13 +137,13 @@ class HNMS(ConfigurableObject):
         i350_eeprom = 'unknown'
 
         # Read version word from EEPROM
-        eePromValue = self._readWord(0x0a)
+        eePromValue = self.i350eeprom.readWord(0x0a)
         if eePromValue is not None:
             majorVersion = str((eePromValue & 0xf000) >> 12)
             minorVersion = str(eePromValue & 0xff)
 
             # OEM version number is in a different EEPROM word
-            eePromValue = self._readWord(0x0c)
+            eePromValue = self.i350eeprom.readWord(0x0c)
             if eePromValue is not None:
                 oem = str(eePromValue)
                 # If we reach this point, we have the major and the minor version, and the OEM
@@ -157,7 +160,7 @@ class HNMS(ConfigurableObject):
         i350_pxe = 'unknown'
 
         # Read PXE Firmware version word from EEPROM
-        eePromValue = self._readWord(0x64)
+        eePromValue = self.i350eeprom.readWord(0x64)
         if eePromValue is not None:
             majorVersion = str((eePromValue & 0xf000) >> 12)
             minorVersion = str((eePromValue & 0xf00) >> 8)
@@ -187,22 +190,6 @@ class HNMS(ConfigurableObject):
                     break
 
         return biosInfo
-
-    ## Private function - read word from I350 EEPROM
-    #
-    #  @param: offset
-    def _readWord(self, offset):
-        # Call ethtool to read the word at the specified offset
-        cmd = ['ethtool', '-e', self.i350EthernetDev + '0', 'offset', str(offset), 'length', '2', 'raw', 'on']
-        ethtool = Popen(cmd, stdout=PIPE)
-        data = ethtool.stdout.read(2)
-        rc = ethtool.wait()
-        if rc != 0:
-            return None
-        # Values are stored little-endian
-        val = (ord(data[1]) << 8) | ord(data[0])
-
-        return val
 
 
 ## Class to set up a listener for GPB messages and hand them off to the HNMS class

@@ -2,7 +2,7 @@ import os
 import subprocess
 
 from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
-from tklabs_utils.vpd.vpd import VPD
+from tklabs_utils.i350.vpd import VPD
 
 
 ## Discard the output
