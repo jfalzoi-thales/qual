@@ -41,6 +41,8 @@ class IFEHDDS(Module):
                                  "inventory.ife.manufacturing_date",
                                  "inventory.ife.manufacturer_name",
                                  "inventory.ife.manufacturer_cage"]
+        ## List of valid ife mac_address keys
+        self.ifeMacKeys = ["mac_address.ife_video_encoder", "mac_address.ife_microcontroller"]
         ## IFEInventory handler
         self.ifeInventory = IFEInventory(self.log)
         #  Add handler to available message handlers
@@ -56,6 +58,7 @@ class IFEHDDS(Module):
 
         if msg.body.requestType == HostDomainDeviceServiceRequest.GET:
             inventoryGetKeys = []
+            macGetKeys = []
             sensorGetKeys = []
 
             for value in msg.body.values:
@@ -63,7 +66,13 @@ class IFEHDDS(Module):
                     if value.key in self.ifeInventoryKeys:
                         inventoryGetKeys.append(value.key)
                     else:
-                        self.log.warning("Attempted to get unrecognized IFE inventory key: %s" % value.key)
+                        self.log.error("Attempted to get unrecognized IFE inventory key: %s" % value.key)
+                        self.addResp(response, value.key)
+                elif value.key.startswith("mac_address.ife"):
+                    if value.key in self.ifeMacKeys:
+                        macGetKeys.append(value.key)
+                    else:
+                        self.log.error("Attempted to get unrecognized IFE MAC key: %s" % value.key)
                         self.addResp(response, value.key)
                 else:
                     if value.key.endswith("*"):
@@ -85,6 +94,7 @@ class IFEHDDS(Module):
                             self.log.warning("Unknown sensor key: %s" % value.key)
 
             if inventoryGetKeys: self.inventoryGet(response, inventoryGetKeys)
+            if macGetKeys: self.macGet(response, macGetKeys)
             if sensorGetKeys: self.sensorGet(response, sensorGetKeys)
         elif msg.body.requestType == HostDomainDeviceServiceRequest.SET:
             inventorySetPairs = {}
@@ -128,6 +138,42 @@ class IFEHDDS(Module):
                 self.addResp(response, key, inventoryValues[key], True)
             elif key in self.ifeInventoryKeys:
                 self.addResp(response, key, "", True)
+
+    ## Handles GET requests for IFE MAC keys
+    #  @param   self
+    #  @param   response    A HostDomainDeviceServiceResponse object
+    #  @param   macKeys     A list of keys to return
+    def macGet(self, response, macKeys):
+        for key in macKeys:
+            mac = None
+
+            if key == "mac_address.ife_video_encoder":
+                if subprocess.call(["videoEncoder.sh", "status"]) == 0:
+                    try:
+                        out = subprocess.check_output(["arp", "-an"])
+                    except subprocess.CalledProcessError as err:
+                        self.log.error("Error running command: %s" % err.cmd)
+                    else:
+                        for line in out.split('\n'):
+                            if "192.168.0.65" in line:
+                                mac = line.split()[3]
+                else:
+                    self.log.error("Error running videoEncoder.sh status")
+            elif key == "mac_address.ife_microcontroller":
+                macPieces = []
+
+                try:
+                    for x in range(1, 6):
+                        macPieces += subprocess.check_output(["eeprom_fpga", "0x%i" % x])[-2:-1]
+                except subprocess.CalledProcessError as err:
+                    self.log.error("Error running command: %s" % err.cmd)
+                else:
+                    mac = ':'.join(macPieces)
+
+            if mac:
+                self.addResp(response, key, mac, True)
+            else:
+                self.addResp(response, key)
 
     ## Handles GET requests for IFE sensor keys
     #  @param   self
