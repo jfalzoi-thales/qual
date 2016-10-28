@@ -18,6 +18,7 @@ Requires: python-zmq
 Requires: protobuf-python
 Requires: tklabs_utils
 Requires: i350-tools
+Requires: ethtool
 %{?systemd_requires}
 BuildRequires: systemd
 
