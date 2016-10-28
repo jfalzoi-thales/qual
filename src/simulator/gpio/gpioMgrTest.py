@@ -1,7 +1,7 @@
+from common.pb2.GPIOManager_pb2 import RequestMessage, ResponseMessage
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.GPIOManager_pb2 import RequestMessage, ResponseMessage
 
 # @cond doxygen_unittest
 
