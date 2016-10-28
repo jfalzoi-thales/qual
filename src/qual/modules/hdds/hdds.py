@@ -10,6 +10,7 @@ from i350Inventory import I350Inventory
 from paramiko import SSHClient, AutoAddPolicy, SSHException
 from qual.pb2.HDDS_pb2 import HostDomainDeviceServiceRequest, HostDomainDeviceServiceResponse
 from semaInventory import SEMAInventory
+from tklabs_utils.i350.eepromTools import EepromTools
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -59,10 +60,14 @@ class HDDS(Module):
                          "software_part.i350_pxe",
                          "software_part.switch",
                          "software_part.ATP"]
+        ## Software part number for ATP
+        self.atpPartnum = "LV39-161008"
         ## I350 inventory handler
         self.i350Inventory = I350Inventory(self.log)
         ## SEMA inventory handler
         self.semaInventory = SEMAInventory(self.log)
+        ## I350 EepromTools object lets us read I350 EEPROM
+        self.i350eeprom = EepromTools(self.log)
         ## BIOS tool command
         self.biosTool = "/thales/host/appliances/mps-biostool"
         ## Flag to detect if running on MPSi
@@ -341,7 +346,7 @@ class HDDS(Module):
             elif target == "i350_pxe":
                 self.i350pxeSwpnGet(response, key)
             elif target == "switch":
-                self.switchSwpnGet(response, key)
+                self.vtssSwpnGet(response, key)
             elif target == "ATP":
                 self.atpSwpnGet(response, key)
 
@@ -378,28 +383,91 @@ class HDDS(Module):
     #  @param     response      HostDomainDeviceServiceResponse object
     #  @param     inventoryKeys List of keys to get
     def i350eepromSwpnGet(self, response, key):
-        pass
+        # Read version word from EEPROM
+        eePromValue = self.i350eeprom.readWord(0x0a)
+        if eePromValue is not None:
+            majorVersion = (eePromValue & 0xf000) >> 12
+            minorVersion = eePromValue & 0xff
+
+            # OEM version number is in a different EEPROM word
+            eePromValue = self.i350eeprom.readWord(0x0c)
+            if eePromValue is not None:
+                oem = eePromValue
+                # If we reach this point, we have the major and the minor version, and the OEM
+                # We can construct the complete version number
+                # I350 doesn't have its own part number, we use the ATP part number
+                self.addResp(response, key, "%s_%d.%d.%d" % (self.atpPartnum, majorVersion, minorVersion, oem), True)
+            else:
+                self.log.error('Unable to get I350 EEPROM OEM version.')
+                self.addResp(response, key)
+        else:
+            self.log.error('Unable to get I350 EEPROM version.')
+            self.addResp(response, key)
 
     ## Handles GET requests for I350 PXE Firmware software part number
     #  @param     self
     #  @param     response      HostDomainDeviceServiceResponse object
     #  @param     inventoryKeys List of keys to get
     def i350pxeSwpnGet(self, response, key):
-        pass
+        # Read PXE Firmware version word from EEPROM
+        eePromValue = self.i350eeprom.readWord(0x64)
+        if eePromValue is not None:
+            majorVersion = (eePromValue & 0xf000) >> 12
+            minorVersion = (eePromValue & 0xf00) >> 8
+            buildNumber  = eePromValue & 0xff
+            # If we reach this point, we have the major and the minor version, and the OEM
+            # We can construct the complete version number
+            # I350 doesn't have its own part number, we use the ATP part number
+            self.addResp(response, key, "%s_%d.%d.%d" % (self.atpPartnum, majorVersion, minorVersion, buildNumber), True)
+        else:
+            self.log.error('Unable to get I350 PXE version.')
+            self.addResp(response, key)
 
     ## Handles GET requests for switch software part number
     #  @param     self
     #  @param     response      HostDomainDeviceServiceResponse object
     #  @param     inventoryKeys List of keys to get
-    def switchSwpnGet(self, response, key):
-        pass
+    def vtssSwpnGet(self, response, key):
+        try:
+            # Open connection with the switch
+            vtss = Vtss(switchIP=self.switchAddress)
+            # Get the firmware version
+            jsonResp = vtss.callMethod(['firmware.status.switch.get'])
+            # If no error, look for something in the string that looks like a version number
+            if jsonResp['error'] is None:
+                partnum = None
+                version = None
+                for item in jsonResp['result'][0]['val']['Version'].split():
+                    if item[0].isdigit():
+                        version = item
+                        break
+                    else:
+                        partnum = item
+                if partnum and version:
+                    self.addResp(response, key, "%s_%s" % (partnum, version), True)
+                else:
+                    self.log.error('Unable to parse switch version information.')
+                    self.addResp(response, key)
+                return
+            else:
+                self.log.error('Error retrieving the information from the switch.')
+                self.addResp(response, key)
+        except Exception:
+            self.log.error('Unable to retrieve the information from the switch.')
+            self.addResp(response, key)
 
     ## Handles GET requests for ATP software part number
     #  @param     self
     #  @param     response      HostDomainDeviceServiceResponse object
     #  @param     inventoryKeys List of keys to get
     def atpSwpnGet(self, response, key):
-        pass
+        try:
+            version = check_output(["rpm", "-q", "--queryformat=%{VERSION}", "qual"])
+        except CalledProcessError:
+            self.log.warning("Unable to get ATP version number.")
+            self.addResp(response, key)
+        else:
+            self.addResp(response, key, "%s_%s" % (self.atpPartnum, version), True)
 
     ## Handles GET requests for HDDS
     #  @param     self
