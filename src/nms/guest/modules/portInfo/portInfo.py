@@ -243,7 +243,7 @@ class PortInfo(Module):
                     value = force + duplex
                 else:
                     errCode = 1002
-                    errDesc = "Link is down, unable to return speed."
+                    errDesc = "Link is down, unable to return speed"
             elif field == "Auto-negotiation" and self.ethCache["Auto-negotiation"] == "on":
                 value = "AUTONEGMODE"
             elif field == "Link detected":
@@ -363,31 +363,36 @@ class PortInfo(Module):
     #  @param   port      Port name for function calls
     #  @param   field     Field to retrieve from cache
     def getPortStatusInfo(self, response, key, port, field):
-        # first check if we have the requested value in cache
-        if field in self.statusCache.keys():
-            # we have it!!!
-            # Add the response
-            self.addResp(response, True, key, self.statusCache[field])
-            return
+        # If cache is empty, populate it
+        if not self.statusCache:
+            try:
+                # Response from the switch
+                jsonResp = self.vtss.callMethod(['port.status.get', port])
 
-        try:
-            # Remote Procedure Call
-            call = 'port.status.get'
-            # Response from the switch
-            jsonResp = self.vtss.callMethod([call, port])
-            if jsonResp["error"] == None:
-                # fill the cache with the received values from the switch
-                self.statusCache['Speed'] = jsonResp['result']['Speed'].upper()
-                self.statusCache['Link'] = 'LINK_UP' if jsonResp['result']['Link'] else 'LINK_DOWN'
-
-                # Add the response
-                self.addResp(response, True, key, self.statusCache[field])
-            else:
-                self.addResp(response, key=key, errCode=1005, errDesc='Unable to get "%s" port information from the switch.' % (field))
+                if jsonResp["error"] == None:
+                    # fill the cache with the received values from the switch
+                    self.statusCache['Speed'] = jsonResp['result']['Speed'].upper()
+                    self.statusCache['Link'] = 'LINK_UP' if jsonResp['result']['Link'] else 'LINK_DOWN'
+            except Exception:
+                self.log.error("Unable to connect to the switch")
                 self.statusCache = {}
-        except Exception:
-            self.addResp(response, key=key, errCode=1005, errDesc="Unable to connect to the switch")
-            self.statusCache = {}
+
+        value = None
+        errCode = 1005
+        errDesc = "Unable to retrieve info for port %s from switch" % port
+
+        if field in self.statusCache:
+            # If link is down, speed is invalid
+            if field != 'Speed' or self.statusCache['Link'] != "LINK_DOWN":
+                value = self.statusCache[field]
+            else:
+                errCode = 1002
+                errDesc = "Link is down, unable to return speed"
+
+        if value:
+            self.addResp(response, True, key, value)
+        else:
+            self.addResp(response, key=key, errCode=errCode, errDesc=errDesc)
 
     ## Handles key requests that are not applicable to this type of port
     #  @param   self
