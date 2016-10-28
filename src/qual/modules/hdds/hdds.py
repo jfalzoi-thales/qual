@@ -1,7 +1,7 @@
 import os
 import socket
 from ConfigParser import SafeConfigParser
-from subprocess import call, check_call, check_output, CalledProcessError
+from subprocess import call, check_output, CalledProcessError, Popen, PIPE
 from time import sleep
 
 from common.pb2.ErrorMessage_pb2 import ErrorMessage
@@ -39,6 +39,8 @@ class HDDS(Module):
         ## Address for communicating with QTA running on the IFE VM
         self.ifeVmQtaAddr = "tcp://localhost:50003"
         self.loadConfig(attributes=('cpuEthernetDev', 'i350EthernetDev', 'switchAddress', 'switchUser', 'switchPassword', 'ifeVmQtaAddr'))
+        ## Magic number for writing the CPU EEPROM
+        self.cpuMagicNum = "0x15B78086"
         ## Connection to QTA running on the IFE VM
         self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log, timeout=4000)
         ## SSH connection for programming switch MAC address
@@ -389,33 +391,18 @@ class HDDS(Module):
     #  @param     key       Key of MAC address to be set
     #  @param     mac       MAC address to be set
     def cpuMacSet(self, response, key, mac):
-        bank = "0"
-        success = True
+        byteMac = bytearray.fromhex(mac.replace(':', ''))
 
-        try:
-            getActive = check_output([self.biosTool, "get-active"])
-            bank = getActive[0]
-        except CalledProcessError:
-            self.log.warning("Unable to get active BIOS bank.")
+        self.log.info("Writing CPU MAC Address to EEPROM")
+        cmd = ['ethtool', '-E', self.cpuEthernetDev, 'magic', self.cpuMagicNum, 'offset', '0x00']
+        self.log.debug("Writing %d bytes to command: %s" % (len(byteMac), " ".join(cmd)))
+        ethtool = Popen(cmd, stdin=PIPE)
+        ethtool.stdin.write(byteMac)
+        ethtool.stdin.close()
+        rc = ethtool.wait()
+        self.log.debug("ethtool command returned: %d" % rc)
 
-        try:
-            if bank == "2":
-                bank = "0"
-                check_call([self.biosTool, "set-active", "0"])
-
-            check_call([self.biosTool, "set-mac", mac])
-            if check_output([self.biosTool, "get-mac"]).rstrip() != mac: success = False
-            check_call([self.biosTool, "set-active", str(1 - int(bank))])
-            check_call([self.biosTool, "set-mac", mac])
-            if check_output([self.biosTool, "get-mac"]).rstrip() != mac: success = False
-
-            # TODO: Confirm that get-mac reports mac addresses in the proper format
-            self.addResp(response, key, mac, success)
-        except CalledProcessError as err:
-            self.log.warning("Unable to run %s" % err.cmd)
-            self.addResp(response, key, mac)
-        finally:
-            call([self.biosTool, "set-active", bank])
+        self.addResp(response, key, mac, True) if rc == 0 else self.addResp(response, key, mac)
 
     ## Handles SET requests for I350 MAC key
     #  @param     self
