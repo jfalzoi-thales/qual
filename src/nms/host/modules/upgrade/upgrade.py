@@ -74,6 +74,7 @@ class Upgrade(Module):
     def upgradeI350EEPROM(self, response, path):
         if call(["eeupdate64e", "-nic=2", "-data", "%s" % path]) == 0:
             self.addResp(response, True)
+            self.log.info('I350EEPROM updated. File name: %s'%(os.path.basename(path)))
         else:
             self.addResp(response, errCode=1002, errDesc="Unable to program I350 EEPROM.")
 
@@ -84,6 +85,7 @@ class Upgrade(Module):
     def upgradeI350Flash(self, response, path):
         if call(["i350-flashtool", "%s" % path]) == 0:
             self.addResp(response, True)
+            self.log.info('i350Flash updated. File name: %s'%(os.path.basename(path)))
         else:
             self.addResp(response, errCode=1002, errDesc="Unable to program I350 flash.")
 
@@ -98,7 +100,7 @@ class Upgrade(Module):
             # Object to call switch functions
             vtss = Vtss(switchIP=self.switchIP)
             # Try to update the configuration
-            response = vtss.callMethod(['firmware.control.image-upload.set',
+            response = vtss.callMethod(['icfg.control.copy.set',
                                         '{"Copy":true,"SourceConfigFile":"tftp://192.168.1.122/%s","SourceConfigType":"configFile","DestinationConfigType":"startupConfig"}'%(os.path.basename(path))])
             # Check the response
             if response['error']:
@@ -132,6 +134,7 @@ class Upgrade(Module):
                     # "success"
                     if status == 'success':
                         self.addResp(response, success=True)
+                        self.log.info('Switch configuration updated. File name: %s'%(os.path.basename(path)))
                         return
                     # "inProgress"
                     elif status == 'inProgress':
@@ -285,6 +288,7 @@ class Upgrade(Module):
                 if copyStarted:
                     # When we can't connect to the switch, and the copy process started it's probably because it restarted as part of the upgrade process
                     self.addResp(response,success=True)
+                    self.log.info('Switch firmware upgraded. File name: %s'%(os.path.basename(path)))
                 else:
                     # When we can't connect to the switch, and the copy process didn't started, we got an error
                     self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Invalid URL.")
