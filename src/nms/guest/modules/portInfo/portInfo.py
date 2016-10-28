@@ -185,8 +185,7 @@ class PortInfo(Module):
     def getIpLinkData(self, response, key, port, field):
         value = None
 
-        if not self.ipLinkCache:
-            self.runIpLinkShow(port)
+        if not self.ipLinkCache: self.runIpLinkShow(port)
 
         if field in self.ipLinkCache:
             if field == "state":
@@ -315,46 +314,51 @@ class PortInfo(Module):
                 elif jsonResp['result']['Mode'] == 'hybrid':
                     for vlan_id in jsonResp['result']['HybridVlans']:
                         self.addResp(response, True, key, str(vlan_id))
-
             else:
                 self.addResp(response, key=key, errCode=1005, errDesc="Unable to get the VLanId from the switch")
         except Exception:
             self.addResp(response, key=key, errCode=1005, errDesc="Unable to connect to the switch")
 
-    ## Handles switch port config key requests
+    ## Retrieves vtss switch port info
+    #  @param   self
+    #  @param   port    Port name for function calls
+    #  @param   type    Info type to retrieve (config or status)
+    def getVtssInfo(self, port, type):
+        callType = 'port.' + type + '.get'
+
+        try:
+            # Response from the switch
+            jsonResp = self.vtss.callMethod([callType, port])
+        except Exception:
+            self.log.error("Unable to connect to the switch")
+        else:
+            if jsonResp["error"] == None:
+                # fill the cache with the received values from the switch
+                if type == 'config':
+                    self.configCache['Shutdown'] = 'True' if jsonResp['result']['Shutdown'] else 'False'
+                    self.configCache['Speed'] = jsonResp['result']['Speed'].upper()
+                    self.configCache['FC'] = 'True' if jsonResp['result']['FC'] == "on" else 'False'
+                    self.configCache['MTU'] = str(jsonResp['result']['MTU'])
+                elif type == 'status':
+                    self.statusCache['Speed'] = jsonResp['result']['Speed'].upper()
+                    self.statusCache['Link'] = 'LINK_UP' if jsonResp['result']['Link'] else 'LINK_DOWN'
+            else:
+                self.log.error("JSON request returned error: %s" % jsonResp["error"])
+
+    ## Handles switch port status key requests
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
     #  @param   port      Port name for function calls
     #  @param   field     Field to retrieve from cache
     def getPortConfigInfo(self, response, key, port, field):
-        # first check if we have the requested value in cache
-        if field in self.configCache.keys():
-            # we have it!!!
-            # Add the response
+        # If cache is empty, populate it
+        if not self.configCache: self.getVtssInfo(port, 'config')
+
+        if field in self.configCache:
             self.addResp(response, True, key, self.configCache[field])
-            return
-
-        try:
-            # Remote Procedure Call
-            call = 'port.config.get'
-            # Response from the switch
-            jsonResp = self.vtss.callMethod([call, port])
-            if jsonResp["error"] == None:
-                # fill the cache with the received values from the switch
-                self.configCache['Shutdown'] = 'True' if jsonResp['result']['Shutdown'] else 'False'
-                self.configCache['Speed'] = jsonResp['result']['Speed'].upper()
-                self.configCache['FC'] = 'True' if jsonResp['result']['FC'] == "on" else 'False'
-                self.configCache['MTU'] = str(jsonResp['result']['MTU'])
-
-                # Add the response
-                self.addResp(response, True, key, self.configCache[field])
-            else:
-                self.addResp(response, key=key, errCode=1005, errDesc='Unable to get "%s" port information from the switch' % (field))
-                self.configCache = {}
-        except Exception:
-            self.addResp(response, key=key, errCode=1005, errDesc="Unable to connect to the switch")
-            self.configCache = {}
+        else:
+            self.addResp(response, key=key, errCode=1005, errDesc="Unable to retrieve info for port %s from switch" % port)
 
     ## Handles switch port status key requests
     #  @param   self
@@ -364,35 +368,16 @@ class PortInfo(Module):
     #  @param   field     Field to retrieve from cache
     def getPortStatusInfo(self, response, key, port, field):
         # If cache is empty, populate it
-        if not self.statusCache:
-            try:
-                # Response from the switch
-                jsonResp = self.vtss.callMethod(['port.status.get', port])
-
-                if jsonResp["error"] == None:
-                    # fill the cache with the received values from the switch
-                    self.statusCache['Speed'] = jsonResp['result']['Speed'].upper()
-                    self.statusCache['Link'] = 'LINK_UP' if jsonResp['result']['Link'] else 'LINK_DOWN'
-            except Exception:
-                self.log.error("Unable to connect to the switch")
-                self.statusCache = {}
-
-        value = None
-        errCode = 1005
-        errDesc = "Unable to retrieve info for port %s from switch" % port
+        if not self.statusCache: self.getVtssInfo(port, 'status')
 
         if field in self.statusCache:
             # If link is down, speed is invalid
             if field != 'Speed' or self.statusCache['Link'] != "LINK_DOWN":
-                value = self.statusCache[field]
+                self.addResp(response, True, key, self.statusCache[field])
             else:
-                errCode = 1002
-                errDesc = "Link is down, unable to return speed"
-
-        if value:
-            self.addResp(response, True, key, value)
+                self.addResp(response, key=key, errCode=1002,errDesc="Link is down, unable to return speed")
         else:
-            self.addResp(response, key=key, errCode=errCode, errDesc=errDesc)
+            self.addResp(response, key=key, errCode=1005, errDesc="Unable to retrieve info for port %s from switch" % port)
 
     ## Handles key requests that are not applicable to this type of port
     #  @param   self
