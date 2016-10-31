@@ -5,7 +5,7 @@
 
 Summary: Network Management Appliance
 Name: nms
-Version: 1.0.3
+Version: 1.0.4
 Release: 1
 Group: System Environment/Libraries
 URL: https://repo-tav.tklabs.com:8102/
@@ -77,6 +77,17 @@ sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
 %exclude %{appdir}/scripts
 
 %changelog
+* Mon Oct 31 2016 Jenkins <jenkins@tklabs.com> 1.0.4-1
+- QUAL-294 HealthInfoReq module added into host NMS (alberto.treto@tklabs.com)
+- QUAL-458 : Updated portInfo to handle 'Link Down' on switch ports
+  (chris.wallace@tklabs.com)
+- QUAL-412: Save and restore VPD and enable PXE boot when upgrading EEPROM
+  (jim.burmeister@tklabs.com)
+- QUAL-294 Fixed RPC call and added log info in successful cases
+  (alberto.treto@tklabs.com)
+- QUAL-294 Implemented upgrade request for switch configuration
+  (alberto.treto@tklabs.com)
+
 * Thu Oct 27 2016 Jenkins <jenkins@tklabs.com> 1.0.3-1
 - QUAL-455 : Updated addResp in getInVlans (chris.wallace@tklabs.com)
 - QUAL-455 : Removed quotes from returned messages (chris.wallace@tklabs.com)
