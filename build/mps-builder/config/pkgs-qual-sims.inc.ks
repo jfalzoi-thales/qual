@@ -45,7 +45,7 @@ kmod-igb
 mps-config
 #mps-config-qual
 mps-config-qual-tk
-#mps-keys
+mps-keys
 #mps-tools
 mpsinst-tools
 libmps-utils
