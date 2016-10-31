@@ -10,6 +10,7 @@ from i350Inventory import I350Inventory
 from paramiko import SSHClient, AutoAddPolicy, SSHException
 from qual.pb2.HDDS_pb2 import HostDomainDeviceServiceRequest, HostDomainDeviceServiceResponse
 from semaInventory import SEMAInventory
+from tklabs_utils.i350.eepromTools import EepromTools
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -53,10 +54,20 @@ class HDDS(Module):
                         "mac_address.i350_2",
                         "mac_address.i350_3",
                         "mac_address.i350_4"]
+        ## Software part number types for handling wild cards
+        self.swpnKeys = ["software_part.BIOS",
+                         "software_part.i350_eeprom",
+                         "software_part.i350_pxe",
+                         "software_part.switch",
+                         "software_part.ATP"]
+        ## Software part number for ATP
+        self.atpPartnum = "LV39-161008"
         ## I350 inventory handler
         self.i350Inventory = I350Inventory(self.log)
         ## SEMA inventory handler
         self.semaInventory = SEMAInventory(self.log)
+        ## I350 EepromTools object lets us read I350 EEPROM
+        self.i350eeprom = EepromTools(self.log)
         ## BIOS tool command
         self.biosTool = "/thales/host/appliances/mps-biostool"
         ## Flag to detect if running on MPSi
@@ -88,12 +99,13 @@ class HDDS(Module):
         #  Split up the requests by key type and handle them
         if msg.body.requestType == HostDomainDeviceServiceRequest.GET:
             macGetKeys = []
+            swpnGetKeys = []
             inventoryGetKeys = []
             ifeGetKeys = []
             hddsGetKeys = []
 
             for value in msg.body.values:
-                if value.key.startswith("mac_address"):
+                if value.key.startswith("mac_address."):
                     if value.key[-1] == "*":
                         macGetKeys.extend(self.macKeys)
                     elif value.key in self.macKeys:
@@ -101,13 +113,21 @@ class HDDS(Module):
                     else:
                         self.log.warning("Attempted to get invalid mac address key: %s" % value.key)
                         self.addResp(response, value.key)
-                elif value.key.startswith("inventory"):
+                elif value.key.startswith("software_part."):
+                    if value.key[-1] == "*":
+                        swpnGetKeys.extend(self.swpnKeys)
+                    elif value.key in self.swpnKeys:
+                        swpnGetKeys.append(value.key)
+                    else:
+                        self.log.warning("Attempted to get invalid software key: %s" % value.key)
+                        self.addResp(response, value.key)
+                elif value.key.startswith("inventory."):
                     if value.key[-1] == "*":
                         keyParts = value.key.split('.')
 
                         if len(keyParts) == 2:
                             for key in self.inventoryKeys:
-                                if self.ife and key.startswith("inventory.ife"):
+                                if self.ife and key.startswith("inventory.ife."):
                                     ifeGetKeys.append(key)
                                 else:
                                     inventoryGetKeys.append(key)
@@ -122,7 +142,7 @@ class HDDS(Module):
                             self.log.warning("Attempted to get invalid wildcard key: %s" % value.key)
                             self.addResp(response, value.key)
                     elif value.key in self.inventoryKeys or self.inventoryKeys == []:
-                        if self.ife and value.key.startswith("inventory.ife"):
+                        if self.ife and value.key.startswith("inventory.ife."):
                             ifeGetKeys.append(value.key)
                         else:
                             inventoryGetKeys.append(value.key)
@@ -135,6 +155,7 @@ class HDDS(Module):
                     hddsGetKeys.append(value.key)
 
             if macGetKeys:          self.macGet(response, macGetKeys)
+            if swpnGetKeys:         self.swpnGet(response, swpnGetKeys)
             if inventoryGetKeys:    self.inventoryGet(response, inventoryGetKeys)
             if ifeGetKeys:          self.ifeGet(response, ifeGetKeys)
             if hddsGetKeys:         self.hddsGet(response, hddsGetKeys)
@@ -145,15 +166,15 @@ class HDDS(Module):
             hddsSetPairs = {}
 
             for value in msg.body.values:
-                if value.key.startswith("mac_address"):
+                if value.key.startswith("mac_address."):
                     if value.key in self.macKeys:
-                        hex = value.value.replace(':','')
+                        hexchars = value.value.replace(':','')
 
                         try:
-                            if int(hex, 16) == 0: hex = ""
-                        except ValueError: hex = ""
+                            if int(hexchars, 16) == 0: hexchars = ""
+                        except ValueError: hexchars = ""
 
-                        if len(hex) == 12:
+                        if len(hexchars) == 12:
                             macSetPairs[value.key] = value.value
                         else:
                             self.log.warning("Invalid MAC Address: %s" % value.value)
@@ -161,17 +182,17 @@ class HDDS(Module):
                     else:
                         self.log.warning("Attempted to set invalid mac address key: %s" % value.key)
                         self.addResp(response, value.key, value.value)
-                elif value.key.startswith("inventory"):
+                elif value.key.startswith("inventory."):
                     if value.key in self.inventoryKeys or self.inventoryKeys == []:
-                        if self.ife and value.key.startswith("inventory.ife"):
+                        if self.ife and value.key.startswith("inventory.ife."):
                             ifeSetPairs[value.key] = value.value
                         else:
                             inventorySetPairs[value.key] = value.value
                     else:
                         self.log.warning("Attempted to set invalid inventory key: %s" % value.key)
                         self.addResp(response, value.key, value.value)
-                elif value.key.startswith("ife"):
-                    self.log.warning("Attempted to set ife voltage or temperature.  Nothing to do.")
+                elif value.key.startswith("ife.") or value.key.startswith("software_part."):
+                    self.log.warning("Attempted to set read-only key %s", value.key)
                     self.addResp(response, value.key, value.value)
                 else:
                     hddsSetPairs[value.key] = value.value
@@ -310,6 +331,144 @@ class HDDS(Module):
                 self.log.warning("Attempted to get unrecognized inventory key: %s" % key)
                 self.addResp(response, key)
 
+    ## Handles GET requests for software_part keys
+    #  @param   self
+    #  @param   response    A HostDomainDeviceServiceResponse object
+    #  @param   macKeys     A list of keys used for requesting MAC addresses
+    def swpnGet(self, response, macKeys):
+        for key in macKeys:
+            target = key.split('.')[-1]
+
+            if target == "BIOS":
+                self.biosSwpnGet(response, key)
+            elif target == "i350_eeprom":
+                self.i350eepromSwpnGet(response, key)
+            elif target == "i350_pxe":
+                self.i350pxeSwpnGet(response, key)
+            elif target == "switch":
+                self.vtssSwpnGet(response, key)
+            elif target == "ATP":
+                self.atpSwpnGet(response, key)
+
+
+    ## Handles GET requests for BIOS software part number
+    #  @param     self
+    #  @param     response      HostDomainDeviceServiceResponse object
+    #  @param     inventoryKeys List of keys to get
+    def biosSwpnGet(self, response, key):
+        try:
+            lines = check_output(['amidewrap' ,'/SS', '/SV']).splitlines()
+        except (CalledProcessError, OSError):
+            self.log.error('Unable to retrieve BIOS information.')
+            self.addResp(response, key)
+        else:
+            partnum = None
+            version = None
+            for line in lines:
+                if 'System Serial number' in line:
+                    line = line.split(" ")
+                    partnum = line[-1].strip('"')
+                elif 'System version' in line:
+                    line = line.split(" ")
+                    version = line[-1].strip('"')
+
+            if partnum and version:
+                self.addResp(response, key, partnum + '_' + version, True)
+            else:
+                self.log.error('Unable to parse BIOS information.')
+                self.addResp(response, key)
+
+    ## Handles GET requests for I350 EEPROM software part number
+    #  @param     self
+    #  @param     response      HostDomainDeviceServiceResponse object
+    #  @param     inventoryKeys List of keys to get
+    def i350eepromSwpnGet(self, response, key):
+        # Read version word from EEPROM
+        eePromValue = self.i350eeprom.readWord(0x0a)
+        if eePromValue is not None:
+            majorVersion = (eePromValue & 0xf000) >> 12
+            minorVersion = eePromValue & 0xff
+
+            # OEM version number is in a different EEPROM word
+            eePromValue = self.i350eeprom.readWord(0x0c)
+            if eePromValue is not None:
+                oem = eePromValue
+                # If we reach this point, we have the major and the minor version, and the OEM
+                # We can construct the complete version number
+                # I350 doesn't have its own part number, we use the ATP part number
+                self.addResp(response, key, "%s_%d.%d.%d" % (self.atpPartnum, majorVersion, minorVersion, oem), True)
+            else:
+                self.log.error('Unable to get I350 EEPROM OEM version.')
+                self.addResp(response, key)
+        else:
+            self.log.error('Unable to get I350 EEPROM version.')
+            self.addResp(response, key)
+
+    ## Handles GET requests for I350 PXE Firmware software part number
+    #  @param     self
+    #  @param     response      HostDomainDeviceServiceResponse object
+    #  @param     inventoryKeys List of keys to get
+    def i350pxeSwpnGet(self, response, key):
+        # Read PXE Firmware version word from EEPROM
+        eePromValue = self.i350eeprom.readWord(0x64)
+        if eePromValue is not None:
+            majorVersion = (eePromValue & 0xf000) >> 12
+            minorVersion = (eePromValue & 0xf00) >> 8
+            buildNumber  = eePromValue & 0xff
+            # If we reach this point, we have the major and the minor version, and the OEM
+            # We can construct the complete version number
+            # I350 doesn't have its own part number, we use the ATP part number
+            self.addResp(response, key, "%s_%d.%d.%d" % (self.atpPartnum, majorVersion, minorVersion, buildNumber), True)
+        else:
+            self.log.error('Unable to get I350 PXE version.')
+            self.addResp(response, key)
+
+    ## Handles GET requests for switch software part number
+    #  @param     self
+    #  @param     response      HostDomainDeviceServiceResponse object
+    #  @param     inventoryKeys List of keys to get
+    def vtssSwpnGet(self, response, key):
+        try:
+            # Open connection with the switch
+            vtss = Vtss(switchIP=self.switchAddress)
+            # Get the firmware version
+            jsonResp = vtss.callMethod(['firmware.status.switch.get'])
+            # If no error, look for something in the string that looks like a version number
+            if jsonResp['error'] is None:
+                partnum = None
+                version = None
+                for item in jsonResp['result'][0]['val']['Version'].split():
+                    if item[0].isdigit():
+                        version = item
+                        break
+                    else:
+                        partnum = item
+                if partnum and version:
+                    self.addResp(response, key, "%s_%s" % (partnum, version), True)
+                else:
+                    self.log.error('Unable to parse switch version information.')
+                    self.addResp(response, key)
+                return
+            else:
+                self.log.error('Error retrieving the information from the switch.')
+                self.addResp(response, key)
+        except Exception:
+            self.log.error('Unable to retrieve the information from the switch.')
+            self.addResp(response, key)
+
+    ## Handles GET requests for ATP software part number
+    #  @param     self
+    #  @param     response      HostDomainDeviceServiceResponse object
+    #  @param     inventoryKeys List of keys to get
+    def atpSwpnGet(self, response, key):
+        try:
+            version = check_output(["rpm", "-q", "--queryformat=%{VERSION}", "qual"])
+        except CalledProcessError:
+            self.log.warning("Unable to get ATP version number.")
+            self.addResp(response, key)
+        else:
+            self.addResp(response, key, "%s_%s" % (self.atpPartnum, version), True)
+
     ## Handles GET requests for HDDS
     #  @param     self
     #  @param     response  HostDomainDeviceServiceResponse object
@@ -339,7 +498,9 @@ class HDDS(Module):
             else:
                 self.log.warning("Unexpected response from HDDS: %s" % HDDSResp.name)
 
-            self.addResp(response)
+            for key in hddsKeys:
+                self.addResp(response, key)
+
 
     ## Handles SET requests for MAC keys
     #  @param     self
@@ -427,9 +588,6 @@ class HDDS(Module):
             # Actually program the MAC address
             if call(["eeupdate64e", "-nic=%d" % nicidx, "-a", macfile]) == 0:
                 success = True
-
-            # TODO: using eeupdate63e to read back doesn't work; do we want to verify a different way?
-
             if not success:
                 self.log.error("Error programming %s", key)
             os.remove(macfile)
@@ -520,9 +678,10 @@ class HDDS(Module):
                 err = ErrorMessage()
                 err.ParseFromString(HDDSResp.serializedBody)
                 self.log.warning("Got error message from HDDS: %s" % err.error_description)
-            elif response.name == "":
+            elif HDDSResp.name == "":
                 self.log.warning("Set failed: No response from HDDS")
             else:
                 self.log.warning("Unexpected response from HDDS: %s" % HDDSResp.name)
 
-            self.addResp(response)
+            for key, value in hddsPairs.items():
+                self.addResp(response, key, value)
