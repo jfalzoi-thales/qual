@@ -160,7 +160,7 @@ class IFEHDDS(Module):
                 else:
                     self.log.error("Error running videoEncoder.sh status")
             elif key == "mac_address.ife_microcontroller":
-                if subprocess.call(["demo_binaryio", "getDiscreteInput", "LLS_IN_GP_KL_01"]):
+                if subprocess.call(["demo_binaryio", "getDiscreteInput", "LLS_IN_GP_KL_01"]) == 0:
                     try:
                         out = subprocess.check_output(["arp", "-an"])
                     except subprocess.CalledProcessError as err:
@@ -171,7 +171,7 @@ class IFEHDDS(Module):
                                 mac = line.split()[3]
                 else:
                     self.log.error("Error running demo_binaryio getDiscreteInput LLS_IN_GP_KL_01")
-                    
+
             if mac:
                 self.addResp(response, key, mac, True)
             else:
