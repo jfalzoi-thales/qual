@@ -1,4 +1,5 @@
 import collections
+import os
 from subprocess import check_output, CalledProcessError
 
 from nms.common.portresolver.portResolver import resolvePort, portNames, updatePorts
@@ -23,14 +24,8 @@ class PortInfo(Module):
                           "flow_control":     self.keyInfo(self.runEthtoola,   0,                  self.getPortConfigInfo, "FC"),
                           "MTU":              self.keyInfo(self.getIpLinkData, "mtu",              self.getPortConfigInfo, "MTU"),
                           "link":             self.keyInfo(self.getEthData,    "Link detected",    self.getPortStatusInfo, "Link"),
-                          "vlan_id":          self.keyInfo(self.tempFunc,      0,                  self.getVlan          , "TrunkVlans"),
-                          "BPDU_state":       self.keyInfo(self.unsupported,   0,                  self.tempFunc         ,  0)}
-        ## Dict containing error codes and descriptions defined by ICD
-        self.errors = {1001: "Port is not supported in this setup",
-                       1002: "Port is not active",
-                       1003: "Port name does not exist in this setup",
-                       1004: "Invalid Message Received",
-                       1005: "Error Processing Message"}
+                          "vlan_id":          self.keyInfo(self.getInVlans,    0,                  self.getPortVlans     , "TrunkVlans"),
+                          "BPDU_state":       self.keyInfo(self.notApplicable, 0,                  self.tempFunc         ,  0)}
         ## Dict for storing relevant output from Ethtool calls
         self.ethCache = {}
         ## Dict for storing relevant output from IpLinkShow calls
@@ -41,8 +36,10 @@ class PortInfo(Module):
         self.statusCache = {}
         ## IP address of the device
         self.switchAddress = "10.10.41.159"
+        ## Device name of the I350
+        self.i350EthernetDev="ens1f"
         # Load config file
-        self.loadConfig(attributes=('switchAddress',))
+        self.loadConfig(attributes=('switchAddress','i350EthernetDev'))
         ## Object to call the RPC
         self.vtss = Vtss(switchIP=self.switchAddress)
         #  Adds handler to available message handlers
@@ -85,11 +82,9 @@ class PortInfo(Module):
                         else:
                             self.callFunc(response, key, keyParts[-1], port[0], False)
                     else:
-                        self.log.warning("Unknown key: %s" % key)
-                        self.addResp(response, key=key, errCode=1003)
+                        self.addResp(response, key=key, errCode=1003, errDesc="Unknown key: %s" % key)
                 else:
-                    self.log.warning("Invalid key: %s" % key)
-                    self.addResp(response, key=key, errCode=1004)
+                    self.addResp(response, key=key, errCode=1004, errDesc="Invalid key: %s" % key)
         else:
             self.wild(response, ["*", "*", "*"])
 
@@ -102,15 +97,16 @@ class PortInfo(Module):
     #  @param   key         Key to be added to response, default empty
     #  @param   value       Value of key to be added to response, default empty
     #  @param   errCode     Error code for optional ErrorMessage field
-    def addResp(self, response, success=False, key="", value="",  errCode=None):
+    def addResp(self, response, success=False, key="", value="",  errCode=None, errDesc=""):
         respVal = response.values.add()
         respVal.success = success
         respVal.keyValue.key = key
         respVal.keyValue.value = value
 
         if errCode:
+            self.log.error(errDesc)
             respVal.error.error_code = errCode
-            respVal.error.error_description = self.errors[errCode] if errCode in self.errors else "Unrecognized Error Code"
+            respVal.error.error_description = errDesc
 
     ## Handles wildcards (*) in requested keys
     #  @param   self
@@ -180,7 +176,7 @@ class PortInfo(Module):
             self.log.error("Problem running command: %s" % err.cmd)
             self.ipLinkCache = {}
 
-    ## Handles external key requests with data stored in ipLinkCache
+    ## Handles inside key requests with data stored in ipLinkCache
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
@@ -189,8 +185,7 @@ class PortInfo(Module):
     def getIpLinkData(self, response, key, port, field):
         value = None
 
-        if not self.ipLinkCache:
-            self.runIpLinkShow(port)
+        if not self.ipLinkCache: self.runIpLinkShow(port)
 
         if field in self.ipLinkCache:
             if field == "state":
@@ -201,8 +196,7 @@ class PortInfo(Module):
         if value:
             self.addResp(response, True, key, value)
         else:
-            self.log.error("Unable to obtain value from ipLink cache.")
-            self.addResp(response, key=key, errCode=1005)
+            self.addResp(response, key=key, errCode=1005, errDesc="Unable to obtain value from ip link show")
 
     ## Populates ethCache with values
     #  @param   self
@@ -219,7 +213,7 @@ class PortInfo(Module):
             self.log.error("Problem running command: %s" % err.cmd)
             self.ethCache = {}
 
-    ## Handles external key requests with data stored in ethCache
+    ## Handles inside key requests with data stored in ethCache
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
@@ -234,15 +228,21 @@ class PortInfo(Module):
                      "10000" : "FORCE10GMODE",
                      "12000" : "FORCE12GMODE"}
         value = None
+        errCode = 1005
+        errDesc = "Unable to obtain value from ethtool"
 
-        if not self.ethCache:
-            self.runEthtool(port)
+        if not self.ethCache: self.runEthtool(port)
 
         if field in self.ethCache:
             if field == "Speed" or [field == "Auto-negotiation" and self.ethCache[field] != "on"]:
-                speed = portSpeed[self.ethCache["Speed"].rstrip('Mb/s')]
-                duplex = "FDX" if self.ethCache["Duplex"] == "Full" else "HDX"
-                value = speed + duplex
+                if self.ethCache["Link detected"] == "yes":
+                    speed = self.ethCache["Speed"].rstrip('Mb/s')
+                    force = portSpeed[speed] if speed in portSpeed else ""
+                    duplex = "FDX" if self.ethCache["Duplex"] == "Full" else "HDX"
+                    value = force + duplex
+                else:
+                    errCode = 1002
+                    errDesc = "Link is down, unable to return speed"
             elif field == "Auto-negotiation" and self.ethCache["Auto-negotiation"] == "on":
                 value = "AUTONEGMODE"
             elif field == "Link detected":
@@ -251,10 +251,9 @@ class PortInfo(Module):
         if value:
             self.addResp(response, True, key, value)
         else:
-            self.log.error("Unable to obtain value from ethtool cache.")
-            self.addResp(response, key=key, errCode=1005)
+            self.addResp(response, key=key, errCode=errCode, errDesc=errDesc)
 
-    ## Handles external flow_control
+    ## Handles inside flow_control key requests
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
@@ -265,16 +264,40 @@ class PortInfo(Module):
             out = check_output(["ethtool", "-a", port])
             self.addResp(response, True, key, out.split('\n')[field])
         except CalledProcessError as err:
-            self.log.error("Problem running command: %s" % err.cmd)
-            self.addResp(response, key=key, errCode=1005)
+            self.addResp(response, key=key, errCode=1005, errDesc="Problem running command: %s" % err.cmd)
 
-    ## Handles external vlan key requests
+    ## Handles inside VLAN key requests
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
     #  @param   port      Port name for function calls
     #  @param   field     Field to retrieve from cache
-    def getVlan(self, response, key, port, field):
+    def getInVlans(self, response, key, port, field):
+        # Only applicable to I350 ports
+        if not port.startswith(self.i350EthernetDev):
+            self.notApplicable(response, key, port, field)
+            return
+
+        # VLAN info comes from /proc entries managed by igb (I350) driver
+        pf = int(port[-1]) + 1
+        procPath = "/proc/driver/igb/vlans/pf_%d" % pf
+        if not os.path.exists(procPath):
+            self.addResp(response, key=key, errCode=1005, errDesc="Cannot get VLAN info for I350 PF%d" % pf)
+        else:
+            with open(procPath, 'r') as procFile:
+                contents = procFile.read(256)
+            for line in contents.splitlines():
+                fields = line.split()
+                if len(fields) > 1:
+                    self.addResp(response, True, key, fields[1])
+
+    ## Handles switch port VLAN key requests
+    #  @param   self
+    #  @param   response  PortInfoResp object
+    #  @param   key       Requested key
+    #  @param   port      Port name for function calls
+    #  @param   field     Field to retrieve from cache
+    def getPortVlans(self, response, key, port, field):
         try:
             # Response from the switch
             jsonResp = self.vtss.callMethod(['vlan.config.interface.get',port])
@@ -291,92 +314,77 @@ class PortInfo(Module):
                 elif jsonResp['result']['Mode'] == 'hybrid':
                     for vlan_id in jsonResp['result']['HybridVlans']:
                         self.addResp(response, True, key, str(vlan_id))
-
             else:
-                self.log.error("Unable to get the VLanId from the switch")
-                self.addResp(response, key=key, errCode=1005)
+                self.addResp(response, key=key, errCode=1005, errDesc="Unable to get the VLanId from the switch")
+        except Exception:
+            self.addResp(response, key=key, errCode=1005, errDesc="Unable to connect to the switch")
+
+    ## Retrieves vtss switch port info
+    #  @param   self
+    #  @param   port    Port name for function calls
+    #  @param   type    Info type to retrieve (config or status)
+    def getVtssInfo(self, port, type):
+        callType = 'port.' + type + '.get'
+
+        try:
+            # Response from the switch
+            jsonResp = self.vtss.callMethod([callType, port])
         except Exception:
             self.log.error("Unable to connect to the switch")
-            self.addResp(response, key=key, errCode=1005)
+        else:
+            if jsonResp["error"] == None:
+                # fill the cache with the received values from the switch
+                if type == 'config':
+                    self.configCache['Shutdown'] = 'True' if jsonResp['result']['Shutdown'] else 'False'
+                    self.configCache['Speed'] = jsonResp['result']['Speed'].upper()
+                    self.configCache['FC'] = 'True' if jsonResp['result']['FC'] == "on" else 'False'
+                    self.configCache['MTU'] = str(jsonResp['result']['MTU'])
+                elif type == 'status':
+                    self.statusCache['Speed'] = jsonResp['result']['Speed'].upper()
+                    self.statusCache['Link'] = 'LINK_UP' if jsonResp['result']['Link'] else 'LINK_DOWN'
+            else:
+                self.log.error("JSON request returned error: %s" % jsonResp["error"])
 
-    ## Handles external port key requests
+    ## Handles switch port status key requests
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
     #  @param   port      Port name for function calls
     #  @param   field     Field to retrieve from cache
     def getPortConfigInfo(self, response, key, port, field):
-        # first check if we have the requested value in cache
-        if field in self.configCache.keys():
-            # we have it!!!
-            # Add the response
+        # If cache is empty, populate it
+        if not self.configCache: self.getVtssInfo(port, 'config')
+
+        if field in self.configCache:
             self.addResp(response, True, key, self.configCache[field])
-            return
+        else:
+            self.addResp(response, key=key, errCode=1005, errDesc="Unable to retrieve info for port %s from switch" % port)
 
-        try:
-            # Remote Procedure Call
-            call = 'port.config.get'
-            # Response from the switch
-            jsonResp = self.vtss.callMethod([call, port])
-            if jsonResp["error"] == None:
-                # fill the cache with the received values from the switch
-                self.configCache['Shutdown'] = 'True' if jsonResp['result']['Shutdown'] else 'False'
-                self.configCache['Speed'] = jsonResp['result']['Speed'].upper()
-                self.configCache['FC'] = 'True' if jsonResp['result']['FC'] == "on" else 'False'
-                self.configCache['MTU'] = str(jsonResp['result']['MTU'])
-
-                # Add the response
-                self.addResp(response, True, key, self.configCache[field])
-            else:
-                self.log.error('Unable to get "%s" port information from the switch.' % (field))
-                self.addResp(response, key=key, errCode=1005)
-                self.configCache = {}
-        except Exception:
-            self.log.error("Unable to connect to the switch")
-            self.addResp(response, key=key, errCode=1005)
-            self.configCache = {}
-
-    ## Handles external port key requests
+    ## Handles switch port status key requests
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
     #  @param   port      Port name for function calls
     #  @param   field     Field to retrieve from cache
     def getPortStatusInfo(self, response, key, port, field):
-        # first check if we have the requested value in cache
-        if field in self.statusCache.keys():
-            # we have it!!!
-            # Add the response
-            self.addResp(response, True, key, self.statusCache[field])
-            return
+        # If cache is empty, populate it
+        if not self.statusCache: self.getVtssInfo(port, 'status')
 
-        try:
-            # Remote Procedure Call
-            call = 'port.status.get'
-            # Response from the switch
-            jsonResp = self.vtss.callMethod([call, port])
-            if jsonResp["error"] == None:
-                # fill the cache with the received values from the switch
-                self.statusCache['Speed'] = jsonResp['result']['Speed'].upper()
-                self.statusCache['Link'] = 'LINK_UP' if jsonResp['result']['Link'] else 'LINK_DOWN'
-
-                # Add the response
+        if field in self.statusCache:
+            # If link is down, speed is invalid
+            if field != 'Speed' or self.statusCache['Link'] != "LINK_DOWN":
                 self.addResp(response, True, key, self.statusCache[field])
             else:
-                self.log.error('Unable to get "%s" port information from the switch.' % (field))
-                self.addResp(response, key=key, errCode=1005)
-                self.statusCache = {}
-        except Exception:
-            self.log.error("Unable to connect to the switch")
-            self.addResp(response, key=key, errCode=1005)
-            self.statusCache = {}
+                self.addResp(response, key=key, errCode=1002,errDesc="Link is down, unable to return speed")
+        else:
+            self.addResp(response, key=key, errCode=1005, errDesc="Unable to retrieve info for port %s from switch" % port)
 
-    ## Handles unsupported key requests
+    ## Handles key requests that are not applicable to this type of port
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   key       Requested key
     #  @param   port      Port name for function calls
     #  @param   field     Field to retrieve from cache
-    def unsupported(self, response, key, port, field):
-        self.log.warning("Unsupported key: %s" % key)
-        self.addResp(response, key=key, errCode=1001)
+    def notApplicable(self, response, key, port, field):
+        # Returning an empty string as the value, because it's not really an error
+        self.addResp(response, True, key, "")

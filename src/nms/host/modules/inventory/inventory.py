@@ -3,7 +3,7 @@ import os.path
 from nms.host.pb2.nms_host_api_pb2 import InventoryReq, InventoryResp, FAILURE_TO_OBTAIN_INVENTORY
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from tklabs_utils.vpd.vpd import VPD
+from tklabs_utils.i350.vpd import VPD
 
 
 ## Inventory Module Class

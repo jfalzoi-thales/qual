@@ -5,11 +5,12 @@ import os
 from subprocess import call
 from time import sleep
 
-
 from nms.host.pb2.nms_host_api_pb2 import UpgradeReq, UpgradeResp, I350, SWITCH, INVALID_NAME, VLAN_ASSIGNMENT_FAILED, ERROR_PROCESSING_MESSAGE, NETWORK_MANAGEMENT_SERVICE_ERROR,FAILED_OBTAINING_SWITCH_INFORMATION, FAILURE_TO_OBTAIN_INVENTORY,UPGRADE_FAILED, INVALID_UPGRADE_PACKAGE_PROVIDED
+from tklabs_utils.i350.eepromTools import EepromTools
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from tklabs_utils.vtss.vtss import Vtss
+
 
 ## Upgrade Module
 class Upgrade(Module):
@@ -28,6 +29,8 @@ class Upgrade(Module):
         self.tftpServerPath = '/thales/qual/firmware/'
         # Load the configuration
         self.loadConfig(['switchAddress','switchUser','switchPassword','tftpServerPath'])
+        ## I350 EepromTools object lets us read/write I350 EEPROM
+        self.i350eeprom = EepromTools(self.log)
         # Adds handler to available message handlers
         self.addMsgHandler(UpgradeReq, self.handler)
 
@@ -72,11 +75,30 @@ class Upgrade(Module):
     #  @param   response    An UpgradeResp object
     #  @param   path        Path to upgrade image
     def upgradeI350EEPROM(self, response, path):
-        if call(["eeupdate64e", "-nic=2", "-data", "%s" % path]) == 0:
-            self.addResp(response, True)
-            self.log.info('I350EEPROM updated. File name: %s'%(os.path.basename(path)))
-        else:
+        # Read VPD (inventory) information before we upgrade, so we can restore it after
+        vpd = self.i350eeprom.readVPD()
+
+        # Install the update
+        if call(["eeupdate64e", "-nic=2", "-data", "%s" % path]) != 0:
             self.addResp(response, errCode=1002, errDesc="Unable to program I350 EEPROM.")
+            return
+
+        # Restore the VPD if necessary
+        if vpd:
+            if not self.i350eeprom.writeVPD(vpd):
+                self.addResp(response, errCode=1002, errDesc="Unable to restore inventory information in I350 EEPROM.")
+                return
+            if not self.i350eeprom.writeVPDPointer():
+                self.addResp(response, errCode=1002, errDesc="Unable to restore inventory information in I350 EEPROM.")
+                return
+
+        # Re-enable PXE boot
+        if not self.i350eeprom.enableLanBoot():
+            self.addResp(response, errCode=1002, errDesc="Unable to enable LAN boot setting in I350 EEPROM.")
+            return
+
+        # If we got here, everything was successful
+        self.addResp(response, True)
 
     ## Attempts to upgrade the I350 Flash using image specified
     #  @param   self
@@ -193,9 +215,9 @@ class Upgrade(Module):
             self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to upgrade switch.")
         else:
             # Here the switch accepted the command and it's trying to upgrade the firmware
+            # flag to to check if the copy process started
+            copyStarted = False
             try:
-                # flag to to check if the copy process started
-                copyStarted = False
                 # We'll wait around 8 minutes for the upgrade process
                 waitTime = 60*8
                 while waitTime >= 0:
