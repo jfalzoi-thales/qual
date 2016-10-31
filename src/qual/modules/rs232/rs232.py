@@ -1,10 +1,9 @@
 import serial
-import time
 
-from common.module.module import Module
-from common.gpb.python.RS232_pb2 import RS232Request, RS232Response
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from qual.modules.rs232.rs232_Exception import RS232ModuleSerialException
+from qual.pb2.RS232_pb2 import RS232Request, RS232Response
+from rs232_Exception import RS232ModuleSerialException
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 ## RS-232 Class Module
 #

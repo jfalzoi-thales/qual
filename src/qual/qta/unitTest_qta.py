@@ -1,12 +1,13 @@
-
 from time import sleep
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.classFinder.classFinder import ClassFinder
-from common.logger.logger import Logger
 from google.protobuf.message import Message
-from common.gpb.python.CPULoading_pb2 import CPULoadingRequest
-from common.gpb.python.RS232_pb2 import RS232Request
+
+from qual.pb2.CPULoading_pb2 import CPULoadingRequest
+from qual.pb2.RS232_pb2 import RS232Request
+from tklabs_utils.classFinder.classFinder import ClassFinder
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 # @cond doxygen_unittest
 
@@ -19,7 +20,7 @@ class QTAClient(ThalesZMQClient):
         super(QTAClient, self).__init__("tcp://localhost:50001")
 
         # Set up a ClassFinder for GPB message classes
-        self.gpbClasses = ClassFinder(rootPath='common.gpb.python',
+        self.gpbClasses = ClassFinder(rootPaths=['qual.pb2'],
                                       baseClass=Message)
         # Set up a logger
         self.log = Logger(name='Test QTA')
