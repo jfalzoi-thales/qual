@@ -55,3 +55,11 @@ message UpgradeResp {
     required bool success = 1;
     optional ErrorMessage error = 2;
 }
+
+message HealthInfoReq {}
+
+message HealthInfoResp
+{
+    required bool healthy = 1;
+    optional string unhealthy_reason = 2;
+}

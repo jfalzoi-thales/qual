@@ -1,5 +1,7 @@
 import socket
 import shutil
+import os
+
 from subprocess import call
 from time import sleep
 
@@ -45,7 +47,10 @@ class Upgrade(Module):
             else:
                 self.upgradeI350Flash(response, msg.body.path)
         elif msg.body.target == SWITCH:
-            self.upgradeVitesseSwitch(response, msg.body.path)
+            if msg.body.path.endswith(".dat"):
+                self.upgradeVitesseSwitch(response, msg.body.path)
+            else:
+                self.updateConfig(response, msg.body.path)
         else:
             self.addResp(response, errCode=1002, errDesc="Unexpected Target %s" % msg.body.target)
 
@@ -102,8 +107,89 @@ class Upgrade(Module):
     def upgradeI350Flash(self, response, path):
         if call(["i350-flashtool", "%s" % path]) == 0:
             self.addResp(response, True)
+            self.log.info('i350Flash updated. File name: %s'%(os.path.basename(path)))
         else:
             self.addResp(response, errCode=1002, errDesc="Unable to program I350 flash.")
+
+    ## Attempts to update startup config
+    #  @param   self
+    #  @param   response    An UpgradeResp object
+    #  @param   path        Path to startup-config file
+    def updateConfig(self, response, path):
+        # Copy the file into the tftp server directory
+        try:
+            shutil.copy(path, self.tftpServerPath)
+            # Object to call switch functions
+            vtss = Vtss(switchIP=self.switchIP)
+            # Try to update the configuration
+            response = vtss.callMethod(['icfg.control.copy.set',
+                                        '{"Copy":true,"SourceConfigFile":"tftp://192.168.1.122/%s","SourceConfigType":"configFile","DestinationConfigType":"startupConfig"}'%(os.path.basename(path))])
+            # Check the response
+            if response['error']:
+                # Something went wrong with the RPC!!!
+                self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to update configuration.")
+                return
+        except EnvironmentError:
+            self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to copy config file into the tftp server.")
+        except Exception:
+            self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to update configuration.")
+        else:
+            # Here the switch accepted the command and it's trying to copy
+            try:
+                # We'll wait around 5 seconds
+                waitTime = 5
+                while waitTime >= 0:
+                    # Wait 1 second
+                    sleep(1)
+                    # Call upgrade process status
+                    response = vtss.callMethod(['icfg.status.copy.get'])
+                    # If there is an error calling status, probably we have an error
+                    if response['error']:
+                        self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to update configuration.")
+                        return
+                    # Check the status of the procedure
+                    status = response['result']['Status']
+                    # Posibles responses from the switch
+                    # "none"
+                    if status == 'none':
+                        pass
+                    # "success"
+                    if status == 'success':
+                        self.addResp(response, success=True)
+                        self.log.info('Switch configuration updated. File name: %s'%(os.path.basename(path)))
+                        return
+                    # "inProgress"
+                    elif status == 'inProgress':
+                        pass
+                    # "errOtherInProcessing"
+                    elif status == 'errOtherInProcessing':
+                        self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Other file in progress.")
+                        return
+                    # "errNoSuchFile"
+                    elif status == 'errNoSuchFile':
+                        self.addResp(response, errCode=INVALID_UPGRADE_PACKAGE_PROVIDED, errDesc="Error: No such a file.")
+                        return
+                    # "errSameSrcDst"
+                    elif status == 'errSameSrcDst':
+                        self.addResp(response, errCode=INVALID_UPGRADE_PACKAGE_PROVIDED, errDesc="Error: Same source and destination file.")
+                        return
+                    # "errPermissionDenied"
+                    elif status == 'errPermissionDenied':
+                        self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Permission denied.")
+                        return
+                    # "errLoadSrc"
+                    elif status == 'errLoadSrc':
+                        self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Loading source.")
+                        return
+                    # "errSaveDst"
+                    elif status == 'errSaveDst':
+                        self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Saving in destination.")
+                        return
+                # If we get out of the loop, the process probably failed
+                self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Timeout.")
+            except Exception:
+                # But here something went wrong trying to call status method!!!
+                self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to upgrade switch.")
 
     ## Attempts to upgrade the Vitesse Switch
     #
@@ -117,16 +203,16 @@ class Upgrade(Module):
             # Object to call switch functions
             vtss = Vtss(switchIP=self.switchIP)
             # Try to upgrade the switch
-            response = vtss.callMethod(['firmware.control.image-upload.set','{"DoUpload":true,"Url":"tftp://192.168.1.122/%s","ImageType":"firmware"}'%(path)])
+            response = vtss.callMethod(['firmware.control.image-upload.set','{"DoUpload":true,"Url":"tftp://192.168.1.122/%s","ImageType":"firmware"}'%(os.path.basename(path))])
             # Check the response
             if response['error']:
                 # Something went wrong with the RPC!!!
-                self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Unable to upgrade switch.")
+                self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to upgrade switch.")
                 return
         except EnvironmentError:
             self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to copy image into the tftp server.")
         except Exception:
-            self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Unable to upgrade switch.")
+            self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to upgrade switch.")
         else:
             # Here the switch accepted the command and it's trying to upgrade the firmware
             # flag to to check if the copy process started
@@ -141,7 +227,7 @@ class Upgrade(Module):
                     response = vtss.callMethod(['firmware.status.image-upload.get'])
                     # If there is an error calling status, probably we have an error
                     if response['error']:
-                        self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Unable to upgrade switch.")
+                        self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to upgrade switch.")
                         return
                     # Check the status of the procedure
                     status = response['result']['Status']
@@ -224,9 +310,10 @@ class Upgrade(Module):
                 if copyStarted:
                     # When we can't connect to the switch, and the copy process started it's probably because it restarted as part of the upgrade process
                     self.addResp(response,success=True)
+                    self.log.info('Switch firmware upgraded. File name: %s'%(os.path.basename(path)))
                 else:
                     # When we can't connect to the switch, and the copy process didn't started, we got an error
                     self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Invalid URL.")
             except Exception:
                 # But here something went wrong trying to call status method!!!
-                self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Unable to upgrade switch.")
+                self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to upgrade switch.")
