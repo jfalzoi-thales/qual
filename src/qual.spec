@@ -56,8 +56,6 @@ cp -r qual/                         %{buildroot}/thales/qual/src/
 cp -r simulator/                    %{buildroot}/thales/qual/src/
 cp -r tklabs_utils/                 %{buildroot}/thales/qual/src/
 cp QTA qtemenu                      %{buildroot}/thales/qual/src/
-cp config/GNMS-sims.conf            %{buildroot}/thales/host/config/GNMS.conf
-cp config/HNMS-sims.conf            %{buildroot}/thales/host/config/HNMS.conf
 cp config/qual-mps.conf             %{buildroot}/thales/qual/src/config/
 cp config/qual-ife.conf             %{buildroot}/thales/qual/src/config/
 cp config/qual.conf                 %{buildroot}/thales/qual/src/config/qual-sims.conf
@@ -108,12 +106,12 @@ echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BI
 /thales/host/config/Arinc429Driver.conf
 /thales/qual/firmware/BIOS.firmware
 /thales/qual/src/simulator/*
+%attr(0644,root,root) /thales/qual/src/config/GNMS-sims.conf
+%attr(0644,root,root) /thales/qual/src/config/HNMS-sims.conf
 %attr(0644,root,root) /thales/qual/src/config/qual-sims.conf
 %attr(0755,root,root) /thales/qual/src/simulator/*.sh
 %attr(0755,root,root) /thales/host/appliances/mps-biostool
 %attr(0755,root,root) /thales/host/appliances/qual-sims
-%attr(0644,root,root) /thales/host/config/GNMS-sims.conf
-%attr(0644,root,root) /thales/host/config/HNMS-sims.conf
 %attr(0755,root,root) %{_bindir}/sema
 %attr(0644,root,root) %{_unitdir}/qual-sims.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-sims-service.preset
@@ -140,6 +138,8 @@ mv -f /thales/qual/src/config/qual-mps.conf /thales/qual/src/config/qual.conf
 
 %post sims
 %systemd_post qual-sims.service
+mv -f /thales/qual/src/config/GNMS-sims.conf                            /thales/host/config/GNMS.conf
+mv -f /thales/qual/src/config/HNMS-sims.conf                            /thales/host/config/HNMS.conf
 mv -f /thales/qual/src/config/qual-sims.conf                            /thales/qual/src/config/qual.conf
 mv -f /thales/qual/src/qual/modules/firmwareUpdate/bootutil64e.sh       /%{_bindir}/bootutil64e
 mv -f /thales/qual/src/qual/modules/firmwareUpdate/eeupdate64e.sh       /%{_bindir}/eeupdate64e
