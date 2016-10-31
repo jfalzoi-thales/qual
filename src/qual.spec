@@ -25,6 +25,7 @@ Group: Development/Tools
 Requires: %{name} = %{version}
 Requires: mps-config
 Requires: i350-tools
+Requires: nms
 
 %package ife
 Summary: An application that uses a VM to communicate with the MPS IFE card
@@ -55,6 +56,8 @@ cp -r qual/                         %{buildroot}/thales/qual/src/
 cp -r simulator/                    %{buildroot}/thales/qual/src/
 cp -r tklabs_utils/                 %{buildroot}/thales/qual/src/
 cp QTA qtemenu                      %{buildroot}/thales/qual/src/
+cp config/GNMS-sims.conf            %{buildroot}/thales/host/config/GNMS.conf
+cp config/HNMS-sims.conf            %{buildroot}/thales/host/config/HNMS.conf
 cp config/qual-mps.conf             %{buildroot}/thales/qual/src/config/
 cp config/qual-ife.conf             %{buildroot}/thales/qual/src/config/
 cp config/qual.conf                 %{buildroot}/thales/qual/src/config/qual-sims.conf
@@ -109,6 +112,8 @@ echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BI
 %attr(0755,root,root) /thales/qual/src/simulator/*.sh
 %attr(0755,root,root) /thales/host/appliances/mps-biostool
 %attr(0755,root,root) /thales/host/appliances/qual-sims
+%attr(0644,root,root) /thales/host/config/GNMS-sims.conf
+%attr(0644,root,root) /thales/host/config/HNMS-sims.conf
 %attr(0755,root,root) %{_bindir}/sema
 %attr(0644,root,root) %{_unitdir}/qual-sims.service
 %attr(0644,root,root) /usr/lib/systemd/system-preset/50-qual-sims-service.preset
