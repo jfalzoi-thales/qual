@@ -1,8 +1,8 @@
-
 from time import sleep
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.ARINC717Driver_pb2 import Request, Response
+
+from common.pb2.ARINC717Driver_pb2 import Request, Response
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 
 # @cond doxygen_unittest

@@ -1,0 +1,65 @@
+syntax = "proto2";
+import public "common_nm.proto";
+
+enum ErrorCodeEnum {
+    INVALID_NAME = 1000;
+    VLAN_ASSIGNMENT_FAILED = 1001;
+    ERROR_PROCESSING_MESSAGE = 1002;
+    NETWORK_MANAGEMENT_SERVICE_ERROR = 1003;
+    FAILED_OBTAINING_SWITCH_INFORMATION = 1011;
+    FAILURE_TO_OBTAIN_INVENTORY = 1022;
+    UPGRADE_FAILED = 1031;
+    INVALID_UPGRADE_PACKAGE_PROVIDED = 1032;
+}
+
+enum TargetEnum {
+    SWITCH = 0;
+    I350 = 1;
+}
+
+message VLANAssignReq {
+    repeated string port_name = 1;
+    repeated uint32 external_vlans = 2;
+    repeated uint32 internal_vlans = 3;
+}
+
+message VLANAssignResp {
+    required bool success = 1;
+    optional ErrorMessage error = 2;
+}
+
+message SwitchInfoReq {
+}
+
+message SwitchInfoResp {
+    required bool success = 1;
+    optional ErrorMessage error = 2;
+    repeated Property values = 3;
+}
+
+message InventoryReq {
+}
+
+message InventoryResp {
+    required bool success = 1;
+    optional ErrorMessage error = 2;
+    repeated ValueResp values = 3;
+}
+
+message UpgradeReq {
+    required TargetEnum target = 1;
+    required string path = 2;
+}
+
+message UpgradeResp {
+    required bool success = 1;
+    optional ErrorMessage error = 2;
+}
+
+message HealthInfoReq {}
+
+message HealthInfoResp
+{
+    required bool healthy = 1;
+    optional string unhealthy_reason = 2;
+}
