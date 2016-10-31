@@ -19,6 +19,8 @@ class HDDSMessages(ModuleMessages):
     @staticmethod
     def getMenuItems():
         return [("Get single power supply value", HDDSMessages.getSingle),
+                ("Get switch temperature value", HDDSMessages.getSwitchTempKey),
+                ("Get processor module cpu_temp value", HDDSMessages.getProcessorKey),
                 ("Get all power supply values", HDDSMessages.getPSWC),
                 ("Get GPIO pin", HDDSMessages.get),
                 ("Get GPIO pins", HDDSMessages.getMul),
@@ -32,6 +34,22 @@ class HDDSMessages(ModuleMessages):
         message.requestType = HostDomainDeviceServiceRequest.GET
         value = message.values.add()
         value.key = "power_supply.28V_monitor.external_temperature"
+        return message
+
+    @staticmethod
+    def getSwitchTempKey():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.GET
+        value = message.values.add()
+        value.key = "carrier_card.switch.temperature"
+        return message
+
+    @staticmethod
+    def getProcessorKey():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.GET
+        value = message.values.add()
+        value.key = "carrier_card.processor_module.temperature.cpu_temp"
         return message
 
     @staticmethod
@@ -177,6 +195,8 @@ class Test_HDDS(unittest.TestCase):
                              "power_supply.28V_monitor.internal_temperature":"41.000000"}
         # Get the reponse
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getPSWC()))
+        self.assertEqual(len(response.body.values), 4)
+
         # Iterate over all responses
         for propertyResponse in response.body.values:
             self.assertTrue(propertyResponse.success)
@@ -195,6 +215,8 @@ class Test_HDDS(unittest.TestCase):
 
         log.info("**** Test case: Get invalid key ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getBogus()))
+        self.assertEqual(len(response.body.values), 1)
+
         for propertyResponse in response.body.values:
             self.assertFalse(propertyResponse.success)
             self.assertEqual(propertyResponse.key, "bogus_key")
@@ -214,6 +236,8 @@ class Test_HDDS(unittest.TestCase):
                              "bogus_key_2":"y",}
         log.info("**** Test case: Set invalid keys ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setBogus()))
+        self.assertEqual(len(response.body.values), 2)
+
         for propertyResponse in response.body.values:
             self.assertFalse(propertyResponse.success)
             self.assertTrue(propertyResponse.key in expectedResponses.keys())
@@ -231,6 +255,8 @@ class Test_HDDS(unittest.TestCase):
 
         log.info("**** Test case: Get single ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.get()))
+        self.assertEqual(len(response.body.values), 1)
+
         for propertyResponse in response.body.values:
             self.assertEqual(propertyResponse.success, True)
             self.assertEqual(propertyResponse.key, "external_pins.output.pin_a_a13")
@@ -253,6 +279,8 @@ class Test_HDDS(unittest.TestCase):
 
         log.info("**** Test case: Get multiple ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getMul()))
+        self.assertEqual(len(response.body.values), 5)
+
         for propertyResponse in response.body.values:
             self.assertEqual(propertyResponse.success, True)
             self.assertTrue(propertyResponse.key in keyList)
@@ -275,6 +303,8 @@ class Test_HDDS(unittest.TestCase):
 
         log.info("**** Test case: Set value ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setMul()))
+        self.assertEqual(len(response.body.values), 5)
+
         for propertyResponse in response.body.values:
             self.assertEqual(propertyResponse.success, True)
             self.assertTrue(propertyResponse.key in keyList)
@@ -291,6 +321,8 @@ class Test_HDDS(unittest.TestCase):
 
         log.info("**** Test case: Get temp ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getTemp()))
+        self.assertEqual(len(response.body.values), 1)
+
         for propertyResponse in response.body.values:
             self.assertTrue(propertyResponse.success)
             self.assertEqual(propertyResponse.key, "ife.temperature.U15_TINT")
@@ -298,6 +330,8 @@ class Test_HDDS(unittest.TestCase):
 
         log.info("**** Test case: Get volt ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getVolt()))
+        self.assertEqual(len(response.body.values), 1)
+
         for propertyResponse in response.body.values:
             self.assertTrue(propertyResponse.success)
             self.assertEqual(propertyResponse.key, "ife.voltage.U130_3V3")
@@ -315,6 +349,8 @@ class Test_HDDS(unittest.TestCase):
 
         log.info("**** Test case: Set temp ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setTemp()))
+        self.assertEqual(len(response.body.values), 1)
+
         for propertyResponse in response.body.values:
             self.assertFalse(propertyResponse.success)
             self.assertEqual(propertyResponse.key, "ife.temperature.U15_TINT")
@@ -322,12 +358,43 @@ class Test_HDDS(unittest.TestCase):
 
         log.info("**** Test case: Set volt ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setVolt()))
+        self.assertEqual(len(response.body.values), 1)
+        
         for propertyResponse in response.body.values:
             self.assertFalse(propertyResponse.success)
             self.assertEqual(propertyResponse.key, "ife.voltage.U130_3V3")
             self.assertEqual(propertyResponse.value, "HIGH")
 
         log.info("==== Test complete ====")
+
+    def test_singleKeys(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test Case: Get Power Supply Key, Switch Temperature Key, and Processor Module Key ****")
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getSingle()))
+        self.assertEqual(len(response.body.values), 1)
+
+        for propertyResponse in response.body.values:
+            self.assertTrue(propertyResponse.success)
+            self.assertEqual(propertyResponse.key, "power_supply.28V_monitor.external_temperature")
+            self.assertTrue(propertyResponse.value)
+
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getSwitchTempKey()))
+        self.assertEqual(len(response.body.values), 1)
+
+        for propertyResponse in response.body.values:
+            self.assertTrue(propertyResponse.success)
+            self.assertEqual(propertyResponse.key, "carrier_card.switch.temperature")
+            self.assertTrue(propertyResponse.value)
+
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getProcessorKey()))
+        self.assertEqual(len(response.body.values), 1)
+
+        for propertyResponse in response.body.values:
+            self.assertTrue(propertyResponse.success)
+            self.assertEqual(propertyResponse.key, "carrier_card.processor_module.temperature.cpu_temp")
+            self.assertTrue(propertyResponse.value)
 
 if __name__ == '__main__':
     unittest.main()
