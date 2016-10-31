@@ -10,4 +10,4 @@ clean:
 	rm ../host/pb2/*_pb2.py 2>/dev/null || true
 	rm ../host/pb2/*_pb2.pyc 2>/dev/null || true
 	rm ../guest/pb2/*_pb2.py 2>/dev/null || true
-	rm ../guest/pb2/*_pb2.py 2>/dev/null || true
+	rm ../guest/pb2/*_pb2.pyc 2>/dev/null || true
