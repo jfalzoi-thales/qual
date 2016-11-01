@@ -154,6 +154,11 @@ class FirmwareUpdate(Module):
 
         # Read VPD (inventory) information before we update, so we can restore it after
         vpd = self.i350eeprom.readVPD()
+        # If LAN boot is enabled (bit 7 is 0) then call "bootutil64e -ALL -FE"
+        LANBootDis = self.i350eeprom.readWord(0x24)
+        if LANBootDis == None:
+            self.setResp(response, False, FW_I350_EEPROM, "Unable to read LAN boot setting in I350 EEPROM.")
+        LANBootDis = LANBootDis & 0x80
 
         if call(["eeupdate64e", "-nic=2", "-data", "%s/%s" % (self.firmPath, eepromFile)]) != 0:
             self.setResp(response, False, FW_I350_EEPROM, "Unable to program I350 EEPROM.")
@@ -168,8 +173,6 @@ class FirmwareUpdate(Module):
                 self.setResp(response, False, FW_I350_EEPROM, "Unable to restore inventory information in I350 EEPROM.")
                 return
 
-        # If LAN boot is enabled (bit 7 is 0) then call "bootutil64e -ALL -FE"
-        LANBootDis = self.i350eeprom.readWord(0x24) & 0x40
         if LANBootDis == 0:
             # Re-enable PXE boot
             if not self.i350eeprom.enableLanBoot():
