@@ -26,7 +26,7 @@ class FirmwareUpdate(Module):
                           FW_BMC:                   self.updateBMC,
                           FW_I350_EEPROM:           self.updateI350EEPROM,
                           FW_I350_FLASH:            self.updateI350Flash,
-                          FW_SWITCH_BOOTLOADER:     self.unimplemented,
+                          FW_SWITCH_BOOTLOADER:     self.bootloaderUpgrade,
                           FW_SWITCH_FIRMWARE:       self.firmwareUpgrade,
                           FW_SWITCH_FIRMWARE_SWAP:  self.firmwareSwap,
                           FW_SWITCH_CONFIG:         self.configUpdate,
@@ -57,6 +57,19 @@ class FirmwareUpdate(Module):
         #  Add thread for handling return messages before a reboot
         self.addThread(self.rebooter)
 
+    ## Sets response fields
+    #  @param   self
+    #  @param   response    A VLANAssignResp object
+    #  @param   success     Success flag to be added to respone
+    #  @param   component   Optional component for component field (only needed for failure)
+    #  @param   errMsg      Optional error message text for ErrorMessage field
+    def setResp(self, response, success, component=0, errMsg=""):
+        response.success = success
+        if errMsg:
+            self.log.error(errMsg)
+            response.error.component = component
+            response.errorMessage = errMsg
+
     ## Handles incoming tzmq messages
     #  @param     self
     #  @param     msg   tzmq format message
@@ -67,9 +80,7 @@ class FirmwareUpdate(Module):
         if msg.body.command in self.firmFuncs:
             self.firmFuncs[msg.body.command](response, msg.body.reboot)
         else:
-            response.success = False
-            response.errorMessage = "Unexpected Command %s" % msg.body.command
-            self.log.error("Unexpected Command %s" % msg.body.command)
+            self.setResp(response, False, msg.body.command, "Unexpected Command %s" % msg.body.command)
 
         return ThalesZMQMessage(response)
 
@@ -85,35 +96,25 @@ class FirmwareUpdate(Module):
         if call("%s set-active primary" % self.biosTool, shell=True) == 0:
             if call("%s program-from %s/%s" % (self.biosTool, self.firmPath, biosFile), shell=True, stdout=DEVNULL) == 0:
                 primary = True
-            else:
-                self.log.error("Unable to properly program primary BIOS.")
         else:
             self.log.error("Unable to set primary BIOS to active.")
 
         if call("%s set-active secondary" % self.biosTool, shell=True) == 0:
             if call("%s program-from %s/%s" % (self.biosTool, self.firmPath, biosFile), shell=True, stdout=DEVNULL) == 0:
                 secondary = True
-            else:
-                self.log.error("Unable to properly program secondary BIOS.")
         else:
             self.log.error("Unable to set secondary BIOS to active.")
 
         if primary and secondary:
-            response.success = True
+            self.setResp(response, True)
         elif primary:
-            response.component = FW_BIOS
-            response.success = False
-            response.errorMessage = "Unable to properly program secondary BIOS."
+            self.setResp(response, False, FW_BIOS, "Unable to properly program secondary BIOS.")
             return
         elif secondary:
-            response.component = FW_BIOS
-            response.success = False
-            response.errorMessage = "Unable to properly program primary BIOS."
+            self.setResp(response, False, FW_BIOS, "Unable to properly program primary BIOS.")
             return
         else:
-            response.component = FW_BIOS
-            response.success = False
-            response.errorMessage = "Unable to properly program BIOS."
+            self.setResp(response, False, FW_BIOS, "Unable to properly program BIOS.")
             return
 
         if reboot: self.reboot.put("REBOOT")
@@ -134,14 +135,10 @@ class FirmwareUpdate(Module):
         sema.wait()
         # Success???
         if sema.returncode != 0:
-            # ERROR!!!
-            response.success = False
-            response.component = FW_BMC
-            response.errorMessage = "SEMA failed. Error code %d" % sema.returncode
-            self.log.error("SEMA failed. Error code %d" % sema.returncode)
-        else:
-            # SUCCESS!!!
-            response.success = True
+            self.setResp(response, False, FW_BMC, "SEMA failed. Error code %d" % sema.returncode)
+            return
+
+        self.setResp(response, True)
 
         if reboot: self.reboot.put("REBOOT")
 
@@ -151,16 +148,14 @@ class FirmwareUpdate(Module):
     #  @param   reboot      Reboot flag
     def updateI350EEPROM(self, response, reboot):
         eepromFile = "I350_mps.txt"
-        response.success = True
 
         # TODO: Save/restore boot flag and inventory info (QUAL-412)
 
         if call(["eeupdate64e", "-nic=2", "-data", "%s/%s" % (self.firmPath, eepromFile)]) != 0:
-            self.log.error("Unable to program I350 EEPROM.")
-            response.component = FW_I350_EEPROM
-            response.success = False
-            response.errorMessage = "Unable to program I350 EEPROM."
+            self.setResp(response, False, FW_I350_EEPROM, "Unable to program I350 EEPROM.")
             return
+
+        self.setResp(response, True)
 
         if reboot: self.reboot.put("REBOOT")
 
@@ -170,21 +165,16 @@ class FirmwareUpdate(Module):
     #  @param   reboot      Reboot flag
     def updateI350Flash(self, response, reboot):
         flashFile = "1573_i350_flash.bin"
-        response.success = True
 
         if call(["i350-flashtool", "%s/%s" % (self.firmPath, flashFile)]) != 0:
-            self.log.error("Unable to program I350 flash.")
-            response.component = FW_I350_FLASH
-            response.success = False
-            response.errorMessage = "Unable to program I350 flash."
+            self.setResp(response, False, FW_I350_FLASH, "Unable to program I350 flash.")
             return
 
         if call(["bootutil64e", "-all", "-fe"], stdout=DEVNULL) != 0:
-            self.log.error("Unable to enable I350 flash boot.")
-            response.component = FW_I350_FLASH
-            response.success = False
-            response.errorMessage = "Unable to enable I350 flash boot."
+            self.setResp(response, False, FW_I350_FLASH, "Unable to enable I350 flash boot.")
             return
+
+        self.setResp(response, True)
 
         if reboot: self.reboot.put("REBOOT")
 
@@ -226,29 +216,20 @@ class FirmwareUpdate(Module):
                     continue
                 if 'secondary-config' not in output:
                     # There was an error transferring the file
-                    response.success = False
-                    response.component = FW_SWITCH_CONFIG
-                    response.errorMessage = "Error transfering file %s to secondary-file" % switchConfigFile
-                    self.log.error("Error transfering file %s to secondary-file" % switchConfigFile)
+                    self.setResp(response, False, FW_SWITCH_CONFIG, "Error transfering file %s to secondary-file" % switchConfigFile)
                     return
                 break
             # Close the connection
             switchClient.close()
             # Fill the response
-            response.success = True
+            self.setResp(response, True)
 
             if reboot: self.reboot.put("REBOOT")
 
         except paramiko.ssh_exception.SSHException:
-            response.success = False
-            response.component = FW_SWITCH_CONFIG
-            response.errorMessage = "Unable to establish the connection with %s" % self.switchAddress
-            self.log.error("Unable to establish the connection with %s" % self.switchAddress)
+            self.setResp(response, False, FW_SWITCH_CONFIG, "Unable to establish the connection with %s" % self.switchAddress)
         except Exception as e:
-            response.success = False
-            response.component = FW_SWITCH_CONFIG
-            response.errorMessage = "Unexpected error with connection. Error message: %s" % e.message
-            self.log.error("Unexpected error with connection. Error message: %s" % e.message)
+            self.setResp(response, False, FW_SWITCH_CONFIG, "Unexpected error with connection. Error message: %s" % e.message)
 
     ## Attempts to swap the configuration update into the
     #  secondary config location
@@ -279,10 +260,7 @@ class FirmwareUpdate(Module):
                     continue
 
                 if "secondary-config" not in output:
-                    response.success = False
-                    response.component = FW_SWITCH_CONFIG_SWAP
-                    response.errorMessage = "No Secondary file configuration present in the switch."
-                    self.log.error("No Secondary file configuration present in the switch.")
+                    self.setResp(response, False, FW_SWITCH_CONFIG_SWAP, "No Secondary file configuration present in the switch.")
                     return
                 break
 
@@ -308,20 +286,14 @@ class FirmwareUpdate(Module):
             # Close the connection
             switchClient.close()
             # Fill the response
-            response.success = True
+            self.setResp(response, True)
 
             if reboot: self.reboot.put("REBOOT")
 
         except paramiko.ssh_exception.SSHException:
-            response.success = False
-            response.component = FW_SWITCH_CONFIG_SWAP
-            response.errorMessage = "Unable to establish the connection with %s" % self.switchAddress
-            self.log.error("Unable to establish the connection with %s" % self.switchAddress)
+            self.setResp(response, False, FW_SWITCH_CONFIG_SWAP, "Unable to establish the connection with %s" % self.switchAddress)
         except Exception as e:
-            response.success = False
-            response.component = FW_SWITCH_CONFIG_SWAP
-            response.errorMessage = "Unexpected error with connection. Error message: %s" % e.message
-            self.log.error("Unexpected error with connection. Error message: %s" % e.message)
+            self.setResp(response, False, FW_SWITCH_CONFIG_SWAP, "Unexpected error with connection. Error message: %s" % e.message)
 
     ## Attempts to load a firmware image into
     #  the alternate location
@@ -354,28 +326,19 @@ class FirmwareUpdate(Module):
                     output = channel.recv(1024)
                 # if the tftp server is not active or wrong IP
                 if "Invalid IP address" in output:
-                    response.success = False
-                    response.component = FW_SWITCH_FIRMWARE
-                    response.errorMessage = "Switch unable to establish the connection with tftp server %s" % self.tftpServer
-                    self.log.error("Switch unable to establish the connection with tftp server %s" % self.tftpServer)
+                    self.setResp(response, False, FW_SWITCH_FIRMWARE, "Switch unable to establish the connection with tftp server %s" % self.tftpServer)
                     return
                 # if Thales-MPS.dat was not present on the tftp server
                 elif 'File not found' in output:
-                    response.success = False
-                    response.component = FW_SWITCH_FIRMWARE
-                    response.errorMessage = "Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % self.tftpServer
-                    self.log.error("Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % self.tftpServer)
+                    self.setResp(response, False, FW_SWITCH_FIRMWARE, "Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % self.tftpServer)
                     return
                 # if Thales-MPS.dat was an invalid image
                 elif 'Error: Invalid image' in output:
-                    response.success = False
-                    response.component = FW_SWITCH_FIRMWARE
-                    response.errorMessage = "Invalid firmware image"
-                    self.log.error("Invalid firmware image")
+                    self.setResp(response, False, FW_SWITCH_FIRMWARE, "Invalid firmware image")
                     return
                 # if Firmware image is up to date
                 elif 'Error: Flash is already updated with this image' in output:
-                    response.success = True
+                    self.setResp(response, True)
                     # reboot if requested
                     if reboot: self.reboot.put("REBOOT")
                     return
@@ -388,26 +351,17 @@ class FirmwareUpdate(Module):
                         continue
                     else:
                         # Fill the response
-                        response.success = True
+                        self.setResp(response, True)
                         # reboot if requested
                         if reboot: self.reboot.put("REBOOT")
                         return
             # If get here, it is because the switch was not able to upgrade
-            response.success = False
-            response.component = FW_SWITCH_FIRMWARE
-            response.errorMessage = "FATAL! Firmware upgrade timeout."
-            self.log.error("FATAL! Firmware upgrade timeout.")
+            self.setResp(response, False, FW_SWITCH_FIRMWARE, "FATAL! Firmware upgrade timeout.")
 
         except paramiko.ssh_exception.SSHException:
-            response.success = False
-            response.component = FW_SWITCH_FIRMWARE
-            response.errorMessage = "Unable to establish the connection with %s" % self.switchAddress
-            self.log.error("Unable to establish the connection with %s" % self.switchAddress)
+            self.setResp(response, False, FW_SWITCH_FIRMWARE, "Unable to establish the connection with %s" % self.switchAddress)
         except Exception as e:
-            response.success = False
-            response.component = FW_SWITCH_FIRMWARE
-            response.errorMessage = "Unexpected error with connection. Error message: %s" % e.message
-            self.log.error("Unexpected error with connection. Error message: %s" % e.message)
+            self.setResp(response, False, FW_SWITCH_FIRMWARE, "Unexpected error with connection. Error message: %s" % e.message)
 
     ## Attempts to swap the firmware between the primary
     # location and the alternate location
@@ -435,31 +389,21 @@ class FirmwareUpdate(Module):
             # Close the connection
             switchClient.close()
             # Fill the response
-            response.success = True
+            self.setResp(response, True)
 
             if reboot: self.reboot.put("REBOOT")
 
         except paramiko.ssh_exception.SSHException:
-            response.success = False
-            response.component = FW_SWITCH_FIRMWARE_SWAP
-            response.errorMessage = "Unable to establish the connection with %s" % self.switchAddress
-            self.log.error("Unable to establish the connection with %s" % self.switchAddress)
+            self.setResp(response, False, FW_SWITCH_FIRMWARE_SWAP, "Unable to establish the connection with %s" % self.switchAddress)
         except Exception as e:
-            response.success = False
-            response.component = FW_SWITCH_CONFIG_SWAP
-            response.errorMessage = "Unexpected error with connection. Error message: %s" % e.message
-            self.log.error("Unexpected error with connection. Error message: %s" % e.message)
+            self.setResp(response, False, FW_SWITCH_CONFIG_SWAP, "Unexpected error with connection. Error message: %s" % e.message)
 
-    ## Catches valid, unimplemented message command types.
+    ## Switch bootloader upgrade.
     #  @param   self
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
-    def unimplemented(self, response, reboot):
-        response.success = False
-        response.errorMessage = "This message is not yet implemented."
-        self.log.info("This message is not yet implemented.")
-
-        if reboot: self.reboot.put("REBOOT")
+    def bootloaderUpgrade(self, response, reboot):
+        self.setResp(response, False, FW_SWITCH_BOOTLOADER, "Switch bootloader upgrade is not yet implemented.")
 
     ## Waits for a reboot command, then attempts to reboot the system
     #  @param   self
