@@ -74,10 +74,7 @@ class PortInfo(Module):
                     self.wild(response, keyParts, aliasPassed[1], aliasPassed[0])
                 elif keyParts[-1] in self.portFuncs:
                     # Try to resolve in case of an alias
-                    auxName = ""
-                    for name in keyParts[:-1]:
-                        auxName += name + "."
-                    portName = resolveAlias(auxName[:-1])[0]
+                    portName = resolveAlias(".".join(keyParts[:-1])[0])
                     port = resolvePort(portName)
 
                     if port:

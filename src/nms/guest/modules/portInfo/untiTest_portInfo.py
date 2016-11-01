@@ -104,12 +104,6 @@ class PortInfoMessages(ModuleMessages):
         return message
 
     @staticmethod
-    def getSingle():
-        message = PortInfoReq()
-        message.portInfoKey.append("external.enet_1.shutdown")
-        return message
-
-    @staticmethod
     def getUsingAlias():
         message = PortInfoReq()
         message.portInfoKey.append("WAP2.speed")
