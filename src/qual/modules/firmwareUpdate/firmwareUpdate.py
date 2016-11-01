@@ -157,8 +157,10 @@ class FirmwareUpdate(Module):
         # If LAN boot is enabled (bit 7 is 0) then call "bootutil64e -ALL -FE"
         LANBootDis = self.i350eeprom.readWord(0x24)
         if LANBootDis == None:
-            self.setResp(response, False, FW_I350_EEPROM, "Unable to read LAN boot setting in I350 EEPROM.")
-        LANBootDis = LANBootDis & 0x80
+            self.log.info("Unable to read LAN boot setting in I350 EEPROM.")
+            LANBootDis = 0
+        else:
+            LANBootDis = LANBootDis & 0x80
 
         if call(["eeupdate64e", "-nic=2", "-data", "%s/%s" % (self.firmPath, eepromFile)]) != 0:
             self.setResp(response, False, FW_I350_EEPROM, "Unable to program I350 EEPROM.")
