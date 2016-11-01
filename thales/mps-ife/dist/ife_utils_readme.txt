@@ -29,3 +29,10 @@ Check I2C devices on IFE card, including factory data I2C EEPROM
 	2.     I2C EEPROM address is 0x50 (0101_000x)
 	3.     “ife_i2c_sel 0” command in the script sets FTDI GPIO control signal (bank B bit 4) to I2C multiplexer
 	4.     “i2cset -y 7 0x73 0x7f” command in the script enables buses of I2C expansion chip
+
+
+NOTE 2: The ife_utils_rebuilt.tgz file contains the binaries from ife_utils.zip
+rebuilt with the same version of the ftdi library that's used by MAP, since the
+binaries from the original package were looking for a different version of the
+library.  The ife_utils_rebuilt.tgz file also contains a Makefile and updated
+sources (each .c file was missing an include).
