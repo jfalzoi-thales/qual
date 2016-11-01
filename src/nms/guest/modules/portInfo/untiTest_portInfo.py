@@ -25,7 +25,8 @@ class PortInfoMessages(ModuleMessages):
                 ("Get All Speed",           PortInfoMessages.getAllSpeed),
                 ("Get All Internal Stats",  PortInfoMessages.getAllIntStats),
                 ("Get All Stats",           PortInfoMessages.getAllStats),
-                ("Get All Keys",            PortInfoMessages.getAll)]
+                ("Get All Keys",            PortInfoMessages.getAll),
+                ("Get Keys using alias",    PortInfoMessages.getUsingAlias)]
 
     @staticmethod
     def getSingle():
@@ -100,6 +101,20 @@ class PortInfoMessages(ModuleMessages):
     def getBogus():
         message = PortInfoReq()
         message.portInfoKey.append("internal.BOGUS.speed")
+        return message
+
+    @staticmethod
+    def getSingle():
+        message = PortInfoReq()
+        message.portInfoKey.append("external.enet_1.shutdown")
+        return message
+
+    @staticmethod
+    def getUsingAlias():
+        message = PortInfoReq()
+        message.portInfoKey.append("WAP2.speed")
+        message.portInfoKey.append("WirelessAccessPoint2.*")
+        message.portInfoKey.append("InstalledVM_enet_eth3.*")
         return message
 
 ## PortInfo Unit Test
@@ -310,6 +325,24 @@ class Test_PortInfo(unittest.TestCase):
         self.assertEqual(response.body.values[0].keyValue.key, 'external.enet_1.vlan_id')
         self.assertTrue(response.body.values[0].keyValue.value)
 
+        log.info("==== Test Complete ====")
+
+    ## Test Case: Get a using port alias
+    def test_GetUsingAias(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test Case: Get Keys using alias port ****")
+
+        response = module.msgHandler(ThalesZMQMessage(PortInfoMessages.getUsingAlias()))
+
+        self.assertEqual(response.name, "PortInfoResp")
+        self.assertGreaterEqual(len(response.body.values), 17)
+
+        for value in response.body.values:
+            self.assertTrue(value.success)
+            self.assertTrue(value.keyValue.key.startswith(("WAP2", "WirelessAccessPoint2", "InstalledVM_enet_eth3")))
+            self.assertTrue(value.keyValue.value)
         log.info("==== Test Complete ====")
 
 

@@ -2,7 +2,7 @@ import collections
 import os
 from subprocess import check_output, CalledProcessError
 
-from nms.common.portresolver.portResolver import resolvePort, portNames, updatePorts
+from nms.common.portresolver.portResolver import resolvePort, portNames, updatePorts,resolveAlias
 from nms.guest.pb2.nms_guest_api_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
@@ -62,14 +62,23 @@ class PortInfo(Module):
                     if len(keyParts) == 1:
                         keyParts += ["*", "*"]
                     elif len(keyParts) == 2:
+                        # Determine if an alias was passed
+                        aliasPassed = resolveAlias(keyParts[0])
+                        if aliasPassed[1]:
+                            keyParts=aliasPassed[0].split(".")
                         if keyParts[0] == "*":
                             keyParts = ["*"] + keyParts
                         else:
                             keyParts += ["*"]
 
-                    self.wild(response, keyParts)
+                    self.wild(response, keyParts, aliasPassed[1], aliasPassed[0])
                 elif keyParts[-1] in self.portFuncs:
-                    port = resolvePort(keyParts[0] + "." + keyParts[1])
+                    # Try to resolve in case of an alias
+                    auxName = ""
+                    for name in keyParts[:-1]:
+                        auxName += name + "."
+                    portName = resolveAlias(auxName[:-1])[0]
+                    port = resolvePort(portName)
 
                     if port:
                         self.ethCache = {}
@@ -112,7 +121,7 @@ class PortInfo(Module):
     #  @param   self
     #  @param   response  PortInfoResp object
     #  @param   keyParts  Key split on last separator
-    def wild(self, response, keyParts):
+    def wild(self, response, keyParts, aliasResolved=False, aliasName=""):
         locs = ["internal", "external"] if keyParts[0] == "*" else [keyParts[0]]
         stats = self.portFuncs.keys() if keyParts[2] == "*" else [keyParts[2]]
 
@@ -129,7 +138,7 @@ class PortInfo(Module):
 
             for stat in stats:
                 port = resolvePort(dev)
-                self.callFunc(response, dev + "." + stat, stat, port[0], port[1])
+                self.callFunc(response, (aliasName if aliasResolved else dev) + "." + stat, stat, port[0], port[1])
 
     ## Calls appropriate function with specified parameters
     #  @param   self

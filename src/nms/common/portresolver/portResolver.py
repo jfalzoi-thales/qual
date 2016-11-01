@@ -95,3 +95,15 @@ def resolvePort(portName):
         name = portNames[configurablesPortNames[portName]] if portName in configurablesPortNames.keys() else None
 
     return name
+
+## Resolves the port name according to the alias
+#
+#  @type:   str
+#  @param:  port_alias
+#  @type:   str
+#  @return: port name to the switch. Eg: "Gi 1/25" or "Gi 14/25" and if it was an alias or not
+def resolveAlias(portAlias):
+    portAlias = portAlias.lower()
+    (name, passed) = (configurablesPortNames[portAlias], True) if portAlias in configurablesPortNames.keys() else (portAlias, False)
+
+    return (name, passed)
