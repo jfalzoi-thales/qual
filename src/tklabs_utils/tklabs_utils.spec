@@ -1,6 +1,6 @@
 Summary: TKLabs Utilities Library
 Name: tklabs_utils
-Version: 1.0.4
+Version: 1.0.5
 Release: 1
 Group: System Environment/Libraries
 URL: https://repo-tav.tklabs.com:8102/
@@ -28,6 +28,9 @@ cp -r * %{buildroot}/%{python2_sitelib}/tklabs_utils/
 %exclude %{python2_sitelib}/tklabs_utils/tzmq/jsonConversion/unitTest*
 
 %changelog
+* Tue Nov 01 2016 Jenkins <jenkins@tklabs.com> 1.0.5-1
+- 
+
 * Mon Oct 31 2016 Jenkins <jenkins@tklabs.com> 1.0.4-1
 - QUAL-412: Created common I350 EEPROM tools class (jim.burmeister@tklabs.com)
 - QUAL-412: Renamed vpd to i350 because I want to add another file
