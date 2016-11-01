@@ -155,7 +155,7 @@ class FirmwareUpdate(Module):
         # Read VPD (inventory) information before we update, so we can restore it after
         vpd = self.i350eeprom.readVPD()
         # If LAN boot is enabled (bit 7 is 0) then call "bootutil64e -ALL -FE"
-        LANBootDis = self.i350eeprom.readWord(0x24)
+        LANBootDis = self.i350eeprom.readWord(0x48)
         if LANBootDis == None:
             self.log.info("Unable to read LAN boot setting in I350 EEPROM.")
             LANBootDis = 0
