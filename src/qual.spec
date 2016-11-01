@@ -25,6 +25,7 @@ Group: Development/Tools
 Requires: %{name} = %{version}
 Requires: mps-config
 Requires: i350-tools
+Requires: nms
 
 %package ife
 Summary: An application that uses a VM to communicate with the MPS IFE card
@@ -105,6 +106,8 @@ echo "This is a dummy firmware file! \o/" > %{buildroot}/thales/qual/firmware/BI
 /thales/host/config/Arinc429Driver.conf
 /thales/qual/firmware/BIOS.firmware
 /thales/qual/src/simulator/*
+%attr(0644,root,root) /thales/qual/src/config/GNMS-sims.conf
+%attr(0644,root,root) /thales/qual/src/config/HNMS-sims.conf
 %attr(0644,root,root) /thales/qual/src/config/qual-sims.conf
 %attr(0755,root,root) /thales/qual/src/simulator/*.sh
 %attr(0755,root,root) /thales/host/appliances/mps-biostool
@@ -135,6 +138,8 @@ mv -f /thales/qual/src/config/qual-mps.conf /thales/qual/src/config/qual.conf
 
 %post sims
 %systemd_post qual-sims.service
+mv -f /thales/qual/src/config/GNMS-sims.conf                            /thales/host/config/GNMS.conf
+mv -f /thales/qual/src/config/HNMS-sims.conf                            /thales/host/config/HNMS.conf
 mv -f /thales/qual/src/config/qual-sims.conf                            /thales/qual/src/config/qual.conf
 mv -f /thales/qual/src/qual/modules/firmwareUpdate/bootutil64e.sh       /%{_bindir}/bootutil64e
 mv -f /thales/qual/src/qual/modules/firmwareUpdate/eeupdate64e.sh       /%{_bindir}/eeupdate64e
