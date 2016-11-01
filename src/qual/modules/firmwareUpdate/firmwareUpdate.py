@@ -9,7 +9,7 @@ from qual.pb2.FirmwareUpdate_pb2 import *
 from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
-
+from tklabs_utils.i350.eepromTools import EepromTools
 
 ## Discard the output
 DEVNULL = open(os.devnull, 'wb')
@@ -58,6 +58,8 @@ class FirmwareUpdate(Module):
         self.addMsgHandler(FirmwareUpdateRequest, self.handler)
         #  Add thread for handling return messages before a reboot
         self.addThread(self.rebooter)
+        ## I350 EepromTools object lets us read/write I350 EEPROM
+        self.i350eeprom = EepromTools(self.log)
 
     ## Sets response fields
     #  @param   self
@@ -150,12 +152,36 @@ class FirmwareUpdate(Module):
     def updateI350EEPROM(self, response, reboot):
         eepromFile = "I350_mps.txt"
 
-        # TODO: Save/restore boot flag and inventory info (QUAL-412)
+        # Read VPD (inventory) information before we update, so we can restore it after
+        vpd = self.i350eeprom.readVPD()
+        # If LAN boot is enabled (bit 7 is 0) then call "bootutil64e -ALL -FE"
+        LANBootDis = self.i350eeprom.readWord(0x48)
+        if LANBootDis == None:
+            self.log.info("Unable to read LAN boot setting in I350 EEPROM.")
+            LANBootDis = 0
+        else:
+            LANBootDis = LANBootDis & 0x80
 
         if call(["eeupdate64e", "-nic=2", "-data", "%s/%s" % (self.firmPath, eepromFile)]) != 0:
             self.setResp(response, False, FW_I350_EEPROM, "Unable to program I350 EEPROM.")
             return
 
+        # Restore the VPD if necessary
+        if vpd:
+            if not self.i350eeprom.writeVPD(vpd):
+                self.setResp(response, False, FW_I350_EEPROM, "Unable to restore inventory information in I350 EEPROM.")
+                return
+            if not self.i350eeprom.writeVPDPointer():
+                self.setResp(response, False, FW_I350_EEPROM, "Unable to restore inventory information in I350 EEPROM.")
+                return
+
+        if LANBootDis == 0:
+            # Re-enable PXE boot
+            if not self.i350eeprom.enableLanBoot():
+                self.setResp(response, False, FW_I350_EEPROM, "Unable to enable LAN boot setting in I350 EEPROM.")
+                return
+
+        # Success!!!
         self.setResp(response, True)
 
         if reboot: self.reboot.put("REBOOT")
