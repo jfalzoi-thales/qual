@@ -3,7 +3,7 @@
 #
 Name: qual
 Summary: An application used to drive MPS hardware
-Version: 1.77
+Version: 1.79
 Release: 1
 License: Proprietary
 Group: Applications/Engineering
@@ -56,6 +56,8 @@ cp -r qual/                         %{buildroot}/thales/qual/src/
 cp -r simulator/                    %{buildroot}/thales/qual/src/
 cp -r tklabs_utils/                 %{buildroot}/thales/qual/src/
 cp QTA qtemenu                      %{buildroot}/thales/qual/src/
+cp config/GNMS-sims.conf            %{buildroot}/thales/qual/src/config/
+cp config/HNMS-sims.conf            %{buildroot}/thales/qual/src/config/
 cp config/qual-mps.conf             %{buildroot}/thales/qual/src/config/
 cp config/qual-ife.conf             %{buildroot}/thales/qual/src/config/
 cp config/qual.conf                 %{buildroot}/thales/qual/src/config/qual-sims.conf

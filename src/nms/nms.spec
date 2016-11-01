@@ -5,7 +5,7 @@
 
 Summary: Network Management Appliance
 Name: nms
-Version: 1.0.4
+Version: 1.0.6
 Release: 1
 Group: System Environment/Libraries
 URL: https://repo-tav.tklabs.com:8102/
@@ -77,6 +77,15 @@ sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
 %exclude %{appdir}/scripts
 
 %changelog
+* Tue Nov 01 2016 Jenkins <jenkins@tklabs.com> 1.0.6-1
+- 
+
+* Tue Nov 01 2016 Jenkins <jenkins@tklabs.com> 1.0.5-1
+- QUAL-456 Fixed get portName code. (alberto.treto@tklabs.com)
+- QUAL-456 Better coding and copied config file to resolve alias.
+  (alberto.treto@tklabs.com)
+- QUAL-456 Testing alias configuration. (alberto.treto@tklabs.com)
+
 * Mon Oct 31 2016 Jenkins <jenkins@tklabs.com> 1.0.4-1
 - QUAL-294 HealthInfoReq module added into host NMS (alberto.treto@tklabs.com)
 - QUAL-458 : Updated portInfo to handle 'Link Down' on switch ports
