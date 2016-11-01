@@ -21,30 +21,12 @@ usage() {
     exit 1
 }
 
-# Handle tito tag and build for tklabs_utils
+# Handle tito tag and build for tklabs_utils from qual tree
 titoutils() {
-    if [ "$NMS" == "YES" ]; then
-        echo "Building tklabs_utils RPMs from Thales Github repos! \('-')/"
-
-        if [ ! -d ${UTILSDIR} ]; then
-            cd
-            git clone https://github.com/mapcollab/tklabs-tklabs_utils.git
-            cd ${UTILSDIR}/
-        else
-            cd ${UTILSDIR}/
-            git fetch origin master
-            git reset --hard FETCH_HEAD
-            git clean -df
-        fi
-
-        UTILSVERSION=`cat .tito/packages/tklabs_utils | cut -f 1 -d ' '`
-    else
-        echo "Building tklabs_utils RPMs from QUAL tree! ('-')"
-        cd ${QUALDIR}/src/tklabs_utils
-        if [ "$TAG" == "YES" ]; then tito tag; fi
-        UTILSVERSION=`cat ${QUALDIR}/.tito/packages/tklabs_utils | cut -f 1 -d ' '`
-    fi
-
+    echo "Building tklabs_utils RPMs from QUAL tree! ('-')"
+    cd ${QUALDIR}/src/tklabs_utils
+    if [ "$TAG" == "YES" ]; then tito tag; fi
+    UTILSVERSION=`cat ${QUALDIR}/.tito/packages/tklabs_utils | cut -f 1 -d ' '`
     tito build --rpm --tag=tklabs_utils-${UTILSVERSION} --offline
 }
 
@@ -179,8 +161,12 @@ fi
 git clean -df
 rm -rf /tmp/tito
 tito init
-titoutils
-if [ "$NMS" == "YES" ]; then titonms; fi
+
+if [ "$NMS" == "YES" ]; then
+    titoutils
+    titonms
+fi
+
 titoqual
 
 if [ "$TAG" == "YES" ]; then
