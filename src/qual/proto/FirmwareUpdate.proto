@@ -10,6 +10,7 @@ enum FirmwareCommandsT {
     FW_SWITCH_FIRMWARE_SWAP = 6;
     FW_SWITCH_CONFIG = 7;
     FW_SWITCH_CONFIG_SWAP = 8;
+    FW_IFE = 9;
 }
 
 message FirmwareUpdateRequest {
