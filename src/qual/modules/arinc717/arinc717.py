@@ -1,10 +1,12 @@
 import os
-from common.gpb.python.ARINC717Frame_pb2 import ARINC717FrameRequest, ARINC717FrameResponse
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.ARINC717Driver_pb2 import Request, Response, ChannelConfig
-from common.gpb.python.GPIOManager_pb2 import RequestMessage, ResponseMessage
-from common.module.module import Module
+
+from common.pb2.ARINC717Driver_pb2 import Request, Response, ChannelConfig
+from common.pb2.GPIOManager_pb2 import RequestMessage, ResponseMessage
+from qual.pb2.ARINC717Frame_pb2 import ARINC717FrameRequest, ARINC717FrameResponse
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## ARINC717 Module
 class ARINC717(Module):
@@ -56,6 +58,8 @@ class ARINC717(Module):
                 self.log.error("Error return from GPIO Manager")
                 self.log.error("ERROR CODE: %s" % setResp.error)
 
+        ##  Indicates if state is running
+        self.running = False
         #  Add handler to available message handlers
         self.addMsgHandler(ARINC717FrameRequest, self.handler)
 
@@ -75,51 +79,31 @@ class ARINC717(Module):
     #  @return    a ThalesZMQMessage object containing the response message
     def handler(self, msg):
         response = ARINC717FrameResponse()
-        response.state = ARINC717FrameResponse.RUNNING
         response.syncState = ARINC717FrameResponse.NO_SYNC
 
-        if msg.body.requestType == ARINC717FrameRequest.RUN:
-            self.start(response)
-        elif msg.body.requestType == ARINC717FrameRequest.STOP:
-            self.stop(response)
-        elif msg.body.requestType == ARINC717FrameRequest.REPORT:
-            self.report(response)
+        if msg.body.requestType in [ARINC717FrameRequest.STOP, ARINC717FrameRequest.RUN, ARINC717FrameRequest.REPORT]:
+            if msg.body.requestType == ARINC717FrameRequest.RUN: self.running = True
+
+            if self.running:
+                driverResponse = self.makeDriverRequest()
+
+                if driverResponse.name == self.driverClient.defaultResponseName:
+                    info = Response()
+                    info.ParseFromString(driverResponse.serializedBody)
+                    data = info.frame.data
+                    if not info.frame.out_of_sync: response.syncState = ARINC717FrameResponse.SYNCED
+
+                    #  turns every two characters in data into 16-bit data
+                    for char in range(0, len(data), 2):
+                        response.arinc717frame.append((ord(data[char]) << 8) | ord(data[char + 1]))
+                else:
+                    self.log.error("Unexpected Response Name: %s" % driverResponse.name)
+                    if msg.body.requestType == ARINC717FrameRequest.RUN: self.running = False
+
+            if msg.body.requestType == ARINC717FrameRequest.STOP: self.running = False
         else:
             self.log.error("Unexpected Request Type %d" % (msg.body.requestType))
 
+        response.state = ARINC717FrameResponse.RUNNING if self.running else ARINC717FrameResponse.STOPPED
+
         return ThalesZMQMessage(response)
-
-    ## Handles messages with requestType of RUN
-    #  RUN request type is defined in the ICD, but is not applicable to
-    #  this module, so we just behave the same as REPORT.
-    #  @param     self
-    #  @param     response  an ARINC717FrameResponse object to be returned to the caller
-    def start(self, response):
-        self.report(response)
-
-    ## Handles messages with requestType of STOP
-    #  STOP request type is defined in the ICD, but is not applicable to
-    #  this module, so we just behave the same as REPORT.
-    #  @param     self
-    #  @param     response  an ARINC717FrameResponse object to be returned to the caller
-    def stop(self, response):
-        self.report(response)
-
-    ## Handles messages with requestType of REPORT
-    #  @param     self
-    #  @param     response  an ARINC717FrameResponse object to be returned to the caller
-    def report(self, response):
-        driverResponse = self.makeDriverRequest()
-        if driverResponse.name == self.driverClient.defaultResponseName:
-            info = Response()
-            info.ParseFromString(driverResponse.serializedBody)
-            data = info.frame.data
-            response.syncState = ARINC717FrameResponse.NO_SYNC if info.frame.out_of_sync else ARINC717FrameResponse.SYNCED
-
-            #  turns every two characters in data into 16-bit data
-            for char in range(0, len(data), 2):
-                response.arinc717frame.append((ord(data[char]) << 8) | ord(data[char + 1]))
-        else:
-            #  Not documented but since we have the field let's use it:
-            #  If we can't contact the driver, return the state as "STOPPED"
-            response.state = ARINC717FrameResponse.STOPPED

@@ -1,12 +1,13 @@
 import collections
-from time import sleep
+import os
 import threading
+from time import sleep
 
-from common.tzmq.ThalesZMQClient import ThalesZMQClient
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.gpb.python.GPIO_pb2 import GPIORequest, GPIOResponse
-from common.gpb.python.GPIOManager_pb2 import RequestMessage, ResponseMessage
-from common.module import module
+from common.pb2.GPIOManager_pb2 import RequestMessage, ResponseMessage
+from qual.pb2.GPIO_pb2 import GPIORequest, GPIOResponse
+from tklabs_utils.module import module
+from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
 
 ## Connection info container class
@@ -39,22 +40,14 @@ class GPIO(module.Module):
         self.addMsgHandler(GPIORequest, self.handler)
         ## Named tuple type to store pin info
         self.PinInfo = collections.namedtuple("PinInfo", "func name")
+
         ## Dict mapping GPIO output pins to handler and handler pin name
         self.outputPins = {"GP_KYLN_OUT1": self.PinInfo(self.gpioManagerSet, "OUTPUT_1_PIN_A6"),
                            "GP_KYLN_OUT2": self.PinInfo(self.gpioManagerSet, "OUTPUT_2_PIN_B6"),
                            "GP_KYLN_OUT3": self.PinInfo(self.gpioManagerSet, "OUTPUT_3_PIN_C6"),
                            "GP_KYLN_OUT4": self.PinInfo(self.gpioManagerSet, "OUTPUT_4_PIN_D6"),
                            "GP_KYLN_OUT5": self.PinInfo(self.gpioManagerSet, "OUTPUT_5_PIN_E6"),
-                           "GP_KYLN_OUT6": self.PinInfo(self.gpioManagerSet, "OUTPUT_6_PIN_E8"),
-                           "GP_KYLN_OUT7": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_01"),
-                           "GP_KYLN_OUT8": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_02"),
-                           "GP_KYLN_OUT9": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_03"),
-                           "VA_KYLN_OUT1": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT1"),
-                           "VA_KYLN_OUT2": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT2"),
-                           "VA_KYLN_OUT3": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT3"),
-                           "VA_KYLN_OUT4": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT4"),
-                           "VA_KYLN_OUT5": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT5"),
-                           "VA_KYLN_OUT6": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT6")}
+                           "GP_KYLN_OUT6": self.PinInfo(self.gpioManagerSet, "OUTPUT_6_PIN_E8")}
 
         ## Dict mapping GPIO input pins to handler and handler pin name
         self.inputPins = {"GP_KYLN_IN1": self.PinInfo(self.gpioManagerGet, "INPUT_1_PIN_A7"),
@@ -62,20 +55,34 @@ class GPIO(module.Module):
                           "GP_KYLN_IN3": self.PinInfo(self.gpioManagerGet, "INPUT_3_PIN_C7"),
                           "GP_KYLN_IN4": self.PinInfo(self.gpioManagerGet, "INPUT_4_PIN_D7"),
                           "GP_KYLN_IN5": self.PinInfo(self.gpioManagerGet, "INPUT_5_PIN_E7"),
-                          "PA_ALL_KYLN_IN": self.PinInfo(self.gpioManagerGet, "PA_All_PIN_C8"),
-                          "GP_KYLN_IN6": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_01"),
-                          "GP_KYLN_IN7": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_02"),
-                          "GP_KYLN_IN8": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_03"),
-                          "GP_KYLN_IN9": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_04"),
-                          "PA_KYLN_IN1": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN1"),
-                          "PA_KYLN_IN2": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN2"),
-                          "PA_KYLN_IN3": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN3"),
-                          "PA_KYLN_IN4": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN4"),
-                          "PA_KYLN_IN5": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN5"),
-                          "PA_KYLN_IN6": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN6"),
-                          "PA_KYLN_IN7": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN7"),
-                          "PA_KYLN_IN8": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN8"),
-                          "PA_MUTE_KYLN_IN": self.PinInfo(self.ifeVmQtaGet, "PA_MUTE")}
+                          "PA_ALL_KYLN_IN": self.PinInfo(self.gpioManagerGet, "PA_All_PIN_C8")}
+
+        #  If we are running on an MPSi, allow ife related keys
+        if os.path.exists("/dev/mps/usb-mcp2221-ife"):
+            self.outputPins.update({"GP_KYLN_OUT7": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_01"),
+                                    "GP_KYLN_OUT8": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_02"),
+                                    "GP_KYLN_OUT9": self.PinInfo(self.ifeVmQtaSet, "LLS_OUT_GP_KL_03"),
+                                    "VA_KYLN_OUT1": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT1"),
+                                    "VA_KYLN_OUT2": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT2"),
+                                    "VA_KYLN_OUT3": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT3"),
+                                    "VA_KYLN_OUT4": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT4"),
+                                    "VA_KYLN_OUT5": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT5"),
+                                    "VA_KYLN_OUT6": self.PinInfo(self.ifeVmQtaSet, "VA_KLOUT6")})
+
+            self.inputPins.update({"GP_KYLN_IN6": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_01"),
+                                   "GP_KYLN_IN7": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_02"),
+                                   "GP_KYLN_IN8": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_03"),
+                                   "GP_KYLN_IN9": self.PinInfo(self.ifeVmQtaGet, "LLS_IN_GP_KL_04"),
+                                   "PA_KYLN_IN1": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN1"),
+                                   "PA_KYLN_IN2": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN2"),
+                                   "PA_KYLN_IN3": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN3"),
+                                   "PA_KYLN_IN4": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN4"),
+                                   "PA_KYLN_IN5": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN5"),
+                                   "PA_KYLN_IN6": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN6"),
+                                   "PA_KYLN_IN7": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN7"),
+                                   "PA_KYLN_IN8": self.PinInfo(self.ifeVmQtaGet, "PA_KLIN8"),
+                                   "PA_MUTE_KYLN_IN": self.PinInfo(self.ifeVmQtaGet, "PA_MUTE")})
+
         ## Dict of connections; key is input pin, value is a ConnectionInfo object
         self.connections = {}
         ## List of connections we're done with
@@ -87,10 +94,10 @@ class GPIO(module.Module):
         ## Connection to GPIO Manager
         self.gpioMgrClient = ThalesZMQClient("ipc:///tmp/gpio-mgr.sock", log=self.log, msgParts=1)
         ## Address for communicating with QTA running on the IFE VM
-        self.ifeVmGpioAddr = "tcp://localhost:50010"
-        self.loadConfig(attributes=('ifeVmGpioAddr',))
+        self.ifeVmQtaAddr = "tcp://localhost:50003"
+        self.loadConfig(attributes=('ifeVmQtaAddr',))
         ## Connection to QTA running on the IFE VM
-        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmGpioAddr, log=self.log)
+        self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log, timeout=4000)
         # Set up thread to toggle outputs
         self.addThread(self.toggleOutputs)
 
@@ -236,6 +243,12 @@ class GPIO(module.Module):
             pinInfo = self.outputPins[outputPin]
             pinInfo.func(pinInfo.name, self.outputState)
 
+        # Requirement MPS-SRS-272 states to toggle "at 0.5 Hz with a 50% duty cycle"
+        # which I interpret as 0.5 Hz for a complete on/off cycle, or 1 second at each state.
+        # Note we do the sleep between the set and the get because some pins (specifically
+        # the PA/VA IFE pins) are slow to register a change on the input side.
+        sleep(0.9)
+
         # For each input pin in the connection list, get its value and increment matches/mismatches
         for inputPin, connection in connectionsCopy.items():
             pinInfo = self.inputPins[inputPin]
@@ -258,10 +271,6 @@ class GPIO(module.Module):
                     connection.matches += 1
                 else:
                     connection.mismatches += 1
-
-        # Requirement MPS-SRS-272 states to toggle "at 0.5 Hz with a 50% duty cycle"
-        # which I interpret as 0.5 Hz for a complete on/off cycle, or 1 second at each state.
-        sleep(1)
 
         # Operate on a copy of dead connections to reduce locking in background thread
         self.connectionsLock.acquire()

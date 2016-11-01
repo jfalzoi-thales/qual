@@ -1,7 +1,9 @@
 import subprocess
-from common.gpb.python.ARINC485_pb2 import ARINC485Request, ARINC485Response
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.module.module import Module
+
+from qual.pb2.ARINC485_pb2 import ARINC485Request, ARINC485Response
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## ARINC485 Module Class
 class IFEARINC485(Module):
