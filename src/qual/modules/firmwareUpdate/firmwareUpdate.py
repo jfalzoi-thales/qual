@@ -1,7 +1,6 @@
 import time
 import os
 import paramiko
-
 from Queue import Queue
 from subprocess import call, Popen
 
@@ -11,8 +10,10 @@ from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 
+
 ## Discard the output
 DEVNULL = open(os.devnull, 'wb')
+
 
 ## FirmwareUpdate Module
 class FirmwareUpdate(Module):
@@ -26,11 +27,12 @@ class FirmwareUpdate(Module):
                           FW_BMC:                   self.updateBMC,
                           FW_I350_EEPROM:           self.updateI350EEPROM,
                           FW_I350_FLASH:            self.updateI350Flash,
-                          FW_SWITCH_BOOTLOADER:     self.bootloaderUpgrade,
-                          FW_SWITCH_FIRMWARE:       self.firmwareUpgrade,
+                          FW_SWITCH_BOOTLOADER:     self.bootloaderUpdate,
+                          FW_SWITCH_FIRMWARE:       self.firmwareUpdate,
                           FW_SWITCH_FIRMWARE_SWAP:  self.firmwareSwap,
                           FW_SWITCH_CONFIG:         self.configUpdate,
-                          FW_SWITCH_CONFIG_SWAP:    self.configUpdateSwap}
+                          FW_SWITCH_CONFIG_SWAP:    self.configSwap,
+                          FW_IFE:                   self.updateIFE}
         ## Location of firmware images
         self.firmPath = "/thales/qual/firmware"
         #  If not running on an MPS, point away from the directory containing MPS firmware
@@ -84,7 +86,7 @@ class FirmwareUpdate(Module):
 
         return ThalesZMQMessage(response)
 
-    ## Attempts to upgrade the BIOS firmware using image included with QUAL
+    ## Attempts to update the BIOS firmware using image included with QUAL
     #  @param   self
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
@@ -124,11 +126,10 @@ class FirmwareUpdate(Module):
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
     def updateBMC(self, response, reboot):
+        bmcFile = 'ESL1v9.bin'
         # System restart delay in seconds after end of update.
         # This should be modify appropriately, but for now let's use 1 second
         delay = '1'
-        # File to install
-        bmcFile = 'ESL1v9.bin'
         # Subprocess obj
         sema = Popen(['sema', 'update', '%s/%s' % (self.firmPath, bmcFile), delay], stdout=DEVNULL)
         # Wait until the BMC is updated
@@ -142,7 +143,7 @@ class FirmwareUpdate(Module):
 
         if reboot: self.reboot.put("REBOOT")
 
-    ## Attempts to upgrade the I350 EEPROM using image included with QUAL
+    ## Attempts to update the I350 EEPROM using image included with QUAL
     #  @param   self
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
@@ -159,7 +160,7 @@ class FirmwareUpdate(Module):
 
         if reboot: self.reboot.put("REBOOT")
 
-    ## Attempts to upgrade the I350 Flash using image included with QUAL
+    ## Attempts to update the I350 Flash using image included with QUAL
     #  @param   self
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
@@ -237,7 +238,7 @@ class FirmwareUpdate(Module):
     #  @param   self
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
-    def configUpdateSwap(self, response, reboot):
+    def configSwap(self, response, reboot):
         try:
             output = ''
             # Open the SSH connection
@@ -301,7 +302,8 @@ class FirmwareUpdate(Module):
     #  @param   self
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
-    def firmwareUpgrade(self, response, reboot):
+    def firmwareUpdate(self, response, reboot):
+        firmwareFile = "Thales-MPS.dat"
         try:
             output = ''
             # Open the SSH connection
@@ -314,7 +316,7 @@ class FirmwareUpdate(Module):
             channel = switchClient.invoke_shell()
 
             # Copy the Firmware image into the switch
-            channel.send("firmware upgrade tftp://%s/%s\n" % (self.tftpServer, "Thales-MPS.dat"))
+            channel.send("firmware upgrade tftp://%s/%s\n" % (self.tftpServer, firmwareFile))
             # Get the starting time of the upgrade operation
             startTime = time.time()
             # It should end in less than 8 minutes
@@ -328,11 +330,11 @@ class FirmwareUpdate(Module):
                 if "Invalid IP address" in output:
                     self.setResp(response, False, FW_SWITCH_FIRMWARE, "Switch unable to establish the connection with tftp server %s" % self.tftpServer)
                     return
-                # if Thales-MPS.dat was not present on the tftp server
+                # if file was not present on the tftp server
                 elif 'File not found' in output:
-                    self.setResp(response, False, FW_SWITCH_FIRMWARE, "Switch unable to find \"Thales-MPS.dat\" image in tftp server %s" % self.tftpServer)
+                    self.setResp(response, False, FW_SWITCH_FIRMWARE, "Switch unable to find %s image in tftp server %s" % (firmwareFile, self.tftpServer))
                     return
-                # if Thales-MPS.dat was an invalid image
+                # if file was an invalid image
                 elif 'Error: Invalid image' in output:
                     self.setResp(response, False, FW_SWITCH_FIRMWARE, "Invalid firmware image")
                     return
@@ -398,12 +400,19 @@ class FirmwareUpdate(Module):
         except Exception as e:
             self.setResp(response, False, FW_SWITCH_CONFIG_SWAP, "Unexpected error with connection. Error message: %s" % e.message)
 
-    ## Switch bootloader upgrade.
+    ## Switch bootloader update.
     #  @param   self
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
-    def bootloaderUpgrade(self, response, reboot):
-        self.setResp(response, False, FW_SWITCH_BOOTLOADER, "Switch bootloader upgrade is not yet implemented.")
+    def bootloaderUpdate(self, response, reboot):
+        self.setResp(response, False, FW_SWITCH_BOOTLOADER, "Switch bootloader update is not yet implemented.")
+
+    ## Attempts to update/reprogram the IFE card components
+    #  @param   self
+    #  @param   response    FirmwareUpdateResponse object
+    #  @param   reboot      Reboot flag
+    def updateIFE(self, response, reboot):
+        self.setResp(response, False, FW_IFE, "IFE update is not yet implemented.")
 
     ## Waits for a reboot command, then attempts to reboot the system
     #  @param   self
