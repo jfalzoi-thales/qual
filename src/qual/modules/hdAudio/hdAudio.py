@@ -2,9 +2,10 @@ import os
 import subprocess
 from time import sleep
 
-from common.gpb.python.HDAudio_pb2 import HDAudioRequest, HDAudioResponse
-from common.module.module import Module
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
+from qual.pb2.HDAudio_pb2 import HDAudioRequest, HDAudioResponse
+from tklabs_utils.module.module import Module
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 ## HD Audio class
 #
