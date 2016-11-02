@@ -32,7 +32,7 @@ class FirmwareUpdate(Module):
                           FW_SWITCH_FIRMWARE_SWAP:  self.firmwareSwap,
                           FW_SWITCH_CONFIG:         self.configUpdate,
                           FW_SWITCH_CONFIG_SWAP:    self.configSwap,
-                          FW_IFE:                   self.updateIFE}
+                          FW_IFE_CARD:              self.updateIFE}
         ## Location of firmware images
         self.firmPath = "/thales/qual/firmware"
         #  If not running on an MPS, point away from the directory containing MPS firmware
@@ -438,7 +438,7 @@ class FirmwareUpdate(Module):
     #  @param   response    FirmwareUpdateResponse object
     #  @param   reboot      Reboot flag
     def updateIFE(self, response, reboot):
-        self.setResp(response, False, FW_IFE, "IFE update is not yet implemented.")
+        self.setResp(response, False, FW_IFE_CARD, "IFE update is not yet implemented.")
 
     ## Waits for a reboot command, then attempts to reboot the system
     #  @param   self
