@@ -20,7 +20,7 @@ class Upgrade(Module):
     def __init__(self, config = None):
         super(Upgrade, self).__init__(config)
         # Switch IP address
-        self.switchIP = '10.10.41.159'
+        self.switchAddress = '10.10.41.159'
         ## User name for switch
         self.switchUser = 'admin'
         ## Password for switch
@@ -120,12 +120,12 @@ class Upgrade(Module):
         try:
             shutil.copy(path, self.tftpServerPath)
             # Object to call switch functions
-            vtss = Vtss(switchIP=self.switchIP)
+            vtss = Vtss(switchIP=self.switchAddress)
             # Try to update the configuration
-            response = vtss.callMethod(['icfg.control.copy.set',
+            resp = vtss.callMethod(['icfg.control.copy.set',
                                         '{"Copy":true,"SourceConfigFile":"tftp://192.168.1.122/%s","SourceConfigType":"configFile","DestinationConfigType":"startupConfig"}'%(os.path.basename(path))])
             # Check the response
-            if response['error']:
+            if resp['error']:
                 # Something went wrong with the RPC!!!
                 self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to update configuration.")
                 return
@@ -142,9 +142,9 @@ class Upgrade(Module):
                     # Wait 1 second
                     sleep(1)
                     # Call upgrade process status
-                    response = vtss.callMethod(['icfg.status.copy.get'])
+                    resp = vtss.callMethod(['icfg.status.copy.get'])
                     # If there is an error calling status, probably we have an error
-                    if response['error']:
+                    if resp['error']:
                         self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to update configuration.")
                         return
                     # Check the status of the procedure
@@ -201,11 +201,11 @@ class Upgrade(Module):
         try:
             shutil.copy(path, self.tftpServerPath)
             # Object to call switch functions
-            vtss = Vtss(switchIP=self.switchIP)
+            vtss = Vtss(switchIP=self.switchAddress)
             # Try to upgrade the switch
-            response = vtss.callMethod(['firmware.control.image-upload.set','{"DoUpload":true,"Url":"tftp://192.168.1.122/%s","ImageType":"firmware"}'%(os.path.basename(path))])
+            resp = vtss.callMethod(['firmware.control.image-upload.set','{"DoUpload":true,"Url":"tftp://192.168.1.122/%s","ImageType":"firmware"}'%(os.path.basename(path))])
             # Check the response
-            if response['error']:
+            if resp['error']:
                 # Something went wrong with the RPC!!!
                 self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to upgrade switch.")
                 return
@@ -224,13 +224,13 @@ class Upgrade(Module):
                     # Wait 1 second
                     sleep(1)
                     # Call upgrade process status
-                    response = vtss.callMethod(['firmware.status.image-upload.get'])
+                    resp = vtss.callMethod(['firmware.status.image-upload.get'])
                     # If there is an error calling status, probably we have an error
-                    if response['error']:
+                    if resp['error']:
                         self.addResp(response, errCode=UPGRADE_FAILED, errDesc="Error: Unable to upgrade switch.")
                         return
                     # Check the status of the procedure
-                    status = response['result']['Status']
+                    status = resp['result']['Status']
                     # Posibles responses from the switch
                     # "none"
                     if status == 'none':

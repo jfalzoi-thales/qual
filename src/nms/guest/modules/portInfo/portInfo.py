@@ -59,13 +59,15 @@ class PortInfo(Module):
                 keyParts = key.split('.')
 
                 if "*" in keyParts:
+                    # Determine if an alias was passed
+                    aliasPassed = resolveAlias(keyParts[0])
+
                     if len(keyParts) == 1:
                         keyParts += ["*", "*"]
                     elif len(keyParts) == 2:
-                        # Determine if an alias was passed
-                        aliasPassed = resolveAlias(keyParts[0])
                         if aliasPassed[1]:
-                            keyParts=aliasPassed[0].split(".")
+                            keyParts = aliasPassed[0].split(".")
+
                         if keyParts[0] == "*":
                             keyParts = ["*"] + keyParts
                         else:
