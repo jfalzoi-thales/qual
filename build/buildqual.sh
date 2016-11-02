@@ -5,7 +5,7 @@ NMSDIR=~/tklabs-nms
 QUALDIR=~/qual
 MPSBUILDDIR=~/mps-builder
 
-BUILD="QUAL"
+BUILD=""
 TAG="NO"
 NMS="NO"
 BRANCH="dev/NMS"
@@ -21,57 +21,21 @@ usage() {
     exit 1
 }
 
-# Handle tito tag and build for tklabs_utils
+# Handle tito tag and build for tklabs_utils from qual tree
 titoutils() {
-    if [ "$NMS" == "YES" ]; then
-        echo "Building tklabs_utils RPMs from Thales Github repos! \('-')/"
-
-        if [ ! -d ${UTILSDIR} ]; then
-            cd
-            git clone https://github.com/mapcollab/tklabs-tklabs_utils.git
-            cd ${UTILSDIR}/
-        else
-            cd ${UTILSDIR}/
-            git fetch origin master
-            git reset --hard FETCH_HEAD
-            git clean -df
-        fi
-
-        UTILSVERSION=`cat .tito/packages/tklabs_utils | cut -f 1 -d ' '`
-    else
-        echo "Building tklabs_utils RPMs from QUAL tree! ('-')"
-        cd ${QUALDIR}/src/tklabs_utils
-        if [ "$TAG" == "YES" ]; then tito tag; fi
-        UTILSVERSION=`cat ${QUALDIR}/.tito/packages/tklabs_utils | cut -f 1 -d ' '`
-    fi
-
+    echo "Building tklabs_utils RPMs from QUAL tree! ('-')"
+    cd ${QUALDIR}/src/tklabs_utils
+    if [ "$TAG" == "YES" ]; then tito tag; fi
+    UTILSVERSION=`cat ${QUALDIR}/.tito/packages/tklabs_utils | cut -f 1 -d ' '`
     tito build --rpm --tag=tklabs_utils-${UTILSVERSION} --offline
 }
 
-# Handle tito tag and build for nms
+# Handle tito tag and build for nms from qual tree
 titonms() {
-    if [ "$NMS" == "YES" ]; then
-        echo "Building nms RPMs from Thales Github repos! (/'-')/"
-
-        if [ ! -d ${NMSDIR} ]; then
-            cd
-            git clone https://github.com/mapcollab/tklabs-nms.git
-            cd ${NMSDIR}/
-        else
-            cd ${NMSDIR}/
-            git fetch origin master
-            git reset --hard FETCH_HEAD
-            git clean -df
-        fi
-
-        NMSVERSION=`cat .tito/packages/nms | cut -f 1 -d ' '`
-    else
-        echo "Building nms RPMs from QUAL tree! ( '-')"
-        cd ${QUALDIR}/src/nms
-        if [ "$TAG" == "YES" ]; then tito tag; fi
-        NMSVERSION=`cat ${QUALDIR}/.tito/packages/nms | cut -f 1 -d ' '`
-    fi
-
+    echo "Building nms RPMs from QUAL tree! ( '-')"
+    cd ${QUALDIR}/src/nms
+    if [ "$TAG" == "YES" ]; then tito tag; fi
+    NMSVERSION=`cat ${QUALDIR}/.tito/packages/nms | cut -f 1 -d ' '`
     tito build --rpm --tag=nms-${NMSVERSION} --offline
 }
 
@@ -188,14 +152,21 @@ set -e
 cd ${QUALDIR}/
 echo "Please use your own Git credentials to log in. \(^^\) \(^^)/ (/^^)/"
 
-git fetch --tags origin "$BRANCH"
-git checkout "$BRANCH"
-git reset --hard FETCH_HEAD
+if [ "$BRANCH" ]; then
+    git fetch --tags origin "$BRANCH"
+    git checkout "$BRANCH"
+    git reset --hard FETCH_HEAD
+fi
+
 git clean -df
 rm -rf /tmp/tito
 tito init
-titoutils
-titonms
+
+if [ "$NMS" == "YES" ]; then
+    titoutils
+    titonms
+fi
+
 titoqual
 
 if [ "$TAG" == "YES" ]; then
@@ -204,8 +175,11 @@ fi
 
 cp -r ${QUALDIR}/build/mps-builder/* ${MPSBUILDDIR}/
 
-sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/nms-*.rpm
-sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/tklabs_utils-*.rpm
+if [ "$NMS" == "YES" ]; then
+    sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/nms-*.rpm
+    sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/tklabs_utils-*.rpm
+fi
+
 sudo rm -f ${MPSBUILDDIR}/repo/packages/x86_64/qual-*.rpm
 sudo mv /tmp/tito/x86_64/* ${MPSBUILDDIR}/repo/packages/x86_64/
 

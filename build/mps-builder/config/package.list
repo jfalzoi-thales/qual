@@ -79,8 +79,11 @@ power-supply-monitor
 # Higher level services
 machine-manager
 host-domain-device-service
-fake-nms
 
+# TKLabs NMS
+i350-tools
+tklabs_utils
+nms
 
 # MAP Test tools
 test-tools

@@ -27,6 +27,7 @@ memlockd memlockd-1.1-2
 mps-config mps-config-1.0.14-1
 mps-keys mps-keys-1.0.2-1
 mps-tools mps-tools-1.0.17-1
+nms nms-1.0.3-1
 pipsd pipsd-1.0.0-24
 pmbw pmbw-0.6.2-1
 power-supply-monitor power-supply-monitor-1.0.6-1
@@ -43,4 +44,5 @@ spi-manager spi-manager-1.0.8-1
 stress-ng stress-ng-0.05.22-1
 syslinux syslinux-6.03-9
 test-tools test-tools-1.0.0-6
+tklabs_utils tklabs_utils-1.0.3-1
 zeromq4 zeromq4-4.1.4-5
