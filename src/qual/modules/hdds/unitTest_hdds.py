@@ -1,9 +1,12 @@
 import unittest
+
 import hdds
-from common.gpb.python.HDDS_pb2 import HostDomainDeviceServiceRequest
-from common.tzmq.ThalesZMQMessage import ThalesZMQMessage
-from common.logger.logger import Logger
-from common.module.modulemsgs import ModuleMessages
+from qual.pb2.HDDS_pb2 import HostDomainDeviceServiceRequest
+from tklabs_utils.configurableObject.configurableObject import ConfigurableObject
+from tklabs_utils.logger.logger import Logger
+from tklabs_utils.module.modulemsgs import ModuleMessages
+from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
+
 
 #  @cond doxygen_unittest
 
@@ -15,77 +18,145 @@ class HDDSMessages(ModuleMessages):
 
     @staticmethod
     def getMenuItems():
-        return [("Get power supply value", HDDSMessages.getPS),
+        return [("Get single power supply value", HDDSMessages.getSingle),
+                ("Get switch temperature value", HDDSMessages.getSwitchTempKey),
+                ("Get processor module cpu_temp value", HDDSMessages.getProcessorKey),
+                ("Get all power supply values", HDDSMessages.getPSWC),
                 ("Get GPIO pin", HDDSMessages.get),
-                ("Set GPIO pin", HDDSMessages.set),
+                ("Get GPIO pins", HDDSMessages.getMul),
+                ("Set GPIO pins", HDDSMessages.setMul),
                 ("Get IFE temperature", HDDSMessages.getTemp),
                 ("Get IFE voltage",     HDDSMessages.getVolt)]
 
     @staticmethod
-    def getPS():
+    def getSingle():
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.GET
-        message.key = "power_supply.28V_monitor.current"
+        value = message.values.add()
+        value.key = "power_supply.28V_monitor.external_temperature"
+        return message
+
+    @staticmethod
+    def getSwitchTempKey():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.GET
+        value = message.values.add()
+        value.key = "carrier_card.switch.temperature"
+        return message
+
+    @staticmethod
+    def getProcessorKey():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.GET
+        value = message.values.add()
+        value.key = "carrier_card.processor_module.temperature.cpu_temp"
+        return message
+
+    @staticmethod
+    def getPSWC():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.GET
+        value = message.values.add()
+        value.key = "power_supply.28V_monitor.*"
         return message
 
     @staticmethod
     def get():
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.GET
-        message.key = "external_pins.output.pin_a_a13"
+        value = message.values.add()
+        value.key = "external_pins.output.pin_a_a13"
         return message
 
     @staticmethod
-    def set():
+    def getMul():
+        message = HostDomainDeviceServiceRequest()
+        message.requestType = HostDomainDeviceServiceRequest.GET
+        value = message.values.add()
+        value.key = "external_pins.input.pin_a_d13"
+        value = message.values.add()
+        value.key = "external_pins.input.pin_a_b14"
+        value = message.values.add()
+        value.key = "external_pins.input.pin_a_b13"
+        value = message.values.add()
+        value.key = "external_pins.input.pin_a_c15"
+        value = message.values.add()
+        value.key = "external_pins.input.pin_a_a15"
+        return message
+
+    @staticmethod
+    def setMul():
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.SET
-        message.key = "external_pins.output.pin_a_a13"
-        message.value = "HIGH"
+        value = message.values.add()
+        value.key = "external_pins.output.pin_a_e15"
+        value.value = "HIGH"
+        value = message.values.add()
+        value.key = "external_pins.output.pin_a_d14"
+        value.value = "HIGH"
+        value = message.values.add()
+        value.key = "external_pins.output.pin_a_d15"
+        value.value = "HIGH"
+        value = message.values.add()
+        value.key = "external_pins.output.pin_a_c14"
+        value.value = "HIGH"
+        value = message.values.add()
+        value.key = "external_pins.output.pin_a_c13"
+        value.value = "HIGH"
         return message
 
     @staticmethod
     def getTemp():
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.GET
-        message.key = "ife.temperature.U15_TINT"
+        value = message.values.add()
+        value.key = "ife.temperature.U15_TINT"
         return message
 
     @staticmethod
     def setTemp():
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.SET
-        message.key = "ife.temperature.U15_TINT"
-        message.value = "HIGH"
+        value = message.values.add()
+        value.key = "ife.temperature.U15_TINT"
+        value.value = "HIGH"
         return message
 
     @staticmethod
     def getVolt():
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.GET
-        message.key = "ife.voltage.U130_3V3"
+        value = message.values.add()
+        value.key = "ife.voltage.U130_3V3"
         return message
 
     @staticmethod
     def setVolt():
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.SET
-        message.key = "ife.voltage.U130_3V3"
-        message.value = "HIGH"
+        value = message.values.add()
+        value.key = "ife.voltage.U130_3V3"
+        value.value = "HIGH"
         return message
 
     @staticmethod
     def getBogus():
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.GET
-        message.key = "bogus_key"
+        value = message.values.add()
+        value.key = "bogus_key"
         return message
 
     @staticmethod
     def setBogus():
         message = HostDomainDeviceServiceRequest()
         message.requestType = HostDomainDeviceServiceRequest.SET
-        message.key = "bogus_key"
-        message.value = "x"
+        value = message.values.add()
+        value.key = "bogus_key_1"
+        value.value = "x"
+        value = message.values.add()
+        value.key = "bogus_key_2"
+        value.value = "y"
         return message
 
 ## HDDS Unit Test
@@ -100,13 +171,38 @@ class Test_HDDS(unittest.TestCase):
     # This is run only once before running any test cases
     @classmethod
     def setUpClass(cls):
+        ConfigurableObject.setFilename("qual")
         # Create a logger so we can add details to a multi-step test case
         cls.log = Logger(name='Test HDDS')
         cls.log.info('++++ Setup before HDDS module unit tests ++++')
         # Create the module
-        cls.module = hdds.HDDS(deserialize=True)
-        # Uncomment this if you want to see module debug messages
-        #cls.module.log.setLevel("DEBUG")
+        if cls.module is None:
+            cls.module = hdds.HDDS()
+
+    ## Test case: Use wildcards. Get "power_supply.28V_monitor.*"
+    # Asserts:
+    #       success == True
+    #       key     == "power_supply.28V_monitor.*"
+    #       value   != ""
+    def test_getPSWC(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        log.info("**** Test case: Get all Power Supply ****")
+        # Dictionary with the expected responses
+        expectedResponses = {"power_supply.28V_monitor.voltage":"28.375256",
+                             "power_supply.28V_monitor.current":"1.845365",
+                             "power_supply.28V_monitor.external_temperature":"38.375000",
+                             "power_supply.28V_monitor.internal_temperature":"41.000000"}
+        # Get the reponse
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getPSWC()))
+        self.assertEqual(len(response.body.values), 4)
+
+        # Iterate over all responses
+        for propertyResponse in response.body.values:
+            self.assertTrue(propertyResponse.success)
+            self.assertTrue(propertyResponse.key in expectedResponses.keys())
+            self.assertNotEqual(propertyResponse.value, "")
+        log.info("==== Test complete ====")
 
     ## Test case: Try to get an invalid key
     # Asserts:
@@ -119,96 +215,186 @@ class Test_HDDS(unittest.TestCase):
 
         log.info("**** Test case: Get invalid key ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getBogus()))
-        self.assertEqual(response.body.success, False)
-        self.assertEqual(response.body.key, "bogus_key")
-        self.assertEqual(response.body.value, "")
+        self.assertEqual(len(response.body.values), 1)
+
+        for propertyResponse in response.body.values:
+            self.assertFalse(propertyResponse.success)
+            self.assertEqual(propertyResponse.key, "bogus_key")
+            self.assertEqual(propertyResponse.value, "")
         log.info("==== Test complete ====")
 
-    ## Test case: Try to set an invalid key
+    ## Test case: Try to set an invalid keys
     # Asserts:
     #       success == False
-    #       key     == "bogus_key"
-    #       value   == ""
-    def test_setInvalidKey(self):
+    #       key     in ["bogus_key_1","bogus_key_2"]
+    #       value   ==      "x"      ,      "y"
+    def test_setInvalidKeys(self):
         log = self.__class__.log
         module = self.__class__.module
-
-        log.info("**** Test case: Set invalid key ****")
+        # Dictionary with the expected responses
+        expectedResponses = {"bogus_key_1":"x",
+                             "bogus_key_2":"y",}
+        log.info("**** Test case: Set invalid keys ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setBogus()))
-        self.assertEqual(response.body.success, False)
-        self.assertEqual(response.body.key, "bogus_key")
-        self.assertEqual(response.body.value, "")
+        self.assertEqual(len(response.body.values), 2)
+
+        for propertyResponse in response.body.values:
+            self.assertFalse(propertyResponse.success)
+            self.assertTrue(propertyResponse.key in expectedResponses.keys())
+            self.assertEqual(propertyResponse.value, expectedResponses[propertyResponse.key])
         log.info("==== Test complete ====")
 
-    ## Test case: Try to get a single value# Asserts:
+    ## Test case: Try to get a single value
+    #  Asserts:
     #       success == True
     #       key     == "external_pins.output.pin_a6"
     #       value   != ""
-    def test_get(self):
+    def test_getSingle(self):
         log = self.__class__.log
         module = self.__class__.module
 
         log.info("**** Test case: Get single ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.get()))
-        self.assertEqual(response.body.success, True)
-        self.assertEqual(response.body.key, "external_pins.output.pin_a6")
-        self.assertNotEqual(response.body.value, "")
+        self.assertEqual(len(response.body.values), 1)
+
+        for propertyResponse in response.body.values:
+            self.assertEqual(propertyResponse.success, True)
+            self.assertEqual(propertyResponse.key, "external_pins.output.pin_a_a13")
+            self.assertNotEqual(propertyResponse.value, "")
         log.info("==== Test complete ====")
 
-    ## Test case: Try to set a single value# Asserts:
+    ## Test case: Try to get a multiple values
+    #  Asserts:
     #       success == True
-    #       key     == "external_pins.output.pin_a6"
-    #       value   == "HIGH"
-    def test_set(self):
+    #       key     == [in list]
+    #       value   != ""
+    def test_getMultiple(self):
         log = self.__class__.log
         module = self.__class__.module
+        keyList = ["external_pins.input.pin_a_d13",
+                   "external_pins.input.pin_a_b14",
+                   "external_pins.input.pin_a_b13",
+                   "external_pins.input.pin_a_c15",
+                   "external_pins.input.pin_a_a15"]
+
+        log.info("**** Test case: Get multiple ****")
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getMul()))
+        self.assertEqual(len(response.body.values), 5)
+
+        for propertyResponse in response.body.values:
+            self.assertEqual(propertyResponse.success, True)
+            self.assertTrue(propertyResponse.key in keyList)
+            self.assertNotEqual(propertyResponse.value, "")
+        log.info("==== Test complete ====")
+
+    ## Test case: Try to set a multiple values
+    #  Asserts:
+    #       success == True
+    #       key     == [in list]
+    #       value   == "HIGH"
+    def test_setMultiple(self):
+        log = self.__class__.log
+        module = self.__class__.module
+        keyList = ["external_pins.output.pin_a_e15",
+                   "external_pins.output.pin_a_d14",
+                   "external_pins.output.pin_a_d15",
+                   "external_pins.output.pin_a_c14",
+                   "external_pins.output.pin_a_c13"]
 
         log.info("**** Test case: Set value ****")
-        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.set()))
-        self.assertEqual(response.body.success, True)
-        self.assertEqual(response.body.key, "external_pins.output.pin_a6")
-        self.assertEqual(response.body.value, "HIGH")
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setMul()))
+        self.assertEqual(len(response.body.values), 5)
+
+        for propertyResponse in response.body.values:
+            self.assertEqual(propertyResponse.success, True)
+            self.assertTrue(propertyResponse.key in keyList)
+            self.assertEqual(propertyResponse.value, "HIGH")
         log.info("==== Test complete ====")
 
-    ## Test case: Test temperature key requests:
+    ## Test case: Test get IFE temperature/voltage :
     #       success == True
-    #       key     == "external_pins.output.pin_a6"
-    #       value   == "HIGH"
-    def test_temp(self):
+    #       key     == [what was specified]
+    #       value   != ""
+    def test_getIFE(self):
         log = self.__class__.log
         module = self.__class__.module
 
-        log.info("**** Test case: Set temp****")
-        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setTemp()))
-        self.assertEqual(response.body.success, False)
-        self.assertEqual(response.body.key, "ife.temperature.U15_TINT")
-        self.assertEqual(response.body.value, "")
-
-        log.info("**** Test case: Get temp****")
+        log.info("**** Test case: Get temp ****")
         response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getTemp()))
-        self.assertEqual(response.body.success, True)
-        self.assertEqual(response.body.key, "ife.temperature.U15_TINT")
-        self.assertNotEqual(response.body.value, "")
+        self.assertEqual(len(response.body.values), 1)
+
+        for propertyResponse in response.body.values:
+            self.assertTrue(propertyResponse.success)
+            self.assertEqual(propertyResponse.key, "ife.temperature.U15_TINT")
+            self.assertNotEqual(propertyResponse.value, "")
+
+        log.info("**** Test case: Get volt ****")
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getVolt()))
+        self.assertEqual(len(response.body.values), 1)
+
+        for propertyResponse in response.body.values:
+            self.assertTrue(propertyResponse.success)
+            self.assertEqual(propertyResponse.key, "ife.voltage.U130_3V3")
+            self.assertNotEqual(propertyResponse.value, "")
 
         log.info("==== Test complete ====")
 
-    def test_volt(self):
+    ## Test case: Test set IFE temperature/voltage :
+    #       success == False
+    #       key     == [what was specified]
+    #       value   == "HIGH"
+    def test_setIFE(self):
         log = self.__class__.log
         module = self.__class__.module
 
-        log.info("**** Test case: Set volt****")
-        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setVolt()))
-        self.assertEqual(response.body.success, False)
-        self.assertEqual(response.body.key, "ife.voltage.U130_3V3")
-        self.assertEqual(response.body.value, "")
+        log.info("**** Test case: Set temp ****")
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setTemp()))
+        self.assertEqual(len(response.body.values), 1)
 
-        log.info("**** Test case: Get volt****")
-        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getVolt()))
-        self.assertEqual(response.body.success, True)
-        self.assertEqual(response.body.key, "ife.voltage.U130_3V3")
-        self.assertNotEqual(response.body.value, "")
+        for propertyResponse in response.body.values:
+            self.assertFalse(propertyResponse.success)
+            self.assertEqual(propertyResponse.key, "ife.temperature.U15_TINT")
+            self.assertEqual(propertyResponse.value, "HIGH")
+
+        log.info("**** Test case: Set volt ****")
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.setVolt()))
+        self.assertEqual(len(response.body.values), 1)
+        
+        for propertyResponse in response.body.values:
+            self.assertFalse(propertyResponse.success)
+            self.assertEqual(propertyResponse.key, "ife.voltage.U130_3V3")
+            self.assertEqual(propertyResponse.value, "HIGH")
 
         log.info("==== Test complete ====")
+
+    def test_singleKeys(self):
+        log = self.__class__.log
+        module = self.__class__.module
+
+        log.info("**** Test Case: Get Power Supply Key, Switch Temperature Key, and Processor Module Key ****")
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getSingle()))
+        self.assertEqual(len(response.body.values), 1)
+
+        for propertyResponse in response.body.values:
+            self.assertTrue(propertyResponse.success)
+            self.assertEqual(propertyResponse.key, "power_supply.28V_monitor.external_temperature")
+            self.assertTrue(propertyResponse.value)
+
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getSwitchTempKey()))
+        self.assertEqual(len(response.body.values), 1)
+
+        for propertyResponse in response.body.values:
+            self.assertTrue(propertyResponse.success)
+            self.assertEqual(propertyResponse.key, "carrier_card.switch.temperature")
+            self.assertTrue(propertyResponse.value)
+
+        response = module.msgHandler(ThalesZMQMessage(HDDSMessages.getProcessorKey()))
+        self.assertEqual(len(response.body.values), 1)
+
+        for propertyResponse in response.body.values:
+            self.assertTrue(propertyResponse.success)
+            self.assertEqual(propertyResponse.key, "carrier_card.processor_module.temperature.cpu_temp")
+            self.assertTrue(propertyResponse.value)
 
 if __name__ == '__main__':
     unittest.main()

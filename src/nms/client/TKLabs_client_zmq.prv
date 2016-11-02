@@ -1,0 +1,12 @@
+#   ****  Generated on 2016-10-24 13:23:26 by CZMQ  ****
+#   ZeroMQ CURVE **Secret** Certificate
+#   DO NOT PROVIDE THIS FILE TO OTHER USERS nor change its permissions.
+
+metadata
+    name = "TKLabs Client Services"
+    date-created = "2016-10-24 13:23:26"
+    created-by = "CZMQ zmakecert"
+    organization = "TKLabs"
+curve
+    public-key = "[iNRo68?z{{Ln!Dqc51@O)]>#>n(xMJnQE[3)#@N"
+    secret-key = "DLOtE+er7j5^P:+[bg1hJ*t?{xP%+o9JgY#{.CS]"

@@ -1,0 +1,25 @@
+package mpsqual;
+
+enum FirmwareCommandsT {
+    FW_BIOS = 0;
+    FW_BMC = 1;
+    FW_I350_EEPROM = 2;
+    FW_I350_FLASH = 3;
+    FW_SWITCH_BOOTLOADER = 4;
+    FW_SWITCH_FIRMWARE = 5;
+    FW_SWITCH_FIRMWARE_SWAP = 6;
+    FW_SWITCH_CONFIG = 7;
+    FW_SWITCH_CONFIG_SWAP = 8;
+    FW_IFE_CARD = 9;
+}
+
+message FirmwareUpdateRequest {
+	required FirmwareCommandsT command = 1;
+    required bool reboot = 2;
+}
+
+message FirmwareUpdateResponse {
+	required bool success = 1;
+    optional FirmwareCommandsT component = 2;
+	optional string errorMessage = 3 [default = ""];
+}
