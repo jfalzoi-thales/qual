@@ -482,19 +482,7 @@ class HDDS(Module):
     #  @param     inventoryKeys List of keys to get
     def bootloaderSwpnGet(self, response, key):
         try:
-            self.sshClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
-            channel = self.sshClient.invoke_shell()
-            channel.send("show version\n")
-            sleep(0.3)
-            output = ''
-            while channel.recv_ready():
-                output += channel.recv(1024)
-            if output.endswith('-- more --, next page: Space, continue: g, quit: ^C'):
-                output += '\n\r'
-                channel.send("\t\n")
-                sleep(0.3)
-                while channel.recv_ready():
-                    output += channel.recv(1024)
+            output = self._sshSwitchCmd('show version')
             output = output.split('\n\r')
             partNum = None
             version = None
@@ -527,19 +515,7 @@ class HDDS(Module):
     #  @param     inventoryKeys List of keys to get
     def primaryAppSwpnGet(self, response, key):
         try:
-            self.sshClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
-            channel = self.sshClient.invoke_shell()
-            channel.send("show version\n")
-            sleep(0.3)
-            output = ''
-            while channel.recv_ready():
-                output += channel.recv(1024)
-            if output.endswith('-- more --, next page: Space, continue: g, quit: ^C'):
-                output += '\n\r'
-                channel.send("\t\n")
-                sleep(0.3)
-                while channel.recv_ready():
-                    output += channel.recv(1024)
+            output = self._sshSwitchCmd('show version')
             output = output.split('\n\r')
             partNum = None
             version = None
@@ -572,19 +548,7 @@ class HDDS(Module):
     #  @param     inventoryKeys List of keys to get
     def secondaryAppSwpnGet(self, response, key):
         try:
-            self.sshClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
-            channel = self.sshClient.invoke_shell()
-            channel.send("show version\n")
-            sleep(0.3)
-            output = ''
-            while channel.recv_ready():
-                output += channel.recv(1024)
-            if output.endswith('-- more --, next page: Space, continue: g, quit: ^C'):
-                output += '\n\r'
-                channel.send("\t\n")
-                sleep(0.3)
-                while channel.recv_ready():
-                    output += channel.recv(1024)
+            output = self._sshSwitchCmd('show version')
             output = output.split('\n\r')
             partNum = None
             version = None
@@ -629,7 +593,8 @@ class HDDS(Module):
                     configVersion = version
                     break
             if configVersion:
-                self.addResp(response, key, "%s_%s" % (self.lru_testPartnum, configVersion), True)
+                # TODO: comment in the code to get the correct part number. I've asked Lee about getting the correct part number but we may not get this information before the end of the sprint.
+                self.addResp(response, key, "%s_%s" % ('UNKNOWN', configVersion), True)
             else:
                 self.log.error('Unable to parse Configuration version.')
                 self.addResp(response, key)
@@ -852,3 +817,28 @@ class HDDS(Module):
             for key, value in hddsPairs.items():
                 self.addResp(response, key, value)
 
+    ## Fuction execute a command through ssh interface
+    #
+    #  @param: cmd
+    #  @type:  str
+    #  @return: switch response
+    #  @type:   str
+    def _sshSwitchCmd(self, cmd):
+        self.sshClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+        channel = self.sshClient.invoke_shell()
+        channel.send("%s\n" % (cmd))
+        sleep(0.3)
+        output = ''
+        while channel.recv_ready():
+            output += channel.recv(1024)
+        while True:
+            if output.endswith('-- more --, next page: Space, continue: g, quit: ^C'):
+                output += '\n\r'
+                channel.send("\t\n")
+                sleep(0.3)
+                while channel.recv_ready():
+                    output += channel.recv(1024)
+                continue
+            break
+
+        return output
