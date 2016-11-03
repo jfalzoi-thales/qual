@@ -10,6 +10,8 @@ from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from tklabs_utils.i350.eepromTools import EepromTools
+from tklabs_utils.vtss.vtss import Vtss
+
 
 ## Discard the output
 DEVNULL = open(os.devnull, 'wb')
@@ -39,10 +41,11 @@ class FirmwareUpdate(Module):
         if not (os.path.exists("/dev/mps/pci-audio") and os.path.exists("/dev/mps/pci-cpu-ethernet")):
             self.log.warning("Hardware does not appear to be an MPS; using test-firmware directory")
             self.firmPath = "/thales/qual/test-firmware"
-        ## TFTP server for configurations
-        self.tftpServer = "10.10.42.200"
-        ## Switch IP
+        ## IP address of the switch - can be a list of addresses
         self.switchAddress = '10.10.41.159'
+        ## TFTP server for uploading updates to the switch
+        ## TODO: This needs to be dynamic based on the switch IP address
+        self.tftpServer = "10.10.42.200"
         ## User name for switch
         self.switchUser = 'admin'
         ## Password for switch
@@ -50,6 +53,8 @@ class FirmwareUpdate(Module):
         self.loadConfig(attributes=('switchAddress','switchUser','switchPassword', 'tftpServer'))
         ## BIOS tool command
         self.biosTool = "PATH=$PATH:/thales/host/appliances mps-biostool"
+        ## JSON-RPC connection to switch
+        self.vtss = Vtss(self.switchAddress)
         ## Connection to GPIO manager
         self.gpioMgrClient = ThalesZMQClient("ipc:///tmp/gpio-mgr.sock", log=self.log, msgParts=1)
         ## Queue for storing a reboot request
@@ -271,7 +276,7 @@ class FirmwareUpdate(Module):
             switchClient = paramiko.SSHClient()
             switchClient.load_system_host_keys()
             switchClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            switchClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+            switchClient.connect(self.vtss.ip, port=22, username=self.switchUser, password=self.switchPassword)
             # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
             channel = switchClient.invoke_shell()
 
@@ -318,7 +323,7 @@ class FirmwareUpdate(Module):
             if reboot: self.reboot.put("REBOOT")
 
         except paramiko.ssh_exception.SSHException:
-            self.setResp(response, False, FW_SWITCH_CONFIG_SWAP, "Unable to establish the connection with %s" % self.switchAddress)
+            self.setResp(response, False, FW_SWITCH_CONFIG_SWAP, "Unable to establish the connection with %s" % self.vtss.ip)
         except Exception as e:
             self.setResp(response, False, FW_SWITCH_CONFIG_SWAP, "Unexpected error with connection. Error message: %s" % e.message)
 
@@ -336,7 +341,7 @@ class FirmwareUpdate(Module):
             switchClient = paramiko.SSHClient()
             switchClient.load_system_host_keys()
             switchClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            switchClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+            switchClient.connect(self.vtss.ip, port=22, username=self.switchUser, password=self.switchPassword)
             # Execute the command
             # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
             channel = switchClient.invoke_shell()
@@ -387,7 +392,7 @@ class FirmwareUpdate(Module):
             self.setResp(response, False, FW_SWITCH_FIRMWARE, "FATAL! Firmware upgrade timeout.")
 
         except paramiko.ssh_exception.SSHException:
-            self.setResp(response, False, FW_SWITCH_FIRMWARE, "Unable to establish the connection with %s" % self.switchAddress)
+            self.setResp(response, False, FW_SWITCH_FIRMWARE, "Unable to establish the connection with %s" % self.vtss.ip)
         except Exception as e:
             self.setResp(response, False, FW_SWITCH_FIRMWARE, "Unexpected error with connection. Error message: %s" % e.message)
 
@@ -404,7 +409,7 @@ class FirmwareUpdate(Module):
             switchClient = paramiko.SSHClient()
             switchClient.load_system_host_keys()
             switchClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            switchClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+            switchClient.connect(self.vtss.ip, port=22, username=self.switchUser, password=self.switchPassword)
             # Execute the command
             # Need to open a channel; cause the switch doesn't support ssh command 'exec_command'
             channel = switchClient.invoke_shell()
@@ -422,7 +427,7 @@ class FirmwareUpdate(Module):
             if reboot: self.reboot.put("REBOOT")
 
         except paramiko.ssh_exception.SSHException:
-            self.setResp(response, False, FW_SWITCH_FIRMWARE_SWAP, "Unable to establish the connection with %s" % self.switchAddress)
+            self.setResp(response, False, FW_SWITCH_FIRMWARE_SWAP, "Unable to establish the connection with %s" % self.vtss.ip)
         except Exception as e:
             self.setResp(response, False, FW_SWITCH_CONFIG_SWAP, "Unexpected error with connection. Error message: %s" % e.message)
 

@@ -31,7 +31,7 @@ class HDDS(Module):
         self.cpuEthernetDev = "enp0s31f6"
         ## Name of I350 Ethernet device
         self.i350EthernetDev = "ens1f"
-        #  IP address of the switch
+        #  IP address of the switch - can be a list of addresses
         self.switchAddress = "10.10.41.159"
         #  Username for switch communication
         self.switchUser = "admin"
@@ -44,6 +44,8 @@ class HDDS(Module):
         self.cpuMagicNum = "0x15B78086"
         ## Connection to QTA running on the IFE VM
         self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log, timeout=4000)
+        ## JSON-RPC connection to switch
+        self.vtss = Vtss(self.switchAddress)
         ## SSH connection for programming switch MAC address
         self.sshClient = SSHClient()
         self.sshClient.set_missing_host_key_policy(AutoAddPolicy())
@@ -288,8 +290,7 @@ class HDDS(Module):
     #  @param   key         Key of MAC address to be obtained
     def vtssMacGet(self, response, key):
         try:
-            vtss = Vtss(self.switchAddress)
-            json = vtss.callMethod(["ip.status.interface.link.get"])
+            json = self.vtss.callMethod(["ip.status.interface.link.get"])
             mac = json["result"][0]["val"]["macAddress"]
         except (socket.error, KeyError, IndexError):
             mac = ""
@@ -429,10 +430,8 @@ class HDDS(Module):
     #  @param     inventoryKeys List of keys to get
     def vtssSwpnGet(self, response, key):
         try:
-            # Open connection with the switch
-            vtss = Vtss(switchIP=self.switchAddress)
             # Get the firmware version
-            jsonResp = vtss.callMethod(['firmware.status.switch.get'])
+            jsonResp = self.vtss.callMethod(['firmware.status.switch.get'])
             # If no error, look for something in the string that looks like a version number
             if jsonResp['error'] is None:
                 partnum = None
@@ -530,7 +529,7 @@ class HDDS(Module):
         switchMac = mac.replace(':', '-')
 
         try:
-            self.sshClient.connect(self.switchAddress, 22, self.switchUser, self.switchPassword)
+            self.sshClient.connect(self.vtss.ip, 22, self.switchUser, self.switchPassword)
             shell = self.sshClient.invoke_shell()
             self.sendShell(shell, "platform debug allow")
             self.sendShell(shell, "debug board mac %s" % switchMac)
