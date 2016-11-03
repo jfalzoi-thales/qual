@@ -6,37 +6,59 @@ import ssl
 import socket
 from exception_Vtss import MethodNotFoundException, WrongParamException
 
+## Global variable - gets set once we successfully contact a switch
+lastValidIP = None
+
 ## Class to handle wrap the VTSS switch interface
 class Vtss(object):
     ## Constructor
     #
-    #  @param: self
-    #  @type:  str
-    #  @param: switchIP - IP of the switch
-    def __init__(self, switchIP=None, user='admin', password='', specFile='mps-vtss-spec-rpc.spec'):
-        #  IP of the switch
-        self.ip = switchIP
-        #  User name
+    #  @param self
+    #  @param ipAddrs   List of IP addresses to try to contact the switch
+    #  @param user      User name to access the switch
+    #  @param password  Password to access the switch
+    #  @param specDir   Directory in which to place the JSON API spec file
+    def __init__(self, ipAddrs, user='admin', password='', specDir='/tmp'):
+        ## List of IP addresses to try to contact
+        self.ipList = ipAddrs.split(',')
+        ## User name
         self.user = user
-        #  Password
+        ## Password
         self.password = password
-        #  Spec file
-        self.specFile = specFile
+        #  Validate spec file directory
+        if specDir:
+            if not os.path.exists(specDir):
+                raise IOError
+        ## Spec file
+        self.specFile = 'mps-vtss-spec-rpc.spec'
+        if specDir:
+            self.specFile = '%s/%s' % (specDir, self.specFile)
+        ## Actual IP address of the switch, or None if we can't contact it
+        self.ip = None
+        ## Use the cached IP address if it's valid, otherwise walk the list and try to contact the switch
+        global lastValidIP
+        if lastValidIP and lastValidIP in self.ipList:
+            self.ip = lastValidIP
+        else:
+            for ip in self.ipList:
+                try:
+                    self.downloadSpecFile(ip, update=True)
+                    # If we don't get an exception, it succeeded
+                    self.ip = ip
+                    lastValidIP = ip
+                    break
+                except Exception:
+                    # If it failed, we'll just try the next address in the list
+                    pass
 
     ## Function to download the spec file from the switch
     #
-    #  @type:  str
-    #  @param: path - path to save the spec file. If not passed, 'cwd' will be used
-    def downloadSpecFiles(self, path="/tmp", update=False):
-        if path != "":
-            #  Check if valid path
-            if not os.path.exists(path):
-                raise IOError
-            self.specFile = '%s/%s' % (path, self.specFile)
-
+    #  @param self
+    #  @param ip   IP address of the switch
+    def downloadSpecFile(self, ip, update=False):
         if not os.path.exists(self.specFile) or update:
             #  Init the connection
-            http = httplib.HTTPSConnection(self.ip, 443, context=ssl._create_default_https_context(), timeout=5)
+            http = httplib.HTTPSConnection(ip, 443, context=ssl._create_default_https_context(), timeout=5)
 
             ## Get the json specs
             auth = base64.b64encode(bytes('%s:%s' % (self.user, self.password,)).decode('utf-8'))
@@ -50,7 +72,7 @@ class Vtss(object):
                 # Probably, HTTPS not enabled in the switch
                 # let's try with a non-secure connection
                 #  Init the connection
-                http = httplib.HTTPConnection(self.ip, 80, timeout=5)
+                http = httplib.HTTPConnection(ip, 80, timeout=5)
                 try:
                     http.request('GET', '/json_spec', headers=header)
                     resp = http.getresponse()
@@ -119,7 +141,7 @@ class Vtss(object):
     #   @note: If not spec file, then it downloads it
     def getSpecs(self):
         if not os.path.exists(self.specFile):
-            self.downloadSpecFiles()
+            self.downloadSpecFile(self.ip)
         file = open(self.specFile)
         content = file.read()
         return json.loads(content)
@@ -207,7 +229,7 @@ class Vtss(object):
             # Probably, HTTPS not enabled in the switch
             # let's try with a non-secure connection
             # Init the connection
-            http = httplib.HTTPConnection('10.10.41.159', 80, timeout=5)
+            http = httplib.HTTPConnection(self.ip, 80, timeout=5)
             try:
                 http.request('POST', url='/config/icfg_conf_download', body=x_UrlMsg, headers=header)
                 resp = http.getresponse()
