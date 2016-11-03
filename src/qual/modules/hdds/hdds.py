@@ -552,6 +552,8 @@ class HDDS(Module):
                         if word[0].isdigit():
                             version = word
                             break
+                        else:
+                            partNum = word
                     break
             if version:
                 self.addResp(response, key, "%s_%s" % (partNum, version), True)
@@ -595,6 +597,8 @@ class HDDS(Module):
                         if word[0].isdigit():
                             version = word
                             break
+                        else:
+                            partNum = word
                         break
             if version:
                 self.addResp(response, key, "%s_%s" % (partNum, version), True)
