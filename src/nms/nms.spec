@@ -5,7 +5,7 @@
 
 Summary: Network Management Appliance
 Name: nms
-Version: 1.0.8
+Version: 1.0.9
 Release: 1
 Group: System Environment/Libraries
 URL: https://repo-tav.tklabs.com:8102/
@@ -77,6 +77,9 @@ sed -i -re 's|/thales/host/appliances|%{THALES_BIN_DIR}|g' \
 %exclude %{appdir}/scripts
 
 %changelog
+* Thu Nov 03 2016 Jenkins <jenkins@tklabs.com> 1.0.9-1
+- 
+
 * Wed Nov 02 2016 Jenkins <jenkins@tklabs.com> 1.0.8-1
 - 
 
