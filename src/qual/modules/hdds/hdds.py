@@ -1,5 +1,6 @@
 import os
 import socket
+import paramiko
 from ConfigParser import SafeConfigParser
 from subprocess import call, check_output, CalledProcessError, Popen, PIPE
 from time import sleep
@@ -7,7 +8,6 @@ from time import sleep
 from common.pb2.ErrorMessage_pb2 import ErrorMessage
 from common.pb2.HDDS_API_pb2 import GetReq, GetResp, SetReq, SetResp
 from i350Inventory import I350Inventory
-from paramiko import SSHClient, AutoAddPolicy, SSHException
 from qual.pb2.HDDS_pb2 import HostDomainDeviceServiceRequest, HostDomainDeviceServiceResponse
 from semaInventory import SEMAInventory
 from tklabs_utils.i350.eepromTools import EepromTools
@@ -15,6 +15,7 @@ from tklabs_utils.module.module import Module
 from tklabs_utils.tzmq.ThalesZMQClient import ThalesZMQClient
 from tklabs_utils.tzmq.ThalesZMQMessage import ThalesZMQMessage
 from tklabs_utils.vtss.vtss import Vtss
+
 
 
 ## HDDS Module
@@ -45,8 +46,9 @@ class HDDS(Module):
         ## Connection to QTA running on the IFE VM
         self.ifeVmQtaClient = ThalesZMQClient(self.ifeVmQtaAddr, log=self.log, timeout=4000)
         ## SSH connection for programming switch MAC address
-        self.sshClient = SSHClient()
-        self.sshClient.set_missing_host_key_policy(AutoAddPolicy())
+        self.sshClient = paramiko.SSHClient()
+        self.sshClient.load_system_host_keys()
+        self.sshClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ## Mac address types for handling wild cards
         self.macKeys = ["mac_address.switch",
                         "mac_address.processor",
@@ -56,12 +58,16 @@ class HDDS(Module):
                         "mac_address.i350_4"]
         ## Software part number types for handling wild cards
         self.swpnKeys = ["software_part.BIOS",
+                         "software_part.BMC",
                          "software_part.i350_eeprom",
                          "software_part.i350_pxe",
-                         "software_part.switch",
-                         "software_part.ATP"]
-        ## Software part number for ATP
-        self.atpPartnum = "LV39-161008"
+                         "software_part.switch_bootloader",
+                         "software_part.switch_primary_app",
+                         "software_part.switch_secondary_app",
+                         "software_part.switch_configuration",
+                         "software_part.lru_test"]
+        ## Software part number for lru_test
+        self.lru_testPartnum = "LV39-161008"
         ## I350 inventory handler
         self.i350Inventory = I350Inventory(self.log)
         ## SEMA inventory handler
@@ -341,15 +347,22 @@ class HDDS(Module):
 
             if target == "BIOS":
                 self.biosSwpnGet(response, key)
+            if target == "BMC":
+                self.bmcSwpnGet(response, key)
             elif target == "i350_eeprom":
                 self.i350eepromSwpnGet(response, key)
             elif target == "i350_pxe":
                 self.i350pxeSwpnGet(response, key)
-            elif target == "switch":
-                self.vtssSwpnGet(response, key)
-            elif target == "ATP":
-                self.atpSwpnGet(response, key)
-
+            elif target == "switch_bootloader_app ":
+                self.bootloaderSwpnGet(response, key)
+            elif target == "switch_primary_app ":
+                self.primaryAppSwpnGet(response, key)
+            elif target == "switch_secondary_app ":
+                self.secondaryAppSwpnGet(response, key)
+            elif target == "switch_configuration":
+                self.configSwpnGet(response, key)
+            elif target == "lru_test":
+                self.lruTestSwpnGet(response, key)
 
     ## Handles GET requests for BIOS software part number
     #  @param     self
@@ -395,8 +408,8 @@ class HDDS(Module):
                 oem = eePromValue
                 # If we reach this point, we have the major and the minor version, and the OEM
                 # We can construct the complete version number
-                # I350 doesn't have its own part number, we use the ATP part number
-                self.addResp(response, key, "%s_%d.%d.%d" % (self.atpPartnum, majorVersion, minorVersion, oem), True)
+                # I350 doesn't have its own part number, we use the lru_test part number
+                self.addResp(response, key, "%s_%d.%d.%d" % (self.lru_testPartnum, majorVersion, minorVersion, oem), True)
             else:
                 self.log.error('Unable to get I350 EEPROM OEM version.')
                 self.addResp(response, key)
@@ -417,57 +430,208 @@ class HDDS(Module):
             buildNumber  = eePromValue & 0xff
             # If we reach this point, we have the major and the minor version, and the OEM
             # We can construct the complete version number
-            # I350 doesn't have its own part number, we use the ATP part number
-            self.addResp(response, key, "%s_%d.%d.%d" % (self.atpPartnum, majorVersion, minorVersion, buildNumber), True)
+            # I350 doesn't have its own part number, we use the lru_test part number
+            self.addResp(response, key, "%s_%d.%d.%d" % (self.lru_testPartnum, majorVersion, minorVersion, buildNumber), True)
         else:
             self.log.error('Unable to get I350 PXE version.')
             self.addResp(response, key)
 
-    ## Handles GET requests for switch software part number
+    ## Handles GET requests for lru_test software part number
     #  @param     self
     #  @param     response      HostDomainDeviceServiceResponse object
     #  @param     inventoryKeys List of keys to get
-    def vtssSwpnGet(self, response, key):
-        try:
-            # Open connection with the switch
-            vtss = Vtss(switchIP=self.switchAddress)
-            # Get the firmware version
-            jsonResp = vtss.callMethod(['firmware.status.switch.get'])
-            # If no error, look for something in the string that looks like a version number
-            if jsonResp['error'] is None:
-                partnum = None
-                version = None
-                for item in jsonResp['result'][0]['val']['Version'].split():
-                    if item[0].isdigit():
-                        version = item
-                        break
-                    else:
-                        partnum = item
-                if partnum and version:
-                    self.addResp(response, key, "%s_%s" % (partnum, version), True)
-                else:
-                    self.log.error('Unable to parse switch version information.')
-                    self.addResp(response, key)
-                return
-            else:
-                self.log.error('Error retrieving the information from the switch.')
-                self.addResp(response, key)
-        except Exception:
-            self.log.error('Unable to retrieve the information from the switch.')
-            self.addResp(response, key)
-
-    ## Handles GET requests for ATP software part number
-    #  @param     self
-    #  @param     response      HostDomainDeviceServiceResponse object
-    #  @param     inventoryKeys List of keys to get
-    def atpSwpnGet(self, response, key):
+    def lruTestSwpnGet(self, response, key):
         try:
             version = check_output(["rpm", "-q", "--queryformat=%{VERSION}", "qual"])
         except CalledProcessError:
-            self.log.warning("Unable to get ATP version number.")
+            self.log.warning("Unable to get lru_test version number.")
             self.addResp(response, key)
         else:
-            self.addResp(response, key, "%s_%s" % (self.atpPartnum, version), True)
+            self.addResp(response, key, "%s_%s" % (self.lru_testPartnum, version), True)
+
+    ## Handles GET requests for BMC software part number
+    #  @param     self
+    #  @param     response      HostDomainDeviceServiceResponse object
+    #  @param     inventoryKeys List of keys to get
+    def bmcSwpnGet(self, response, key):
+        try:
+            lines = check_output(['sema', 'bmc']).splitlines()
+        except (CalledProcessError, OSError):
+            self.log.error('Unable to retrieve BMC information.')
+            self.addResp(response, key)
+        else:
+            version = None
+            for line in lines:
+                if line.startswith('Firmware:'):
+                    words = line.split()
+                    for word in words:
+                        if word[0].isdigit():
+                            version = word
+                            break
+                    break
+
+            if version:
+                self.addResp(response, key, "%s_%s" % (self.lru_testPartnum, version), True)
+            else:
+                self.log.error('Unable to parse BMC information.')
+                self.addResp(response, key)
+
+    ## Handles GET requests for Bootloader software part number
+    #  @param     self
+    #  @param     response      HostDomainDeviceServiceResponse object
+    #  @param     inventoryKeys List of keys to get
+    def bootloaderSwpnGet(self, response, key):
+        try:
+            self.sshClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+            channel = self.sshClient.invoke_shell()
+            channel.send("show version\n")
+            sleep(0.3)
+            output = ''
+            while channel.recv_ready():
+                output += channel.recv(1024)
+            if output.endswith('-- more --, next page: Space, continue: g, quit: ^C'):
+                output += '\n\r'
+                channel.send("\t\n")
+                sleep(0.3)
+                while channel.recv_ready():
+                    output += channel.recv(1024)
+            output = output.split('\n\r')
+            partNum = None
+            version = None
+            bootSection = False
+            for line in output:
+                if 'Bootloader' in line:
+                    bootSection = True
+                if bootSection and 'Version' in line:
+                    for word in line.split():
+                        if word[0].isdigit():
+                            version = word
+                            break
+                        else:
+                            partNum = word
+                    break
+            if version:
+                self.addResp(response, key, "%s_%s" % (partNum, version), True)
+            else:
+                self.log.error('Unable to parse Bootloader version.')
+                self.addResp(response, key)
+
+            self.sshClient.close()
+        except Exception:
+            self.log.error('Unable to retrieve Bootloader version.')
+            self.addResp(response, key)
+
+    ## Handles GET requests for Primary App part number
+    #  @param     self
+    #  @param     response      HostDomainDeviceServiceResponse object
+    #  @param     inventoryKeys List of keys to get
+    def primaryAppSwpnGet(self, response, key):
+        try:
+            self.sshClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+            channel = self.sshClient.invoke_shell()
+            channel.send("show version\n")
+            sleep(0.3)
+            output = ''
+            while channel.recv_ready():
+                output += channel.recv(1024)
+            if output.endswith('-- more --, next page: Space, continue: g, quit: ^C'):
+                output += '\n\r'
+                channel.send("\t\n")
+                sleep(0.3)
+                while channel.recv_ready():
+                    output += channel.recv(1024)
+            output = output.split('\n\r')
+            partNum = None
+            version = None
+            activeImageSection = False
+            for line in output:
+                if 'Active Image' in line:
+                    activeImageSection = True
+                if activeImageSection and 'Version' in line:
+                    for word in line.split(' '):
+                        if word[0].isdigit():
+                            version = word
+                            break
+                    break
+            if version:
+                self.addResp(response, key, "%s_%s" % (partNum, version), True)
+            else:
+                self.log.error('Unable to parse Active Image version.')
+                self.addResp(response, key)
+
+            self.sshClient.close()
+        except Exception:
+            self.log.error('Unable to retrieve Active Image version.')
+            self.addResp(response, key)
+
+    ## Handles GET requests for secondary app software part number
+    #  @param     self
+    #  @param     response      HostDomainDeviceServiceResponse object
+    #  @param     inventoryKeys List of keys to get
+    def secondaryAppSwpnGet(self, response, key):
+        try:
+            self.sshClient.connect(self.switchAddress, port=22, username=self.switchUser, password=self.switchPassword)
+            channel = self.sshClient.invoke_shell()
+            channel.send("show version\n")
+            sleep(0.3)
+            output = ''
+            while channel.recv_ready():
+                output += channel.recv(1024)
+            if output.endswith('-- more --, next page: Space, continue: g, quit: ^C'):
+                output += '\n\r'
+                channel.send("\t\n")
+                sleep(0.3)
+                while channel.recv_ready():
+                    output += channel.recv(1024)
+            output = output.split('\n\r')
+            partNum = None
+            version = None
+            alternateImageSection = False
+            for line in output:
+                if 'Alternate Image' in line.split():
+                    alternateImageSection = True
+                if alternateImageSection and 'Version' in line:
+                    for word in line:
+                        if word[0].isdigit():
+                            version = word
+                            break
+                        break
+            if version:
+                self.addResp(response, key, "%s_%s" % (partNum, version), True)
+            else:
+                self.log.error('Unable to parse Alternate Image version.')
+                self.addResp(response, key)
+
+            self.sshClient.close()
+        except Exception:
+            self.log.error('Unable to retrieve Alternate Image version.')
+            self.addResp(response, key)
+
+    ## Handles GET requests for configuration version
+    #  @param     self
+    #  @param     response      HostDomainDeviceServiceResponse object
+    #  @param     inventoryKeys List of keys to get
+    def configSwpnGet(self, response, key):
+        try:
+            configVersion = None
+            vtss = Vtss(switchIP=self.switchAddress)
+            response = vtss.downloadFile('startup-config').splitlines()
+            for version in reversed(response):
+                if version == "":
+                    continue
+                elif version == 'end':
+                    break
+                else:
+                    configVersion = version
+                    break
+            if configVersion:
+                self.addResp(response, key, "%s_%s" % (self.lru_testPartnum, configVersion), True)
+            else:
+                self.log.error('Unable to parse Configuration version.')
+                self.addResp(response, key)
+        except Exception:
+            self.log.error('Unable to retrieve Configuration version.')
+            self.addResp(response, key)
 
     ## Handles GET requests for HDDS
     #  @param     self
@@ -501,7 +665,6 @@ class HDDS(Module):
             for key in hddsKeys:
                 self.addResp(response, key)
 
-
     ## Handles SET requests for MAC keys
     #  @param     self
     #  @param     response  HostDomainDeviceServiceResponse object
@@ -520,7 +683,6 @@ class HDDS(Module):
                 self.log.warning("Invalid or not yet supported key: %s" % key)
                 self.addResp(response, key, value)
 
-
     ## Handles SET requests for vtss MAC key
     #  @param     self
     #  @param     response  HostDomainDeviceServiceResponse object
@@ -536,7 +698,7 @@ class HDDS(Module):
             self.sendShell(shell, "debug board mac %s" % switchMac)
             out = self.sendShell(shell, "debug board")
             self.sshClient.close()
-        except SSHException:
+        except paramiko.SSHException:
             self.log.error("Problem communicating with switch via SSH.")
             self.addResp(response, key, mac)
         else:
@@ -685,3 +847,4 @@ class HDDS(Module):
 
             for key, value in hddsPairs.items():
                 self.addResp(response, key, value)
+
