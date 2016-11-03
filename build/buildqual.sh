@@ -5,10 +5,10 @@ NMSDIR=~/tklabs-nms
 QUALDIR=~/qual
 MPSBUILDDIR=~/mps-builder
 
-BUILD=""
+BUILD="QUAL"
 TAG="NO"
 NMS="NO"
-BRANCH="dev/NMS"
+BRANCH=""
 
 # Display buildqual command usage
 usage() {
@@ -209,19 +209,19 @@ sudo createrepo --update ${MPSBUILDDIR}/repo/packages/
 # Build guest-vm RPM and store in repo
 buildife
 
-case $BUILD in
+case "$BUILD" in
     "QUAL") buildqual;;
     "SIMS") buildsims;;
      "ALL") buildqual; buildsims;;
 esac
 
-if [ $BUILD != "SIMS" ]; then
+if [ "$BUILD" != "SIMS" ]; then
     echo "Built qual PXE image: $NEWQUALPXE"
     echo "Built qual USBDISK image: $NEWQUALUSBDISK"
     echo "Built qual USBPART image: $NEWQUALUSBPART"
 fi
 
-if [ $BUILD != "QUAL" ]; then 
+if [ "$BUILD" != "QUAL" ]; then
     echo "Built qual-sims PXE image: $NEWSIMSPXE"
     echo "Built qual-sims USBDISK image: $NEWSIMSUSBDISK"
     echo "Built qual-sims USBPART image: $NEWSIMSUSBPART"
