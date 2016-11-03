@@ -16,8 +16,6 @@ class PortStateConfig(Module):
         super(PortStateConfig, self).__init__(config)
         # IP address of the device
         self.switchAddress = "10.10.41.159"
-        # path to the spec file
-        self.spec_file_path = '/tmp'
         self.loadConfig(attributes=('switchAddress',))
         # adding the message handler
         self.addMsgHandler(ConfigPortStateReq, self.hdlrMsg)
@@ -57,12 +55,8 @@ class PortStateConfig(Module):
         #  Port name
         switchPortName= resolvePort(configPortState.namedPort)
 
-        #  Create the Vtss object with the relative path where
-        #  we'll always place the spec file to avoid multiple downloas
-        vtss = Vtss(switchIP=self.switchAddress, specFile='mps-vtss-spec-rpc.spec')
-
-        #  Try to download the spec file if it doesn't exits
-        vtss.downloadSpecFiles(path=self.spec_file_path)
+        #  Create the Vtss object
+        vtss = Vtss(self.switchAddress)
 
         #  if port name doesn't exist or it's not a switch port, return error
         if switchPortName != None and switchPortName[1]:

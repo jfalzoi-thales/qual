@@ -86,7 +86,7 @@ class HNMS(ConfigurableObject):
 
         try:
             # Open connection with the switch
-            vtss = Vtss(switchIP=self.switchAddress)
+            vtss = Vtss(self.switchAddress)
             # Get the firmware version
             jsonResp = vtss.callMethod(['firmware.status.switch.get'])
             # If no error, look for something in the string that looks like a version number
@@ -109,7 +109,7 @@ class HNMS(ConfigurableObject):
 
         try:
             # Open connection with the switch
-            vtss = Vtss(switchIP=self.switchAddress)
+            vtss = Vtss(self.switchAddress)
             # Download the config file
             response = vtss.downloadFile('startup-config').splitlines()
             for version in reversed(response):

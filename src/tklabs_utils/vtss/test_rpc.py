@@ -8,7 +8,7 @@ params = argparse.ArgumentParser(description="Remote Procedure Calls.")
 params.add_argument('-d',
                     dest='switch',
                     type=str,
-                    default="10.10.41.159",
+                    default="192.168.1.1",
                     help="IP address of switch")
 params.add_argument('-c',
                     dest='cmds',
@@ -32,10 +32,7 @@ args = params.parse_args()
 calls = []
 
 # Vtss obj
-obj = Vtss(args.switch)
-
-# Download Spec file
-obj.downloadSpecFiles(path=args.path)
+obj = Vtss(args.switch, specDir=args.path)
 
 if isinstance(args.cmds, str):
     calls.append(args.cmds)
@@ -49,6 +46,3 @@ jsonData = obj.callMethod(calls)
 file = open(args.results, 'w+')
 json.dump(jsonData, file, sort_keys=True, indent=4, ensure_ascii=False)
 file.close()
-
-
-

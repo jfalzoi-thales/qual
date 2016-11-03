@@ -120,7 +120,7 @@ class Upgrade(Module):
         try:
             shutil.copy(path, self.tftpServerPath)
             # Object to call switch functions
-            vtss = Vtss(switchIP=self.switchAddress)
+            vtss = Vtss(self.switchAddress)
             # Try to update the configuration
             resp = vtss.callMethod(['icfg.control.copy.set',
                                         '{"Copy":true,"SourceConfigFile":"tftp://192.168.1.122/%s","SourceConfigType":"configFile","DestinationConfigType":"startupConfig"}'%(os.path.basename(path))])
@@ -201,7 +201,7 @@ class Upgrade(Module):
         try:
             shutil.copy(path, self.tftpServerPath)
             # Object to call switch functions
-            vtss = Vtss(switchIP=self.switchAddress)
+            vtss = Vtss(self.switchAddress)
             # Try to upgrade the switch
             resp = vtss.callMethod(['firmware.control.image-upload.set','{"DoUpload":true,"Url":"tftp://192.168.1.122/%s","ImageType":"firmware"}'%(os.path.basename(path))])
             # Check the response

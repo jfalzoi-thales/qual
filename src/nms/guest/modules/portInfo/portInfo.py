@@ -41,7 +41,7 @@ class PortInfo(Module):
         # Load config file
         self.loadConfig(attributes=('switchAddress','i350EthernetDev'))
         ## Object to call the RPC
-        self.vtss = Vtss(switchIP=self.switchAddress)
+        self.vtss = Vtss(self.switchAddress)
         #  Adds handler to available message handlers
         self.addMsgHandler(PortInfoReq, self.handler)
         # Update the enet_8 and i350 port names
