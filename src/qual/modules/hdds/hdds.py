@@ -548,7 +548,7 @@ class HDDS(Module):
                 if 'Active Image' in line:
                     activeImageSection = True
                 if activeImageSection and 'Version' in line:
-                    for word in line.split(' '):
+                    for word in line.split():
                         if word[0].isdigit():
                             version = word
                             break
