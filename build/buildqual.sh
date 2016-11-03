@@ -16,7 +16,7 @@ usage() {
                 -t|--tag    - builds RPMs with a new tag
                 -b|--branch - builds images from specified branch
                 -s|--sims   - builds only qual-sims image
-                -n|--nms    - builds nms and tklabs_utils rpms from Thales Github repo
+                -n|--nms    - builds nms and tklabs_utils rpms from QUAL tree
                 -a|--all    - builds both qual and qual-sims images"
     exit 1
 }

@@ -71,7 +71,7 @@ class FirmwareUpdate(Module):
         response.success = success
         if errMsg:
             self.log.error(errMsg)
-            response.error.component = component
+            response.component = component
             response.errorMessage = errMsg
 
     ## Handles incoming tzmq messages
