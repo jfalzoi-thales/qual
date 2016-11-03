@@ -12,12 +12,12 @@ BRANCH=""
 
 # Display buildqual command usage
 usage() {
-    echo "Unrecognized parameter specified.  Accepted parameters are:
-                -t|--tag    - builds RPMs with a new tag
-                -b|--branch - builds images from specified branch
-                -s|--sims   - builds only qual-sims image
-                -n|--nms    - builds nms and tklabs_utils rpms from QUAL tree
-                -a|--all    - builds both qual and qual-sims images"
+    echo "Accepted parameters are:
+        -t|--tag    - builds RPMs with a new tag if BRANCH specified
+        -b|--branch - builds images from specified branch
+        -s|--sims   - builds only qual-sims image
+        -n|--nms    - builds nms and tklabs_utils rpms from QUAL tree
+        -a|--all    - builds both qual and qual-sims images"
     exit 1
 }
 
@@ -145,6 +145,11 @@ while true ; do
 done
 
 if [ "$#" != 0 ]; then usage; fi
+
+if [ "$TAG" == "YES" -a ! "$BRANCH" ]; then
+    echo "ERROR: BRANCH must be specified to use -t|--tag"
+    usage
+fi
 
 set -e
 
